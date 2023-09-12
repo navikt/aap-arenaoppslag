@@ -1,0 +1,5 @@
+db:
+  host: setme
+  port: setme
+  database: setme
+env: prod

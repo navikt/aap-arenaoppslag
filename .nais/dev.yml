@@ -1,0 +1,5 @@
+db:
+  host: a01dbfl048.adeo.no
+  port: 1521
+  database: areq02
+env: dev

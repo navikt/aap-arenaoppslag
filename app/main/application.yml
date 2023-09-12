@@ -1,0 +1,8 @@
+database:
+  url: jdbc:oracle:thin:@${DB_HOST}:${DB_PORT}/${DB_DATABASE}
+  username: ${ARENA_DB_USERNAME}
+  password: ${ARENA_DB_PASSWORD}
+azure:
+  clientId: ${AZURE_APP_CLIENT_ID}
+  tokenEndpoint: ${AZURE_OPENID_CONFIG_TOKEN_ENDPOINT}
+  clientSecret: ${AZURE_APP_CLIENT_SECRET}

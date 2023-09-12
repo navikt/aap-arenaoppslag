@@ -1,0 +1,56 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: arenaoppslag
+  namespace: aap
+  labels:
+    team: aap
+    sub: arenaoppslag
+spec:
+  image: {{image}}
+  replicas:
+    cpuThresholdPercentage: 90
+    disableAutoScaling: true
+    max: 1
+    min: 1
+  azure:
+    application:
+      enabled: true
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  liveness:
+    path: /actuator/live
+    initialDelay: 3
+    periodSeconds: 3
+    failureThreshold: 21
+  readiness:
+    path: /actuator/ready
+    initialDelay: 3
+    periodSeconds: 3
+    failureThreshold: 21
+  prometheus:
+    enabled: true
+    path: /actuator/metrics
+  secureLogs:
+    enabled: true
+  accessPolicy:
+    inbound:
+      rules:
+        - application: api
+          cluster: {{env}}-gcp
+          namespace: aap
+  webproxy: true
+  env:
+    - name: DB_HOST
+      value: {{db.host}}
+    - name: DB_PORT
+      value: {{db.port}}
+    - name: DB_DATABASE
+      value: {{db.database}}
+  envFrom:
+    - secret: arena-db
