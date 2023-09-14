@@ -44,6 +44,9 @@ spec:
         - application: api
           cluster: {{env}}-gcp
           namespace: aap
+        - application: saksinfo
+          cluster: {{env}}-gcp
+          namespace: aap
   webproxy: true
   env:
     - name: DB_HOST

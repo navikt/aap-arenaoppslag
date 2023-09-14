@@ -21,7 +21,15 @@ class VedtakDao(private val dataSource: DataSource) {
                     Vedtak(
                         personId = fnr,
                         utfallkode = row.getString("utfallkode"),
-                        datoMottatt = row.getDate("dato_mottatt").toLocalDate()
+                        datoMottatt = row.getDate("dato_mottatt").toLocalDate(),
+                        vedtakId = row.getInt("vedtak_id"),
+                        sakId = row.getInt("sak_id"),
+                        vedtakstatuskode = row.getString("vedtakstatuskode"),
+                        vedtaktypekode = row.getString("vedtaktypekode"),
+                        regDato = row.getDate("reg_dato").toLocalDate(),
+                        regUser = row.getString("reg_user"),
+                        modDato = row.getDate("mod_dato").toLocalDate(),
+                        modUser = row.getString("mod_user")
                     )
                 }.toList()
             }
