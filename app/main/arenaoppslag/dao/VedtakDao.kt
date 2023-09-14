@@ -21,7 +21,7 @@ class VedtakDao(private val dataSource: DataSource) {
 
     fun selectAlleVedtak(fnr: String): List<Vedtak> {
         return dataSource.connection.use { connection ->
-            connection.prepareStatement(hentVedtakForEnPersonSql).use { preparedStatement ->  
+            connection.prepareStatement(hentVedtakForEnPersonSql).use { preparedStatement ->
                 preparedStatement.setString(1, fnr)
 
                 val resultSet = preparedStatement.executeQuery()
@@ -47,22 +47,23 @@ class VedtakDao(private val dataSource: DataSource) {
         }
     }
 
-    fun selectVedtakMedTidsbegrensning(fnr:String, datoForØnsketUttakForAFP: LocalDate){
+    fun selectVedtakMedTidsbegrensning(fnr: String, datoForØnsketUttakForAFP: LocalDate): List<FellesOrdningDTO> {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(hentVedtakForEnPersonSql).use { preparedStatement ->
                 preparedStatement.setString(1, fnr)
                 preparedStatement.setDate(2, Date.valueOf(datoForØnsketUttakForAFP.minusYears(3)))
-                preparedStatement.setDate(3, Date.valueOf(datoForØnsketUttakForAFP) )
+                preparedStatement.setDate(3, Date.valueOf(datoForØnsketUttakForAFP))
 
                 val resultSet = preparedStatement.executeQuery()
 
-                resultSet.map { row->
+                resultSet.map { row ->
                     FellesOrdningDTO(
                         personId = fnr,
                         fraDato = row.getDate("fra_dato").toLocalDate(),
                         tilDato = row.getDate("til_dato").toLocalDate(),
-                )}
+                    )
+                }.toList()
             }
+        }
     }
-
 }
