@@ -13,6 +13,7 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.aap.ktor.config.loadConfig
 import org.slf4j.LoggerFactory
+import java.time.LocalDate
 
 private val secureLog = LoggerFactory.getLogger("secureLog")
 
@@ -55,8 +56,16 @@ fun Application.server() {
         }
 
         route("/vedtak") {
-            get("/alle") {
-                call.respond(repo.hentAlleVedtak(""))
+            post {
+                val fnr=call.parameters["fnr"]
+                val datoForØnsketUttakForAFP = LocalDate.parse(call.parameters["datoForOnsketUttakForAFP"])
+                try {
+                    if (fnr != null) {
+                        call.respond(repo.hentGrunnInfoForAAPMotaker(fnr, datoForØnsketUttakForAFP))
+                    } else throw Exception("Fnr er null")
+                } catch (e:Exception){
+                    call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av info")
+                }
             }
         }
     }
