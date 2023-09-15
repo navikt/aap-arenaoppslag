@@ -1,12 +1,23 @@
 package arenaoppslag
 
+import arenaoppslag.dao.VedtakDao
+import arenaoppslag.dto.FellesOrdningDTO
+import arenaoppslag.modell.Vedtak
+import com.auth0.jwk.JwkProvider
+import com.auth0.jwk.JwkProviderBuilder
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.http.*
+import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.micrometer.prometheus.PrometheusConfig
@@ -14,17 +25,25 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.aap.ktor.config.loadConfig
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 
 private val secureLog = LoggerFactory.getLogger("secureLog")
 
 data class Config(
-    val database: DbConfig
+    val database: DbConfig,
+    val tokenx: TokenXConfig
 )
 
 data class DbConfig(
     val url: String,
     val username: String,
     val password: String
+)
+
+data class TokenXConfig(
+    val jwksUri: String,
+    val issuer: String,
+    val clientId: String
 )
 
 fun main() {
@@ -42,6 +61,37 @@ fun Application.server() {
     val datasource = initDatasource(config.database)
     val repo = Repo(datasource)
 
+    val jwkProvider: JwkProvider = JwkProviderBuilder(config.tokenx.jwksUri)
+        .cached(10, 24, TimeUnit.HOURS)
+        .rateLimited(10, 1, TimeUnit.MINUTES)
+        .build()
+    install(Authentication) {
+        jwt {
+            verifier(jwkProvider, config.tokenx.issuer)
+            challenge { _, _ ->
+                call.respond(HttpStatusCode.Unauthorized)
+            }
+            validate { credential ->
+                if (credential.payload.audience.contains(config.tokenx.clientId)) {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
+    install(ContentNegotiation) {
+        jackson {
+            registerModule(JavaTimeModule())
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            registerSubtypes(
+                Vedtak::class.java,
+                FellesOrdningDTO::class.java
+            )
+        }
+    }
+
     routing {
         route("/actuator") {
             get("/metrics") {
@@ -54,17 +104,18 @@ fun Application.server() {
                 call.respond(HttpStatusCode.OK, "vedtak")
             }
         }
-
-        route("/vedtak") {
-            post {
-                val fnr=call.parameters["fnr"]
-                val datoForØnsketUttakForAFP = LocalDate.parse(call.parameters["datoForOnsketUttakForAFP"])
-                try {
-                    if (fnr != null) {
-                        call.respond(repo.hentGrunnInfoForAAPMotaker(fnr, datoForØnsketUttakForAFP))
-                    } else throw Exception("Fnr er null")
-                } catch (e:Exception){
-                    call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av info")
+        authenticate{
+            route("/vedtak") {
+                post {
+                    val fnr = call.parameters["fnr"]
+                    val datoForØnsketUttakForAFP = LocalDate.parse(call.parameters["datoForOnsketUttakForAFP"])
+                    try {
+                        if (fnr != null) {
+                            call.respond(repo.hentGrunnInfoForAAPMotaker(fnr, datoForØnsketUttakForAFP))
+                        } else throw Exception("Fnr er null")
+                    } catch (e: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av info")
+                    }
                 }
             }
         }

@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val testContainersVersion = "1.18.3"
+val testContainersVersion = "1.19.0"
 
 plugins {
     kotlin("jvm") version "1.9.0"
@@ -17,7 +17,9 @@ application {
 
 dependencies {
     implementation("com.github.navikt.aap-libs:ktor-utils:$aapLibVersion")
-    implementation("com.github.navikt.aap-libs:ktor-auth-azuread:$aapLibVersion")
+
+    implementation("io.ktor:ktor-server-auth:$ktorVersion")
+    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
@@ -28,6 +30,8 @@ dependencies {
 
     implementation("io.micrometer:micrometer-registry-prometheus:1.11.2")
     implementation("ch.qos.logback:logback-classic:1.4.11")
+    implementation("io.ktor:ktor-server-auth-jvm:2.3.3")
+    implementation("io.ktor:ktor-server-core-jvm:2.3.3")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
@@ -41,7 +45,7 @@ dependencies {
     testImplementation("org.flywaydb:flyway-core:9.21.1")
     testImplementation("org.testcontainers:testcontainers:$testContainersVersion")
     testImplementation("org.testcontainers:junit-jupiter:$testContainersVersion")
-    testImplementation("org.testcontainers:oracle-xe:1.18.3")
+    testImplementation("org.testcontainers:oracle-xe:1.19.0")
 }
 
 repositories {
