@@ -28,7 +28,7 @@ import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 private val secureLog = LoggerFactory.getLogger("secureLog")
-
+private val logger = LoggerFactory.getLogger("main")
 data class Config(
     val database: DbConfig,
     val tokenx: TokenXConfig
@@ -58,6 +58,7 @@ fun Application.server() {
 
     Thread.currentThread().setUncaughtExceptionHandler { _, e -> secureLog.error("Uhåndtert feil", e) }
 
+    logger.info("Starter opp med config: ${config.database.url}")
     val datasource = initDatasource(config.database)
     val repo = Repo(datasource)
 
