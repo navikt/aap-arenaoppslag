@@ -9,6 +9,6 @@ import org.junit.jupiter.api.*
 class AppTest {
     @Test
     fun `test`() {
-        println("Hello, world!")
+        assert(true)
     }
 }
