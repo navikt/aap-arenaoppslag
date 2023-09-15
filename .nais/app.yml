@@ -52,6 +52,7 @@ spec:
       value: {{db.host}}
     - name: DB_PORT
       value: {{db.port}}
+      forceString: true
     - name: DB_DATABASE
       value: {{db.database}}
   envFrom:
