@@ -134,4 +134,5 @@ private fun initDatasource(dbConfig: DbConfig) = HikariDataSource(HikariConfig()
     connectionTimeout = 1000
     maxLifetime = 30001
     driverClassName = "oracle.jdbc.OracleDriver"
+    connectionTestQuery= "SELECT 1 FROM DUAL"
 })
