@@ -47,6 +47,10 @@ spec:
           cluster: {{env}}-gcp
           namespace: aap
   webproxy: true
+  ingresses:
+    {{ #each ingresses as |url|}}
+    - {{url }}
+    {{/each}}
   env:
     - name: DB_HOST
       value: {{db.host}}

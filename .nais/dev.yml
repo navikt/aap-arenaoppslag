@@ -3,3 +3,6 @@ db:
   port: 1521
   database: areq02
 env: dev
+ingresses:
+  - https://arenaoppslag.dev-fss-pub.nais.io
+  - https://arenaoppslag.dev.intern.nav.no
