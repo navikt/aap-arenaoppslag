@@ -1,7 +1,7 @@
 package arenaoppslag
 
-import arenaoppslag.dao.VedtakDao
-import arenaoppslag.dto.FellesOrdningDTO
+import arenaoppslag.fellesordning.FellesOrdningDTO
+import arenaoppslag.fellesordning.FellesordningRequest
 import arenaoppslag.modell.Vedtak
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
@@ -18,17 +18,18 @@ import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.aap.ktor.config.loadConfig
 import org.slf4j.LoggerFactory
-import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 private val secureLog = LoggerFactory.getLogger("secureLog")
 private val logger = LoggerFactory.getLogger("main")
+
 data class Config(
     val database: DbConfig,
     val tokenx: TokenXConfig
@@ -105,15 +106,12 @@ fun Application.server() {
                 call.respond(HttpStatusCode.OK, "vedtak")
             }
         }
-        authenticate{
+        authenticate {
             route("/vedtak") {
                 post {
-                    val fnr = call.parameters["fnr"]
-                    val datoForØnsketUttakForAFP = LocalDate.parse(call.parameters["datoForOnsketUttakForAFP"])
+                    val request = call.receive<FellesordningRequest>()
                     try {
-                        if (fnr != null) {
-                            call.respond(repo.hentGrunnInfoForAAPMotaker(fnr, datoForØnsketUttakForAFP))
-                        } else throw Exception("Fnr er null")
+                        call.respond(repo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
                     } catch (e: Exception) {
                         call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av info")
                     }
@@ -134,5 +132,5 @@ private fun initDatasource(dbConfig: DbConfig) = HikariDataSource(HikariConfig()
     connectionTimeout = 1000
     maxLifetime = 30001
     driverClassName = "oracle.jdbc.OracleDriver"
-    connectionTestQuery= "SELECT 1 FROM DUAL"
+    connectionTestQuery = "SELECT 1 FROM DUAL"
 })

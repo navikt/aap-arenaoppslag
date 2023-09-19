@@ -1,6 +1,6 @@
 package arenaoppslag.dao
 
-import arenaoppslag.dto.FellesOrdningDTO
+import arenaoppslag.fellesordning.FellesOrdningDTO
 import arenaoppslag.modell.Vedtak
 import java.sql.Date
 import java.time.LocalDate
@@ -47,10 +47,10 @@ class VedtakDao(private val dataSource: DataSource) {
         }
     }
 
-    fun selectVedtakMedTidsbegrensning(fnr: String, datoForØnsketUttakForAFP: LocalDate): List<FellesOrdningDTO> {
+    fun selectVedtakMedTidsbegrensning(personId: String, datoForØnsketUttakForAFP: LocalDate): List<FellesOrdningDTO> {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(hentVedtakForEnPersonSql).use { preparedStatement ->
-                preparedStatement.setString(1, fnr)
+                preparedStatement.setString(1, personId)
                 preparedStatement.setDate(2, Date.valueOf(datoForØnsketUttakForAFP.minusYears(3)))
                 preparedStatement.setDate(3, Date.valueOf(datoForØnsketUttakForAFP))
 
@@ -58,7 +58,7 @@ class VedtakDao(private val dataSource: DataSource) {
 
                 resultSet.map { row ->
                     FellesOrdningDTO(
-                        personId = fnr,
+                        personId = personId,
                         fraDato = row.getDate("fra_dato").toLocalDate(),
                         tilDato = row.getDate("til_dato").toLocalDate(),
                     )

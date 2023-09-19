@@ -1,4 +1,4 @@
-package arenaoppslag.dto
+package arenaoppslag.fellesordning
 
 import java.time.LocalDate
 

@@ -1,6 +1,8 @@
 package arenaoppslag
 
 import arenaoppslag.dao.VedtakDao
+import arenaoppslag.fellesordning.FellesOrdningDTO
+import arenaoppslag.modell.Person
 import java.time.LocalDate
 import javax.sql.DataSource
 
@@ -10,5 +12,5 @@ class Repo(dataSource: DataSource) {
 
     fun hentAlleVedtak(fnr: String) = vedtakDao.selectAlleVedtak(fnr)
 
-    fun hentGrunnInfoForAAPMotaker(fnr: String, datoForØnsketUttakForAFP:LocalDate) = vedtakDao.selectVedtakMedTidsbegrensning(fnr, datoForØnsketUttakForAFP)
+    fun hentGrunnInfoForAAPMotaker(personId: String, datoForØnsketUttakForAFP:LocalDate):List<FellesOrdningDTO> = vedtakDao.selectVedtakMedTidsbegrensning(personId, datoForØnsketUttakForAFP)
 }
