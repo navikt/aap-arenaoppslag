@@ -17,6 +17,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -25,6 +26,7 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.aap.ktor.config.loadConfig
 import org.slf4j.LoggerFactory
+import org.slf4j.event.Level
 import java.util.concurrent.TimeUnit
 
 private val secureLog = LoggerFactory.getLogger("secureLog")
@@ -59,7 +61,11 @@ fun Application.server() {
 
     Thread.currentThread().setUncaughtExceptionHandler { _, e -> secureLog.error("Uhåndtert feil", e) }
 
-    logger.info("Starter opp med config: ${config.database.url}")
+    install(CallLogging) {
+        level = Level.INFO
+        filter { call -> call.request.path().startsWith("/actuator").not() }
+    }
+
     val datasource = initDatasource(config.database)
     val repo = Repo(datasource)
 
