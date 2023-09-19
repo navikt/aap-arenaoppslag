@@ -48,9 +48,9 @@ spec:
           namespace: aap
   webproxy: true
   ingresses:
-    {{ #each ingresses as |url|}}
+  {{ #each ingresses as |url|}}
     - {{url }}
-    {{/each}}
+  {{/each}}
   env:
     - name: DB_HOST
       value: {{db.host}}
