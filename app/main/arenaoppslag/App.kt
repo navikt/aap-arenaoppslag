@@ -32,7 +32,7 @@ private val logger = LoggerFactory.getLogger("main")
 
 data class Config(
     val database: DbConfig,
-    val tokenx: TokenXConfig
+    val azure: AzureConfig
 )
 
 data class DbConfig(
@@ -41,7 +41,7 @@ data class DbConfig(
     val password: String
 )
 
-data class TokenXConfig(
+data class AzureConfig(
     val jwksUri: String,
     val issuer: String,
     val clientId: String
@@ -63,18 +63,18 @@ fun Application.server() {
     val datasource = initDatasource(config.database)
     val repo = Repo(datasource)
 
-    val jwkProvider: JwkProvider = JwkProviderBuilder(config.tokenx.jwksUri)
+    val jwkProvider: JwkProvider = JwkProviderBuilder(config.azure.jwksUri)
         .cached(10, 24, TimeUnit.HOURS)
         .rateLimited(10, 1, TimeUnit.MINUTES)
         .build()
     install(Authentication) {
         jwt {
-            verifier(jwkProvider, config.tokenx.issuer)
+            verifier(jwkProvider, config.azure.issuer)
             challenge { _, _ ->
                 call.respond(HttpStatusCode.Unauthorized)
             }
             validate { credential ->
-                if (credential.payload.audience.contains(config.tokenx.clientId)) {
+                if (credential.payload.audience.contains(config.azure.clientId)) {
                     JWTPrincipal(credential.payload)
                 } else {
                     null

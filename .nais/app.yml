@@ -13,11 +13,11 @@ spec:
     disableAutoScaling: true
     max: 1
     min: 1
-  tokenx:
-    enabled: true
+  azure:
+    application:
+      enabled: true
   resources:
     limits:
-      cpu: 1000m
       memory: 1024Mi
     requests:
       cpu: 500m
