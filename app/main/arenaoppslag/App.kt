@@ -115,10 +115,13 @@ fun Application.server() {
         authenticate {
             route("/vedtak") {
                 post {
+                    logger.info("Mottar kall")
                     val request = call.receive<FellesordningRequest>()
+                    logger.info("Melding $request mottatt")
                     try {
                         call.respond(repo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
                     } catch (e: Exception) {
+                        logger.error("Feil ved henting", e)
                         call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av info")
                     }
                 }
