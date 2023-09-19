@@ -80,6 +80,10 @@ fun Application.server() {
                 call.respond(HttpStatusCode.Unauthorized)
             }
             validate { credential ->
+                logger.info("Audience: ${credential.payload.audience}")
+                logger.info("clientId: ${config.azure.clientId}")
+                logger.info("credential Issuer: ${credential.payload.issuer}")
+                logger.info("azure Issuer: ${config.azure.issuer}")
                 if (credential.payload.audience.contains(config.azure.clientId)) {
                     JWTPrincipal(credential.payload)
                 } else {
