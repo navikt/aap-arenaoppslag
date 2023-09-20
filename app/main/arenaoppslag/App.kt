@@ -5,6 +5,8 @@ import arenaoppslag.fellesordning.FellesordningRequest
 import arenaoppslag.modell.Vedtak
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
+import com.auth0.jwk.RateLimitedJwkProvider
+import com.auth0.jwk.UrlJwkProvider
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.zaxxer.hikari.HikariConfig
@@ -27,6 +29,7 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.aap.ktor.config.loadConfig
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
+import java.net.URI
 import java.util.concurrent.TimeUnit
 
 private val secureLog = LoggerFactory.getLogger("secureLog")
@@ -69,7 +72,7 @@ fun Application.server() {
     val datasource = initDatasource(config.database)
     val repo = Repo(datasource)
 
-    val jwkProvider: JwkProvider = JwkProviderBuilder(config.azure.jwksUri)
+    val jwkProvider: JwkProvider = JwkProviderBuilder(URI(config.azure.jwksUri).toURL())
         .cached(10, 24, TimeUnit.HOURS)
         .rateLimited(10, 1, TimeUnit.MINUTES)
         .build()
