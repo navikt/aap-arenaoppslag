@@ -6,3 +6,4 @@ data class FellesordningRequest(
     val personId:String,
     val datoForOnsketUttakForAFP:LocalDate,
 )
+

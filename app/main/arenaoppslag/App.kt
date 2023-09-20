@@ -21,6 +21,7 @@ import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -32,6 +33,7 @@ import org.slf4j.event.Level
 import java.net.InetSocketAddress
 import java.net.ProxySelector
 import java.net.URI
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 private val secureLog = LoggerFactory.getLogger("secureLog")
@@ -64,10 +66,22 @@ fun Application.server() {
 
     install(MicrometerMetrics) { registry = prometheus }
 
-    Thread.currentThread().setUncaughtExceptionHandler { _, e -> secureLog.error("Uhåndtert feil", e) }
+    install(StatusPages) {
+        exception<Throwable> { call, cause ->
+            logger.error("Uhåndtert feil", cause)
+            call.respondText(text = "Feil i tjeneste: ${cause.message}" , status = HttpStatusCode.InternalServerError)
+        }
+    }
 
     install(CallLogging) {
-        level = Level.TRACE
+        level = Level.INFO
+        format { call ->
+            val status = call.response.status()
+            val httpMethod = call.request.httpMethod.value
+            val userAgent = call.request.headers["User-Agent"]
+            val callId = call.request.header("x-callId") ?: call.request.header("nav-callId") ?: "ukjent"
+            "Status: $status, HTTP method: $httpMethod, User agent: $userAgent, callId: $callId"
+        }
         filter { call -> call.request.path().startsWith("/actuator").not() }
     }
 
@@ -87,10 +101,6 @@ fun Application.server() {
                 call.respond(HttpStatusCode.Unauthorized)
             }
             validate { credential ->
-                logger.info("Audience: ${credential.payload.audience}")
-                logger.info("clientId: ${config.azure.clientId}")
-                logger.info("credential Issuer: ${credential.payload.issuer}")
-                logger.info("azure Issuer: ${config.azure.issuer}")
                 if (credential.payload.audience.contains(config.azure.clientId)) {
                     JWTPrincipal(credential.payload)
                 } else {
@@ -126,15 +136,8 @@ fun Application.server() {
         authenticate {
             route("/vedtak") {
                 post {
-                    logger.info("Mottar kall")
                     val request = call.receive<FellesordningRequest>()
-                    logger.info("Melding $request mottatt")
-                    try {
-                        call.respond(repo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
-                    } catch (e: Exception) {
-                        logger.error("Feil ved henting", e)
-                        call.respond(HttpStatusCode.InternalServerError, "Feil ved henting av info")
-                    }
+                    call.respond(repo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
                 }
             }
         }
