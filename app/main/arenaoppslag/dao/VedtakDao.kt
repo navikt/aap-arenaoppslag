@@ -14,7 +14,7 @@ class VedtakDao(private val dataSource: DataSource) {
     """
 
     private val selectVedtakMedTidsbegrensningSql = """
-        SELECT fodselsnr, utfallkode, til_dato, fra_dato FROM vedtak WHERE utfallkode IS NOT NULL AND person_id = 
+        SELECT utfallkode, til_dato, fra_dato FROM vedtak WHERE utfallkode IS NOT NULL AND person_id = 
        (SELECT person_id FROM person WHERE fodselsnr = ?) AND (til_dato >= ? OR til_dato IS NULL) AND fra_dato < ?
     """ //TODO: sjekk om vi ønsker resultat hvor utfallkode er null (vi antar at det betyr ikke fattet vedtak)
 
