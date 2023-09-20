@@ -29,6 +29,8 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.aap.ktor.config.loadConfig
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
+import java.net.InetSocketAddress
+import java.net.ProxySelector
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
@@ -71,8 +73,10 @@ fun Application.server() {
 
     val datasource = initDatasource(config.database)
     val repo = Repo(datasource)
+    val proxyUri = URI.create(System.getenv("HTTP_PROXY"))
 
     val jwkProvider: JwkProvider = JwkProviderBuilder(URI(config.azure.jwksUri).toURL())
+        .proxied(ProxySelector.of(InetSocketAddress(proxyUri.host, proxyUri.port)).select(URI(config.azure.jwksUri)).first())
         .cached(10, 24, TimeUnit.HOURS)
         .rateLimited(10, 1, TimeUnit.MINUTES)
         .build()
