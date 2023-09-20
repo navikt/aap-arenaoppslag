@@ -49,7 +49,7 @@ class VedtakDao(private val dataSource: DataSource) {
 
     fun selectVedtakMedTidsbegrensning(personId: String, datoForØnsketUttakForAFP: LocalDate): List<FellesOrdningDTO> {
         return dataSource.connection.use { connection ->
-            connection.prepareStatement(hentVedtakForEnPersonSql).use { preparedStatement ->
+            connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
                 preparedStatement.setString(1, personId)
                 preparedStatement.setDate(2, Date.valueOf(datoForØnsketUttakForAFP.minusYears(3)))
                 preparedStatement.setDate(3, Date.valueOf(datoForØnsketUttakForAFP))
