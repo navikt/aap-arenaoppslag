@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test
 import javax.sql.DataSource
 import org.junit.jupiter.api.Assertions.assertEquals
 
-class VedtakDaoTest {
+class VedtakDAOTest {
 
     private val dataSource: DataSource
     private val flyway: Flyway
-    private val vedtakDao: VedtakDao
+    private val vedtakDao: VedtakDAO
 
     init {
         dataSource = HikariDataSource(HikariConfig().apply {
@@ -23,7 +23,7 @@ class VedtakDaoTest {
 
         flyway = Flyway.configure().dataSource(dataSource).locations("flyway").load().apply { migrate() }
 
-        vedtakDao = VedtakDao(dataSource)
+        vedtakDao = VedtakDAO(dataSource)
     }
 
     @Test

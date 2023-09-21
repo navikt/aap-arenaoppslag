@@ -1,12 +1,12 @@
 package arenaoppslag.dao
 
-import arenaoppslag.fellesordning.FellesOrdningDTO
-import arenaoppslag.modell.Vedtak
+import arenaoppslag.fellesordning.FellesordningRespone
+import arenaoppslag.arenamodell.Vedtak
 import java.sql.Date
 import java.time.LocalDate
 import javax.sql.DataSource
 
-class VedtakDao(private val dataSource: DataSource) {
+class VedtakDAO(private val dataSource: DataSource) {
 
     private val hentVedtakForEnPersonSql = """
        SELECT * FROM vedtak WHERE utfallkode IS NOT NULL AND person_id = 
@@ -47,7 +47,7 @@ class VedtakDao(private val dataSource: DataSource) {
         }
     }
 
-    fun selectVedtakMedTidsbegrensning(personId: String, datoForØnsketUttakForAFP: LocalDate): List<FellesOrdningDTO> {
+    fun selectVedtakMedTidsbegrensning(personId: String, datoForØnsketUttakForAFP: LocalDate): List<FellesordningRespone> {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
                 preparedStatement.setString(1, personId)
@@ -57,7 +57,7 @@ class VedtakDao(private val dataSource: DataSource) {
                 val resultSet = preparedStatement.executeQuery()
 
                 resultSet.map { row ->
-                    FellesOrdningDTO(
+                    FellesordningRespone(
                         personId = personId,
                         fraDato = row.getDate("fra_dato").toLocalDate(),
                         tilDato = row.getDate("til_dato").toLocalDate(),

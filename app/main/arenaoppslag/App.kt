@@ -1,12 +1,11 @@
 package arenaoppslag
 
-import arenaoppslag.fellesordning.FellesOrdningDTO
+import arenaoppslag.fellesordning.FellesordningRespone
 import arenaoppslag.fellesordning.FellesordningRequest
-import arenaoppslag.modell.Vedtak
+import arenaoppslag.arenamodell.Vedtak
+import arenaoppslag.fellesordning.FelleordningRepo
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
-import com.auth0.jwk.RateLimitedJwkProvider
-import com.auth0.jwk.UrlJwkProvider
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.zaxxer.hikari.HikariConfig
@@ -33,28 +32,9 @@ import org.slf4j.event.Level
 import java.net.InetSocketAddress
 import java.net.ProxySelector
 import java.net.URI
-import java.util.*
 import java.util.concurrent.TimeUnit
 
-private val secureLog = LoggerFactory.getLogger("secureLog")
 private val logger = LoggerFactory.getLogger("main")
-
-data class Config(
-    val database: DbConfig,
-    val azure: AzureConfig
-)
-
-data class DbConfig(
-    val url: String,
-    val username: String,
-    val password: String
-)
-
-data class AzureConfig(
-    val jwksUri: String,
-    val issuer: String,
-    val clientId: String
-)
 
 fun main() {
     embeddedServer(Netty, port = 8080, module = Application::server).start(wait = true)
@@ -85,15 +65,13 @@ fun Application.server() {
         filter { call -> call.request.path().startsWith("/actuator").not() }
     }
 
-    val datasource = initDatasource(config.database)
-    val repo = Repo(datasource)
     val proxyUri = URI.create(System.getenv("HTTP_PROXY"))
-
     val jwkProvider: JwkProvider = JwkProviderBuilder(URI(config.azure.jwksUri).toURL())
         .proxied(ProxySelector.of(InetSocketAddress(proxyUri.host, proxyUri.port)).select(URI(config.azure.jwksUri)).first())
         .cached(10, 24, TimeUnit.HOURS)
         .rateLimited(10, 1, TimeUnit.MINUTES)
         .build()
+
     install(Authentication) {
         jwt {
             verifier(jwkProvider, config.azure.issuer)
@@ -116,10 +94,13 @@ fun Application.server() {
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             registerSubtypes(
                 Vedtak::class.java,
-                FellesOrdningDTO::class.java
+                FellesordningRespone::class.java
             )
         }
     }
+
+    val datasource = initDatasource(config.database)
+    val felleordningRepo = FelleordningRepo(datasource)
 
     routing {
         route("/actuator") {
@@ -137,7 +118,7 @@ fun Application.server() {
             route("/vedtak") {
                 post {
                     val request = call.receive<FellesordningRequest>()
-                    call.respond(repo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
+                    call.respond(felleordningRepo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
                 }
             }
         }

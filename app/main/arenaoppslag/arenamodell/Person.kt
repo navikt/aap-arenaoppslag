@@ -1,4 +1,4 @@
-package arenaoppslag.modell
+package arenaoppslag.arenamodell
 
 import java.time.LocalDate
 
