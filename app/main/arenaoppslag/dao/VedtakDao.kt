@@ -34,7 +34,7 @@ class VedtakDao(private val dataSource: DataSource) {
                         vedtakId = row.getInt("vedtak_id"),
                         sakId = row.getInt("sak_id"),
                         vedtakstatuskode = row.getString("vedtakstatuskode"),
-                        vedtaktypekode = row.getString("vedtakstypekode"),
+                        vedtaktypekode = row.getString("vedtaktypekode"),
                         modDato = row.getDate("mod_dato").toLocalDate(),
                         modUser = row.getString("mod_user"),
                         regDato = row.getDate("reg_dato").toLocalDate(),

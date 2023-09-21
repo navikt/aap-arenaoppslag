@@ -7,9 +7,6 @@ CREATE TABLE PERSON
 
 INSERT INTO PERSON(PERSON_ID, FODSELSNR) VALUES(4873545, '1');
 
-
-
-
 CREATE TABLE SAK
 (
     SAK_ID               NUMBER       NOT NULL,
@@ -116,7 +113,7 @@ Insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, REG_DAT
 values ('36905537', '13489616', 'IVERK', 'S', to_date('30.08.2022', 'DD.MM.RRRR'), 'KSB0502',
         to_date('30.08.2022', 'DD.MM.RRRR'), 'MNA0502', 'JA', 'Syntetisert rettighet', 'KSB0502', '0502', '2022',
         '73981', '5', 'BASI', 'UGJEN', '31028783', null, to_date('30.08.2022', 'DD.MM.RRRR'), '36905534', null,
-        '4873545', 'MNA0502', null, 'N', null, null, null, null, null, to_date('30.08.2022', 'DD.MM.RRRR'), null, null,
+        '4873545', 'MNA0502', null, 'N', null, null, null, null, null, to_date('30.08.2022', 'DD.MM.RRRR'), to_date('30.08.2022', 'DD.MM.RRRR'), null,
         'N', null, null, 'MNA0502', null, to_date('17.09.2022', 'DD.MM.RRRR'), 'N');
 
 

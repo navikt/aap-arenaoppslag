@@ -42,12 +42,9 @@ dependencies {
     implementation("com.oracle.database.jdbc:ojdbc11:23.2.0.0")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 
     testImplementation("org.flywaydb:flyway-core:9.21.1")
-    testImplementation("org.testcontainers:testcontainers:$testContainersVersion")
-    testImplementation("org.testcontainers:junit-jupiter:$testContainersVersion")
-    testImplementation("org.testcontainers:oracle-xe:1.19.0")
+    testImplementation("com.h2database:h2:2.2.224")
 }
 
 repositories {
