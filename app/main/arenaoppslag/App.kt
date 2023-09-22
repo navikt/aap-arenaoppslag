@@ -1,6 +1,6 @@
 package arenaoppslag
 
-import arenaoppslag.fellesordning.FellesordningRespone
+import arenaoppslag.fellesordning.FellesordningResponse
 import arenaoppslag.fellesordning.FellesordningRequest
 import arenaoppslag.arenamodell.Vedtak
 import arenaoppslag.fellesordning.FelleordningRepo
@@ -94,7 +94,7 @@ fun Application.server() {
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             registerSubtypes(
                 Vedtak::class.java,
-                FellesordningRespone::class.java
+                FellesordningResponse::class.java
             )
         }
     }
