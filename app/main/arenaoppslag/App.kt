@@ -116,6 +116,10 @@ fun Application.server() {
         }
         authenticate {
             route("/vedtak") {
+                get {
+                    val fnr = call.request.headers["NAV-PersonIdent"]?: call.respond(HttpStatusCode.BadRequest,"Mangler personident")
+                    call.respond(felleordningRepo.hentAlleVedtak(fnr.toString()))
+                }
                 post {
                     val request = call.receive<FellesordningRequest>()
                     call.respond(felleordningRepo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
