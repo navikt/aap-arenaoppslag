@@ -2,6 +2,7 @@ package arenaoppslag.dao
 
 import arenaoppslag.fellesordning.FellesordningResponse
 import arenaoppslag.arenamodell.Vedtak
+import arenaoppslag.fellesordning.VedtakPeriode
 import java.sql.Date
 import java.time.LocalDate
 import javax.sql.DataSource
@@ -47,7 +48,7 @@ class VedtakDAO(private val dataSource: DataSource) {
         }
     }
 
-    fun selectVedtakMedTidsbegrensning(personId: String, datoForØnsketUttakForAFP: LocalDate): List<FellesordningResponse> {
+    fun selectVedtakMedTidsbegrensning(personId: String, datoForØnsketUttakForAFP: LocalDate): FellesordningResponse {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
                 preparedStatement.setString(1, personId)
@@ -56,13 +57,14 @@ class VedtakDAO(private val dataSource: DataSource) {
 
                 val resultSet = preparedStatement.executeQuery()
 
-                resultSet.map { row ->
-                    FellesordningResponse(
-                        personId = personId,
+                val perioder = resultSet.map { row ->
+                    VedtakPeriode(
                         fraDato = row.getDate("fra_dato").toLocalDate(),
                         tilDato = row.getDate("til_dato").toLocalDate(),
                     )
                 }.toList()
+
+                FellesordningResponse(personId, perioder)
             }
         }
     }

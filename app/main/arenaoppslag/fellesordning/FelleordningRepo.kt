@@ -10,5 +10,5 @@ class FelleordningRepo(dataSource: DataSource) {
 
     fun hentAlleVedtak(fnr: String) = vedtakDao.selectAlleVedtak(fnr)
 
-    fun hentGrunnInfoForAAPMotaker(personId: String, datoForØnsketUttakForAFP:LocalDate):List<FellesordningResponse> = vedtakDao.selectVedtakMedTidsbegrensning(personId, datoForØnsketUttakForAFP)
+    fun hentGrunnInfoForAAPMotaker(personId: String, datoForØnsketUttakForAFP:LocalDate): FellesordningResponse = vedtakDao.selectVedtakMedTidsbegrensning(personId, datoForØnsketUttakForAFP)
 }
