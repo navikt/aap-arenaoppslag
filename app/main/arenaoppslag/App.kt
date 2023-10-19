@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit
 private val logger = LoggerFactory.getLogger("main")
 
 fun main() {
+    Thread.currentThread().setUncaughtExceptionHandler { _, e -> logger.error("Uhåndtert feil", e) }
     embeddedServer(Netty, port = 8080, module = Application::server).start(wait = true)
 }
 
