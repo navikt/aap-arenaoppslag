@@ -1,3 +1,4 @@
+proxyUrl: ${HTTP_PROXY}
 database:
   url: jdbc:oracle:thin:@${DB_HOST}:${DB_PORT}/${DB_DATABASE}
   username: ${ARENA_DB_USERNAME}

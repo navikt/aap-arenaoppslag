@@ -1,9 +1,8 @@
 package arenaoppslag
 
-import arenaoppslag.fellesordning.FellesordningResponse
-import arenaoppslag.fellesordning.FellesordningRequest
+import arenaoppslag.fellesordningen.VedtakResponse
 import arenaoppslag.arenamodell.Vedtak
-import arenaoppslag.fellesordning.FelleordningRepo
+import arenaoppslag.fellesordningen.fellesordningen
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -66,7 +65,7 @@ fun Application.server() {
         filter { call -> call.request.path().startsWith("/actuator").not() }
     }
 
-    val proxyUri = URI.create(System.getenv("HTTP_PROXY"))
+    val proxyUri = URI.create(config.proxyUrl)
     val jwkProvider: JwkProvider = JwkProviderBuilder(URI(config.azure.jwksUri).toURL())
         .proxied(ProxySelector.of(InetSocketAddress(proxyUri.host, proxyUri.port)).select(URI(config.azure.jwksUri)).first())
         .cached(10, 24, TimeUnit.HOURS)
@@ -95,13 +94,12 @@ fun Application.server() {
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             registerSubtypes(
                 Vedtak::class.java,
-                FellesordningResponse::class.java
+                VedtakResponse::class.java
             )
         }
     }
 
     val datasource = initDatasource(config.database)
-    val felleordningRepo = FelleordningRepo(datasource)
 
     routing {
         route("/actuator") {
@@ -116,16 +114,7 @@ fun Application.server() {
             }
         }
         authenticate {
-            route("/vedtak") {
-                get {
-                    val fnr = call.request.headers["NAV-PersonIdent"]?: call.respond(HttpStatusCode.BadRequest,"Mangler personident")
-                    call.respond(felleordningRepo.hentAlleVedtak(fnr.toString()))
-                }
-                post {
-                    val request = call.receive<FellesordningRequest>()
-                    call.respond(felleordningRepo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
-                }
-            }
+            fellesordningen(datasource)
         }
     }
 }

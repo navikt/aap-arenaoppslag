@@ -1,17 +1,19 @@
 package arenaoppslag.dao
 
+import arenaoppslag.fellesordningen.FellesordningenDao
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import javax.sql.DataSource
 import org.junit.jupiter.api.Assertions.assertEquals
+import java.time.LocalDate
 
-class VedtakDAOTest {
+class FellesordningenDaoTest {
 
     private val dataSource: DataSource
     private val flyway: Flyway
-    private val vedtakDao: VedtakDAO
+    private val fellesordningenDao: FellesordningenDao
 
     init {
         dataSource = HikariDataSource(HikariConfig().apply {
@@ -23,13 +25,13 @@ class VedtakDAOTest {
 
         flyway = Flyway.configure().dataSource(dataSource).locations("flyway").load().apply { migrate() }
 
-        vedtakDao = VedtakDAO(dataSource)
+        fellesordningenDao = FellesordningenDao(dataSource)
     }
 
     @Test
-    fun `test`() {
-        val alleVedtak = vedtakDao.selectAlleVedtak("1")
+    fun test() {
+        val alleVedtak = fellesordningenDao.selectVedtakMedTidsbegrensning("1", LocalDate.of(2022, 10, 1))
 
-        assertEquals(1, alleVedtak.size)
+        assertEquals(1, alleVedtak.perioder.size)
     }
 }

@@ -1,9 +1,8 @@
-package arenaoppslag.fellesordning
+package arenaoppslag.fellesordningen
 
 import java.time.LocalDate
 
-data class FellesordningRequest(
+data class VedtakRequest(
     val personId: String,
     val datoForOnsketUttakForAFP: LocalDate,
 )
-

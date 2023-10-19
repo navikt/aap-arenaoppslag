@@ -1,6 +1,7 @@
 package arenaoppslag
 
 data class Config(
+    val proxyUrl: String,
     val database: DbConfig,
     val azure: AzureConfig
 )
