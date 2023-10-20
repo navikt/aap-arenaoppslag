@@ -8,6 +8,6 @@ data class VedtakResponse(
 )
 
 data class VedtakPeriode(
-    val fraDato:LocalDate,
-    val tilDato:LocalDate
+    val fraDato: LocalDate,
+    val tilDato: LocalDate?
 )
