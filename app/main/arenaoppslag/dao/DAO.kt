@@ -23,6 +23,10 @@ fun <T : Any> ResultSet.map(block: (rs: ResultSet) -> T): Sequence<T> {
     return ResultSetSequence(this).map(block)
 }
 
+fun  ResultSet.forEach(block: (rs: ResultSet) -> Unit) {
+     ResultSetSequence(this).forEach(block)
+}
+
 fun <T> Connection.transaction(block: (connection: Connection) -> T): T {
     return this.use { connection ->
         try {
