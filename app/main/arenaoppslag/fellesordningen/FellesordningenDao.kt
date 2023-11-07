@@ -10,11 +10,15 @@ class FellesordningenDao(private val dataSource: DataSource) {
     private val selectVedtakMedTidsbegrensningSql = """
         SELECT til_dato, fra_dato 
           FROM vedtak 
-         WHERE utfallkode = 'JA' 
-           AND person_id = 
+         WHERE person_id = 
                (SELECT person_id 
                   FROM person 
                  WHERE fodselsnr = ?) 
+           AND utfallkode = 'JA' 
+           AND rettighetkode = 'AAP'
+           AND vedtaktypekode IN ('O', 'E', 'G')
+           AND vedtakstatuskode IN ('IVERK', 'AVSLU')
+           AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND (til_dato >= ? OR til_dato IS NULL) 
            AND fra_dato < ?
     """

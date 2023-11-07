@@ -110,9 +110,9 @@ Insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, REG_DAT
                     OPPSUMMERING_SB2, DATO_UTFORT_DEL1, DATO_UTFORT_DEL2, OVERFORT_NAVI, FRA_DATO, TIL_DATO,
                     SF_OPPFOLGING_ID, STATUS_SOSIALDATA, KONTOR_SOSIALDATA, TEKSTVARIANTKODE, VALGT_BESLUTTER,
                     TEKNISK_VEDTAK, DATO_INNSTILT, ER_UTLAND)
-values ('36905537', '13489616', 'IVERK', 'S', to_date('30.08.2022', 'DD.MM.RRRR'), 'KSB0502',
+values ('36905537', '13489616', 'IVERK', 'O', to_date('30.08.2022', 'DD.MM.RRRR'), 'KSB0502',
         to_date('30.08.2022', 'DD.MM.RRRR'), 'MNA0502', 'JA', 'Syntetisert rettighet', 'KSB0502', '0502', '2022',
-        '73981', '5', 'BASI', 'UGJEN', '31028783', null, to_date('30.08.2022', 'DD.MM.RRRR'), '36905534', null,
+        '73981', '5', 'AAP', 'UGJEN', '31028783', null, to_date('30.08.2022', 'DD.MM.RRRR'), '36905534', null,
         '4873545', 'MNA0502', null, 'N', null, null, null, null, null, to_date('30.08.2022', 'DD.MM.RRRR'), to_date('30.08.2023', 'DD.MM.RRRR'), null,
         'N', null, null, 'MNA0502', null, to_date('17.09.2022', 'DD.MM.RRRR'), 'N');
 
