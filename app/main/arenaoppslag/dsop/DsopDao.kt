@@ -14,16 +14,16 @@ class DsopDao(private val dataSource: DataSource) {
     """
     private val selectMeldekortSql = """
         SELECT * from v_dsop_meldekort_aap
-        WHERE foedselsnr =? 
-        AND datofra <= ? 
-        AND datotil >= ?   
+        WHERE fodselsnr =? 
+        AND dato_fra <= ? 
+        AND dato_til >= ?   
     """
 
     private val selectVedtakSql = """
         SELECT * from v_dsop_vedtak_aap
-        WHERE foedselsnr =?
-        AND datofra <= ?
-        AND datotil >= ?
+        WHERE fodselsnr =?
+        AND fra_dato <= ?
+        AND til_dato >= ?
     """
 
     fun selectVedtak(personId: String, periode: Periode, samtykkePeriode: Periode): VedtakResponse {
@@ -36,22 +36,22 @@ class DsopDao(private val dataSource: DataSource) {
                 val resultSet = preparedStatement.executeQuery()
 
                 val vedtaksListe = resultSet.map { row ->
-                    val justertFraDato = justerFradato(row.getDate("datofra").toLocalDate(), samtykkePeriode)
-                    val justertTilDato = justerTilDato(row.getDate("datotil").toLocalDate(), samtykkePeriode)
+                    val justertFraDato = justerFradato(row.getDate("fra_dato").toLocalDate(), samtykkePeriode)
+                    val justertTilDato = justerTilDato(row.getDate("til_dato").toLocalDate(), samtykkePeriode)
 
                     DsopVedtak(
-                        vedtakId = row.getInt("vedtakid"),
+                        vedtakId = row.getInt("vedtak_id"),
                         virkningsperiode = Periode(
                             fraDato = justertFraDato,
                             tilDato = justertTilDato
                         ),
                         vedtakstype = Kodeverdi(
-                            kode = row.getString("vedtakstypekode"),
-                            termnavn = row.getString("vedtakstypenavn")
+                            kode = row.getString("vedtaktypekode"),
+                            termnavn = row.getString("vedtaktypenavn")
                         ),
                         vedtaksvariant = Kodeverdi(
-                            kode = row.getString("vedtaksvariantkode"),
-                            termnavn = row.getString("vedtaksvariantnavn")
+                            kode = row.getString("tekstvariantkode"),
+                            termnavn = row.getString("tekstvariantnavn")
                         ),
                         vedtakstatus = Kodeverdi(
                             kode = row.getString("vedtakstatuskode"),
@@ -66,8 +66,8 @@ class DsopDao(private val dataSource: DataSource) {
                             termnavn = row.getString("utfallnavn")
                         ),
                         aktivitetsfase = Kodeverdi(
-                            kode = row.getString("aktivitetsfasekode"),
-                            termnavn = row.getString("aktivitetsfasenavn")
+                            kode = row.getString("aktfasekode"),
+                            termnavn = row.getString("aktfasenavn")
                         )
                     )
                 }.toList()
@@ -86,8 +86,8 @@ class DsopDao(private val dataSource: DataSource) {
                 val resultSet = preparedStatement.executeQuery()
 
                 val meldekortListe = resultSet.map { row ->
-                    val justertFraDato = justerFradato(row.getDate("datofra").toLocalDate(), samtykkePeriode)
-                    val justertTilDato = justerTilDato(row.getDate("datotil").toLocalDate(), samtykkePeriode)
+                    val justertFraDato = justerFradato(row.getDate("dato_fra").toLocalDate(), samtykkePeriode)
+                    val justertTilDato = justerTilDato(row.getDate("dato_til").toLocalDate(), samtykkePeriode)
 
                     val meldekortId = row.getInt("meldekortid")
                     DsopMeldekort(
