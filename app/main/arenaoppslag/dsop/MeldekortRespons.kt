@@ -8,4 +8,5 @@ data class MeldekortResponse(
 data class DsopMeldekort(
     val meldekortId: Int,
     val periode: Periode,
-    val antallTimerArbeidet: Double,)
+    val antallTimerArbeidet: Double
+)

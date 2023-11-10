@@ -15,4 +15,3 @@ data class DsopVedtak(
     val utfall: Kodeverdi,
     val aktivitetsfase: Kodeverdi,
 )
-

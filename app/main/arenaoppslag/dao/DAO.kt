@@ -23,7 +23,7 @@ fun <T : Any> ResultSet.map(block: (rs: ResultSet) -> T): Sequence<T> {
     return ResultSetSequence(this).map(block)
 }
 
-fun  ResultSet.forEach(block: (rs: ResultSet) -> Unit) {
+fun ResultSet.forEach(block: (rs: ResultSet) -> Unit) {
      ResultSetSequence(this).forEach(block)
 }
 

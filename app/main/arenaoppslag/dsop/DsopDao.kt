@@ -2,8 +2,8 @@ package arenaoppslag.dsop
 
 import arenaoppslag.dao.forEach
 import arenaoppslag.dao.map
-import arenaoppslag.fellesordningen.VedtakPeriode
 import java.sql.Date
+import java.time.LocalDate
 import javax.sql.DataSource
 
 class DsopDao(private val dataSource: DataSource) {
@@ -36,13 +36,9 @@ class DsopDao(private val dataSource: DataSource) {
                 val resultSet = preparedStatement.executeQuery()
 
                 val vedtaksListe = resultSet.map { row ->
-                    val fraDato = row.getDate("datofra").toLocalDate()
-                    val tilDato = row.getDate("datotil").toLocalDate()
+                    val justertFraDato = justerFradato(row.getDate("datofra").toLocalDate(), samtykkePeriode)
+                    val justertTilDato = justerTilDato(row.getDate("datotil").toLocalDate(), samtykkePeriode)
 
-                    val justertFraDato =
-                        if (fraDato.isBefore(samtykkePeriode.fraDato)) samtykkePeriode.fraDato else fraDato
-                    val justertTilDato =
-                        if (tilDato.isAfter(samtykkePeriode.tilDato)) samtykkePeriode.tilDato else tilDato
                     DsopVedtak(
                         vedtakId = row.getInt("vedtakid"),
                         virkningsperiode = Periode(
@@ -90,13 +86,9 @@ class DsopDao(private val dataSource: DataSource) {
                 val resultSet = preparedStatement.executeQuery()
 
                 val meldekortListe = resultSet.map { row ->
-                    val fraDato = row.getDate("datofra").toLocalDate()
-                    val tilDato = row.getDate("datotil").toLocalDate()
+                    val justertFraDato = justerFradato(row.getDate("datofra").toLocalDate(), samtykkePeriode)
+                    val justertTilDato = justerTilDato(row.getDate("datotil").toLocalDate(), samtykkePeriode)
 
-                    val justertFraDato =
-                        if (fraDato.isBefore(samtykkePeriode.fraDato)) samtykkePeriode.fraDato else fraDato
-                    val justertTilDato =
-                        if (tilDato.isAfter(samtykkePeriode.tilDato)) samtykkePeriode.tilDato else tilDato
                     val meldekortId = row.getInt("meldekortid")
                     DsopMeldekort(
                         meldekortId = meldekortId,
@@ -121,7 +113,7 @@ class DsopDao(private val dataSource: DataSource) {
 
                 var antallTimerArbeidet = 0.0
                 resultSet.forEach {
-                    val dato= it.getDate("dato").toLocalDate()
+                    val dato = it.getDate("dato").toLocalDate()
 
                     if (dato in samtykkePeriode.fraDato .. samtykkePeriode.tilDato) {
                         antallTimerArbeidet += it.getDouble("timer_arbeidet")
@@ -132,5 +124,11 @@ class DsopDao(private val dataSource: DataSource) {
             }
         }
     }
+
+    private fun justerFradato(fraDato: LocalDate, samtykkePeriode: Periode) =
+        if (fraDato.isBefore(samtykkePeriode.fraDato)) samtykkePeriode.fraDato else fraDato
+
+    private fun justerTilDato(tilDato: LocalDate, samtykkePeriode: Periode) =
+        if (tilDato.isAfter(samtykkePeriode.tilDato)) samtykkePeriode.tilDato else tilDato
 }
 
