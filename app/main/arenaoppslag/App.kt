@@ -2,6 +2,7 @@ package arenaoppslag
 
 import arenaoppslag.fellesordningen.VedtakResponse
 import arenaoppslag.arenamodell.Vedtak
+import arenaoppslag.dsop.dsop
 import arenaoppslag.fellesordningen.fellesordningen
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
@@ -73,7 +74,7 @@ fun Application.server() {
         .build()
 
     install(Authentication) {
-        jwt {
+        jwt("azureAd") {
             verifier(jwkProvider, config.azure.issuer)
             challenge { _, _ ->
                 call.respond(HttpStatusCode.Unauthorized)
@@ -113,9 +114,11 @@ fun Application.server() {
                 call.respond(HttpStatusCode.OK, "vedtak")
             }
         }
-        authenticate {
+        authenticate("azureAd") {
             fellesordningen(datasource)
+            dsop(datasource)
         }
+
     }
 }
 
