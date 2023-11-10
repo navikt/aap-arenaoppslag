@@ -30,8 +30,8 @@ class DsopDao(private val dataSource: DataSource) {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(selectVedtakSql).use { preparedStatement ->
                 preparedStatement.setString(1, personId)
-                preparedStatement.setDate(2, Date.valueOf(periode.fraDato))
-                preparedStatement.setDate(3, Date.valueOf(periode.tilDato))
+                preparedStatement.setDate(2, Date.valueOf(periode.tilDato))
+                preparedStatement.setDate(3, Date.valueOf(periode.fraDato))
 
                 val resultSet = preparedStatement.executeQuery()
 
@@ -97,13 +97,14 @@ class DsopDao(private val dataSource: DataSource) {
                         if (fraDato.isBefore(samtykkePeriode.fraDato)) samtykkePeriode.fraDato else fraDato
                     val justertTilDato =
                         if (tilDato.isAfter(samtykkePeriode.tilDato)) samtykkePeriode.tilDato else tilDato
+                    val meldekortId = row.getInt("meldekortid")
                     DsopMeldekort(
-                        meldekortId = row.getInt("meldekortid"),
+                        meldekortId = meldekortId,
                         periode = Periode(
                             fraDato = justertFraDato,
                             tilDato = justertTilDato
                         ),
-                        antallTimerArbeidet = kalkulerAntallTimerArbeidet(row.getInt("meldekortid"), samtykkePeriode),
+                        antallTimerArbeidet = kalkulerAntallTimerArbeidet(meldekortId, samtykkePeriode),
                     )
                 }.toList()
                 MeldekortResponse(periode, meldekortListe)
@@ -111,7 +112,7 @@ class DsopDao(private val dataSource: DataSource) {
         }
     }
 
-    fun kalkulerAntallTimerArbeidet(meldekortId: Int, samtykkePeriode: Periode ): Double {
+    private fun kalkulerAntallTimerArbeidet(meldekortId: Int, samtykkePeriode: Periode ): Double {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(selectMeldekortDagSql).use { preparedStatement ->
                 preparedStatement.setInt(1, meldekortId)
@@ -122,7 +123,7 @@ class DsopDao(private val dataSource: DataSource) {
                 resultSet.forEach {
                     val dato= it.getDate("dato").toLocalDate()
 
-                    if (dato.isAfter(samtykkePeriode.fraDato) && dato.isBefore(samtykkePeriode.tilDato)) {
+                    if (dato in samtykkePeriode.fraDato .. samtykkePeriode.tilDato) {
                         antallTimerArbeidet += it.getDouble("timer_arbeidet")
                     }
                 }
