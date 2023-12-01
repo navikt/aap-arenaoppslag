@@ -29,7 +29,10 @@ class FellesordningenDaoTest {
 
     @Test
     fun test() {
-        val alleVedtak = fellesordningenDao.selectVedtakMedTidsbegrensning("1", LocalDate.of(2022, 10, 1))
+        val alleVedtak = fellesordningenDao.selectVedtakMedTidsbegrensning(
+            personId = "1",
+            fraOgMedDato = LocalDate.of(2022, 10, 1),
+            tilOgMedDato = LocalDate.of(2023, 12, 31))
 
         assertEquals(1, alleVedtak.perioder.size)
     }

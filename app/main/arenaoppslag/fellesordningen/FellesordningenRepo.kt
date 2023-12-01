@@ -7,7 +7,7 @@ class FellesordningenRepo(dataSource: DataSource) {
 
     private val fellesordningenDao = FellesordningenDao(dataSource)
 
-    fun hentGrunnInfoForAAPMotaker(personId: String, datoForØnsketUttakForAFP: LocalDate): VedtakResponse =
-        fellesordningenDao.selectVedtakMedTidsbegrensning(personId, datoForØnsketUttakForAFP)
+    fun hentGrunnInfoForAAPMotaker(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse =
+        fellesordningenDao.selectVedtakMedTidsbegrensning(personId, fraOgMedDato, tilOgMedDato)
 
 }

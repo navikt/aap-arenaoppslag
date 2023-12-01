@@ -20,15 +20,15 @@ class FellesordningenDao(private val dataSource: DataSource) {
            AND vedtakstatuskode IN ('IVERK', 'AVSLU')
            AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND (til_dato >= ? OR til_dato IS NULL) 
-           AND fra_dato < ?
+           AND fra_dato <= ?
     """
 
-    fun selectVedtakMedTidsbegrensning(personId: String, datoForØnsketUttakForAFP: LocalDate): VedtakResponse {
+    fun selectVedtakMedTidsbegrensning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
                 preparedStatement.setString(1, personId)
-                preparedStatement.setDate(2, Date.valueOf(datoForØnsketUttakForAFP.minusYears(3)))
-                preparedStatement.setDate(3, Date.valueOf(datoForØnsketUttakForAFP))
+                preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
+                preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
                 val resultSet = preparedStatement.executeQuery()
 

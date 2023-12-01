@@ -1,5 +1,5 @@
 # Docker multistage layer with a fatty jar stripped of unused rocskdb-instances
-FROM eclipse-temurin:20.0.2_9-jre-alpine
+FROM eclipse-temurin:21.0.1_12-jre-alpine
 ENV LANG="nb_NO.UTF-8"
 ENV LC_ALL="nb_NO.UTF-8"
 ENV TZ="Europe/Oslo"

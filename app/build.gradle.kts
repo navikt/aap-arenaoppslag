@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 val testContainersVersion = "1.19.0"
 
 plugins {
-    kotlin("jvm") version "1.9.0"
+    kotlin("jvm") version "1.9.20"
     id("io.ktor.plugin") version "2.3.3"
     application
 }
@@ -54,7 +54,7 @@ repositories {
 
 tasks {
     withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "20"
+        kotlinOptions.jvmTarget = "21"
     }
     withType<Test> {
         useJUnitPlatform()

@@ -12,7 +12,11 @@ fun Route.fellesordningen(datasource: DataSource) {
     route("/fellesordningen/vedtak") {
         post {
             val request = call.receive<VedtakRequest>()
-            call.respond(felleordningRepo.hentGrunnInfoForAAPMotaker(request.personId, request.datoForOnsketUttakForAFP))
+            call.respond(felleordningRepo.hentGrunnInfoForAAPMotaker(
+                request.personidentifikator,
+                request.fraOgMedDato,
+                request.tilOgMedDato)
+            )
         }
     }
 }
