@@ -34,12 +34,12 @@ class FellesordningenDao(private val dataSource: DataSource) {
 
                 val perioder = resultSet.map { row ->
                     VedtakPeriode(
-                        fraDato = row.getDate("fra_dato").toLocalDate(),
-                        tilDato = getNullableDate(row.getDate("til_dato")),
+                        fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                        tilOgMedDato = getNullableDate(row.getDate("til_dato")),
                     )
                 }.toList()
 
-                VedtakResponse(personId, perioder)
+                VedtakResponse(perioder)
             }
         }
     }
