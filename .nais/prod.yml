@@ -3,3 +3,4 @@ db:
   port: setme
   database: setme
 env: prod
+ingress: https://arenaoppslag.prod-fss-pub.nais.io

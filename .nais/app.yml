@@ -5,7 +5,7 @@ metadata:
   namespace: aap
   labels:
     team: aap
-    sub: arenaoppslag
+    komponent: datadeling
 spec:
   image: {{image}}
   replicas:

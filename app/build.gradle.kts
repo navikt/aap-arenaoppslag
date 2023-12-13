@@ -3,13 +3,13 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 val testContainersVersion = "1.19.0"
 
 plugins {
-    kotlin("jvm") version "1.9.20"
-    id("io.ktor.plugin") version "2.3.3"
+    kotlin("jvm") version "1.9.21"
+    id("io.ktor.plugin") version "2.3.7"
     application
 }
 
 val aapLibVersion = "3.7.54"
-val ktorVersion = "2.3.3"
+val ktorVersion = "2.3.7"
 
 application {
     mainClass.set("arenaoppslag.AppKt")
@@ -30,16 +30,16 @@ dependencies {
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-    implementation("io.micrometer:micrometer-registry-prometheus:1.11.2")
-    implementation("ch.qos.logback:logback-classic:1.4.11")
-    implementation("io.ktor:ktor-server-auth-jvm:2.3.3")
-    implementation("io.ktor:ktor-server-core-jvm:2.3.3")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.12.1")
+    implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0")
 
-    implementation("com.zaxxer:HikariCP:5.0.1")
-    implementation("com.oracle.database.jdbc:ojdbc11:23.2.0.0")
+    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("com.oracle.database.jdbc:ojdbc11:23.3.0.23.09")
 
     testImplementation(kotlin("test"))
 
