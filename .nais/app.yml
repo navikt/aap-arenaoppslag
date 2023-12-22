@@ -49,12 +49,10 @@ spec:
   webproxy: true
   ingresses:
     - {{ingress}}
-  env:
-    - name: DB_HOST
-      value: {{db.host}}
-    - name: DB_PORT
-      value: "{{db.port}}"
-    - name: DB_DATABASE
-      value: {{db.database}}
-  envFrom:
-    - secret: arena-db
+  vault:
+    enabled: true
+    paths:
+      - kvPath: {{ vault_db_config_path }}
+        mountPath: /secrets/dbconfig
+      - kvPath: {{ vault_db_creds_path }}
+        mountPath: /secrets/dbcreds

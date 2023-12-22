@@ -8,7 +8,6 @@ plugins {
     application
 }
 
-val aapLibVersion = "3.7.54"
 val ktorVersion = "2.3.7"
 
 application {
@@ -16,8 +15,6 @@ application {
 }
 
 dependencies {
-    implementation("com.github.navikt.aap-libs:ktor-utils:$aapLibVersion")
-
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
 

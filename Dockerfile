@@ -4,7 +4,9 @@ ENV LANG="nb_NO.UTF-8"
 ENV LC_ALL="nb_NO.UTF-8"
 ENV TZ="Europe/Oslo"
 RUN apk --update --no-cache add libstdc++
+COPY /.scripts/export-dbconfig.sh /init-scripts/export-dbconfig.sh
 COPY /app/build/libs/app-all.jar app.jar
+RUN /init-scripts/export-dbconfig.sh
 CMD ["java", "-XX:ActiveProcessorCount=2", "-jar", "app.jar"]
 
 # use -XX:+UseParallelGC when 2 CPUs and 4G RAM.

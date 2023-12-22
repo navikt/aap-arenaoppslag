@@ -26,7 +26,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import no.nav.aap.ktor.config.loadConfig
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.net.InetSocketAddress
@@ -43,7 +42,7 @@ fun main() {
 
 fun Application.server() {
     val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-    val config = loadConfig<Config>()
+    val config = Config()
 
     install(MicrometerMetrics) { registry = prometheus }
 
