@@ -52,3 +52,17 @@ jobs:
           CLUSTER: dev-fss
           RESOURCE: .nais/app.yml
           VARS: .nais/dev.yml
+
+
+  deploy-prod:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          PRINT_PAYLOAD: true
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-fss
+          RESOURCE: .nais/app.yml
+          VARS: .nais/prod.yml
