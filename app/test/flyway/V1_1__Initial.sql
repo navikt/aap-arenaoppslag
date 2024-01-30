@@ -1,3 +1,4 @@
+-- En kopi av viewene som ligger i Arena, for å kunne teste logikk i unittester. Skal ikke brukes til noe produksjon.
 CREATE TABLE PERSON
 (
     PERSON_ID NUMBER NOT NULL,

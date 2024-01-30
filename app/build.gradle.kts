@@ -1,9 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val testContainersVersion = "1.19.0"
-
 plugins {
-    kotlin("jvm") version "1.9.21"
+    kotlin("jvm") version "1.9.22"
     id("io.ktor.plugin") version "2.3.7"
     application
 }
@@ -17,7 +15,8 @@ application {
 dependencies {
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-
+    implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
@@ -27,19 +26,15 @@ dependencies {
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-    implementation("io.micrometer:micrometer-registry-prometheus:1.12.1")
     implementation("ch.qos.logback:logback-classic:1.4.14")
-    implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.12.1")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0")
-
-    implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("com.oracle.database.jdbc:ojdbc11:23.3.0.23.09")
+    implementation("com.zaxxer:HikariCP:5.1.0")
 
     testImplementation(kotlin("test"))
-
     testImplementation("org.flywaydb:flyway-core:9.21.1")
     testImplementation("com.h2database:h2:2.2.224")
 }

@@ -1,13 +1,12 @@
 package arenaoppslag.fellesordningen
 
-import arenaoppslag.dao.map
+import arenaoppslag.datasource.map
+import java.sql.Connection
 import java.sql.Date
 import java.time.LocalDate
-import javax.sql.DataSource
 
-class FellesordningenDao(private val dataSource: DataSource) {
-
-    private val selectVedtakMedTidsbegrensningSql = """
+object FellesordningenDao {
+    private const val selectVedtakMedTidsbegrensningSql = """
         SELECT til_dato, fra_dato 
           FROM vedtak 
          WHERE person_id = 
@@ -23,29 +22,31 @@ class FellesordningenDao(private val dataSource: DataSource) {
            AND fra_dato <= ?
     """
 
-    fun selectVedtakMedTidsbegrensning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
-        return dataSource.connection.use { connection ->
-            connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
-                preparedStatement.setString(1, personId)
-                preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
-                preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
+    fun selectVedtakMedTidsbegrensning(
+        personId: String,
+        fraOgMedDato: LocalDate,
+        tilOgMedDato: LocalDate,
+        connection: Connection
+    ): VedtakResponse {
+        return connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
+            preparedStatement.setString(1, personId)
+            preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
+            preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
-                val resultSet = preparedStatement.executeQuery()
+            val resultSet = preparedStatement.executeQuery()
 
-                val perioder = resultSet.map { row ->
-                    VedtakPeriode(
-                        fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                        tilOgMedDato = getNullableDate(row.getDate("til_dato")),
-                    )
-                }.toList()
-
-                VedtakResponse(perioder)
+            val perioder = resultSet.map { row ->
+                VedtakPeriode(
+                    fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                    tilOgMedDato = getNullableDate(row.getDate("til_dato")),
+                )
             }
+            VedtakResponse(perioder)
         }
     }
 
     private fun getNullableDate(date: Date?): LocalDate? {
-        if(date == null) return null
+        if (date == null) return null
         return date.toLocalDate()
     }
 }

@@ -2,14 +2,13 @@ package arenaoppslag
 
 import arenaoppslag.fellesordningen.VedtakResponse
 import arenaoppslag.arenamodell.Vedtak
+import arenaoppslag.datasource.Hikari
 import arenaoppslag.dsop.dsop
 import arenaoppslag.fellesordningen.fellesordningen
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
@@ -26,6 +25,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.net.InetSocketAddress
@@ -33,10 +33,10 @@ import java.net.ProxySelector
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
-private val logger = LoggerFactory.getLogger("main")
+private val secureLog: Logger = LoggerFactory.getLogger("secureLog")
 
 fun main() {
-    Thread.currentThread().setUncaughtExceptionHandler { _, e -> logger.error("Uhåndtert feil", e) }
+    Thread.currentThread().setUncaughtExceptionHandler { _, e -> secureLog.error("Uhåndtert feil", e) }
     embeddedServer(Netty, port = 8080, module = Application::server).start(wait = true)
 }
 
@@ -48,7 +48,7 @@ fun Application.server() {
 
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            logger.error("Uhåndtert feil", cause)
+            secureLog.error("Uhåndtert feil", cause)
             call.respondText(text = "Feil i tjeneste: ${cause.message}" , status = HttpStatusCode.InternalServerError)
         }
     }
@@ -73,7 +73,7 @@ fun Application.server() {
         .build()
 
     install(Authentication) {
-        jwt("azureAd") {
+        jwt {
             verifier(jwkProvider, config.azure.issuer)
             challenge { _, _ ->
                 call.respond(HttpStatusCode.Unauthorized)
@@ -99,7 +99,7 @@ fun Application.server() {
         }
     }
 
-    val datasource = initDatasource(config.database)
+    val datasource = Hikari.create(config.database)
 
     routing {
         route("/actuator") {
@@ -107,30 +107,16 @@ fun Application.server() {
                 call.respond(prometheus.scrape())
             }
             get("/live") {
-                call.respond(HttpStatusCode.OK, "vedtak")
+                call.respond(HttpStatusCode.OK, "arenaoppslag")
             }
             get("/ready") {
-                call.respond(HttpStatusCode.OK, "vedtak")
+                call.respond(HttpStatusCode.OK, "arenaoppslag")
             }
         }
-        authenticate("azureAd") {
+
+        authenticate {
             fellesordningen(datasource)
             dsop(datasource)
         }
-
     }
 }
-
-private fun initDatasource(dbConfig: DbConfig) = HikariDataSource(HikariConfig().apply {
-    jdbcUrl = dbConfig.url
-    username = dbConfig.username
-    password = dbConfig.password
-    maximumPoolSize = 3
-    minimumIdle = 1
-    initializationFailTimeout = 5000
-    idleTimeout = 10001
-    connectionTimeout = 1000
-    maxLifetime = 30001
-    driverClassName = "oracle.jdbc.OracleDriver"
-    connectionTestQuery = "SELECT 1 FROM DUAL"
-})

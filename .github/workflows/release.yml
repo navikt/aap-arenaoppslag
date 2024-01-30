@@ -1,0 +1,44 @@
+name: release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  gradle:
+    ## push til main eller etter branch (e.g. dependabot) er merget
+    if: github.event.pull_request.merged || github.event_name == 'push'
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      id-token: write
+    uses: navikt/aap-workflows/.github/workflows/gradle-build.yml@main
+    secrets: inherit
+
+  dev:
+    ## push til main eller etter branch (e.g. dependabot) er merget
+    if: github.event.pull_request.merged || github.event_name == 'push'
+    permissions:
+      contents: read
+      id-token: write
+    needs: gradle
+    uses: navikt/aap-workflows/.github/workflows/deploy.yml@main
+    secrets: inherit
+    with:
+      cluster: dev-fss
+      manifest: .nais/app.yml
+      vars: .nais/dev.yml
+
+  prod:
+    if: github.event.pull_request.merged || github.event_name == 'push'
+    permissions:
+      contents: read
+      id-token: write
+    needs: gradle
+    uses: navikt/aap-workflows/.github/workflows/deploy.yml@main
+    secrets: inherit
+    with:
+      cluster: prod-fss
+      manifest: .nais/app.yml
+      vars: .nais/prod.yml

@@ -9,7 +9,8 @@ data class Config(
 data class DbConfig(
     val url: String = getEnvVar("DB_JDBC_URL"),
     val username: String = getEnvVar("DB_USERNAME"),
-    val password: String = getEnvVar("DB_PASSWORD")
+    val password: String = getEnvVar("DB_PASSWORD"),
+    val driver: String = "oracle.jdbc.OracleDriver"
 )
 
 data class AzureConfig(
