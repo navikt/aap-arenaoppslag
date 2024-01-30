@@ -1,6 +1,6 @@
 package arenaoppslag.fellesordningen
 
-import arenaoppslag.H2TestBase
+import arenaoppslag.util.H2TestBase
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.time.LocalDate

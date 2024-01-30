@@ -2,6 +2,7 @@ package arenaoppslag
 
 data class Config(
     val proxyUrl: String = getEnvVar("HTTP_PROXY"),
+    val enableProxy: Boolean = true,
     val database: DbConfig = DbConfig(),
     val azure: AzureConfig = AzureConfig()
 )

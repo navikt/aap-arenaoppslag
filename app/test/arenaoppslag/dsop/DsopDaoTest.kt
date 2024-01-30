@@ -1,6 +1,6 @@
 package arenaoppslag.dsop
 
-import arenaoppslag.H2TestBase
+import arenaoppslag.util.H2TestBase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate

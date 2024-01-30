@@ -1,14 +1,14 @@
-package arenaoppslag
+package arenaoppslag.util
 
+import arenaoppslag.TestConfig
 import arenaoppslag.datasource.Hikari
 import org.flywaydb.core.Flyway
-import org.junit.jupiter.api.BeforeEach
 import javax.sql.DataSource
 
 abstract class H2TestBase {
 
     protected val h2: DataSource = Hikari.create(
-        TestConfig.postgres
+        TestConfig.oracleH2
     )
 
     init {
