@@ -43,7 +43,7 @@ spec:
         - application: api
           cluster: {{env}}-gcp
           namespace: aap
-        - application: saksinfo
+        - application: api-intern
           cluster: {{env}}-gcp
           namespace: aap
   webproxy: true
