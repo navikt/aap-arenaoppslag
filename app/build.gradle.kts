@@ -1,12 +1,12 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.22"
-    id("io.ktor.plugin") version "2.3.7"
+    kotlin("jvm") version "1.9.23"
+    id("io.ktor.plugin") version "2.3.9"
     application
 }
 
-val ktorVersion = "2.3.7"
+val ktorVersion = "2.3.9"
 
 application {
     mainClass.set("arenaoppslag.AppKt")
@@ -25,9 +25,9 @@ dependencies {
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-    implementation("ch.qos.logback:logback-classic:1.4.14")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.12.1")
+    implementation("ch.qos.logback:logback-classic:1.5.3")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.2")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.12.4")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.3.0.23.09")
@@ -36,7 +36,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:9.37.3")
-    testImplementation("org.flywaydb:flyway-core:9.21.1")
+    testImplementation("org.flywaydb:flyway-core:10.9.1")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.2.224")
 }
