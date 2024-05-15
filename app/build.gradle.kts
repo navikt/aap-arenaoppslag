@@ -30,7 +30,7 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus:1.12.4")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
 
-    implementation("com.oracle.database.jdbc:ojdbc11:23.3.0.23.09")
+    implementation("com.oracle.database.jdbc:ojdbc11:23.4.0.24.05")
     implementation("com.zaxxer:HikariCP:5.1.0")
 
     testImplementation(kotlin("test"))
