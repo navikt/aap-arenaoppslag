@@ -27,7 +27,7 @@ dependencies {
 
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.0")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.12.4")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.13.0")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:7.4")
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.4.0.24.05")
