@@ -24,6 +24,12 @@ object FellesordningenDao {
            AND fra_dato <= ?
     """
 
+    private const val hentVedtakfakta = """
+        SELECT dagsmbt, barntill, dags
+            FROM vedtakfakta
+            WHERE vedtak_id = ?
+    """
+
     private const val selectVedtakMedTidsbegrensningSql = """
         SELECT til_dato, fra_dato
           FROM vedtak 
@@ -39,6 +45,20 @@ object FellesordningenDao {
            AND (til_dato >= ? OR til_dato IS NULL) 
            AND fra_dato <= ?
     """
+
+    fun selectVedtakFakta(vedtakId: Int, connection: Connection): List<VedtakFakta>{
+        return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
+            val resultSet = preparedStatement.executeQuery()
+            val vedtakFakta = resultSet.map { row ->
+                VedtakFakta(
+                    dagsmbt = row.getInt("dagsmbt"),
+                    barntill = row.getInt("barntill"),
+                    dags = row.getInt("dags")
+                )
+            }
+            vedtakFakta
+        }
+    }
 
     fun selectVedtakMedTidsbegrensning(
         personId: String,

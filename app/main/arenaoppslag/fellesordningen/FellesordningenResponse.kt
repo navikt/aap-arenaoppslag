@@ -10,3 +10,9 @@ data class VedtakPeriode(
     val fraOgMedDato: LocalDate,
     val tilOgMedDato: LocalDate?
 )
+
+data class VedtakFakta(
+    val dagsmbt: Int,
+    val barntill: Int,
+    val dags: Int
+)
