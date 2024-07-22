@@ -15,11 +15,11 @@ data class Maksimum2(
 data class Vedtak(
     val utbetaling: List<Utbetaling>,
     val dagsats: Int,
-    val status: String,
-    val saksnummer: String,
-    val vedtaksdato: String,
+    val status: String, //Hypotese, vedtaksstatuskode
+    val saksnummer: String, //hypotese sak_id
+    val vedtaksdato: String, //reg_dato
     val periode: Periode,
-    val rettighetType: RettighetType, //TODO: trenger vi alt dette?
+    val rettighetType: String, //TODO: trenger vi alt dette? //aktivitetsfase //Aktfasekode
 )
 
 data class Utbetaling(
@@ -29,6 +29,12 @@ data class Utbetaling(
     val dagsats: Int,
     val barnetilegg: Int,
 )
+
+//dagsats ligger i vedtaksfakta //barntill
+// dagsbeløp med barnetillegg
+//alt ligger i vedtakfakta
+
+
 
 data class Utbetalingsgrad(
     val kode: String,

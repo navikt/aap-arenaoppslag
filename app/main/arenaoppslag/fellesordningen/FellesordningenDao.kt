@@ -9,7 +9,7 @@ import java.time.LocalDate
 
 object FellesordningenDao {
     private const val selectMaksimumMedTidsbegrensning = """
-        SELECT til_dato, fra_dato, vedtakstatuskode, sak_id, 
+        SELECT til_dato, fra_dato, vedtakstatuskode, sak_id, aktfasekode 
           FROM vedtak 
          WHERE person_id = 
                (SELECT person_id 
