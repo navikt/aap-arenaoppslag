@@ -24,7 +24,9 @@ fun Route.testroute (datasource: DataSource) {
                 request.personidentifikator,
                 request.fraOgMedDato,
                 request.tilOgMedDato)
-            )
+            ).also {
+                secureLog.info(this.context.response.status().toString())
+            }
         }
     }
 }

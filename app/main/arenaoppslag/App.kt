@@ -50,5 +50,7 @@ fun Application.server(
             dsop(datasource)
         }
 
+        testroute(datasource)
+
     }
 }
