@@ -14,7 +14,7 @@ fun Route.testroute (datasource: DataSource) {
     route("/intern/test") {
         post {
             val request = call.receive<VedtakRequest>()
-            call.respond(felleordningRepo.hentGrunnInfoForAAPMotaker(
+            call.respond(felleordningRepo.selectMaksimumsløsning(
                 request.personidentifikator,
                 request.fraOgMedDato,
                 request.tilOgMedDato)
