@@ -1,7 +1,7 @@
 package arenaoppslag.modeller
 
-import arenaoppslag.arenamodell.RettighetType
-import arenaoppslag.dsop.Periode
+import arenaoppslag.perioder.Periode
+
 
 data class Maksimum1 (
     val vedtak: List<Vedtak>
@@ -19,7 +19,7 @@ data class Vedtak(
     val saksnummer: String, //hypotese sak_id
     val vedtaksdato: String, //reg_dato
     val periode: Periode,
-    val rettighetType: String, //TODO: trenger vi alt dette? //aktivitetsfase //Aktfasekode
+    val rettighetType: String, ////aktivitetsfase //Aktfasekode
 )
 
 data class Utbetaling(

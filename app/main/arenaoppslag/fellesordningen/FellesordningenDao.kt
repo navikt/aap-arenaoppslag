@@ -1,6 +1,9 @@
 package arenaoppslag.fellesordningen
 
 import arenaoppslag.datasource.map
+import arenaoppslag.modeller.Maksimum2
+import arenaoppslag.modeller.Vedtak
+import arenaoppslag.perioder.Periode
 import java.sql.Connection
 import java.sql.Date
 import java.time.LocalDate
@@ -46,7 +49,7 @@ object FellesordningenDao {
            AND fra_dato <= ?
     """
 
-    fun selectVedtakFakta(vedtakId: Int, connection: Connection): List<VedtakFakta>{
+    fun selectVedtakFakta(vedtakId: Int, connection: Connection): VedtakFakta{
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
             val resultSet = preparedStatement.executeQuery()
             val vedtakFakta = resultSet.map { row ->
@@ -55,7 +58,7 @@ object FellesordningenDao {
                     barntill = row.getInt("barntill"),
                     dags = row.getInt("dags")
                 )
-            }
+            }.single()
             vedtakFakta
         }
     }
@@ -81,6 +84,39 @@ object FellesordningenDao {
             }
             VedtakResponse(perioder)
         }
+    }
+
+    fun selectVedtakMaksimum(
+        personId: String,
+        fraOgMedDato: LocalDate,
+        tilOgMedDato: LocalDate,
+        connection: Connection
+    ):Maksimum2{
+        val vedtak = connection.prepareStatement(selectMaksimumMedTidsbegrensning).use { preparedStatement ->
+            preparedStatement.setString(1, personId)
+            preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
+            preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
+
+            val resultSet = preparedStatement.executeQuery()
+
+            val vedtak = resultSet.map { row ->
+                val vedtakFakta = selectVedtakFakta(row.getInt("sak_id"),connection)
+                Vedtak(
+                    utbetaling = emptyList(),
+                    dagsats = vedtakFakta.dags,
+                    status = row.getString("vedtakstatuskode"),
+                    saksnummer = row.getString("sak_id"),
+                    vedtaksdato = row.getString("fra_dato"),
+                    rettighetType = row.getString("aktfasekode"),
+                    periode = Periode(
+                        fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                        tilOgMedDato = getNullableDate(row.getDate("til_dato"))
+                    ),
+                )
+            }.toList()
+            vedtak
+        }
+        return Maksimum2(vedtak, emptyList())
     }
 
     private fun getNullableDate(date: Date?): LocalDate? {
