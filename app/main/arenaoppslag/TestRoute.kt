@@ -20,12 +20,13 @@ fun Route.testroute (datasource: DataSource) {
         post {
             val request = call.receive<VedtakRequest>()
             secureLog.info("mottatt test kall til api")
-            call.respond(felleordningRepo.selectMaksimumsløsning(
+            val res = felleordningRepo.selectMaksimumsløsning(
                 request.personidentifikator,
                 request.fraOgMedDato,
                 request.tilOgMedDato)
+            call.respond(res
             ).also {
-                secureLog.info("respons fra arenaoppslag: ${this.context.response.toString()}")
+                secureLog.info("respons fra arenaoppslag: $res")
             }
         }
     }
