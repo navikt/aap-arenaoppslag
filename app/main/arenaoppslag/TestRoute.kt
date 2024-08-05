@@ -25,7 +25,7 @@ fun Route.testroute (datasource: DataSource) {
                 request.fraOgMedDato,
                 request.tilOgMedDato)
             ).also {
-                secureLog.info(this.context.response.status().toString())
+                secureLog.info("respons fra arenaoppslag: ${this.context.response.toString()}")
             }
         }
     }
