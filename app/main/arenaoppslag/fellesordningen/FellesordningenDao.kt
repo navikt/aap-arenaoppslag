@@ -12,7 +12,7 @@ import java.time.LocalDate
 
 object FellesordningenDao {
     private const val selectMaksimumMedTidsbegrensning = """
-        SELECT til_dato, fra_dato, vedtakstatuskode, sak_id, aktfasekode 
+        SELECT vedtak_id, til_dato, fra_dato, vedtakstatuskode, sak_id, aktfasekode 
           FROM vedtak 
          WHERE person_id = 
                (SELECT person_id 
@@ -51,6 +51,7 @@ object FellesordningenDao {
 
     fun selectVedtakFakta(vedtakId: Int, connection: Connection): VedtakFakta{
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
+            preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
             val vedtakFakta = resultSet.map { row ->
                 VedtakFakta(
@@ -100,7 +101,7 @@ object FellesordningenDao {
             val resultSet = preparedStatement.executeQuery()
 
             val vedtak = resultSet.map { row ->
-                val vedtakFakta = selectVedtakFakta(row.getInt("sak_id"),connection)
+                val vedtakFakta = selectVedtakFakta(row.getInt("vedtak_id"),connection)
                 Vedtak(
                     utbetaling = emptyList(),
                     dagsats = vedtakFakta.dags,
