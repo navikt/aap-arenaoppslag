@@ -18,5 +18,13 @@ fun Route.perioder(datasource: DataSource) {
                 request.tilOgMedDato)
             )
         }
+        post("/11-17") {
+            val request = call.receive<PerioderRequest>()
+            call.respond(felleordningRepo.hentPeriodeInkludert11_17(
+                request.personidentifikator,
+                request.fraOgMedDato,
+                request.tilOgMedDato)
+            )
+        }
     }
 }
