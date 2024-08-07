@@ -28,9 +28,9 @@ object FellesordningenDao {
     """
 
     private const val hentVedtakfakta = """
-        SELECT dagsmbt, barntill, dags
-            FROM vedtakfakta
-            WHERE vedtak_id = ?
+        SELECT vedtakfaktakode, vedtakverdi
+            FROM vedtakfakta 
+             WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS')
     """
 
     private const val selectVedtakMedTidsbegrensningSql = """
