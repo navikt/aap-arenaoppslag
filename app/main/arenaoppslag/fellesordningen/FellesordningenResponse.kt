@@ -12,7 +12,7 @@ data class VedtakPeriode(
 )
 
 data class VedtakFakta(
-    val dagsmbt: Int,
-    val barntill: Int,
-    val dags: Int
+    var dagsmbt: Int,
+    var barntill: Int,
+    var dags: Int
 )

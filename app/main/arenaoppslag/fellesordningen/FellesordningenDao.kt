@@ -1,5 +1,6 @@
 package arenaoppslag.fellesordningen
 
+import arenaoppslag.arenamodell.Vedtakfakta
 import arenaoppslag.datasource.map
 import arenaoppslag.modeller.Maksimum2
 import arenaoppslag.modeller.Vedtak
@@ -53,14 +54,15 @@ object FellesordningenDao {
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
-            val vedtakFakta = resultSet.map { row ->
-                VedtakFakta(
-                    dagsmbt = row.getInt("dagsmbt"),
-                    barntill = row.getInt("barntill"),
-                    dags = row.getInt("dags")
-                )
-            }.single()
-            vedtakFakta
+            val vedtakfakta=VedtakFakta(0, 0, 0)
+            resultSet.map { row ->
+                when(row.getString("vedtakfaktakode")){
+                    "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
+                    "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
+                    "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
+                }
+            }
+            vedtakfakta
         }
     }
 
