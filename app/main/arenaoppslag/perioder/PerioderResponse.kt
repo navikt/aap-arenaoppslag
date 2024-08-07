@@ -6,7 +6,17 @@ data class PerioderResponse(
     val perioder: List<Periode>
 )
 
+data class PerioderMed11_17Response(
+    val perioder: List<PeriodeMed11_17>
+)
+
 data class Periode(
     val fraOgMedDato: LocalDate,
     val tilOgMedDato: LocalDate?
+)
+
+data class PeriodeMed11_17(
+    val fraOgMedDato: LocalDate,
+    val tilOgMedDato: LocalDate?,
+    val aktivitetsfase: String
 )

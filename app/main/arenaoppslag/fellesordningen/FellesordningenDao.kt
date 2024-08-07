@@ -1,5 +1,6 @@
 package arenaoppslag.fellesordningen
 
+import arenaoppslag.arenamodell.Vedtakfakta
 import arenaoppslag.datasource.map
 import arenaoppslag.modeller.Maksimum2
 import arenaoppslag.modeller.Vedtak
@@ -12,7 +13,7 @@ import java.time.LocalDate
 
 object FellesordningenDao {
     private const val selectMaksimumMedTidsbegrensning = """
-        SELECT til_dato, fra_dato, vedtakstatuskode, sak_id, aktfasekode 
+        SELECT vedtak_id, til_dato, fra_dato, vedtakstatuskode, sak_id, aktfasekode 
           FROM vedtak 
          WHERE person_id = 
                (SELECT person_id 
@@ -28,9 +29,9 @@ object FellesordningenDao {
     """
 
     private const val hentVedtakfakta = """
-        SELECT dagsmbt, barntill, dags
-            FROM vedtakfakta
-            WHERE vedtak_id = ?
+        SELECT vedtakfaktakode, vedtakverdi
+            FROM vedtakfakta 
+             WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS')
     """
 
     private const val selectVedtakMedTidsbegrensningSql = """
@@ -51,15 +52,17 @@ object FellesordningenDao {
 
     fun selectVedtakFakta(vedtakId: Int, connection: Connection): VedtakFakta{
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
+            preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
-            val vedtakFakta = resultSet.map { row ->
-                VedtakFakta(
-                    dagsmbt = row.getInt("dagsmbt"),
-                    barntill = row.getInt("barntill"),
-                    dags = row.getInt("dags")
-                )
-            }.single()
-            vedtakFakta
+            val vedtakfakta=VedtakFakta(0, 0, 0)
+            resultSet.map { row ->
+                when(row.getString("vedtakfaktakode")){
+                    "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
+                    "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
+                    "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
+                }
+            }
+            vedtakfakta
         }
     }
 
@@ -100,7 +103,7 @@ object FellesordningenDao {
             val resultSet = preparedStatement.executeQuery()
 
             val vedtak = resultSet.map { row ->
-                val vedtakFakta = selectVedtakFakta(row.getInt("sak_id"),connection)
+                val vedtakFakta = selectVedtakFakta(row.getInt("vedtak_id"),connection)
                 Vedtak(
                     utbetaling = emptyList(),
                     dagsats = vedtakFakta.dags,
