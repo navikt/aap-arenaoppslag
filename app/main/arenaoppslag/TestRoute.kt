@@ -2,6 +2,7 @@ package arenaoppslag
 
 import arenaoppslag.fellesordningen.FellesordningenRepo
 import arenaoppslag.fellesordningen.VedtakRequest
+import arenaoppslag.perioder.PerioderRepo
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -15,6 +16,7 @@ private val secureLog: Logger = LoggerFactory.getLogger("secureLog")
 
 fun Route.testroute (datasource: DataSource) {
     val felleordningRepo = FellesordningenRepo(datasource)
+    val perioderRepo = PerioderRepo(datasource)
 
     route("/intern/test") {
         post {
@@ -28,6 +30,10 @@ fun Route.testroute (datasource: DataSource) {
             ).also {
                 secureLog.info("respons fra arenaoppslag: $res")
             }
+        }
+
+        post("/aktfasekoder") {
+            call.respond(perioderRepo.hentAktFaseKoder())
         }
     }
 }

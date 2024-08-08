@@ -13,4 +13,9 @@ class PerioderRepo(private val dataSource: DataSource) {
         dataSource.connection.use { con ->
             PerioderDao.selectVedtakMedTidsbegrensningOg11_17(personId, fraOgMedDato, tilOgMedDato, con)
         }
+
+    fun hentAktFaseKoder(): List<AktivitetsfaseKode> =
+        dataSource.connection.use { con ->
+            PerioderDao.selectAktFaseKoder(con)
+        }
 }

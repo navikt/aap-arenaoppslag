@@ -39,6 +39,25 @@ object PerioderDao {
            AND fra_dato <= ?
     """
 
+    private val aktivitetsfaseKodeSql = """
+        SELECT DISTINCT aktfasekode, aktfasenavn 
+        FROM AKTIVITETFASE;
+    """.trimIndent()
+
+    fun selectAktFaseKoder(connection: Connection):List<AktivitetsfaseKode> {
+        return connection.prepareStatement(aktivitetsfaseKodeSql).use { preparedStatement ->
+            val resultSet = preparedStatement.executeQuery()
+
+            val aktivitetsfaseKoder = resultSet.map { row ->
+                AktivitetsfaseKode(
+                    aktfasekode = row.getString("aktfasekode"),
+                    aktfasenavn = row.getString("aktfasenavn")
+                )
+            }
+            aktivitetsfaseKoder
+        }
+    }
+
     fun selectVedtakMedTidsbegrensning(
         personId: String,
         fraOgMedDato: LocalDate,
@@ -61,6 +80,8 @@ object PerioderDao {
             PerioderResponse(perioder)
         }
     }
+
+
 
     fun selectVedtakMedTidsbegrensningOg11_17(
         personId: String,
