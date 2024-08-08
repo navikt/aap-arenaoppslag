@@ -17,5 +17,6 @@ data class Periode(
 
 data class PeriodeMed11_17(
     val periode: Periode,
-    val aktivitetsfase: String
+    val aktivitetsfaseKode: String,
+    val aktivitetsfaseNavn: String
 )

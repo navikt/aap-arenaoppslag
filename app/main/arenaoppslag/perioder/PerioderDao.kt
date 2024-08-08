@@ -23,7 +23,7 @@ object PerioderDao {
     """
 
     private const val selectVedtakMedTidsbegrensningMed11_17Sql = """
-        SELECT v.til_dato, v.fra_dato, af.aktfasenavn 
+        SELECT v.til_dato, v.fra_dato, af.aktfasenavn, v.aktfasekode
           FROM vedtak v
           JOIN aktivitetsfase af ON v.aktfasekode = af.aktfasekode
          WHERE person_id = 
@@ -68,7 +68,7 @@ object PerioderDao {
         tilOgMedDato: LocalDate,
         connection: Connection
     ): PerioderMed11_17Response {
-        return connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
+        return connection.prepareStatement(selectVedtakMedTidsbegrensningMed11_17Sql).use { preparedStatement ->
             preparedStatement.setString(1, personId)
             preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
             preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
@@ -81,7 +81,8 @@ object PerioderDao {
                     fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                     tilOgMedDato = getNullableDate(row.getDate("til_dato")),
                     ),
-                    aktivitetsfase = row.getString("aktfasenavn")
+                    aktivitetsfaseKode = row.getString("aktfasenavn"),
+                    aktivitetsfaseNavn = row.getString("aktfasekode"),
                 )
             }
             PerioderMed11_17Response(perioder)
