@@ -1,9 +1,12 @@
 package arenaoppslag.perioder
 
 import arenaoppslag.datasource.map
+import org.slf4j.LoggerFactory
 import java.sql.Connection
 import java.sql.Date
 import java.time.LocalDate
+
+private val logger = LoggerFactory.getLogger("App")
 
 object PerioderDao {
     private const val selectVedtakMedTidsbegrensningSql = """

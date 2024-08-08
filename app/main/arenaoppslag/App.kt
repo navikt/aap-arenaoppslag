@@ -19,6 +19,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
 
+private val logger = LoggerFactory.getLogger("App")
 private val secureLog: Logger = LoggerFactory.getLogger("secureLog")
 
 fun main() {
