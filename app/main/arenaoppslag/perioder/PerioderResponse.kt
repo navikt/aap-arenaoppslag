@@ -16,7 +16,6 @@ data class Periode(
 )
 
 data class PeriodeMed11_17(
-    val fraOgMedDato: LocalDate,
-    val tilOgMedDato: LocalDate?,
+    val periode: Periode,
     val aktivitetsfase: String
 )

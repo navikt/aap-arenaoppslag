@@ -77,8 +77,10 @@ object PerioderDao {
 
             val perioder = resultSet.map { row ->
                 PeriodeMed11_17(
+                    Periode(
                     fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                     tilOgMedDato = getNullableDate(row.getDate("til_dato")),
+                    ),
                     aktivitetsfase = row.getString("aktfasenavn")
                 )
             }

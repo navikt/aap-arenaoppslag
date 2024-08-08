@@ -64,6 +64,7 @@ data class Utbetalingsgrad(
                 }
             ],
             dagsats: 1,
+            dagsmbt: 1,
             status: "string",
             saksnummer: "string",
             vedtaksdato: "LocalDate",
