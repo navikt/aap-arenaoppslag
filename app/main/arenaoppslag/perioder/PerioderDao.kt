@@ -41,7 +41,7 @@ object PerioderDao {
 
     private val aktivitetsfaseKodeSql = """
         SELECT DISTINCT aktfasekode, aktfasenavn 
-        FROM AKTIVITETFASE;
+        FROM aktivitetsfase
     """.trimIndent()
 
     fun selectAktFaseKoder(connection: Connection):List<AktivitetsfaseKode> {
