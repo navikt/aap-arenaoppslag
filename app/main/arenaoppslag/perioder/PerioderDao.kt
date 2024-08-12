@@ -42,6 +42,7 @@ object PerioderDao {
            AND fra_dato <= ?
     """
 
+
     fun selectVedtakMedTidsbegrensning(
         personId: String,
         fraOgMedDato: LocalDate,

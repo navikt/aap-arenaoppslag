@@ -9,11 +9,11 @@ data class Maksimum1 (
 
 data class Maksimum2(
     val vedtak: List<Vedtak>,
-    val utbetalinger: List<Utbetaling>,
+    val utbetalinger: List<UtbetalingMedMer>,
 )
 
 data class Vedtak(
-    val utbetaling: List<Utbetaling>,
+    val utbetaling: List<UtbetalingMedMer>,
     val dagsats: Int,
     val status: String, //Hypotese, vedtaksstatuskode
     val saksnummer: String, //hypotese sak_id
@@ -22,8 +22,8 @@ data class Vedtak(
     val rettighetType: String, ////aktivitetsfase //Aktfasekode
 )
 
-data class Utbetaling(
-    val utbetalingsgrad: Utbetalingsgrad,
+data class UtbetalingMedMer(
+    val utbetalingsgrad: Utbetalingsgrad? = null,
     val periode: Periode,
     val belop: Int,
     val dagsats: Int,

@@ -9,9 +9,4 @@ class FellesordningenRepo(private val dataSource: DataSource) {
         dataSource.connection.use { con ->
             FellesordningenDao.selectVedtakMedTidsbegrensning(personId, fraOgMedDato, tilOgMedDato, con)
         }
-
-    fun selectMaksimumsløsning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum2 =
-        dataSource.connection.use { con ->
-            FellesordningenDao.selectVedtakMaksimum(personId, fraOgMedDato, tilOgMedDato, con)
-        }
 }

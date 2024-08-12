@@ -1,5 +1,7 @@
 package arenaoppslag
 
+import arenaoppslag.ekstern.EksternRepo
+import arenaoppslag.ekstern.ekstern
 import arenaoppslag.fellesordningen.FellesordningenRepo
 import arenaoppslag.fellesordningen.VedtakRequest
 import io.ktor.server.application.*
@@ -14,13 +16,13 @@ import javax.sql.DataSource
 private val secureLog: Logger = LoggerFactory.getLogger("secureLog")
 
 fun Route.testroute (datasource: DataSource) {
-    val felleordningRepo = FellesordningenRepo(datasource)
+    val eksternRepo = EksternRepo(datasource)
 
     route("/intern/test") {
         post {
             val request = call.receive<VedtakRequest>()
             secureLog.info("mottatt test kall til api")
-            val res = felleordningRepo.selectMaksimumsløsning(
+            val res = eksternRepo.hentMaksimumsløsning(
                 request.personidentifikator,
                 request.fraOgMedDato,
                 request.tilOgMedDato)

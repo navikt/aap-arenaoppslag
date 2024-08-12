@@ -1,4 +1,4 @@
-package arenaoppslag.fellesordningen
+package arenaoppslag.ekstern
 
 import java.time.LocalDate
 
@@ -9,5 +9,11 @@ data class VedtakResponse(
 data class VedtakPeriode(
     val fraOgMedDato: LocalDate,
     val tilOgMedDato: LocalDate?
+)
+
+data class VedtakFakta(
+    var dagsmbt: Int,
+    var barntill: Int,
+    var dags: Int
 )
 
