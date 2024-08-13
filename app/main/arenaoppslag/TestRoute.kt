@@ -18,7 +18,7 @@ private val secureLog: Logger = LoggerFactory.getLogger("secureLog")
 fun Route.testroute (datasource: DataSource) {
     val eksternRepo = EksternRepo(datasource)
 
-    route("/intern/test") {
+    route("/intern/maksimum") {
         post {
             val request = call.receive<VedtakRequest>()
             secureLog.info("mottatt test kall til api")
