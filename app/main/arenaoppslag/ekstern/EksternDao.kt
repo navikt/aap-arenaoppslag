@@ -53,7 +53,7 @@ object EksternDao {
 
     private const val selectUtbetalingVedVedtakId = """
         SELECT dato_periode_fra, dato_periode_til, belop
-          FROM utbetaling
+          FROM postering
          WHERE vedtak_id = ?
     """
 
