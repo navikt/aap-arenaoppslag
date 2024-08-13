@@ -38,7 +38,7 @@ dependencies {
     testImplementation("com.nimbusds:nimbus-jose-jwt:9.40")
     testImplementation("org.flywaydb:flyway-core:10.17.0")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    testImplementation("com.h2database:h2:2.3.230")
+    testImplementation("com.h2database:h2:2.3.232")
 }
 
 repositories {
