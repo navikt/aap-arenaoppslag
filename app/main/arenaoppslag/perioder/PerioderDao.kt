@@ -28,7 +28,7 @@ object PerioderDao {
     private const val selectVedtakMedTidsbegrensningMed11_17Sql = """
         SELECT v.til_dato, v.fra_dato, af.aktfasenavn, v.aktfasekode
           FROM vedtak v
-          JOIN aktivitetsfase af ON v.aktfasekode = af.aktfasekode
+          JOIN aktivitetfase af ON v.aktfasekode = af.aktfasekode
          WHERE person_id = 
                (SELECT person_id 
                   FROM person 
