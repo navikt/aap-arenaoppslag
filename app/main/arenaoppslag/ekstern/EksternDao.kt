@@ -1,10 +1,7 @@
 package arenaoppslag.ekstern
 
 import arenaoppslag.datasource.map
-import arenaoppslag.modeller.Maksimum2
-import arenaoppslag.modeller.Minimum
-import arenaoppslag.modeller.UtbetalingMedMer
-import arenaoppslag.modeller.Vedtak
+import arenaoppslag.modeller.*
 import arenaoppslag.perioder.Periode
 import java.sql.Connection
 import java.sql.Date
@@ -57,6 +54,22 @@ object EksternDao {
          WHERE vedtak_id = ?
     """
 
+
+    //henter timer arbeidet for bruker x mellom y og z dato
+    private const val selectMeldekortTimer = """
+        SELECT mkd.timer_arbeidet
+         FROM meldekort m
+         JOIN meldekortdag mkd ON mkdmeldekort_id = m.id
+         JOIN MELDEKORTPERIODEBRUK mkpb ON mkpb.meldekortkode = m.meldekortkode 
+         JOIN MELDEKORTPERIODE mkp ON mkp.periodekode = mkpb.periodekode
+        WHERE m.person_id = 
+               (SELECT person_id 
+                  FROM person 
+                 WHERE fodselsnr = ?)
+        AND mkp.dato_fra = ?
+        AND mkp.dato_til = ?
+    """
+
     fun selectVedtakMinimum(
         personId: String,
         fraOgMedDato: LocalDate,
@@ -81,11 +94,34 @@ object EksternDao {
         }
     }
 
+    fun selectMeldekortData(
+        connection: Connection,
+        personId: String,
+        til_dato: LocalDate,
+        fra_Dato: LocalDate,
+    ): Reduksjon {
+        return connection.prepareStatement(selectMeldekortTimer).use { preparedStatement ->
+            preparedStatement.setString(1,personId)
+            preparedStatement.setDate(2,Date.valueOf(fra_Dato))
+            preparedStatement.setDate(3,Date.valueOf(til_dato))
+
+            val resultSet = preparedStatement.executeQuery()
+
+            val reduksjon = Reduksjon(
+                timerArbeidet = resultSet.map { row-> row.getFloat("timer_arbeidet") }.sum().toDouble(),
+                annenReduksjon = AnnenReduksjon(null,null,null) //TODO: Disse 3 mangler
+            )
+            reduksjon
+        }
+    }
+
+
     fun selectUtbetalingVedVedtakId(
         vedtakId: Int,
         connection: Connection,
         barnetiTillegg: Int,
-        dagsats: Int
+        dagsats: Int,
+        personId: String
     ): List<UtbetalingMedMer> {
         return connection.prepareStatement(selectUtbetalingVedVedtakId).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
@@ -94,6 +130,12 @@ object EksternDao {
 
             return resultSet.map { row ->
                 UtbetalingMedMer(
+                    reduksjon = selectMeldekortData(
+                        connection = connection,
+                        personId = personId,
+                        fra_Dato = row.getDate("dato_periode_fra").toLocalDate(),
+                        til_dato = row.getDate("dato_periode_til").toLocalDate(),
+                        ),
                     periode = Periode(
                         fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
                         tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
@@ -137,8 +179,15 @@ object EksternDao {
             val utbetalinger = mutableListOf<UtbetalingMedMer>()
             val vedtak = resultSet.map { row ->
                 val vedtakFakta = selectVedtakFakta(row.getInt("vedtak_id"),connection)
-                utbetalinger.addAll(selectUtbetalingVedVedtakId(row.getInt("vedtak_id"), connection, vedtakFakta.barntill, vedtakFakta.dags))
-
+                utbetalinger.addAll(
+                    selectUtbetalingVedVedtakId(
+                        connection = connection,
+                        barnetiTillegg = vedtakFakta.barntill,
+                        dagsats = vedtakFakta.dags,
+                        personId = personId,
+                        vedtakId = row.getInt("vedtak_id")
+                    )
+                )
                 Vedtak(
                     utbetaling = emptyList(),
                     dagsats = vedtakFakta.dags,

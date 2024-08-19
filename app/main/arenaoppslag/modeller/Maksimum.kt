@@ -23,7 +23,7 @@ data class Vedtak(
 )
 
 data class UtbetalingMedMer(
-    val utbetalingsgrad: Utbetalingsgrad? = null,
+    val reduksjon: Reduksjon? = null,
     val periode: Periode,
     val belop: Int,
     val dagsats: Int,
@@ -41,28 +41,41 @@ data class Utbetalingsgrad(
     val termnavn: String //TODO: Denne må renskes sammen med øyvind
 )
 
+data class Reduksjon(
+    val timerArbeidet: Double,
+    val annenReduksjon: AnnenReduksjon
+)
 
+data class AnnenReduksjon(
+    val sukepenger: Float?,
+    val sentMeldekort:Boolean?,
+    val fraver: Float?
+)
 
 /*
 {
   Maksimum1: {
-    vedtak: [
-        {
-            utbetaling: [
+     utbetaling: [
                 {
-                    utbetalingsgrad: {
-                        kode: "string",
-                        termnavn: "string"
+                    reduksjon: {
+                        timerArbeidet: 5.0,
+                        annenReduksjon:{
+                            sykepenger: 1.0, #timer
+                            SentMeldekort: 1.0, #timer
+                            fravær: 1.0, #timer
+                        } # 100% -8 timer
                     },
                     periode: {
                         fraDato: "string",
-                        tilDato: "string"
+                        tilDato: "string" #hent meldekort ut fra periode
                     },
                     belop: 1,
                     dagsats: 1,
                     barnetilegg: 1
                 }
             ],
+    vedtak: [
+        {
             dagsats: 1,
             dagsmbt: 1,
             status: "string",
