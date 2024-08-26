@@ -1,5 +1,6 @@
 # AAP arenaoppslag
-Applikasjon som skal brukes til å gjøre sql-oppslag mot Arena via dedikerte views. Kjører i FSS og henter Arena-tilkobling fra Vault.
+
+Applikasjon som skal brukes til å gjøre SQL-oppslag mot Arena via dedikerte views. Kjører i FSS og henter Arena-tilkobling fra Vault.
 Skal kun kalles fra våre egne interne apper, ikke lag åpning for apper utenfor vårt namespace.
 
 # Komme i gang
