@@ -48,13 +48,6 @@ object EksternDao {
            AND fra_dato <= ?
     """
 
-    private const val selectUtbetalingVedVedtakId = """
-        SELECT dato_periode_fra, dato_periode_til, belop
-          FROM postering
-         WHERE vedtak_id = ?
-    """
-
-
     //henter timer arbeidet for bruker x mellom y og z dato gruppert på meldekortperiode
     private const val selectTimerArbeidetIMeldekortPeriode = """
         SELECT 
@@ -106,48 +99,30 @@ object EksternDao {
         }
     }
 
-    fun selectMeldekortData(
-        connection: Connection,
-        personId: String,
-        til_dato: LocalDate,
-        fra_Dato: LocalDate,
-    ): Reduksjon {
-        return connection.prepareStatement(selectTimerArbeidetIMeldekortPeriode).use { preparedStatement ->
-            preparedStatement.setString(1,personId)
-            preparedStatement.setDate(2,Date.valueOf(fra_Dato))
-            preparedStatement.setDate(3,Date.valueOf(til_dato))
-
-            val resultSet = preparedStatement.executeQuery()
-
-            val reduksjon = Reduksjon(
-                timerArbeidet = resultSet.map { row-> row.getFloat("timer_arbeidet") }.sum().toDouble(),
-                annenReduksjon = AnnenReduksjon(null,null,null) //TODO: Disse 3 mangler
-            )
-            reduksjon
-        }
-    }
-
 
     fun selectUtbetalingVedVedtakId(
         vedtakId: Int,
         connection: Connection,
         barnetiTillegg: Int,
         dagsats: Int,
-        personId: String
+        personId: String,
+        fra_Dato: LocalDate,
+        til_dato: LocalDate
     ): List<UtbetalingMedMer> {
-        return connection.prepareStatement(selectUtbetalingVedVedtakId).use { preparedStatement ->
+        return connection.prepareStatement(selectTimerArbeidetIMeldekortPeriode).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
+            preparedStatement.setString(2, personId)
+            preparedStatement.setDate(3,Date.valueOf(fra_Dato))
+            preparedStatement.setDate(4,Date.valueOf(til_dato))
 
             val resultSet = preparedStatement.executeQuery()
 
             return resultSet.map { row ->
                 UtbetalingMedMer(
-                    reduksjon = selectMeldekortData(
-                        connection = connection,
-                        personId = personId,
-                        fra_Dato = row.getDate("dato_periode_fra").toLocalDate(),
-                        til_dato = row.getDate("dato_periode_til").toLocalDate(),
-                        ),
+                    reduksjon = Reduksjon(
+                        timerArbeidet = row.getFloat("timer_arbeidet").toDouble(),
+                        annenReduksjon = AnnenReduksjon(null,null,null)
+                    ),
                     periode = Periode(
                         fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
                         tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
@@ -197,11 +172,13 @@ object EksternDao {
                         barnetiTillegg = vedtakFakta.barntill,
                         dagsats = vedtakFakta.dags,
                         personId = personId,
-                        vedtakId = row.getInt("vedtak_id")
+                        vedtakId = row.getInt("vedtak_id"),
+                        fra_Dato = fraOgMedDato,
+                        til_dato = tilOgMedDato
                     )
                 )
                 Vedtak(
-                    utbetaling = emptyList(),
+                    utbetaling = utbetalinger,
                     dagsats = vedtakFakta.dags,
                     status = row.getString("vedtakstatuskode"),
                     saksnummer = row.getString("sak_id"),
