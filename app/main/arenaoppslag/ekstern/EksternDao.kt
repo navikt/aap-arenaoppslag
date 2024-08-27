@@ -55,20 +55,32 @@ object EksternDao {
     """
 
 
-    //henter timer arbeidet for bruker x mellom y og z dato
-    private const val selectMeldekortTimer = """
-        SELECT mkd.timer_arbeidet
-         FROM meldekort m
-         JOIN meldekortdag mkd ON mkdmeldekort_id = m.id
-         JOIN MELDEKORTPERIODEBRUK mkpb ON mkpb.meldekortkode = m.meldekortkode 
-         JOIN MELDEKORTPERIODE mkp ON mkp.periodekode = mkpb.periodekode
-        WHERE m.person_id = 
-               (SELECT person_id 
-                  FROM person 
-                 WHERE fodselsnr = ?)
-        AND mkp.dato_fra = ?
-        AND mkp.dato_til = ?
+    //henter timer arbeidet for bruker x mellom y og z dato gruppert på meldekortperiode
+    private const val selectTimerArbeidetIMeldekortPeriode = """
+        SELECT 
+            SUM(mkd.timer_arbeidet) AS timer_arbeidet,
+            p.belop,
+            p.dato_periode_fra,
+            p.dato_periode_til
+        FROM 
+            meldekort m
+        JOIN 
+            meldekortdag mkd ON mkd.meldekort_id = m.meldekort_id
+        JOIN 
+            (SELECT dato_periode_fra, dato_periode_til, belop, meldekort_id
+             FROM postering
+             WHERE vedtak_id = ?) p
+            ON m.meldekort_id = p.meldekort_id
+        WHERE 
+            m.person_id = (SELECT person_id FROM person WHERE fodselsnr = ?)
+        AND 
+            p.dato_periode_til >= ? AND p.dato_periode_fra <= ?
+        GROUP BY
+            p.dato_periode_fra, p.dato_periode_til, p.belop
     """
+
+
+
 
     fun selectVedtakMinimum(
         personId: String,
@@ -100,7 +112,7 @@ object EksternDao {
         til_dato: LocalDate,
         fra_Dato: LocalDate,
     ): Reduksjon {
-        return connection.prepareStatement(selectMeldekortTimer).use { preparedStatement ->
+        return connection.prepareStatement(selectTimerArbeidetIMeldekortPeriode).use { preparedStatement ->
             preparedStatement.setString(1,personId)
             preparedStatement.setDate(2,Date.valueOf(fra_Dato))
             preparedStatement.setDate(3,Date.valueOf(til_dato))

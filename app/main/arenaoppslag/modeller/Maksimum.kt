@@ -47,7 +47,7 @@ data class Reduksjon(
 )
 
 data class AnnenReduksjon(
-    val sukepenger: Float?,
+    val sykedager: Float?,
     val sentMeldekort:Boolean?,
     val fraver: Float?
 )
@@ -55,25 +55,7 @@ data class AnnenReduksjon(
 /*
 {
   Maksimum1: {
-     utbetaling: [
-                {
-                    reduksjon: {
-                        timerArbeidet: 5.0,
-                        annenReduksjon:{
-                            sykepenger: 1.0, #timer
-                            SentMeldekort: 1.0, #timer
-                            fravær: 1.0, #timer
-                        } # 100% -8 timer
-                    },
-                    periode: {
-                        fraDato: "string",
-                        tilDato: "string" #hent meldekort ut fra periode
-                    },
-                    belop: 1,
-                    dagsats: 1,
-                    barnetilegg: 1
-                }
-            ],
+
     vedtak: [
         {
             dagsats: 1,
@@ -97,7 +79,26 @@ data class AnnenReduksjon(
                 sakskode: "string",
                 rettighetsklassekode: "string",
                 belopkode: "string"
-            }
+            },
+            utbetaling: [
+            {
+                reduksjon: {
+                    timerArbeidet: 5.0,
+                    annenReduksjon:{
+                        sykepenger: 1.0, #timer #sykedager
+                        SentMeldekort: 1.0, #timer
+                        fravær: 1.0, #timer
+                    } # 100% -8 timer
+                },
+                periode: {
+                    fraDato: "string",
+                    tilDato: "string" #hent meldekort ut fra periode
+                },
+                belop: 1,
+                dagsats: 1,
+                barnetilegg: 1
+                }
+            ],
         }
     ]
 }
