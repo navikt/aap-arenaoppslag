@@ -85,7 +85,7 @@ data class AnnenReduksjon(
                 reduksjon: {
                     timerArbeidet: 5.0,
                     annenReduksjon:{
-                        sykepenger: 1.0, #timer #sykedager
+                        sykedager: 1.0, #dager #sykedager
                         SentMeldekort: 1.0, #timer
                         fravær: 1.0, #timer
                     } # 100% -8 timer

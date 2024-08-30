@@ -31,5 +31,8 @@ fun Route.testroute (datasource: DataSource) {
                 secureLog.info("respons fra arenaoppslag: $res")
             }
         }
+        get {
+            call.respond(eksternRepo.hentanmerkningsTyper())
+        }
     }
 }

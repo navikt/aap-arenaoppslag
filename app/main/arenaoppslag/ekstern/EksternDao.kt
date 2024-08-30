@@ -48,10 +48,16 @@ object EksternDao {
            AND fra_dato <= ?
     """
 
+    private const val selectAnmerkningsTyper = """
+        SELECT DISTINCT anmerkningkode, anmerkningnavn
+          FROM anmerkningtype
+          """
+
     //henter timer arbeidet for bruker x mellom y og z dato gruppert på meldekortperiode
     private const val selectTimerArbeidetIMeldekortPeriode = """
         SELECT 
             SUM(mkd.timer_arbeidet) AS timer_arbeidet,
+            m.meldekort_id,
             p.belop,
             p.dato_periode_fra,
             p.dato_periode_til
@@ -73,6 +79,18 @@ object EksternDao {
     """
 
 
+    fun selectAnmerkningTyper(connection: Connection): List<AnmerkningType> {
+        return connection.prepareStatement(selectAnmerkningsTyper).use { preparedStatement ->
+            val resultSet = preparedStatement.executeQuery()
+
+            resultSet.map { row ->
+                AnmerkningType(
+                    kode = row.getString("anmerkningkode"),
+                    navn = row.getString("anmerkningnavn")
+                )
+            }.toList()
+        }
+    }
 
 
     fun selectVedtakMinimum(
@@ -118,6 +136,7 @@ object EksternDao {
             val resultSet = preparedStatement.executeQuery()
 
             return resultSet.map { row ->
+                //hent andmerking for sent meldekort
                 UtbetalingMedMer(
                     reduksjon = Reduksjon(
                         timerArbeidet = row.getFloat("timer_arbeidet").toDouble(),
@@ -200,3 +219,5 @@ object EksternDao {
         return date.toLocalDate()
     }
 }
+
+data class AnmerkningType(val kode: String?, val navn: String?)

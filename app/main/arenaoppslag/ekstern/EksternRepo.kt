@@ -16,4 +16,9 @@ class EksternRepo(private val dataSource: DataSource) {
         dataSource.connection.use { con ->
             EksternDao.selectVedtakMaksimum(personId, fraOgMedDato, tilOgMedDato, con)
         }
+
+    fun  hentanmerkningsTyper(): List<AnmerkningType> =
+        dataSource.connection.use { con ->
+            EksternDao.selectAnmerkningTyper(con)
+        }
 }
