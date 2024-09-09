@@ -67,25 +67,13 @@ data class AnnenReduksjon(
                 fraDato: "LocalDate",
                 tilDato: "LocalDate"
             },
-            rettighetType: {
-                rettighetKode: "string",
-                rettighetNavn: "string",
-                datoGyldigFra: "LocalDate",
-                datoGyldigTil: "LocalDate",
-                regDato: "LocalDate",
-                regUser: "string",
-                modDato: "LocalDate",
-                modUser: "string",
-                sakskode: "string",
-                rettighetsklassekode: "string",
-                belopkode: "string"
-            },
+            rettighetType: "string", //aktivitetsfase //Aktfasekode
             utbetaling: [
             {
                 reduksjon: {
                     timerArbeidet: 5.0,
                     annenReduksjon:{
-                        sykepenger: 1.0, #timer #sykedager
+                        sykedager: 1.0, #dager #sykedager
                         SentMeldekort: 1.0, #timer
                         fravær: 1.0, #timer
                     } # 100% -8 timer

@@ -1,6 +1,5 @@
 package arenaoppslag.ekstern
 
-import arenaoppslag.fellesordningen.VedtakResponse
 import arenaoppslag.modeller.Maksimum2
 import arenaoppslag.modeller.Minimum
 import java.time.LocalDate
