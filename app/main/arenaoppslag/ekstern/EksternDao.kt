@@ -48,16 +48,36 @@ object EksternDao {
            AND fra_dato <= ?
     """
 
-    private const val selectAnmerkningsTyper = """
-        SELECT DISTINCT anmerkningkode, anmerkningnavn
-          FROM anmerkningtype
-          """
+    private const val selectSykedagerMeldekort = """
+        SELECT sum(verdi)
+          FROM anmerkning
+        WHERE tabellnavnalias = 'MKORT'
+          AND objekt_id       = ?
+          AND anmerkningkode  = 'FSNN'
+    """
+
+    private const val selectSentMeldekort = """
+        SELECT sum(verdi)
+          FROM anmerkning
+        WHERE tabellnavnalias = 'MKORT'
+          AND objekt_id       = ?
+          AND anmerkningkode  = 'SENN'
+    """
+
+    private const val selectFraværMeldekort = """
+        SELECT sum(verdi)
+          FROM anmerkning
+        WHERE tabellnavnalias = 'MKORT'
+          AND objekt_id       = ?
+          AND anmerkningkode  = 'FXNN'
+    """
+    //Syk=FSNN', fravære = 'FXNN' og for sent = 'SENN'
 
     //henter timer arbeidet for bruker x mellom y og z dato gruppert på meldekortperiode
     private const val selectTimerArbeidetIMeldekortPeriode = """
         SELECT 
             SUM(mkd.timer_arbeidet) AS timer_arbeidet,
-            m.meldekort_id,
+            p.meldekort_id,
             p.belop,
             p.dato_periode_fra,
             p.dato_periode_til
@@ -75,20 +95,41 @@ object EksternDao {
         AND 
             p.dato_periode_til >= ? AND p.dato_periode_fra <= ?
         GROUP BY
-            p.dato_periode_fra, p.dato_periode_til, p.belop
+            p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
     """
 
+    fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
+        return connection.prepareStatement(selectSykedagerMeldekort).use { preparedStatement ->
+            preparedStatement.setString(1, meldekortId)
 
-    fun selectAnmerkningTyper(connection: Connection): List<AnmerkningType> {
-        return connection.prepareStatement(selectAnmerkningsTyper).use { preparedStatement ->
             val resultSet = preparedStatement.executeQuery()
 
             resultSet.map { row ->
-                AnmerkningType(
-                    kode = row.getString("anmerkningkode"),
-                    navn = row.getString("anmerkningnavn")
-                )
-            }.toList()
+                row.getInt(1)
+            }.firstOrNull() ?: 0
+        }
+    }
+    fun selectFraværMeldekort(meldekortId: String, connection: Connection): Int {
+        return connection.prepareStatement(selectFraværMeldekort).use { preparedStatement ->
+            preparedStatement.setString(1, meldekortId)
+
+            val resultSet = preparedStatement.executeQuery()
+
+            resultSet.map { row ->
+                row.getInt(1)
+            }.firstOrNull() ?: 0
+        }
+    }
+    fun selectSentMeldekort(meldekortId: String, connection: Connection): Boolean {
+        return connection.prepareStatement(selectSentMeldekort).use { preparedStatement ->
+            preparedStatement.setString(1, meldekortId)
+
+            val resultSet = preparedStatement.executeQuery()
+
+            val forSent = resultSet.map { row ->
+                row.getInt(1)
+            }.firstOrNull() ?: 0
+            forSent > 0
         }
     }
 
@@ -137,10 +178,15 @@ object EksternDao {
 
             return resultSet.map { row ->
                 //hent andmerking for sent meldekort
+                val meldekortId=row.getString("meldekort_id")
                 UtbetalingMedMer(
                     reduksjon = Reduksjon(
                         timerArbeidet = row.getFloat("timer_arbeidet").toDouble(),
-                        annenReduksjon = AnnenReduksjon(null,null,null)
+                        annenReduksjon = AnnenReduksjon(
+                            selectSykedagerMeldekort(meldekortId,connection).toFloat(),
+                            selectSentMeldekort(meldekortId,connection),
+                            selectFraværMeldekort(meldekortId,connection).toFloat()
+                        )
                     ),
                     periode = Periode(
                         fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
@@ -219,5 +265,3 @@ object EksternDao {
         return date.toLocalDate()
     }
 }
-
-data class AnmerkningType(val kode: String?, val navn: String?)

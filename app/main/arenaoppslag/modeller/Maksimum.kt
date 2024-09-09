@@ -67,19 +67,7 @@ data class AnnenReduksjon(
                 fraDato: "LocalDate",
                 tilDato: "LocalDate"
             },
-            rettighetType: {
-                rettighetKode: "string",
-                rettighetNavn: "string",
-                datoGyldigFra: "LocalDate",
-                datoGyldigTil: "LocalDate",
-                regDato: "LocalDate",
-                regUser: "string",
-                modDato: "LocalDate",
-                modUser: "string",
-                sakskode: "string",
-                rettighetsklassekode: "string",
-                belopkode: "string"
-            },
+            rettighetType: "string", //aktivitetsfase //Aktfasekode
             utbetaling: [
             {
                 reduksjon: {
