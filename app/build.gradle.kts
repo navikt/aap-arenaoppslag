@@ -1,4 +1,7 @@
+import org.gradle.kotlin.dsl.invoke
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import kotlin.text.set
 
 plugins {
     kotlin("jvm") version "2.0.20"
@@ -24,12 +27,13 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
     implementation("io.ktor:ktor-server-call-logging-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-call-id:$ktorVersion")
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-    implementation("ch.qos.logback:logback-classic:1.5.7")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
     implementation("io.micrometer:micrometer-registry-prometheus:1.13.3")
+    implementation("ch.qos.logback:logback-classic:1.5.8")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.0")
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.5.0.24.07")
@@ -38,7 +42,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:9.40")
-    testImplementation("org.flywaydb:flyway-core:10.17.2")
+    testImplementation("org.flywaydb:flyway-core:10.17.3")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.3.232")
 }
@@ -49,11 +53,15 @@ repositories {
 }
 
 tasks {
-    withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "21"
-    }
     withType<Test> {
         useJUnitPlatform()
+    }
+}
+
+kotlin {
+    jvmToolchain(21)
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
