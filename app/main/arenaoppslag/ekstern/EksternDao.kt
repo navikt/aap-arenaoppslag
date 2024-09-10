@@ -105,7 +105,7 @@ object EksternDao {
             JOIN
                 meldekort mk ON mk.person_id = p.person_id
             JOIN
-                vedtak v ON v.person_id = p.person_id     
+                vedtak v ON v.person_id = p.person_id
             WHERE
                 v.utfallkode = 'JA' 
             AND 
@@ -118,7 +118,7 @@ object EksternDao {
                 (v.fra_dato <= v.til_dato OR v.til_dato IS NULL)
             AND 
                 (SELECT count(*) FROM postering pos WHERE pos.vedtak_id = v.vedtak_id) > 0
-            FETCH FIRST 50 ROWS ONLY
+            FETCH FIRST 10 ROWS ONLY
     """
 
     fun selectFnrForTest(connection: Connection):List<String>{
