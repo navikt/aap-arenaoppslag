@@ -99,7 +99,7 @@ object EksternDao {
     """
         //select fodselnr where person has AAP vedtak and any entries in posering
     const val test ="""
-        SELECT DISTINCT p.fodselsnr 
+        SELECT p.fodselsnr 
             FROM 
                 person p
             JOIN
