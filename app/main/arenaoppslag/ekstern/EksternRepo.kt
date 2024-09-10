@@ -15,4 +15,8 @@ class EksternRepo(private val dataSource: DataSource) {
         dataSource.connection.use { con ->
             EksternDao.selectVedtakMaksimum(personId, fraOgMedDato, tilOgMedDato, con)
         }
+    fun hentFnrForTest(): List<String> =
+        dataSource.connection.use { con ->
+            EksternDao.selectFnrForTest(con)
+        }
 }

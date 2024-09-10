@@ -97,6 +97,38 @@ object EksternDao {
         GROUP BY
             p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
     """
+        //select fodselnr where person has AAP vedtak and any entries in posering
+    const val test ="""
+        SELECT p.fodselsnr 
+            FROM 
+                person p
+            JOIN
+                meldekort mk ON mk.person_id = p.person_id
+            JOIN
+                vedtak v ON v.person_id = p.person_id     
+            WHERE
+                v.utfallkode = 'JA' 
+            AND 
+                v.rettighetkode = 'AAP'
+            AND 
+                v.vedtaktypekode IN ('O', 'E', 'G')
+            AND 
+                v.vedtakstatuskode IN ('IVERK', 'AVSLU')
+            AND 
+                (v.fra_dato <= v.til_dato OR v.til_dato IS NULL)
+            AND 
+                (SELECT count(*) FROM postering pos WHERE pos.vedtak_id = v.vedtak_id) > 0
+            FETCH FIRST 50 ROWS ONLY
+    """
+
+    fun selectFnrForTest(connection: Connection):List<String>{
+        return connection.prepareStatement(test).use { preparedStatement ->
+            val resultSet = preparedStatement.executeQuery()
+            resultSet.map { row ->
+                row.getString("fodselsnr")
+            }.toList()
+        }
+    }
 
     fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
         return connection.prepareStatement(selectSykedagerMeldekort).use { preparedStatement ->
