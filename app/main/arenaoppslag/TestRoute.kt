@@ -32,9 +32,4 @@ fun Route.testroute (datasource: DataSource) {
             }
         }
     }
-    route("/fnr/test"){
-        get {
-            call.respond(eksternRepo.hentFnrForTest())
-        }
-    }
 }

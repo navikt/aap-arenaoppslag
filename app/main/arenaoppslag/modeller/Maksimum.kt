@@ -19,7 +19,7 @@ data class Vedtak(
     val saksnummer: String, //hypotese sak_id
     val vedtaksdato: String, //reg_dato
     val periode: Periode,
-    val rettighetType: String, ////aktivitetsfase //Aktfasekode
+    val rettighetsType: String, ////aktivitetsfase //Aktfasekode
 )
 
 data class UtbetalingMedMer(

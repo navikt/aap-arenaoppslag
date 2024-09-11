@@ -78,8 +78,5 @@ fun Application.server(
             perioder(datasource)
             dsop(datasource)
         }
-
-        testroute(datasource)
-
     }
 }
