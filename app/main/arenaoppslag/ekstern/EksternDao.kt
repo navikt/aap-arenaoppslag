@@ -248,7 +248,7 @@ object EksternDao {
                     status = row.getString("vedtakstatuskode"),
                     saksnummer = row.getString("sak_id"),
                     vedtaksdato = row.getString("fra_dato"),
-                    rettighetType = row.getString("aktfasekode"),
+                    rettighetsType = row.getString("aktfasekode"),
                     periode = Periode(
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato"))
