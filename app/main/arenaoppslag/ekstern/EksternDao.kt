@@ -26,6 +26,12 @@ object EksternDao {
            AND fra_dato <= ?
     """
 
+    private const val hentBeregningsgrunnlag = """
+        SELECT vedtakfaktakode, vedtakverdi
+            FROM vedtakfakta 
+             WHERE vedtak_id = ? AND vedtakfaktakode IN ('AAPBERREGL', 'AAPMANBER')
+    """
+
     private const val hentVedtakfakta = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
@@ -200,6 +206,24 @@ object EksternDao {
         }
     }
 
+    fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection):Float{
+        return connection.prepareStatement(hentBeregningsgrunnlag).use { preparedStatement ->
+            preparedStatement.setInt(1, vedtakId)
+            val resultSet = preparedStatement.executeQuery()
+            var beregningsgrunnlag:Float?=null
+            var beregninggrunnlagManuelt:Float?=null
+            resultSet.map { row ->
+                if (row.getString("vedtakfaktakode")=="AAPBERREGL") {
+                    beregningsgrunnlag = row.getFloat("vedtakverdi")
+                }
+                if(row.getString("vedtakfaktakode")=="AAPMANBER"){
+                    beregninggrunnlagManuelt=row.getFloat("vedtakverdi")
+                }
+            }
+            beregninggrunnlagManuelt?:beregningsgrunnlag?:0f
+        }
+    }
+
     fun selectVedtakFakta(vedtakId: Int, connection: Connection): VedtakFakta{
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
@@ -230,7 +254,8 @@ object EksternDao {
             val resultSet = preparedStatement.executeQuery()
             val utbetalinger = mutableListOf<UtbetalingMedMer>()
             val vedtak = resultSet.map { row ->
-                val vedtakFakta = selectVedtakFakta(row.getInt("vedtak_id"),connection)
+                val vedtakId=row.getInt("vedtak_id")
+                val vedtakFakta = selectVedtakFakta(vedtakId,connection)
                 utbetalinger.addAll(
                     selectUtbetalingVedVedtakId(
                         connection = connection,
@@ -253,6 +278,7 @@ object EksternDao {
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato"))
                     ),
+                    beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId,connection)
                 )
             }.toList()
             Maksimum2(vedtak, utbetalinger)

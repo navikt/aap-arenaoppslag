@@ -20,6 +20,7 @@ data class Vedtak(
     val vedtaksdato: String, //reg_dato
     val periode: Periode,
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode
+    val beregningsgrunnlag: Float,
 )
 
 data class UtbetalingMedMer(
