@@ -206,21 +206,21 @@ object EksternDao {
         }
     }
 
-    fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection):Float{
+    fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection):String{
         return connection.prepareStatement(hentBeregningsgrunnlag).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
-            var beregningsgrunnlag:Float?=null
-            var beregninggrunnlagManuelt:Float?=null
+            var beregningsgrunnlag:String?=null
+            var beregninggrunnlagManuelt:String?=null
             resultSet.map { row ->
                 if (row.getString("vedtakfaktakode")=="AAPBERREGL") {
-                    beregningsgrunnlag = row.getFloat("vedtakverdi")
+                    beregningsgrunnlag = row.getString("vedtakverdi")
                 }
                 if(row.getString("vedtakfaktakode")=="AAPMANBER"){
-                    beregninggrunnlagManuelt=row.getFloat("vedtakverdi")
+                    beregninggrunnlagManuelt=row.getString("vedtakverdi")
                 }
             }
-            beregninggrunnlagManuelt?:beregningsgrunnlag?:0f
+            beregninggrunnlagManuelt?:beregningsgrunnlag?:"0"
         }
     }
 
