@@ -26,12 +26,6 @@ object EksternDao {
            AND fra_dato <= ?
     """
 
-    private const val hentBeregningsgrunnlag = """
-        SELECT vedtakfaktakode, vedtakverdi
-            FROM vedtakfakta 
-             WHERE vedtak_id = ? AND vedtakfaktakode IN ('AAPBERREGL', 'AAPMANBER')
-    """
-
     private const val hentVedtakfakta = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
@@ -103,6 +97,10 @@ object EksternDao {
         GROUP BY
             p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
     """
+
+    fun dagsatsTilBeregningsgrunnlag(dagsats: Int):Int{
+        return (dagsats*260/66)*100
+    }
 
     fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
         return connection.prepareStatement(selectSykedagerMeldekort).use { preparedStatement ->
@@ -206,24 +204,6 @@ object EksternDao {
         }
     }
 
-    fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection):String{
-        return connection.prepareStatement(hentBeregningsgrunnlag).use { preparedStatement ->
-            preparedStatement.setInt(1, vedtakId)
-            val resultSet = preparedStatement.executeQuery()
-            var beregningsgrunnlag:String?=null
-            var beregninggrunnlagManuelt:String?=null
-            resultSet.map { row ->
-                if (row.getString("vedtakfaktakode")=="AAPBERREGL") {
-                    beregningsgrunnlag = row.getString("vedtakverdi")
-                }
-                if(row.getString("vedtakfaktakode")=="AAPMANBER"){
-                    beregninggrunnlagManuelt=row.getString("vedtakverdi")
-                }
-            }
-            beregninggrunnlagManuelt?:beregningsgrunnlag?:"0"
-        }
-    }
-
     fun selectVedtakFakta(vedtakId: Int, connection: Connection): VedtakFakta{
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
@@ -278,7 +258,7 @@ object EksternDao {
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato"))
                     ),
-                    beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId,connection)
+                    beregningsgrunnlag = dagsatsTilBeregningsgrunnlag(vedtakFakta.dags)
                 )
             }.toList()
             Maksimum2(vedtak, utbetalinger)
