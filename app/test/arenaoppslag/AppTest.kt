@@ -1,7 +1,7 @@
 package arenaoppslag
 
 import arenaoppslag.fellesordningen.VedtakRequest
-import arenaoppslag.fellesordningen.VedtakResponse
+import arenaoppslag.modeller.Minimum
 import arenaoppslag.util.AzureTokenGen
 import arenaoppslag.util.Fakes
 import arenaoppslag.util.H2TestBase
@@ -28,7 +28,7 @@ class AppTest : H2TestBase() {
             testApplication {
                 application { server(config, h2) }
 
-                val res = jsonHttpClient.post("/fellesordningen/vedtak") {
+                val res = jsonHttpClient.post("/ekstern/minimum") {
                     bearerAuth(azure.generate())
                     contentType(ContentType.Application.Json)
                     setBody(
@@ -42,9 +42,9 @@ class AppTest : H2TestBase() {
 
                 assertEquals(HttpStatusCode.OK, res.status)
 
-                val alleVedtak = res.body<VedtakResponse>()
+                val alleVedtak = res.body<List<Minimum>>()
 
-                assertEquals(1, alleVedtak.perioder.size)
+                assertEquals(1, alleVedtak.size)
             }
         }
     }
