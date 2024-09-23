@@ -2,8 +2,8 @@ package arenaoppslag
 
 import arenaoppslag.datasource.Hikari
 import arenaoppslag.dsop.dsop
-import arenaoppslag.fellesordningen.fellesordningen
-import arenaoppslag.perioder.perioder
+import arenaoppslag.ekstern.ekstern
+import arenaoppslag.perioder.intern
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages
@@ -74,12 +74,9 @@ fun Application.server(
 
         authenticate {
             // TODO: fellesordningen og perioder er helt like. slå sammen eller beholde skille?
-            fellesordningen(datasource)
-            perioder(datasource)
             dsop(datasource)
+            intern(datasource)
+            ekstern(datasource)
         }
-
-        testroute(datasource)
-
     }
 }

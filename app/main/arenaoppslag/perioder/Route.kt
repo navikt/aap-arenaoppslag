@@ -6,7 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import javax.sql.DataSource
 
-fun Route.perioder(datasource: DataSource) {
+fun Route.intern(datasource: DataSource) {
     val felleordningRepo = PerioderRepo(datasource)
 
     route("/intern/perioder") {
