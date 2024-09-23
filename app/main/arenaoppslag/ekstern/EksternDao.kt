@@ -143,7 +143,7 @@ object EksternDao {
         fraOgMedDato: LocalDate,
         tilOgMedDato: LocalDate,
         connection: Connection
-    ): List<Minimum> {
+    ): List<Periode> {
         return connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
             preparedStatement.setString(1, personId)
             preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
@@ -152,12 +152,12 @@ object EksternDao {
             val resultSet = preparedStatement.executeQuery()
 
             resultSet.map { row ->
-                Minimum(
+
                     Periode(
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato")),
                     )
-                )
+
             }.toList()
         }
     }

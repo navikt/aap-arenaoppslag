@@ -2,11 +2,12 @@ package arenaoppslag.ekstern
 
 import arenaoppslag.modeller.Maksimum2
 import arenaoppslag.modeller.Minimum
+import arenaoppslag.perioder.Periode
 import java.time.LocalDate
 import javax.sql.DataSource
 
 class EksternRepo(private val dataSource: DataSource) {
-    fun hentMinimumLøsning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): List<Minimum> =
+    fun hentMinimumLøsning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): List<Periode> =
         dataSource.connection.use { con ->
             EksternDao.selectVedtakMinimum(personId, fraOgMedDato, tilOgMedDato, con)
         }

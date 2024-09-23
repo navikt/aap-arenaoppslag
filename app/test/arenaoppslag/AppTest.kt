@@ -2,6 +2,7 @@ package arenaoppslag
 
 import arenaoppslag.fellesordningen.VedtakRequest
 import arenaoppslag.modeller.Minimum
+import arenaoppslag.perioder.Periode
 import arenaoppslag.util.AzureTokenGen
 import arenaoppslag.util.Fakes
 import arenaoppslag.util.H2TestBase
@@ -42,7 +43,7 @@ class AppTest : H2TestBase() {
 
                 assertEquals(HttpStatusCode.OK, res.status)
 
-                val alleVedtak = res.body<List<Minimum>>()
+                val alleVedtak = res.body<List<Periode>>()
 
                 assertEquals(1, alleVedtak.size)
             }
