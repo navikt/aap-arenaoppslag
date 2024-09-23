@@ -1,5 +1,6 @@
 package arenaoppslag
 
+import arenaoppslag.ekstern.VedtakResponse
 import arenaoppslag.fellesordningen.VedtakRequest
 import arenaoppslag.modeller.Minimum
 import arenaoppslag.perioder.Periode
@@ -43,9 +44,9 @@ class AppTest : H2TestBase() {
 
                 assertEquals(HttpStatusCode.OK, res.status)
 
-                val alleVedtak = res.body<List<Periode>>()
+                val alleVedtak = res.body<VedtakResponse>()
 
-                assertEquals(1, alleVedtak.size)
+                assertEquals(1, alleVedtak.perioder.size)
             }
         }
     }
