@@ -42,7 +42,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:9.41.1")
-    testImplementation("org.flywaydb:flyway-core:10.18.0")
+    testImplementation("org.flywaydb:flyway-core:10.18.1")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.3.232")
 }
