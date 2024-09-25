@@ -3,13 +3,8 @@ package arenaoppslag.modeller
 import arenaoppslag.perioder.Periode
 
 
-data class Maksimum1 (
-    val vedtak: List<Vedtak>
-)
-
-data class Maksimum2(
+data class Maksimum(
     val vedtak: List<Vedtak>,
-    val utbetalinger: List<UtbetalingMedMer>,
 )
 
 data class Vedtak(
@@ -35,12 +30,6 @@ data class UtbetalingMedMer(
 // dagsbeløp med barnetillegg
 //alt ligger i vedtakfakta
 
-
-
-data class Utbetalingsgrad(
-    val kode: String,
-    val termnavn: String //TODO: Denne må renskes sammen med øyvind
-)
 
 data class Reduksjon(
     val timerArbeidet: Double,

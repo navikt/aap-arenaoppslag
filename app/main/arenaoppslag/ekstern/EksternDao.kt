@@ -247,7 +247,7 @@ object EksternDao {
         fraOgMedDato: LocalDate,
         tilOgMedDato: LocalDate,
         connection: Connection
-    ):Maksimum2{
+    ):Maksimum{
         val maksimum = connection.prepareStatement(selectMaksimumMedTidsbegrensning).use { preparedStatement ->
             preparedStatement.setString(1, personId)
             preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
@@ -283,7 +283,7 @@ object EksternDao {
                     beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId,connection)
                 )
             }.toList()
-            Maksimum2(vedtak, utbetalinger)
+            Maksimum(vedtak)
         }
         return maksimum
     }

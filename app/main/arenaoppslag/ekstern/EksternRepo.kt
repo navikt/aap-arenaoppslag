@@ -1,8 +1,6 @@
 package arenaoppslag.ekstern
 
-import arenaoppslag.modeller.Maksimum2
-import arenaoppslag.modeller.Minimum
-import arenaoppslag.perioder.Periode
+import arenaoppslag.modeller.Maksimum
 import java.time.LocalDate
 import javax.sql.DataSource
 
@@ -12,7 +10,7 @@ class EksternRepo(private val dataSource: DataSource) {
             EksternDao.selectVedtakMinimum(personId, fraOgMedDato, tilOgMedDato, con)
         }
 
-    fun hentMaksimumsløsning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum2 =
+    fun hentMaksimumsløsning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum =
         dataSource.connection.use { con ->
             EksternDao.selectVedtakMaksimum(personId, fraOgMedDato, tilOgMedDato, con)
         }

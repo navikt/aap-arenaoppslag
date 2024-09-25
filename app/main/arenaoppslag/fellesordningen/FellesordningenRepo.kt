@@ -1,6 +1,5 @@
 package arenaoppslag.fellesordningen
 
-import arenaoppslag.modeller.Maksimum2
 import java.time.LocalDate
 import javax.sql.DataSource
 
