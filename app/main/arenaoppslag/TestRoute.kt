@@ -1,9 +1,7 @@
 package arenaoppslag
 
 import arenaoppslag.ekstern.EksternRepo
-import arenaoppslag.ekstern.ekstern
-import arenaoppslag.fellesordningen.FellesordningenRepo
-import arenaoppslag.fellesordningen.VedtakRequest
+import arenaoppslag.modeller.VedtakRequest
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*

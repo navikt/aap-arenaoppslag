@@ -1,6 +1,7 @@
 package arenaoppslag.modeller
 
 import arenaoppslag.perioder.Periode
+import java.time.LocalDate
 
 
 data class Maksimum(
@@ -29,6 +30,22 @@ data class UtbetalingMedMer(
 //dagsats ligger i vedtaksfakta //barntill
 // dagsbeløp med barnetillegg
 //alt ligger i vedtakfakta
+
+data class VedtakRequest(
+    val personidentifikator: String,
+    val fraOgMedDato: LocalDate,
+    val tilOgMedDato: LocalDate
+)
+
+data class VedtakResponse(
+    val perioder: List<VedtakPeriode>
+)
+
+data class VedtakPeriode(
+    val fraOgMedDato: LocalDate,
+    val tilOgMedDato: LocalDate?
+)
+
 
 
 data class Reduksjon(

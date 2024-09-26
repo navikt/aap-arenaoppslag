@@ -1,7 +1,7 @@
 package arenaoppslag.plugins
 
 import arenaoppslag.arenamodell.Vedtak
-import arenaoppslag.fellesordningen.VedtakResponse
+import arenaoppslag.ekstern.VedtakResponse
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.ktor.serialization.jackson.*

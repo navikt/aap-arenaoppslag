@@ -1,9 +1,7 @@
 package arenaoppslag
 
 import arenaoppslag.ekstern.VedtakResponse
-import arenaoppslag.fellesordningen.VedtakRequest
-import arenaoppslag.modeller.Minimum
-import arenaoppslag.perioder.Periode
+import arenaoppslag.modeller.VedtakRequest
 import arenaoppslag.util.AzureTokenGen
 import arenaoppslag.util.Fakes
 import arenaoppslag.util.H2TestBase
