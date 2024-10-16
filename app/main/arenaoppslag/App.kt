@@ -3,7 +3,7 @@ package arenaoppslag
 import arenaoppslag.datasource.Hikari
 import arenaoppslag.dsop.dsop
 import arenaoppslag.ekstern.ekstern
-import arenaoppslag.perioder.intern
+import arenaoppslag.intern.intern
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages

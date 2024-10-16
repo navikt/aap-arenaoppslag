@@ -1,7 +1,8 @@
 package arenaoppslag.modeller
 
-import arenaoppslag.perioder.Periode
+import arenaoppslag.ekstern.Periode
 import java.time.LocalDate
+
 
 
 data class Maksimum(

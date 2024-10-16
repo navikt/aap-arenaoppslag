@@ -2,7 +2,6 @@ package arenaoppslag.ekstern
 
 import arenaoppslag.datasource.map
 import arenaoppslag.modeller.*
-import arenaoppslag.perioder.Periode
 import java.sql.Connection
 import java.sql.Date
 import java.time.LocalDate

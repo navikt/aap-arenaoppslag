@@ -6,21 +6,31 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import javax.sql.DataSource
 
-fun Route.ekstern(datasource: DataSource) {
-    val felleordningRepo = InternRepo(datasource)
+fun Route.intern(datasource: DataSource) {
+    val internRepo = InternRepo(datasource)
 
-    route("/Intern") {
-        post("/minimum") {
-            val request = call.receive<VedtakRequest>()
-            call.respond(felleordningRepo.hentMinimumLøsning(
-                request.personidentifikator,
-                request.fraOgMedDato,
-                request.tilOgMedDato)
-            )
+    route("/intern") {
+        route("/perioder"){
+            post {
+                val request = call.receive<VedtakRequest>()
+                call.respond(internRepo.hentMinimumLøsning(
+                    request.personidentifikator,
+                    request.fraOgMedDato,
+                    request.tilOgMedDato)
+                )
+            }
+            post("/11-17") {
+                val request = call.receive<VedtakRequest>()
+                call.respond(internRepo.hentPeriodeInkludert11_17(
+                    request.personidentifikator,
+                    request.fraOgMedDato,
+                    request.tilOgMedDato)
+                )
+            }
         }
         post("/maksimum") {
             val request = call.receive<VedtakRequest>()
-            call.respond(felleordningRepo.hentMaksimumsløsning(
+            call.respond(internRepo.hentMaksimumsløsning(
                 request.personidentifikator,
                 request.fraOgMedDato,
                 request.tilOgMedDato)
@@ -28,7 +38,7 @@ fun Route.ekstern(datasource: DataSource) {
         }
         post("/saker") {
             val request = call.receive<SakerRequest>()
-            call.respond(felleordningRepo.hentSaker(
+            call.respond(internRepo.hentSaker(
                 request.personidentifikator
             )
             )

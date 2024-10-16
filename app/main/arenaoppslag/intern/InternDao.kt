@@ -2,7 +2,6 @@ package arenaoppslag.intern
 
 import arenaoppslag.datasource.map
 import arenaoppslag.modeller.*
-import arenaoppslag.perioder.Periode
 import java.sql.Connection
 import java.sql.Date
 import java.time.LocalDate
@@ -116,6 +115,50 @@ object InternDao {
             p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
     """
 
+    private const val selectVedtakMedTidsbegrensningMed11_17Sql = """
+        SELECT v.til_dato, v.fra_dato, af.aktfasenavn, v.aktfasekode
+          FROM vedtak v
+          JOIN aktivitetfase af ON v.aktfasekode = af.aktfasekode
+         WHERE person_id = 
+               (SELECT person_id 
+                  FROM person 
+                 WHERE fodselsnr = ?) 
+           AND utfallkode = 'JA' 
+           AND rettighetkode = 'AAP'
+           AND vedtaktypekode IN ('O', 'E', 'G')
+           AND vedtakstatuskode IN ('IVERK', 'AVSLU')
+           AND (fra_dato <= til_dato OR til_dato IS NULL)
+           AND (til_dato >= ? OR til_dato IS NULL) 
+           AND fra_dato <= ?
+    """
+
+    fun selectVedtakMedTidsbegrensningOg11_17(
+        personId: String,
+        fraOgMedDato: LocalDate,
+        tilOgMedDato: LocalDate,
+        connection: Connection
+    ): PerioderMed11_17Response {
+        return connection.prepareStatement(selectVedtakMedTidsbegrensningMed11_17Sql).use { preparedStatement ->
+            preparedStatement.setString(1, personId)
+            preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
+            preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
+
+            val resultSet = preparedStatement.executeQuery()
+
+            val perioder = resultSet.map { row ->
+                PeriodeMed11_17(
+                    Periode(
+                        fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                        tilOgMedDato = getNullableDate(row.getDate("til_dato")),
+                    ),
+                    aktivitetsfaseKode = row.getString("aktfasenavn"),
+                    aktivitetsfaseNavn = row.getString("aktfasekode"),
+                )
+            }
+            PerioderMed11_17Response(perioder)
+        }
+    }
+
     fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
         return connection.prepareStatement(selectSykedagerMeldekort).use { preparedStatement ->
             preparedStatement.setString(1, meldekortId)
@@ -208,7 +251,7 @@ object InternDao {
                             selectFraværMeldekort(meldekortId,connection).toFloat()
                         )
                     ),
-                    periode = Periode(
+                    periode = arenaoppslag.ekstern.Periode(
                         fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
                         tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
                     ),
@@ -288,7 +331,7 @@ object InternDao {
                     saksnummer = row.getString("sak_id"),
                     vedtaksdato = row.getString("fra_dato"),
                     rettighetsType = row.getString("aktfasekode"),
-                    periode = Periode(
+                    periode = arenaoppslag.ekstern.Periode(
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato"))
                     ),

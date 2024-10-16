@@ -7,12 +7,12 @@ import io.ktor.server.routing.*
 import javax.sql.DataSource
 
 fun Route.ekstern(datasource: DataSource) {
-    val felleordningRepo = EksternRepo(datasource)
+    val eksternRepo = EksternRepo(datasource)
 
     route("/ekstern") {
         post("/minimum") {
             val request = call.receive<VedtakRequest>()
-            call.respond(felleordningRepo.hentMinimumLøsning(
+            call.respond(eksternRepo.hentMinimumLøsning(
                 request.personidentifikator,
                 request.fraOgMedDato,
                 request.tilOgMedDato)
@@ -20,7 +20,7 @@ fun Route.ekstern(datasource: DataSource) {
         }
         post("/maksimum") {
             val request = call.receive<VedtakRequest>()
-            call.respond(felleordningRepo.hentMaksimumsløsning(
+            call.respond(eksternRepo.hentMaksimumsløsning(
                 request.personidentifikator,
                 request.fraOgMedDato,
                 request.tilOgMedDato)

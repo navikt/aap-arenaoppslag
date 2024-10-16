@@ -10,6 +10,11 @@ class InternRepo(private val dataSource: DataSource) {
             InternDao.selectVedtakMinimum(personId, fraOgMedDato, tilOgMedDato, con)
         }
 
+    fun hentPeriodeInkludert11_17(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): PerioderMed11_17Response =
+        dataSource.connection.use { con ->
+            InternDao.selectVedtakMedTidsbegrensningOg11_17(personId, fraOgMedDato, tilOgMedDato, con)
+        }
+
     fun hentMaksimumsløsning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum =
         dataSource.connection.use { con ->
             InternDao.selectVedtakMaksimum(personId, fraOgMedDato, tilOgMedDato, con)
