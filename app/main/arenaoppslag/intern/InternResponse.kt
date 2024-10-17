@@ -21,7 +21,8 @@ data class VedtakFakta(
 
 data class SakStatus(
     val sakId: String,
-    val vedtakStatusKode: String
+    val vedtakStatusKode: String,
+    val periode: Periode
 )
 
 data class PerioderMed11_17Response(

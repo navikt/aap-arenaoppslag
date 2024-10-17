@@ -26,7 +26,7 @@ object InternDao {
     """
 
     private const val selectSaksIdByFnr = """
-        SELECT vedtakstatuskode, sak_id 
+        SELECT vedtakstatuskode, sak_id, til_dato, fra_dato
           FROM vedtak
          WHERE person_id = 
                (SELECT person_id 
@@ -355,7 +355,11 @@ object InternDao {
             return resultSet.map { row ->
                 SakStatus(
                     row.getString("sak_id"),
-                    row.getString("vedtakstatuskode")
+                    row.getString("vedtakstatuskode"),
+                    Periode(
+                        row.getDate("fra_dato").toLocalDate(),
+                        getNullableDate(row.getDate("til_dato"))
+                    )
                 )
             }.toList()
         }
