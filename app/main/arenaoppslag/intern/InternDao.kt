@@ -1,6 +1,7 @@
 package arenaoppslag.intern
 
 import arenaoppslag.datasource.map
+import arenaoppslag.ekstern.EksternDao
 import arenaoppslag.modeller.*
 import java.sql.Connection
 import java.sql.Date
@@ -263,21 +264,17 @@ object InternDao {
         }
     }
 
-    fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection):String{
+    fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection):Int{
         return connection.prepareStatement(hentBeregningsgrunnlag).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
-            var beregningsgrunnlag:String?=null
-            var beregninggrunnlagManuelt:String?=null
+            var beregningsgrunnlag:Int?=null
             resultSet.map { row ->
-                if (row.getString("vedtakfaktakode")=="AAPBERREGL") {
-                    beregningsgrunnlag = row.getString("vedtakverdi")
-                }
-                if(row.getString("vedtakfaktakode")=="AAPMANBER"){
-                    beregninggrunnlagManuelt=row.getString("vedtakverdi")
+                if (row.getString("vedtakfaktakode")=="DAGSFSAM") {
+                    beregningsgrunnlag = row.getInt("vedtakverdi")
                 }
             }
-            beregninggrunnlagManuelt?:beregningsgrunnlag?:"0"
+            return@use beregningsgrunnlag?:0
         }
     }
 
