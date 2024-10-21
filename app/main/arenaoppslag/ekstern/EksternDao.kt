@@ -28,7 +28,7 @@ object EksternDao {
     private const val hentBeregningsgrunnlag = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
-             WHERE vedtak_id = ? AND vedtakfaktakode IN ('AAPBERREGL', 'AAPMANBER')
+             WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSFSAM')
     """
 
     private const val hentVedtakfakta = """
@@ -214,7 +214,7 @@ object EksternDao {
             var beregningsgrunnlag:Int?=null
             resultSet.map { row ->
                 if (row.getString("vedtakfaktakode")=="DAGSFSAM") {
-                    beregningsgrunnlag = row.getInt("vedtakverdi")
+                    beregningsgrunnlag = row.getInt("vedtakverdi")*13000/33
                 }
             }
             return@use beregningsgrunnlag?:0
