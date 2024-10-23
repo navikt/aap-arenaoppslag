@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     kotlin("jvm") version "2.0.21"
 }
@@ -24,4 +26,12 @@ subprojects {
     kotlin.sourceSets["test"].kotlin.srcDirs("test")
     sourceSets["main"].resources.srcDirs("main")
     sourceSets["test"].resources.srcDirs("test")
+
+    kotlin {
+        jvmToolchain(21)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+            apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+        }
+    }
 }
