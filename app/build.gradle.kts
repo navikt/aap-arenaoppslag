@@ -1,16 +1,6 @@
-import org.gradle.kotlin.dsl.invoke
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import kotlin.text.set
-
 plugins {
     id("io.ktor.plugin") version "3.0.0"
     application
-}
-
-repositories {
-    mavenCentral()
-    maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
 }
 
 val ktorVersion = "3.0.0"
@@ -49,10 +39,4 @@ dependencies {
     testImplementation("org.flywaydb:flyway-core:10.19.0")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.3.232")
-}
-
-tasks {
-    withType<Test> {
-        useJUnitPlatform()
-    }
 }

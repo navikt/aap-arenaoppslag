@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+
 plugins {
     `maven-publish`
     `java-library`
@@ -6,13 +8,15 @@ plugins {
 apply(plugin = "maven-publish")
 apply(plugin = "java-library")
 
-repositories {
-    mavenCentral()
-    maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
-}
-
 java {
     withSourcesJar()
+}
+
+kotlin {
+    explicitApi = ExplicitApiMode.Warning
+    compilerOptions {
+        apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0)
+    }
 }
 
 publishing {

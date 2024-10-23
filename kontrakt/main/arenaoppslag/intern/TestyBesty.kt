@@ -1,5 +1,5 @@
 package arenaoppslag.intern
 
-data class TestyBesty(
+public data class TestyBesty(
     val hei: String
 )
