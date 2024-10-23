@@ -96,4 +96,16 @@ class EksternDaoMinimumTest : H2TestBase(
         assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtakLeftOverlap)
         assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtakRightOverlap)
     }
+
+    @Test
+    fun `ingen vedtaks-perioder blir hentet ut for personer som har invalid vedtak (feil VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE)`() {
+        val alleVedtak = EksternDao.selectVedtakMinimum(
+            personId = "invalid",
+            fraOgMedDato = LocalDate.of(2022, 10, 1),
+            tilOgMedDato = LocalDate.of(2023, 12, 31),
+            h2.connection
+        )
+
+        assertEquals(VedtakResponse(listOf()), alleVedtak)
+    }
 }
