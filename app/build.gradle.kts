@@ -5,11 +5,11 @@ import kotlin.text.set
 
 plugins {
     kotlin("jvm") version "2.0.20"
-    id("io.ktor.plugin") version "2.3.12"
+    id("io.ktor.plugin") version "3.0.0"
     application
 }
 
-val ktorVersion = "2.3.12"
+val ktorVersion = "3.0.0"
 
 application {
     mainClass.set("arenaoppslag.AppKt")

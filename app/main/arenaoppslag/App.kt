@@ -14,7 +14,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import io.micrometer.prometheusmetrics.PrometheusConfig
@@ -54,7 +54,6 @@ fun Application.server(
             val userAgent = call.request.headers["User-Agent"]
             val callId =
                 call.request.header("x-callid") ?: call.request.header("nav-callId") ?: "ukjent"
-            val token = call.request.header("Authorization")
             val path = call.request.path()
             "Status: $status$errorBody, HTTP method: $httpMethod, User agent: $userAgent, Call id: $callId, Path: $path"
         }
