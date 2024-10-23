@@ -4,4 +4,4 @@ plugins {
 }
 
 rootProject.name = "arenaoppslag"
-include("app")
+include("app", "kontrakt")
