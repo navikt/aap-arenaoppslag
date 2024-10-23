@@ -52,8 +52,10 @@ class AppTest : H2TestBase() {
     private val ApplicationTestBuilder.jsonHttpClient: HttpClient
         get() =
             createClient {
-                install(ContentNegotiation) { jackson {
-                    registerModule(JavaTimeModule())
-                } }
+                install(ContentNegotiation) {
+                    jackson {
+                        registerModule(JavaTimeModule())
+                    }
+                }
             }
 }

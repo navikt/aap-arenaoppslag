@@ -27,4 +27,5 @@ fun Application.azure() {
     }
 }
 
-fun NettyApplicationEngine.port() = runBlocking { resolvedConnectors() }.first { it.type == ConnectorType.HTTP }.port
+fun NettyApplicationEngine.port() =
+    runBlocking { resolvedConnectors() }.first { it.type == ConnectorType.HTTP }.port
