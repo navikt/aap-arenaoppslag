@@ -12,6 +12,7 @@ allprojects {
 }
 
 subprojects {
+    group = "no.nav.aap.arenaoppslag"
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
     tasks {
