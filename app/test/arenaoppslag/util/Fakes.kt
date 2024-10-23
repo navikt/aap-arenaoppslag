@@ -27,5 +27,7 @@ fun Application.azure() {
     }
 }
 
-fun NettyApplicationEngine.port() =
-    runBlocking { resolvedConnectors() }.first { it.type == ConnectorType.HTTP }.port
+fun EmbeddedServer<*, *>.port(): Int =
+    runBlocking { this@port.engine.resolvedConnectors() }
+        .first { it.type == ConnectorType.HTTP }
+        .port
