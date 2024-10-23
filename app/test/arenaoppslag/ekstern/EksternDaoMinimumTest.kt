@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import java.time.LocalDate
 import kotlin.test.assertContains
 
-class FellesordningenDaoTest : H2TestBase(
+class EksternDaoMinimumTest : H2TestBase(
     "flyway/eksterndaotest"
 ) {
     @Test
