@@ -15,7 +15,7 @@ values ('1234', '13489616', 'IVERK', 'O', to_date('30.08.2022', 'DD.MM.RRRR'), '
         'N', null, null, 'MNA0502', null, to_date('17.09.2022', 'DD.MM.RRRR'), 'N');
 
 
--- hente ut gyldige minimumsstrukturer
+-- hente ut gyldige minimumsstrukturer for flere vedtak
 INSERT INTO PERSON(PERSON_ID, FODSELSNR) VALUES(2, '321');
 
 Insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER,
@@ -36,3 +36,6 @@ values
      '73981', '5', 'AAP', 'UGJEN', '31028783', null, to_date('30.08.2022', 'DD.MM.RRRR'), '36905534', null,
      '2', 'MNA0502', null, 'N', null, null, null, null, null, to_date('31.12.2019', 'DD.MM.RRRR'), to_date('01.01.2023', 'DD.MM.RRRR'), null,
      'N', null, null, 'MNA0502', null, to_date('17.09.2022', 'DD.MM.RRRR'), 'N');
+
+-- person uten vedtak
+INSERT INTO PERSON(PERSON_ID, FODSELSNR) VALUES(3, 'ingenvedtak');
