@@ -1,9 +1,9 @@
 package arenaoppslag.ekstern
 
-import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.kontrakt.ekstern.EksternVedtakRequest
 import javax.sql.DataSource
 
 fun Route.ekstern(datasource: DataSource) {
@@ -11,7 +11,7 @@ fun Route.ekstern(datasource: DataSource) {
 
     route("/ekstern") {
         post("/minimum") {
-            val request = call.receive<VedtakRequest>()
+            val request = call.receive<EksternVedtakRequest>()
             call.respond(eksternRepo.hentMinimumLøsning(
                 request.personidentifikator,
                 request.fraOgMedDato,
@@ -19,7 +19,7 @@ fun Route.ekstern(datasource: DataSource) {
             )
         }
         post("/maksimum") {
-            val request = call.receive<VedtakRequest>()
+            val request = call.receive<EksternVedtakRequest>()
             call.respond(eksternRepo.hentMaksimumsløsning(
                 request.personidentifikator,
                 request.fraOgMedDato,

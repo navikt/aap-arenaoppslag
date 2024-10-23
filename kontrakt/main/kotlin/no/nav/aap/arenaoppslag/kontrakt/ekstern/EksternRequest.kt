@@ -1,8 +1,8 @@
-package arenaoppslag.ekstern
+package no.nav.aap.arenaoppslag.kontrakt.ekstern
 
 import java.time.LocalDate
 
-data class VedtakRequest(
+public data class EksternVedtakRequest(
     val personidentifikator: String,
     val fraOgMedDato: LocalDate,
     val tilOgMedDato: LocalDate

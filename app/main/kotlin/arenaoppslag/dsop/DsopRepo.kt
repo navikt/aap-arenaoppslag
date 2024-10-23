@@ -1,5 +1,6 @@
 package arenaoppslag.dsop
 
+import no.nav.aap.arenaoppslag.kontrakt.dsop.Periode
 import javax.sql.DataSource
 
 class DsopRepo(private val datasource: DataSource) {

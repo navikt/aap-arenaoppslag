@@ -1,6 +1,6 @@
 package arenaoppslag.dsop
 
-import java.time.LocalDate
+import no.nav.aap.arenaoppslag.kontrakt.dsop.Periode
 
 data class VedtakResponse(
     val uttrekksperiode: Periode,
@@ -32,9 +32,4 @@ data class DsopMeldekort(
 data class Kodeverdi(
     val kode: String,
     val termnavn: String
-)
-
-data class Periode(
-    val fraDato: LocalDate,
-    val tilDato: LocalDate
 )

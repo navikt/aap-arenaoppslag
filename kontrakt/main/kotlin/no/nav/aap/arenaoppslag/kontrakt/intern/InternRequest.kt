@@ -1,13 +1,13 @@
-package arenaoppslag.intern
+package no.nav.aap.arenaoppslag.kontrakt.intern
 
 import java.time.LocalDate
 
-data class VedtakRequest(
+public data class InternVedtakRequest(
     val personidentifikator: String,
     val fraOgMedDato: LocalDate,
     val tilOgMedDato: LocalDate
 )
 
-class SakerRequest (
+public data class SakerRequest (
     val personidentifikator: String
 )
