@@ -7,15 +7,13 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import java.time.LocalDate
 import kotlin.test.assertContains
 
-class EksternDaoMinimumTest : H2TestBase(
-    "flyway/eksterndaotest"
-) {
+class EksternDaoMinimumTest : H2TestBase("flyway/eksterndaotest") {
     @Test
     fun `ingen vedtaks-perioder blir hentet ut for personer som ikke er tilknyttet noe vedtak`() {
         val alleVedtak = EksternDao.selectVedtakMinimum(
             personId = "ingenvedtak",
-            fraOgMedDato = LocalDate.of(2022, 10, 1),
-            tilOgMedDato = LocalDate.of(2023, 12, 31),
+            fraOgMedDato = LocalDate.of(2010, 10, 1),
+            tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
         )
 
@@ -31,8 +29,8 @@ class EksternDaoMinimumTest : H2TestBase(
 
         val alleVedtak = EksternDao.selectVedtakMinimum(
             personId = "123",
-            fraOgMedDato = LocalDate.of(2022, 10, 1),
-            tilOgMedDato = LocalDate.of(2023, 12, 31),
+            fraOgMedDato = LocalDate.of(2010, 10, 1),
+            tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
         )
 
@@ -101,11 +99,80 @@ class EksternDaoMinimumTest : H2TestBase(
     fun `ingen vedtaks-perioder blir hentet ut for personer som har invalid vedtak (feil VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE)`() {
         val alleVedtak = EksternDao.selectVedtakMinimum(
             personId = "invalid",
-            fraOgMedDato = LocalDate.of(2022, 10, 1),
-            tilOgMedDato = LocalDate.of(2023, 12, 31),
+            fraOgMedDato = LocalDate.of(2010, 10, 1),
+            tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
         )
 
         assertEquals(VedtakResponse(listOf()), alleVedtak)
+    }
+
+    @Test
+    fun `en person som har blanding av invalid of valid vedtak, får bare de som er valid`() {
+        val forventetVedtaksperioder = listOf(
+            Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 2, 4))
+        )
+
+        val alleVedtak = EksternDao.selectVedtakMinimum(
+            personId = "somevalid",
+            fraOgMedDato = LocalDate.of(2010, 10, 1),
+            tilOgMedDato = LocalDate.of(2024, 12, 31),
+            h2.connection
+        )
+
+        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+    }
+
+    @Test
+    fun `hente vedtak med forskjellige gyldige vedtaksstatus-koder`() {
+        val forventetVedtaksperioder = listOf(
+            Periode(LocalDate.of(2022, 8, 27), LocalDate.of(2023, 2, 4)),
+            Periode(LocalDate.of(2019, 8, 27), LocalDate.of(2023, 1, 1))
+        )
+
+        val alleVedtak = EksternDao.selectVedtakMinimum(
+            personId = "statuskode",
+            fraOgMedDato = LocalDate.of(2010, 10, 1),
+            tilOgMedDato = LocalDate.of(2024, 12, 31),
+            h2.connection
+        )
+
+        assertEquals(forventetVedtaksperioder.size, alleVedtak.perioder.size)
+        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.perioder.toSet())
+    }
+
+    @Test
+    fun `hente vedtak med forskjellige gyldige vedtakstype-koder`() {
+        val forventetVedtaksperioder = listOf(
+            Periode(LocalDate.of(2022, 8, 27), LocalDate.of(2023, 2, 4)),
+            Periode(LocalDate.of(2019, 8, 27), LocalDate.of(2022, 2, 4)),
+            Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
+        )
+
+        val alleVedtak = EksternDao.selectVedtakMinimum(
+            personId = "typekode",
+            fraOgMedDato = LocalDate.of(2010, 10, 1),
+            tilOgMedDato = LocalDate.of(2024, 12, 31),
+            h2.connection
+        )
+
+        assertEquals(forventetVedtaksperioder.size, alleVedtak.perioder.size)
+        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.perioder.toSet())
+    }
+
+    @Test
+    fun `hente vedtak med null til-dato`() {
+        val forventetVedtaksperioder = listOf(
+            Periode(LocalDate.of(2022, 8, 30), null)
+        )
+
+        val alleVedtak = EksternDao.selectVedtakMinimum(
+            personId = "nulltildato",
+            fraOgMedDato = LocalDate.of(2010, 10, 1),
+            tilOgMedDato = LocalDate.of(2024, 12, 31),
+            h2.connection
+        )
+
+        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
     }
 }
