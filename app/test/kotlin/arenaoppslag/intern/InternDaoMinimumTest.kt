@@ -1,16 +1,14 @@
-package arenaoppslag.ekstern
+package arenaoppslag.intern
 
 import arenaoppslag.util.H2TestBase
-import org.flywaydb.core.Flyway
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import kotlin.test.assertContains
 
-class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
+class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
-    fun `ingen vedtaks-perioder blir hentet ut for personer som ikke er tilknyttet noe vedtak`() {
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+    fun `ingen vedtaks-perioder blir hentet ut for per'soner som ikke er tilknyttet noe vedtak`() {
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "ingenvedtak",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -27,7 +25,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 8, 30))
         )
 
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "123",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -44,7 +42,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
         )
 
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "321",
             fraOgMedDato = LocalDate.of(2009, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
@@ -61,7 +59,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
         )
 
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "321",
             fraOgMedDato = LocalDate.of(2019, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
@@ -77,14 +75,14 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 8, 30))
         )
 
-        val alleVedtakLeftOverlap = EksternDao.selectVedtakMinimum(
+        val alleVedtakLeftOverlap = InternDao.selectVedtakMinimum(
             personId = "123",
             fraOgMedDato = LocalDate.of(2022, 2, 1),
             tilOgMedDato = LocalDate.of(2022, 10, 31),
             h2.connection
         )
 
-        val alleVedtakRightOverlap = EksternDao.selectVedtakMinimum(
+        val alleVedtakRightOverlap = InternDao.selectVedtakMinimum(
             personId = "123",
             fraOgMedDato = LocalDate.of(2023, 6, 1),
             tilOgMedDato = LocalDate.of(2024, 10, 31),
@@ -97,7 +95,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
 
     @Test
     fun `ingen vedtaks-perioder blir hentet ut for personer som har invalid vedtak (feil VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE)`() {
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "invalid",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -113,7 +111,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 2, 4))
         )
 
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "somevalid",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -130,7 +128,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2019, 8, 27), LocalDate.of(2023, 1, 1))
         )
 
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "statuskode",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -149,7 +147,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
         )
 
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "typekode",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -166,7 +164,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), null)
         )
 
-        val alleVedtak = EksternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "nulltildato",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
