@@ -5,7 +5,7 @@ import java.time.LocalDate
 import javax.sql.DataSource
 
 class EksternRepo(private val dataSource: DataSource) {
-    fun hentMinimumLøsning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse =
+    fun hentMinimumLøsning(personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): List<Periode> =
         dataSource.connection.use { con ->
             EksternDao.selectVedtakMinimum(personId, fraOgMedDato, tilOgMedDato, con)
         }

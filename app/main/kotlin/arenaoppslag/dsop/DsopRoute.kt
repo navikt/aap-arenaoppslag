@@ -12,11 +12,23 @@ fun Route.dsop(datasource: DataSource) {
     route("/dsop") {
         post("/vedtak") {
             val request = call.receive<DsopRequest>()
-            call.respond(dsopRepo.hentVedtak(request.personId, request.periode, request.samtykkePeriode))
+            call.respond(
+                dsopRepo.hentVedtak(
+                    request.personId,
+                    request.periode,
+                    request.samtykkePeriode
+                ).tilKontrakt()
+            )
         }
         post("/meldekort") {
             val request = call.receive<DsopRequest>()
-            call.respond(dsopRepo.hentMeldeplikt(request.personId, request.periode, request.samtykkePeriode))
+            call.respond(
+                dsopRepo.hentMeldeplikt(
+                    request.personId,
+                    request.periode,
+                    request.samtykkePeriode
+                ).tilKontrakt()
+            )
         }
     }
 }

@@ -1,13 +1,14 @@
 package arenaoppslag.intern
 
 import arenaoppslag.util.H2TestBase
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
-    fun `ingen vedtaks-perioder blir hentet ut for per'soner som ikke er tilknyttet noe vedtak`() {
+    fun `ingen vedtaks-perioder blir hentet ut for personer som ikke er tilknyttet noe vedtak`() {
         val alleVedtak = InternDao.selectVedtakMinimum(
             personId = "ingenvedtak",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
@@ -15,7 +16,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(listOf()), alleVedtak)
+        assertThat(alleVedtak).isEmpty()
     }
 
     @Test
@@ -32,7 +33,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+        assertEquals(forventetVedtaksperioder, alleVedtak)
     }
 
     @Test
@@ -49,8 +50,8 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(forventetVedtaksperioder.size, alleVedtak.perioder.size)
-        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.perioder.toSet())
+        assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
+        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.toSet())
     }
 
     @Test
@@ -66,7 +67,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+        assertEquals(forventetVedtaksperioder, alleVedtak)
     }
 
     @Test
@@ -89,8 +90,8 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtakLeftOverlap)
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtakRightOverlap)
+        assertEquals(forventetVedtaksperioder, alleVedtakLeftOverlap)
+        assertEquals(forventetVedtaksperioder, alleVedtakRightOverlap)
     }
 
     @Test
@@ -102,7 +103,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(listOf()), alleVedtak)
+        assertThat(alleVedtak).isEmpty()
     }
 
     @Test
@@ -118,7 +119,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+        assertEquals(forventetVedtaksperioder, alleVedtak)
     }
 
     @Test
@@ -135,8 +136,8 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(forventetVedtaksperioder.size, alleVedtak.perioder.size)
-        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.perioder.toSet())
+        assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
+        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.toSet())
     }
 
     @Test
@@ -154,8 +155,8 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(forventetVedtaksperioder.size, alleVedtak.perioder.size)
-        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.perioder.toSet())
+        assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
+        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.toSet())
     }
 
     @Test
@@ -171,6 +172,6 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+        assertEquals(forventetVedtaksperioder, alleVedtak)
     }
 }

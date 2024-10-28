@@ -1,11 +1,10 @@
 package arenaoppslag.ekstern
 
 import arenaoppslag.util.H2TestBase
-import org.flywaydb.core.Flyway
-import org.junit.jupiter.api.Test
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import kotlin.test.assertContains
 
 class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
@@ -17,14 +16,17 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(listOf()), alleVedtak)
+        assertThat(alleVedtak).isEmpty()
     }
 
     @Test
     //TODO - kanskje redundant considering testen som kommer rett etter denne
     fun `hente ut gyldig minimumstruktur for enkelt vedtak`() {
         val forventetVedtaksperioder = listOf(
-            Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 8, 30))
+            Periode(
+                LocalDate.of(2022, 8, 30),
+                LocalDate.of(2023, 8, 30)
+            )
         )
 
         val alleVedtak = EksternDao.selectVedtakMinimum(
@@ -34,7 +36,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+        assertEquals(forventetVedtaksperioder, alleVedtak)
     }
 
     @Test
@@ -51,14 +53,17 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(forventetVedtaksperioder.size, alleVedtak.perioder.size)
-        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.perioder.toSet())
+        assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
+        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.toSet())
     }
 
     @Test
     fun `ikke ha med de vedtak som faller utenfor periode som blir queriet etter`() {
         val forventetVedtaksperioder = listOf(
-            Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
+            Periode(
+                LocalDate.of(2019, 12, 31),
+                LocalDate.of(2023, 1, 1)
+            )
         )
 
         val alleVedtak = EksternDao.selectVedtakMinimum(
@@ -68,13 +73,16 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+        assertEquals(forventetVedtaksperioder, alleVedtak)
     }
 
     @Test
     fun `ha med vedtak som overlapper med, men ikke er subset av, query-perioden`() {
         val forventetVedtaksperioder = listOf(
-            Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 8, 30))
+            Periode(
+                LocalDate.of(2022, 8, 30),
+                LocalDate.of(2023, 8, 30)
+            )
         )
 
         val alleVedtakLeftOverlap = EksternDao.selectVedtakMinimum(
@@ -91,8 +99,8 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtakLeftOverlap)
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtakRightOverlap)
+        assertEquals(forventetVedtaksperioder, alleVedtakLeftOverlap)
+        assertEquals(forventetVedtaksperioder, alleVedtakRightOverlap)
     }
 
     @Test
@@ -104,13 +112,16 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(listOf()), alleVedtak)
+        assertThat(alleVedtak).isEmpty()
     }
 
     @Test
     fun `en person som har blanding av invalid of valid vedtak, får bare de som er valid`() {
         val forventetVedtaksperioder = listOf(
-            Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 2, 4))
+            Periode(
+                LocalDate.of(2022, 8, 30),
+                LocalDate.of(2023, 2, 4)
+            )
         )
 
         val alleVedtak = EksternDao.selectVedtakMinimum(
@@ -120,7 +131,7 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+        assertEquals(forventetVedtaksperioder, alleVedtak)
     }
 
     @Test
@@ -137,8 +148,8 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(forventetVedtaksperioder.size, alleVedtak.perioder.size)
-        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.perioder.toSet())
+        assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
+        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.toSet())
     }
 
     @Test
@@ -156,8 +167,8 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(forventetVedtaksperioder.size, alleVedtak.perioder.size)
-        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.perioder.toSet())
+        assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
+        assertEquals(forventetVedtaksperioder.toSet(), alleVedtak.toSet())
     }
 
     @Test
@@ -173,6 +184,6 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             h2.connection
         )
 
-        assertEquals(VedtakResponse(forventetVedtaksperioder), alleVedtak)
+        assertEquals(forventetVedtaksperioder, alleVedtak)
     }
 }

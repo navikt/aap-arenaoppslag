@@ -15,6 +15,6 @@ class FellesordningenDaoTest : H2TestBase() {
             tilOgMedDato = LocalDate.of(2023, 12, 31),
             h2.connection)
 
-        assertEquals(1, alleVedtak.perioder.size)
+        assertEquals(1, alleVedtak.size)
     }
 }

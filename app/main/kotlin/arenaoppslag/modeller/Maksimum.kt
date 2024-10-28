@@ -1,13 +1,18 @@
 package arenaoppslag.modeller
 
 import arenaoppslag.ekstern.Periode
-import java.time.LocalDate
-
+import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum as KontraktMaksimum
 
 
 data class Maksimum(
     val vedtak: List<Vedtak>,
-)
+) {
+    fun tilKontrakt(): KontraktMaksimum {
+        return KontraktMaksimum(
+            vedtak = vedtak.map { it.tilKontrakt() }
+        )
+    }
+}
 
 data class Vedtak(
     val utbetaling: List<UtbetalingMedMer>,
@@ -18,7 +23,20 @@ data class Vedtak(
     val periode: Periode,
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode
     val beregningsgrunnlag: Int,
-)
+) {
+    fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak {
+        return no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak(
+            utbetaling = utbetaling.map { it.tilKontrakt() },
+            dagsats = dagsats,
+            status = status,
+            saksnummer = saksnummer,
+            vedtaksdato = vedtaksdato,
+            periode = periode.tilKontrakt(),
+            rettighetsType = rettighetsType,
+            beregningsgrunnlag = beregningsgrunnlag,
+        )
+    }
+}
 
 data class UtbetalingMedMer(
     val reduksjon: Reduksjon? = null,
@@ -26,39 +44,48 @@ data class UtbetalingMedMer(
     val belop: Int,
     val dagsats: Int,
     val barnetilegg: Int,
-)
+) {
+    fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.UtbetalingMedMer {
+        return no.nav.aap.arenaoppslag.kontrakt.modeller.UtbetalingMedMer(
+            reduksjon = reduksjon?.tilKontrakt(),
+            periode = periode.tilKontrakt(),
+            belop = belop,
+            dagsats = dagsats,
+            barnetillegg = barnetilegg
+        )
+    }
+}
 
 //dagsats ligger i vedtaksfakta //barntill
 // dagsbeløp med barnetillegg
 //alt ligger i vedtakfakta
 
-data class VedtakRequest(
-    val personidentifikator: String,
-    val fraOgMedDato: LocalDate,
-    val tilOgMedDato: LocalDate
-)
-
-data class VedtakResponse(
-    val perioder: List<VedtakPeriode>
-)
-
-data class VedtakPeriode(
-    val fraOgMedDato: LocalDate,
-    val tilOgMedDato: LocalDate?
-)
-
-
 
 data class Reduksjon(
     val timerArbeidet: Double,
     val annenReduksjon: AnnenReduksjon
-)
+) {
+    fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Reduksjon {
+        return no.nav.aap.arenaoppslag.kontrakt.modeller.Reduksjon(
+            timerArbeidet = timerArbeidet,
+            annenReduksjon = annenReduksjon.tilKontrakt()
+        )
+    }
+}
 
 data class AnnenReduksjon(
     val sykedager: Float?,
-    val sentMeldekort:Boolean?,
+    val sentMeldekort: Boolean?,
     val fraver: Float?
-)
+) {
+    fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.AnnenReduksjon {
+        return no.nav.aap.arenaoppslag.kontrakt.modeller.AnnenReduksjon(
+            sykedager = sykedager,
+            sentMeldekort = sentMeldekort,
+            fraver = fraver
+        )
+    }
+}
 
 /*
 {

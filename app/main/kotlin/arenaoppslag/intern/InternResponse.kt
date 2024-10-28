@@ -6,12 +6,11 @@ import java.time.LocalDate
 data class Periode(
     val fraOgMedDato: LocalDate,
     val tilOgMedDato: LocalDate?
-)
-
-data class VedtakResponse(
-    val perioder: List<Periode>
-)
-
+) {
+    fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Periode {
+        return no.nav.aap.arenaoppslag.kontrakt.modeller.Periode(fraOgMedDato, tilOgMedDato)
+    }
+}
 
 data class VedtakFakta(
     var dagsmbt: Int,
@@ -19,18 +18,16 @@ data class VedtakFakta(
     var dags: Int
 )
 
-data class SakStatus(
-    val sakId: String,
-    val vedtakStatusKode: String,
-    val periode: Periode
-)
-
-data class PerioderMed11_17Response(
-    val perioder: List<PeriodeMed11_17>
-)
-
 data class PeriodeMed11_17(
     val periode: Periode,
     val aktivitetsfaseKode: String,
     val aktivitetsfaseNavn: String
-)
+) {
+    fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.intern.PeriodeMed11_17 {
+        return no.nav.aap.arenaoppslag.kontrakt.intern.PeriodeMed11_17(
+            periode = periode.tilKontrakt(),
+            aktivitetsfaseKode = aktivitetsfaseKode,
+            aktivitetsfaseNavn = aktivitetsfaseNavn
+        )
+    }
+}

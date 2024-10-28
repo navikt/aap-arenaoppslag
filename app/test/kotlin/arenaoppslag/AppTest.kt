@@ -1,7 +1,5 @@
 package arenaoppslag
 
-import arenaoppslag.ekstern.VedtakResponse
-import arenaoppslag.modeller.VedtakRequest
 import arenaoppslag.util.AzureTokenGen
 import arenaoppslag.util.Fakes
 import arenaoppslag.util.H2TestBase
@@ -13,7 +11,9 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.testing.*
-import org.junit.jupiter.api.Assertions.*
+import no.nav.aap.arenaoppslag.kontrakt.ekstern.EksternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.ekstern.VedtakResponse
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -32,7 +32,7 @@ class AppTest : H2TestBase() {
                     bearerAuth(azure.generate())
                     contentType(ContentType.Application.Json)
                     setBody(
-                        VedtakRequest(
+                        EksternVedtakRequest(
                             personidentifikator = "1",
                             fraOgMedDato = LocalDate.of(2022, 10, 1),
                             tilOgMedDato = LocalDate.of(2023, 12, 31)
