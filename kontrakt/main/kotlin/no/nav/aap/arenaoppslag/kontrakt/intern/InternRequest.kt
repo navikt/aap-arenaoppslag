@@ -9,5 +9,5 @@ public data class InternVedtakRequest(
 )
 
 public data class SakerRequest (
-    val personidentifikator: List<String>
+    val personidentifikatorer: List<String>
 )
