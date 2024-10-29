@@ -34,7 +34,7 @@ object EksternDao {
     private const val hentVedtakfakta = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
-             WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS')
+             WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS', 'DAGSFSAM')
     """
 
     private const val selectVedtakMedTidsbegrensningSql = """
@@ -229,12 +229,13 @@ object EksternDao {
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
-            val vedtakfakta = VedtakFakta(0, 0, 0)
+            val vedtakfakta=VedtakFakta(0, 0, 0, 0)
             resultSet.map { row ->
                 when (row.getString("vedtakfaktakode")) {
                     "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
                     "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
                     "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
+                    "DAGSFSAM" -> vedtakfakta.dagsfs = row.getInt("vedtakverdi")
                 }
             }
             vedtakfakta
@@ -271,7 +272,7 @@ object EksternDao {
                     )
                     Vedtak(
                         utbetaling = utbetalinger,
-                        dagsats = vedtakFakta.dags,
+                        dagsats = vedtakFakta.dagsfs,
                         status = row.getString("vedtakstatuskode"),
                         saksnummer = row.getString("sak_id"),
                         vedtaksdato = row.getString("fra_dato"),
