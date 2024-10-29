@@ -52,10 +52,11 @@ fun Route.intern(datasource: DataSource) {
         }
         post("/saker") {
             val request = call.receive<SakerRequest>()
+            val saker = request.personidentifikator.flatMap { personidentifikator ->
+                internRepo.hentSaker(personidentifikator)
+            }
             call.respond(
-                internRepo.hentSaker(
-                    request.personidentifikator
-                )
+                saker
             )
         }
     }
