@@ -42,13 +42,13 @@ object InternDao {
     private const val hentBeregningsgrunnlag = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
-             WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSFSAM')
+             WHERE vedtak_id = ? AND vedtakfaktakode IN ('GRUNN')
     """
 
     private const val hentVedtakfakta = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
-             WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS')
+             WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS', 'BARNMSTON', 'DAGSFSAM')
     """
 
     private const val selectVedtakMedTidsbegrensningSql = """
@@ -277,7 +277,7 @@ object InternDao {
             var beregningsgrunnlag: Int? = null
             resultSet.map { row ->
                 if (row.getString("vedtakfaktakode") == "DAGSFSAM") {
-                    beregningsgrunnlag = row.getInt("vedtakverdi") * 13000 / 33
+                    beregningsgrunnlag = row.getInt("vedtakverdi")
                 }
             }
             return@use beregningsgrunnlag ?: 0
@@ -288,12 +288,14 @@ object InternDao {
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
-            val vedtakfakta = VedtakFakta(0, 0, 0)
+            val vedtakfakta = VedtakFakta(0, 0, 0, 0,0)
             resultSet.map { row ->
                 when (row.getString("vedtakfaktakode")) {
                     "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
                     "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
                     "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
+                    "BARNMSTON" -> vedtakfakta.barnmston = row.getInt("vedtakverdi")
+                    "DAGSFSAM" -> vedtakfakta.dagsfsam = row.getInt("vedtakverdi")
                 }
             }
             vedtakfakta

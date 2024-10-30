@@ -15,7 +15,9 @@ data class Periode(
 data class VedtakFakta(
     var dagsmbt: Int,
     var barntill: Int,
-    var dags: Int
+    var dags: Int,
+    var barnmston: Int,
+    var dagsfsam: Int
 )
 
 data class PeriodeMed11_17(
