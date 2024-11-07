@@ -32,7 +32,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.12")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.0")
 
-    implementation("com.oracle.database.jdbc:ojdbc11:23.5.0.24.07")
+    implementation("com.oracle.database.jdbc:ojdbc11:23.6.0.24.10")
     implementation("com.zaxxer:HikariCP:6.1.0")
 
     testImplementation(kotlin("test"))
