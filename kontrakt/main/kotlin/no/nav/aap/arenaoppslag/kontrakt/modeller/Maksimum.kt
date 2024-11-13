@@ -13,6 +13,7 @@ public data class Vedtak(
     val periode: Periode,
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode
     val beregningsgrunnlag: Int,
+    val barnMedStonad: Int,
 )
 
 public data class UtbetalingMedMer(

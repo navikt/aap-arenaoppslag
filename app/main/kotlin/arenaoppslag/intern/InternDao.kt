@@ -341,7 +341,8 @@ object InternDao {
                             fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                             tilOgMedDato = getNullableDate(row.getDate("til_dato"))
                         ),
-                        beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection)
+                        beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
+                        barnMedStonad = vedtakFakta.barnmston
                     )
                 }.toList()
                 Maksimum(vedtak)
