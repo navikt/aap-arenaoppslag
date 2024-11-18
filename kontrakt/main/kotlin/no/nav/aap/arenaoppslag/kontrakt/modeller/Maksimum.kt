@@ -18,6 +18,7 @@ public data class Vedtak(
 
 public data class UtbetalingMedMer(
     val reduksjon: Reduksjon? = null,
+    val utbetalingsgrad: Int? = null,
     val periode: Periode,
     val belop: Int,
     val dagsats: Int,
