@@ -276,7 +276,7 @@ object InternDao {
             val resultSet = preparedStatement.executeQuery()
             var beregningsgrunnlag: Int? = null
             resultSet.map { row ->
-                if (row.getString("vedtakfaktakode") == "DAGSFSAM") {
+                if (row.getString("vedtakfaktakode") == "GRUNN") {
                     beregningsgrunnlag = row.getInt("vedtakverdi")
                 }
             }
