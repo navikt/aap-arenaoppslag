@@ -20,6 +20,8 @@ data class Vedtak(
     val status: String, //Hypotese, vedtaksstatuskode
     val saksnummer: String, //hypotese sak_id
     val vedtaksdato: String, //reg_dato
+    val vedtaksTypeKode:String,
+    val vedtaksTypeNavn: String,
     val periode: Periode,
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode
     val beregningsgrunnlag: Int,
@@ -35,10 +37,29 @@ data class Vedtak(
             periode = periode.tilKontrakt(),
             rettighetsType = rettighetsType,
             beregningsgrunnlag = beregningsgrunnlag,
-            barnMedStonad = barnMedStonad
+            barnMedStonad = barnMedStonad,
+            vedtaksTypeKode = vedtaksTypeKode,
+            vedtaksTypeNavn = vedtaksTypeNavn,
         )
     }
 }
+
+enum class VedtaksType(
+    val kode: String,
+    val navn: String
+) {
+    REAKSJON("A", "Reaksjon"),
+    ENDRING("E", "Endring"),
+    FORLENGET_VENTETID("F","Forlenget ventetid"),
+    GJENOPPTAK("G", "Gjenopptak"),
+    KONTROLL("K", "Kontroll"),
+    OMGJØR_REAKSJON("M", "Omgjør reaksjon"),
+    ANNULER_SANKSJON("N", "Annuller sanksjon"),
+    NY_RETTIGHET("O", "Ny rettighet"),
+    STANS("S", "Stans"),
+    TIDSBEGRENSET_BORTFALL("T", "Tidsbegrenset bortfall")
+}
+
 
 data class UtbetalingMedMer(
     val reduksjon: Reduksjon? = null,
