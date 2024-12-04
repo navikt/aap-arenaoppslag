@@ -20,7 +20,6 @@ class EksternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     }
 
     @Test
-    //TODO - kanskje redundant considering testen som kommer rett etter denne
     fun `hente ut gyldig minimumstruktur for enkelt vedtak`() {
         val forventetVedtaksperioder = listOf(
             Periode(

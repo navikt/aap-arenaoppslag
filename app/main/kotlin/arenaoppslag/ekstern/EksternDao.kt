@@ -103,7 +103,7 @@ object EksternDao {
             p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
     """
 
-    fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
+    private fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
         return connection.prepareStatement(selectSykedagerMeldekort).use { preparedStatement ->
             preparedStatement.setString(1, meldekortId)
 
@@ -187,7 +187,7 @@ object EksternDao {
 
                 val resultSet = preparedStatement.executeQuery()
 
-                return resultSet.map { row ->
+                resultSet.map { row ->
                     //hent andmerking for sent meldekort
                     val meldekortId = row.getString("meldekort_id")
                     UtbetalingMedMer(
