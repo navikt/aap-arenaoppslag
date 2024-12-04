@@ -13,6 +13,7 @@ import io.ktor.serialization.jackson.*
 import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.kontrakt.ekstern.EksternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.ekstern.VedtakResponse
+import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -45,6 +46,36 @@ class AppTest : H2TestBase() {
                 val alleVedtak = res.body<VedtakResponse>()
 
                 assertEquals(1, alleVedtak.perioder.size)
+            }
+        }
+    }
+
+    @Test
+    fun `Henter ut maksimumsvedtak for fellesordningen`() {
+        Fakes().use { fakes ->
+            val config = TestConfig.default(fakes)
+            val azure = AzureTokenGen(config.azure)
+
+            testApplication {
+                application { server(config, h2) }
+
+                val res = jsonHttpClient.post("/ekstern/maksimum") {
+                    bearerAuth(azure.generate())
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        EksternVedtakRequest(
+                            personidentifikator = "1",
+                            fraOgMedDato = LocalDate.of(2022, 10, 1),
+                            tilOgMedDato = LocalDate.of(2023, 12, 31)
+                        )
+                    )
+                }
+
+                assertEquals(HttpStatusCode.OK, res.status)
+
+                val alleVedtak = res.body<Maksimum>()
+
+                assertEquals(1, alleVedtak.vedtak.size)
             }
         }
     }

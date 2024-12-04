@@ -12,7 +12,7 @@ import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 
 object InternDao {
     private const val selectMaksimumMedTidsbegrensning = """
-        SELECT vedtak_id, til_dato, fra_dato, vedtakstatuskode, sak_id, aktfasekode 
+        SELECT vedtak_id, til_dato, fra_dato, vedtaktypekode, vedtakstatuskode, sak_id, aktfasekode 
           FROM vedtak 
          WHERE person_id = 
                (SELECT person_id 
