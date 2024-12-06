@@ -36,7 +36,6 @@ object InternDao {
                  WHERE fodselsnr = ?) 
            AND rettighetkode = 'AAP'
            AND vedtaktypekode IN ('O', 'E', 'G')
-           AND vedtakstatuskode IN ('IVERK', 'AVSLU')
     """
 
     private const val hentBeregningsgrunnlag = """
