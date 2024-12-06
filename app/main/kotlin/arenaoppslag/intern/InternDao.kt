@@ -3,6 +3,7 @@ package arenaoppslag.intern
 import arenaoppslag.datasource.map
 import arenaoppslag.modeller.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
+import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakStatus
 import java.sql.Connection
 import java.sql.Date
 import java.time.LocalDate
@@ -364,7 +365,8 @@ object InternDao {
             return resultSet.map { row ->
                 SakStatus(
                     row.getString("sak_id"),
-                    row.getString("vedtakstatuskode"),
+                    VedtakStatus.entries.find { it.name == row.getString("vedtakstatuskode") }
+                        ?: VedtakStatus.UKJENT,
                     KontraktPeriode(
                         row.getDate("fra_dato").toLocalDate(),
                         getNullableDate(row.getDate("til_dato"))
