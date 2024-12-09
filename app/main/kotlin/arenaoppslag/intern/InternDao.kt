@@ -154,8 +154,8 @@ object InternDao {
                             fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                             tilOgMedDato = getNullableDate(row.getDate("til_dato")),
                         ),
-                        aktivitetsfaseKode = row.getString("aktfasenavn"),
-                        aktivitetsfaseNavn = row.getString("aktfasekode"),
+                        aktivitetsfaseKode = row.getString("aktfasekode"),
+                        aktivitetsfaseNavn = row.getString("aktfasenavn"),
                     )
                 }
                 perioder
