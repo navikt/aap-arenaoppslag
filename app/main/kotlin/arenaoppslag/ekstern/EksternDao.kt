@@ -5,6 +5,8 @@ import arenaoppslag.modeller.*
 import java.sql.Connection
 import java.sql.Date
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 //https://confluence.adeo.no/display/ARENA/Arena+-+Datamodell+-+Vedtak
 
@@ -249,6 +251,7 @@ object EksternDao {
         tilOgMedDato: LocalDate,
         connection: Connection
     ): Maksimum {
+        val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val maksimum =
             connection.prepareStatement(selectMaksimumMedTidsbegrensning).use { preparedStatement ->
                 preparedStatement.setString(1, personId)
@@ -276,7 +279,7 @@ object EksternDao {
                         dagsats = vedtakFakta.dagsfs,
                         status = row.getString("vedtakstatuskode"),
                         saksnummer = row.getString("sak_id"),
-                        vedtaksdato = row.getString("fra_dato"),
+                        vedtaksdato = LocalDateTime.parse(row.getString("fra_dato"), inputFormatter).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                         rettighetsType = row.getString("aktfasekode"),
                         periode = Periode(
                             fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
