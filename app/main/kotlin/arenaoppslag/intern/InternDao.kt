@@ -368,7 +368,7 @@ object InternDao {
                     VedtakStatus.entries.find { it.name == row.getString("vedtakstatuskode") }
                         ?: VedtakStatus.UKJENT,
                     KontraktPeriode(
-                        row.getDate("fra_dato").toLocalDate(),
+                        getNullableDate(row.getDate("fra_dato")),
                         getNullableDate(row.getDate("til_dato"))
                     )
                 )
