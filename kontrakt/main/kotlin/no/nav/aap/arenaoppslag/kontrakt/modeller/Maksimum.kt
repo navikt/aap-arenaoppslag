@@ -5,6 +5,7 @@ public data class Maksimum(
 )
 
 public data class Vedtak(
+    val vedtaksId: String,
     val utbetaling: List<UtbetalingMedMer>,
     val dagsats: Int,
     val status: String, //Hypotese, vedtaksstatuskode

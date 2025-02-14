@@ -275,6 +275,7 @@ object EksternDao {
                         )
                     )
                     Vedtak(
+                        vedtaksId = vedtakId.toString(),
                         utbetaling = utbetalinger,
                         dagsats = vedtakFakta.dagsfs,
                         status = row.getString("vedtakstatuskode"),

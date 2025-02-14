@@ -331,6 +331,7 @@ object InternDao {
                         )
                     )
                     Vedtak(
+                        vedtaksId = vedtakId.toString(),
                         utbetaling = utbetalinger,
                         dagsats = vedtakFakta.dags,
                         status = row.getString("vedtakstatuskode"),

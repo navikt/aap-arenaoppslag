@@ -15,6 +15,7 @@ data class Maksimum(
 }
 
 data class Vedtak(
+    val vedtaksId: String,
     val utbetaling: List<UtbetalingMedMer>,
     val dagsats: Int,
     val status: String, //Hypotese, vedtaksstatuskode
@@ -29,6 +30,7 @@ data class Vedtak(
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak {
         return no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak(
+            vedtaksId = vedtaksId,
             utbetaling = utbetaling.map { it.tilKontrakt() },
             dagsats = dagsats,
             status = status,
