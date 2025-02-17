@@ -19,11 +19,17 @@ public data class PeriodeMed11_17(
 
 public data class SakStatus(
     val sakId: String,
-    val vedtakStatusKode: VedtakStatus,
-    val periode: Periode
+    val StatusKode: Status,
+    val periode: Periode,
+    val kilde:Kilde = Kilde.ARENA
 )
 
-public enum class VedtakStatus{
+public enum class Kilde{
+    ARENA,
+    KELVIN
+}
+
+public enum class Status{
     AVSLU,
     FORDE,
     GODKJ,
