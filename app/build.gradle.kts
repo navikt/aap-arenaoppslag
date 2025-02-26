@@ -29,7 +29,7 @@ dependencies {
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2")
     implementation("io.micrometer:micrometer-registry-prometheus:1.14.4")
-    implementation("ch.qos.logback:logback-classic:1.5.16")
+    implementation("ch.qos.logback:logback-classic:1.5.17")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.0")
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.7.0.25.01")
