@@ -6,6 +6,11 @@ import java.time.LocalDate
 import javax.sql.DataSource
 
 class InternRepo(private val dataSource: DataSource) {
+    fun hentEksistererIAAPArena(personId: String): Boolean =
+        dataSource.connection.use { con ->
+            InternDao.selectPersonMedFnrEksisterer(personId, con)
+        }
+
     fun hentMinimumLøsning(
         personId: String,
         fraOgMedDato: LocalDate,

@@ -6,6 +6,7 @@ import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.personEksistererIAAPArena
 import javax.sql.DataSource
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse as KontraktVedtakResponse
 
@@ -39,6 +40,16 @@ fun Route.intern(datasource: DataSource) {
                     )
                 )
             }
+        }
+        post("/person/aap/eksisterer") {
+            val request = call.receive<SakerRequest>()
+            call.respond(
+                personEksistererIAAPArena(
+                    request.personidentifikatorer.map { personidentifikator ->
+                        internRepo.hentEksistererIAAPArena(personidentifikator)
+                    }.any()
+                )
+            )
         }
         post("/maksimum") {
             val request = call.receive<InternVedtakRequest>()

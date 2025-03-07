@@ -2,6 +2,9 @@ package no.nav.aap.arenaoppslag.kontrakt.intern
 
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 
+public data class personEksistererIAAPArena(
+    val eksisterer: Boolean
+)
 
 public data class VedtakResponse(
     val perioder: List<Periode>

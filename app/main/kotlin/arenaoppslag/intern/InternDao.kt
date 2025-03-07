@@ -134,6 +134,25 @@ object InternDao {
            AND fra_dato <= ?
     """
 
+    private const val selectPersonMedFnrEksisterer = """
+        SELECT EXISTS (
+            SELECT 1 
+            FROM person 
+            WHERE fodselsnr = ?
+        )
+    """
+
+    fun selectPersonMedFnrEksisterer(
+        personIdent: String,
+        connection: Connection
+    ):Boolean{
+        return connection.prepareStatement(selectPersonMedFnrEksisterer).use { preparedStatement ->
+            preparedStatement.setString(1, personIdent)
+            val resultSet = preparedStatement.executeQuery()
+            resultSet.next() && resultSet.getBoolean(1)
+        }
+    }
+
     fun selectVedtakMedTidsbegrensningOg11_17(
         personId: String,
         fraOgMedDato: LocalDate,
