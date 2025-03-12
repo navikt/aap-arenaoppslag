@@ -135,10 +135,9 @@ object InternDao {
     """
 
     private const val selectPersonMedFnrEksisterer = """
-        SELECT 1 
+        SELECT * 
         FROM person 
         WHERE fodselsnr = ?
-        
     """
 
     fun selectPersonMedFnrEksisterer(
@@ -148,7 +147,7 @@ object InternDao {
         return connection.prepareStatement(selectPersonMedFnrEksisterer).use { preparedStatement ->
             preparedStatement.setString(1, personIdent)
             val resultSet = preparedStatement.executeQuery()
-            resultSet.next() && resultSet.getInt(1) == 1
+            resultSet.next()
         }
     }
 
