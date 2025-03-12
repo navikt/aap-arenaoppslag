@@ -178,6 +178,15 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     }
 
     @Test
+    fun `returnerer riktig om person eksisterer`(){
+        val personId = "1"
+        val personEksisterer = InternDao.selectPersonMedFnrEksisterer(personId, h2.connection)
+        assertEquals(true, personEksisterer)
+        val personEksistererIkke = InternDao.selectPersonMedFnrEksisterer("2", h2.connection)
+        assertEquals(false, personEksistererIkke)
+    }
+
+    @Test
     fun `hente aktfasePerioder`() {
         val forventetVedtaksperioder = listOf(
             SakStatus(sakId = "0",Status.IVERK,no.nav.aap.arenaoppslag.kontrakt.modeller.Periode(LocalDate.of(2022, 8, 30), null))
