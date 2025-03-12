@@ -47,7 +47,7 @@ fun Route.intern(datasource: DataSource) {
                 personEksistererIAAPArena(
                     request.personidentifikatorer.map { personidentifikator ->
                         internRepo.hentEksistererIAAPArena(personidentifikator)
-                    }.any()
+                    }.any { it.equals(true) }
                 )
             )
         }
