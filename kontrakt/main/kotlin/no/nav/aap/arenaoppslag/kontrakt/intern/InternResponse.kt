@@ -42,5 +42,9 @@ public enum class Status{
     MOTAT,
     OPPRE,
     REGIS,
-    UKJENT
+    UKJENT,
+    OPPRETTET,
+    UTREDES,
+    LØPENDE,
+    AVSLUTTET
 }
