@@ -45,10 +45,10 @@ spec:
     inbound:
       rules:
         - application: api
-          cluster: {{env}}-gcp
+          cluster: {{cluster}}-gcp
           namespace: aap
         - application: api-intern
-          cluster: {{env}}-gcp
+          cluster: {{cluster}}-gcp
           namespace: aap
   webproxy: true
   ingresses:
@@ -60,3 +60,10 @@ spec:
         mountPath: /secrets/dbconfig
       - kvPath: {{ vault_db_creds_path }}
         mountPath: /secrets/dbcreds
+  env:
+    - name: DB_USERNAME_PATH
+      value: "/secrets/dbcreds/username"
+    - name: DB_PASSWORD_PATH
+      value: "/secrets/dbcreds/password"
+    - name: DB_JDBC_URL_PATH
+      value: "/secrets/dbconfig/jdbc_url"

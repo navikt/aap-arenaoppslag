@@ -24,7 +24,7 @@ import org.slf4j.event.Level
 import java.util.UUID
 import javax.sql.DataSource
 
-private val logger = LoggerFactory.getLogger("App")
+val logger = LoggerFactory.getLogger("App")
 
 fun main() {
     Thread.currentThread()

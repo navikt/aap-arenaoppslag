@@ -11,7 +11,7 @@ application {
 
 dependencies {
     implementation(project(":kontrakt"))
-
+    implementation("com.natpryce:konfig:1.6.10.0")
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
