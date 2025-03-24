@@ -26,6 +26,7 @@ data class DbConfig(
     val driver: String = "oracle.jdbc.OracleDriver"
 )
 
+
 data class AzureConfig(
     val jwksUri: String = getEnvVar("AZURE_OPENID_CONFIG_JWKS_URI"),
     val issuer: String = getEnvVar("AZURE_OPENID_CONFIG_ISSUER"),
