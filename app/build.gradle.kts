@@ -33,7 +33,7 @@ dependencies {
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.0")
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.7.0.25.01")
-    implementation("com.zaxxer:HikariCP:6.2.1")
+    implementation("com.zaxxer:HikariCP:6.3.0")
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
