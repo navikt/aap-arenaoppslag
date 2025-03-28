@@ -2,7 +2,15 @@ package no.nav.aap.arenaoppslag.kontrakt.intern
 
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 
+@Deprecated(
+    "Bruk PersonEksistererIAAPArena",
+    replaceWith = ReplaceWith("PersonEksistererIAAPArena")
+)
 public data class personEksistererIAAPArena(
+    val eksisterer: Boolean
+)
+
+public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
 
@@ -24,15 +32,15 @@ public data class SakStatus(
     val sakId: String,
     val StatusKode: Status,
     val periode: Periode,
-    val kilde:Kilde = Kilde.ARENA
+    val kilde: Kilde = Kilde.ARENA
 )
 
-public enum class Kilde{
+public enum class Kilde {
     ARENA,
     KELVIN
 }
 
-public enum class Status{
+public enum class Status {
     AVSLU,
     FORDE,
     GODKJ,
