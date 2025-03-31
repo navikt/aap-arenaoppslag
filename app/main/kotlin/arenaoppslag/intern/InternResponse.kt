@@ -8,7 +8,10 @@ data class Periode(
     val tilOgMedDato: LocalDate?
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Periode {
-        return no.nav.aap.arenaoppslag.kontrakt.modeller.Periode(fraOgMedDato, tilOgMedDato)
+        return no.nav.aap.arenaoppslag.kontrakt.modeller.Periode(
+            fraOgMedDato = fraOgMedDato,
+            tilOgMedDato = tilOgMedDato
+        )
     }
 }
 

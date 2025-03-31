@@ -29,7 +29,7 @@ object InternDao {
     """
 
     private const val selectSaksIdByFnr = """
-        SELECT vedtakstatuskode, sak_id, til_dato, fra_dato
+        SELECT vedtakstatuskode, sak_id, fra_dato, til_dato
           FROM vedtak
          WHERE person_id = 
                (SELECT person_id 
@@ -386,8 +386,8 @@ object InternDao {
                     Status.entries.find { it.name == row.getString("vedtakstatuskode") }
                         ?: Status.UKJENT,
                     KontraktPeriode(
-                        getNullableDate(row.getDate("fra_dato")),
-                        getNullableDate(row.getDate("til_dato"))
+                        fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
+                        tilOgMedDato = getNullableDate(row.getDate("til_dato"))
                     )
                 )
             }.toList()
