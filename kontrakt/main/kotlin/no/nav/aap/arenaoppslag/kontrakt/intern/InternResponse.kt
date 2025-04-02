@@ -30,7 +30,7 @@ public data class PeriodeMed11_17(
 
 public data class SakStatus(
     val sakId: String,
-    val StatusKode: Status,
+    val statusKode: Status,
     val periode: Periode,
     val kilde: Kilde = Kilde.ARENA
 )

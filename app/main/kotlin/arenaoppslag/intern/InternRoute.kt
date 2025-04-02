@@ -3,10 +3,7 @@ package arenaoppslag.intern
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
-import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.personEksistererIAAPArena
+import no.nav.aap.arenaoppslag.kontrakt.intern.*
 import javax.sql.DataSource
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse as KontraktVedtakResponse
 
@@ -44,7 +41,7 @@ fun Route.intern(datasource: DataSource) {
         post("/person/aap/eksisterer") {
             val request = call.receive<SakerRequest>()
             call.respond(
-                personEksistererIAAPArena(
+                PersonEksistererIAAPArena(
                     request.personidentifikatorer.map { personidentifikator ->
                         internRepo.hentEksistererIAAPArena(personidentifikator)
                     }.any { it.equals(true) }
@@ -66,9 +63,7 @@ fun Route.intern(datasource: DataSource) {
             val saker = request.personidentifikatorer.flatMap { personidentifikator ->
                 internRepo.hentSaker(personidentifikator)
             }
-            call.respond(
-                saker
-            )
+            call.respond(saker)
         }
     }
 }

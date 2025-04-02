@@ -289,7 +289,7 @@ object EksternDao {
                         beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
                         barnMedStonad = vedtakFakta.barnmston,
                         vedtaksTypeKode = row.getString("vedtaktypekode"),
-                        vedtaksTypeNavn = VedtaksType.values().find { it.kode == row.getString("vedtaktypekode") }?.navn
+                        vedtaksTypeNavn = VedtaksType.entries.find { it.kode == row.getString("vedtaktypekode") }?.navn
                             ?: ""
                     )
                 }.toList()
