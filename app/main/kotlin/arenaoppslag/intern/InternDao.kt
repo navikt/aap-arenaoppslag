@@ -36,9 +36,10 @@ object InternDao {
                   FROM person 
                  WHERE fodselsnr = ?) 
            AND rettighetkode = 'AAP'
-           AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND vedtaktypekode IN ('O', 'E', 'G')
     """
+
+    // AND (fra_dato <= til_dato OR til_dato IS NULL)
 
     private const val hentBeregningsgrunnlag = """
         SELECT vedtakfaktakode, vedtakverdi
