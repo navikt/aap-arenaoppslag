@@ -8,7 +8,9 @@ public data class Periode(
 ) {
     init {
         if (fraOgMedDato != null && tilOgMedDato != null && tilOgMedDato != fraOgMedDato) {
-            require(tilOgMedDato.isAfter(fraOgMedDato))
+            require(tilOgMedDato.isAfter(fraOgMedDato)){
+                "Til og med dato må være etter fra og med dato { fraOgMedDato=$fraOgMedDato, tilOgMedDato=$tilOgMedDato }"
+            }
         }
     }
 }
