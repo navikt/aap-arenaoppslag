@@ -24,7 +24,7 @@ class AppTest : H2TestBase() {
     fun `Henter ut vedtak for fellesordningen`() {
         Fakes().use { fakes ->
             val config = TestConfig.default(fakes)
-            val azure = AzureTokenGen(config.azure)
+            val azure = AzureTokenGen(config.azure.issuer, config.azure.clientId)
 
             testApplication {
                 application { server(config, h2) }
@@ -54,7 +54,7 @@ class AppTest : H2TestBase() {
     fun `Henter ut maksimumsvedtak for fellesordningen`() {
         Fakes().use { fakes ->
             val config = TestConfig.default(fakes)
-            val azure = AzureTokenGen(config.azure)
+            val azure = AzureTokenGen(config.azure.issuer, config.azure.clientId)
 
             testApplication {
                 application { server(config, h2) }

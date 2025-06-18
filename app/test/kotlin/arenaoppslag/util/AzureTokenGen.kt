@@ -13,7 +13,7 @@ import org.intellij.lang.annotations.Language
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class AzureTokenGen(private val config: AzureConfig) {
+class AzureTokenGen(private val issuer: String, private val audience: String) {
     private val rsaKey: RSAKey get() = JWKSet.parse(AZURE_JWKS).getKeyByKeyId("localhost-signer") as RSAKey
 
     private fun signed(claims: JWTClaimsSet): SignedJWT {
@@ -25,8 +25,8 @@ class AzureTokenGen(private val config: AzureConfig) {
     private fun claims(now: Date = Date()) = JWTClaimsSet
         .Builder()
         .subject(null)
-        .issuer(config.issuer)
-        .audience(config.clientId)
+        .issuer(issuer)
+        .audience(audience)
         .notBeforeTime(now)
         .issueTime(now)
         .expirationTime(Date(now.time + TimeUnit.MINUTES.toMillis((60 * 60 * 3600).toLong())))
