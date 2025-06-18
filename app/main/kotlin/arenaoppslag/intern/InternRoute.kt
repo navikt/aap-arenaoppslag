@@ -14,6 +14,7 @@ import javax.sql.DataSource
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse as KontraktVedtakResponse
 
 val logger = LoggerFactory.getLogger("App")
+val secureLog = LoggerFactory.getLogger("secureLog")
 
 fun Route.intern(datasource: DataSource) {
     val internRepo = InternRepo(datasource)
@@ -22,7 +23,7 @@ fun Route.intern(datasource: DataSource) {
         route("/perioder") {
             post {
                 val string = call.receive<String>()
-                val request = ObjectMapper().readValue(string, InternVedtakRequest::class.java)
+                val request = DefaultJsonMapper.fromJson<InternVedtakRequest>(string)
                 call.respond(
                     KontraktVedtakResponse(
                         perioder = internRepo.hentMinimumLøsning(
@@ -50,6 +51,7 @@ fun Route.intern(datasource: DataSource) {
         post("/person/aap/eksisterer") {
             logger.info("Sjekker om person eksisterer")
             val string = call.receive<String>()
+            secureLog.info("Body: '$string'.")
             val request = DefaultJsonMapper.fromJson<SakerRequest>(string)
             call.respond(
                 PersonEksistererIAAPArena(
