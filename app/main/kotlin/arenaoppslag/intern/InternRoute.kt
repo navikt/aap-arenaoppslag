@@ -1,11 +1,16 @@
 package arenaoppslag.intern
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.intern.*
-import javax.sql.DataSource
+import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
+import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
+import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
+import javax.sql.DataSource
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse as KontraktVedtakResponse
 
 val logger = LoggerFactory.getLogger("App")
@@ -16,7 +21,8 @@ fun Route.intern(datasource: DataSource) {
     route("/intern") {
         route("/perioder") {
             post {
-                val request = call.receive<InternVedtakRequest>()
+                val string = call.receive<String>()
+                val request = ObjectMapper().readValue(string, InternVedtakRequest::class.java)
                 call.respond(
                     KontraktVedtakResponse(
                         perioder = internRepo.hentMinimumLøsning(
@@ -28,7 +34,8 @@ fun Route.intern(datasource: DataSource) {
                 )
             }
             post("/11-17") {
-                val request = call.receive<InternVedtakRequest>()
+                val string = call.receive<String>()
+                val request = DefaultJsonMapper.fromJson<InternVedtakRequest>(string)
                 call.respond(
                     PerioderMed11_17Response(
                         perioder = internRepo.hentPeriodeInkludert11_17(
@@ -42,7 +49,8 @@ fun Route.intern(datasource: DataSource) {
         }
         post("/person/aap/eksisterer") {
             logger.info("Sjekker om person eksisterer")
-            val request = call.receive<SakerRequest>()
+            val string = call.receive<String>()
+            val request = DefaultJsonMapper.fromJson<SakerRequest>(string)
             call.respond(
                 PersonEksistererIAAPArena(
                     request.personidentifikatorer.map { personidentifikator ->
@@ -53,7 +61,8 @@ fun Route.intern(datasource: DataSource) {
         }
         post("/maksimum") {
             logger.info("Henter maksimum")
-            val request = call.receive<InternVedtakRequest>()
+            val string = call.receive<String>()
+            val request = DefaultJsonMapper.fromJson<InternVedtakRequest>(string)
             call.respond(
                 internRepo.hentMaksimumsløsning(
                     request.personidentifikator,
@@ -64,7 +73,8 @@ fun Route.intern(datasource: DataSource) {
         }
         post("/saker") {
             logger.info("Henter saker")
-            val request = call.receive<SakerRequest>()
+            val string = call.receive<String>()
+            val request = ObjectMapper().readValue(string, SakerRequest::class.java)
             val saker = request.personidentifikatorer.flatMap { personidentifikator ->
                 internRepo.hentSaker(personidentifikator)
             }

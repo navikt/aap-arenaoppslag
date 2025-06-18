@@ -2,14 +2,6 @@ package no.nav.aap.arenaoppslag.kontrakt.intern
 
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 
-@Deprecated(
-    "Bruk PersonEksistererIAAPArena",
-    replaceWith = ReplaceWith("PersonEksistererIAAPArena")
-)
-public data class personEksistererIAAPArena(
-    val eksisterer: Boolean
-)
-
 public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
