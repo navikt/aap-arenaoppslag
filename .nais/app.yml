@@ -38,7 +38,7 @@ spec:
   observability:
     autoInstrumentation:
       enabled: true
-      runtime: sdk
+      runtime: java
     logging:
       destinations:
         - id: elastic
