@@ -1,9 +1,9 @@
 plugins {
-    id("io.ktor.plugin") version "3.2.0"
+    id("io.ktor.plugin") version "3.1.3"
     application
 }
 
-val ktorVersion = "3.2.0"
+val ktorVersion = "3.1.3"
 
 application {
     mainClass.set("arenaoppslag.AppKt")
@@ -27,7 +27,7 @@ dependencies {
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.1")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0")
     implementation("io.micrometer:micrometer-registry-prometheus:1.15.1")
     implementation("ch.qos.logback:logback-classic:1.5.18")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.1")
