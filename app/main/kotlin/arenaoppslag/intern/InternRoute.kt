@@ -5,8 +5,10 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.*
 import javax.sql.DataSource
+import org.slf4j.LoggerFactory
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse as KontraktVedtakResponse
 
+val logger = LoggerFactory.getLogger("App")
 
 fun Route.intern(datasource: DataSource) {
     val internRepo = InternRepo(datasource)
@@ -39,6 +41,7 @@ fun Route.intern(datasource: DataSource) {
             }
         }
         post("/person/aap/eksisterer") {
+            logger.info("Sjekker om person eksisterer")
             val request = call.receive<SakerRequest>()
             call.respond(
                 PersonEksistererIAAPArena(
@@ -49,6 +52,7 @@ fun Route.intern(datasource: DataSource) {
             )
         }
         post("/maksimum") {
+            logger.info("Henter maksimum")
             val request = call.receive<InternVedtakRequest>()
             call.respond(
                 internRepo.hentMaksimumsløsning(
@@ -59,6 +63,7 @@ fun Route.intern(datasource: DataSource) {
             )
         }
         post("/saker") {
+            logger.info("Henter saker")
             val request = call.receive<SakerRequest>()
             val saker = request.personidentifikatorer.flatMap { personidentifikator ->
                 internRepo.hentSaker(personidentifikator)
