@@ -76,6 +76,7 @@ fun Route.intern(datasource: DataSource) {
         post("/saker") {
             logger.info("Henter saker")
             val string = call.receive<String>()
+            secureLog.info("/saker body: '$string'.")
             val request = ObjectMapper().readValue(string, SakerRequest::class.java)
             val saker = request.personidentifikatorer.flatMap { personidentifikator ->
                 internRepo.hentSaker(personidentifikator)
