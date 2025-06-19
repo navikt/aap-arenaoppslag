@@ -26,6 +26,8 @@ import javax.sql.DataSource
 
 val logger = LoggerFactory.getLogger("App")
 
+val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+
 fun main() {
     Thread.currentThread()
         .setUncaughtExceptionHandler { _, e -> logger.error("Uhåndtert feil", e)}
@@ -36,8 +38,6 @@ fun Application.server(
     config: Config = Config(),
     datasource: DataSource = Hikari.create(config.database)
 ) {
-    val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-
     install(CallId) {
         retrieveFromHeader(HttpHeaders.XCorrelationId)
         generate { UUID.randomUUID().toString() }

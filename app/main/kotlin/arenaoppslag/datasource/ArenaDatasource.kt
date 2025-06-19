@@ -1,6 +1,7 @@
 package arenaoppslag.datasource
 
 import arenaoppslag.DbConfig
+import arenaoppslag.prometheus
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import java.sql.ResultSet
@@ -19,6 +20,7 @@ internal object Hikari {
             maxLifetime = 30001
             driverClassName = dbConfig.driver
             connectionTestQuery = "SELECT 1 FROM DUAL"
+            metricRegistry = prometheus
         })
 }
 
