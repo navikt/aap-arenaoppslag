@@ -12,7 +12,6 @@ internal object Hikari {
             jdbcUrl = dbConfig.url
             username = dbConfig.username
             password = dbConfig.password
-            maximumPoolSize = 3
             minimumIdle = 1
             initializationFailTimeout = 5000
             idleTimeout = 10001
