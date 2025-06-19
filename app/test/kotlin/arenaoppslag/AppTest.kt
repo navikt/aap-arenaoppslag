@@ -80,6 +80,29 @@ class AppTest : H2TestBase() {
         }
     }
 
+
+    @Test
+    fun `Henter ut saker by fnr`() {
+        Fakes().use { fakes ->
+            val config = TestConfig.default(fakes)
+            val azure = AzureTokenGen(config.azure.issuer, config.azure.clientId)
+
+            testApplication {
+                application { server(config, h2) }
+
+                val res = jsonHttpClient.post("/intern/saker") {
+                    bearerAuth(azure.generate())
+                    contentType(ContentType.Application.Json)
+                    setBody("{\"personidentifikatorer\":[\"12345678901\"]}")
+                }
+
+                assertEquals(HttpStatusCode.OK, res.status)
+
+            }
+        }
+    }
+
+
     private val ApplicationTestBuilder.jsonHttpClient: HttpClient
         get() =
             createClient {
