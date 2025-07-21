@@ -28,7 +28,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     implementation("no.nav.aap.kelvin:json:1.0.288")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.1")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.2")
     implementation("io.micrometer:micrometer-registry-prometheus:1.15.2")
     implementation("ch.qos.logback:logback-classic:1.5.18")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.1")
