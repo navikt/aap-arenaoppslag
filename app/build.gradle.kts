@@ -26,7 +26,7 @@ dependencies {
     implementation("io.ktor:ktor-server-call-id:$ktorVersion")
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("no.nav.aap.kelvin:json:1.0.315")
+    implementation("no.nav.aap.kelvin:json:1.0.318")
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.2")
     implementation("io.micrometer:micrometer-registry-prometheus:1.15.2")
