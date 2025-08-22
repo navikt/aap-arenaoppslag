@@ -4,8 +4,8 @@ import java.time.LocalDate
 
 public data class InternVedtakRequest(
     val personidentifikator: String,
-    val fraOgMedDato: LocalDate,
-    val tilOgMedDato: LocalDate
+    val fraOgMedDato: LocalDate = LocalDate.MIN,
+    val tilOgMedDato: LocalDate = LocalDate.MAX
 )
 
 public data class SakerRequest (
