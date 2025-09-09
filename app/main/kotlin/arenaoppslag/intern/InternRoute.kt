@@ -1,6 +1,5 @@
 package arenaoppslag.intern
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -14,7 +13,6 @@ import javax.sql.DataSource
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse as KontraktVedtakResponse
 
 val logger = LoggerFactory.getLogger("App")
-val secureLog = LoggerFactory.getLogger("secureLog")
 
 fun Route.intern(datasource: DataSource) {
     val internRepo = InternRepo(datasource)
@@ -51,7 +49,6 @@ fun Route.intern(datasource: DataSource) {
         post("/person/aap/eksisterer") {
             logger.info("Sjekker om person eksisterer")
             val string = call.receive<String>()
-            secureLog.info("Body: '$string'.")
             val request = DefaultJsonMapper.fromJson<SakerRequest>(string)
             call.respond(
                 PersonEksistererIAAPArena(
@@ -76,7 +73,6 @@ fun Route.intern(datasource: DataSource) {
         post("/saker") {
             logger.info("Henter saker")
             val string = call.receive<String>()
-            secureLog.info("/saker body: '$string'.")
             val request = DefaultJsonMapper.fromJson<SakerRequest>(string)
             val saker = request.personidentifikatorer.flatMap { personidentifikator ->
                 internRepo.hentSaker(personidentifikator)
