@@ -1,5 +1,5 @@
 plugins {
-    id("io.ktor.plugin") version "3.2.3"
+    id("io.ktor.plugin") version "3.3.0"
     application
 }
 
