@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-val ktorVersion = "3.2.3"
+val ktorVersion = "3.3.0"
 
 application {
     mainClass.set("arenaoppslag.AppKt")
