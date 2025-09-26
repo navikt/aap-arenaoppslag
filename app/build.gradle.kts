@@ -1,9 +1,9 @@
 plugins {
-    id("io.ktor.plugin") version "3.2.3"
+    id("io.ktor.plugin") version "3.3.0"
     application
 }
 
-val ktorVersion = "3.2.3"
+val ktorVersion = "3.3.0"
 
 application {
     mainClass.set("arenaoppslag.AppKt")
