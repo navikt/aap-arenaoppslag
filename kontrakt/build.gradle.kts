@@ -8,6 +8,9 @@ plugins {
 java {
     withSourcesJar()
 }
+kotlin {
+    explicitApi = ExplicitApiMode.Warning
+}
 
 publishing {
     publications {
