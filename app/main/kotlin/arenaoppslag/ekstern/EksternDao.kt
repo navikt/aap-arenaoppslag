@@ -174,7 +174,7 @@ object EksternDao {
     fun selectUtbetalingVedVedtakId(
         vedtakId: Int,
         connection: Connection,
-        barnetiTillegg: Int,
+        barneTillegg: Int,
         dagsats: Int,
         personId: String,
         fra_Dato: LocalDate,
@@ -207,7 +207,7 @@ object EksternDao {
                         ),
                         belop = row.getInt("belop"),
                         dagsats = dagsats,
-                        barnetilegg = barnetiTillegg
+                        barnetillegg = barneTillegg
                     )
                 }.toList()
             }
@@ -266,7 +266,7 @@ object EksternDao {
                     utbetalinger.addAll(
                         selectUtbetalingVedVedtakId(
                             connection = connection,
-                            barnetiTillegg = vedtakFakta.barntill,
+                            barneTillegg = vedtakFakta.barntill,
                             dagsats = vedtakFakta.dags,
                             personId = personId,
                             vedtakId = row.getInt("vedtak_id"),

@@ -282,7 +282,7 @@ object InternDao {
                         ),
                         belop = row.getInt("belop"),
                         dagsats = dagsats,
-                        barnetilegg = barnetiTillegg
+                        barnetillegg = barnetiTillegg
                     )
                 }.toList()
             }

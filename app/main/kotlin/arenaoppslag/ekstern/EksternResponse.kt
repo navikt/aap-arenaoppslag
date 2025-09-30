@@ -11,6 +11,9 @@ data class Periode(
     }
 }
 
+/**
+ * @param barntill Totalt barnetillegg.
+ */
 data class VedtakFakta(
     var dagsmbt: Int,
     var barntill: Int,

@@ -68,7 +68,7 @@ data class UtbetalingMedMer(
     val periode: Periode,
     val belop: Int,
     val dagsats: Int,
-    val barnetilegg: Int,
+    val barnetillegg: Int,
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.UtbetalingMedMer {
         return no.nav.aap.arenaoppslag.kontrakt.modeller.UtbetalingMedMer(
@@ -76,7 +76,7 @@ data class UtbetalingMedMer(
             periode = periode.tilKontrakt(),
             belop = belop,
             dagsats = dagsats,
-            barnetillegg = barnetilegg
+            barnetillegg = barnetillegg
         )
     }
 }

@@ -19,6 +19,9 @@ public data class Vedtak(
     val barnMedStonad: Int,
 )
 
+/**
+ * @param barnetillegg Totalt barnetillegg.
+ */
 public data class UtbetalingMedMer(
     val reduksjon: Reduksjon? = null,
     val utbetalingsgrad: Int? = null,
