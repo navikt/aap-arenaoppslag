@@ -29,7 +29,7 @@ class AppTest : H2TestBase() {
             testApplication {
                 application { server(config, h2) }
 
-                val res = jsonHttpClient.post("/ekstern/minimum") {
+                val res = jsonHttpClient.post("/intern/perioder") {
                     bearerAuth(azure.generate())
                     contentType(ContentType.Application.Json)
                     setBody(
@@ -59,7 +59,7 @@ class AppTest : H2TestBase() {
             testApplication {
                 application { server(config, h2) }
 
-                val res = jsonHttpClient.post("/ekstern/maksimum") {
+                val res = jsonHttpClient.post("/intern/maksimum") {
                     bearerAuth(azure.generate())
                     contentType(ContentType.Application.Json)
                     setBody(

@@ -1,6 +1,6 @@
 package arenaoppslag.modeller
 
-import arenaoppslag.ekstern.Periode
+import arenaoppslag.intern.Periode
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum as KontraktMaksimum
 
 
@@ -81,11 +81,6 @@ data class UtbetalingMedMer(
     }
 }
 
-//dagsats ligger i vedtaksfakta //barntill
-// dagsbeløp med barnetillegg
-//alt ligger i vedtakfakta
-
-
 data class Reduksjon(
     val timerArbeidet: Double,
     val annenReduksjon: AnnenReduksjon
@@ -111,44 +106,3 @@ data class AnnenReduksjon(
         )
     }
 }
-
-/*
-{
-  Maksimum1: {
-
-    vedtak: [
-        {
-            dagsats: 1,
-            dagsmbt: 1,
-            status: "string",
-            saksnummer: "string",
-            vedtaksdato: "LocalDate",
-            periode: {
-                fraDato: "LocalDate",
-                tilDato: "LocalDate"
-            },
-            rettighetType: "string", //aktivitetsfase //Aktfasekode
-            utbetaling: [
-            {
-                reduksjon: {
-                    timerArbeidet: 5.0,
-                    annenReduksjon:{
-                        sykedager: 1.0, #dager #sykedager
-                        SentMeldekort: 1.0, #timer
-                        fravær: 1.0, #timer
-                    } # 100% -8 timer
-                },
-                periode: {
-                    fraDato: "string",
-                    tilDato: "string" #hent meldekort ut fra periode
-                },
-                belop: 1,
-                dagsats: 1,
-                barnetilegg: 1
-                }
-            ],
-        }
-    ]
-}
-}
- */

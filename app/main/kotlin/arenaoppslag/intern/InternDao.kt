@@ -276,7 +276,7 @@ object InternDao {
                                 selectFraværMeldekort(meldekortId, connection).toFloat()
                             )
                         ),
-                        periode = arenaoppslag.ekstern.Periode(
+                        periode = Periode(
                             fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
                             tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
                         ),
@@ -356,7 +356,7 @@ object InternDao {
                         saksnummer = row.getString("sak_id"),
                         vedtaksdato = row.getString("fra_dato"),
                         rettighetsType = row.getString("aktfasekode"),
-                        periode = arenaoppslag.ekstern.Periode(
+                        periode = Periode(
                             fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                             tilOgMedDato = getNullableDate(row.getDate("til_dato"))
                         ),
