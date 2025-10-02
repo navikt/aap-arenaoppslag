@@ -1,6 +1,6 @@
 package arenaoppslag.modeller
 
-import arenaoppslag.ekstern.Periode
+import arenaoppslag.intern.Periode
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum as KontraktMaksimum
 
 
