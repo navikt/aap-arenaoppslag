@@ -1,7 +1,6 @@
 package arenaoppslag
 
 import arenaoppslag.datasource.Hikari
-import arenaoppslag.dsop.dsop
 import arenaoppslag.intern.intern
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
@@ -71,8 +70,6 @@ fun Application.server(
         actuator(prometheus)
 
         authenticate {
-            // TODO: fellesordningen og perioder er helt like. slå sammen eller beholde skille?
-            dsop(datasource)
             intern(datasource)
         }
     }
