@@ -351,7 +351,7 @@ object InternDao {
                     Vedtak(
                         vedtaksId = vedtakId.toString(),
                         utbetaling = utbetalinger,
-                        dagsats = vedtakFakta.dags,
+                        dagsats = vedtakFakta.dagsfsam,
                         status = row.getString("vedtakstatuskode"),
                         saksnummer = row.getString("sak_id"),
                         vedtaksdato = row.getString("fra_dato"),
