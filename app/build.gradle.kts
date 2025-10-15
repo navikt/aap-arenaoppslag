@@ -29,7 +29,7 @@ dependencies {
     implementation("no.nav.aap.kelvin:json:1.0.397")
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.0")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.15.4")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.15.5")
     implementation("ch.qos.logback:logback-classic:1.5.19")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.1")
 
