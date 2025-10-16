@@ -61,7 +61,7 @@ object InternDao {
                  WHERE fodselsnr = ?) 
            AND utfallkode = 'JA' 
            AND rettighetkode = 'AAP'
-           AND vedtaktypekode IN ('O', 'E', 'G', 'S')
+           AND vedtaktypekode IN ('O', 'E', 'G')
            AND vedtakstatuskode IN ('IVERK', 'AVSLU', 'INAKT')
            AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND (til_dato >= ? OR til_dato IS NULL) 
@@ -128,7 +128,7 @@ object InternDao {
                  WHERE fodselsnr = ?) 
            AND utfallkode = 'JA' 
            AND rettighetkode = 'AAP'
-           AND vedtaktypekode IN ('O', 'E', 'G', 'S')
+           AND vedtaktypekode IN ('O', 'E', 'G')
            AND vedtakstatuskode IN ('IVERK', 'AVSLU', 'INAKT')
            AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND (til_dato >= ? OR til_dato IS NULL) 
