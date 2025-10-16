@@ -388,7 +388,7 @@ object InternDao {
                     Status.entries.find { it.name == row.getString("vedtakstatuskode") }
                         ?: Status.UKJENT,
                     KontraktPeriode(
-                        fraOgMedDato = requireNotNull(getNullableDate(row.getDate("fra_dato"))) { "Fikk null for fra_dato." },
+                        fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato"))
                     )
                 )
