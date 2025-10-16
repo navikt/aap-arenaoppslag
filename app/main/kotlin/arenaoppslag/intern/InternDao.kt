@@ -144,7 +144,7 @@ object InternDao {
     fun selectPersonMedFnrEksisterer(
         personIdent: String,
         connection: Connection
-    ):Boolean{
+    ): Boolean {
         return connection.prepareStatement(selectPersonMedFnrEksisterer).use { preparedStatement ->
             preparedStatement.setString(1, personIdent)
             val resultSet = preparedStatement.executeQuery()
@@ -306,7 +306,7 @@ object InternDao {
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
-            val vedtakfakta = VedtakFakta(0, 0, 0, 0,0)
+            val vedtakfakta = VedtakFakta(0, 0, 0, 0, 0)
             resultSet.map { row ->
                 when (row.getString("vedtakfaktakode")) {
                     "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
@@ -363,7 +363,8 @@ object InternDao {
                         beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
                         barnMedStonad = vedtakFakta.barnmston,
                         vedtaksTypeKode = row.getString("vedtaktypekode"),
-                        vedtaksTypeNavn = VedtaksType.values().find { it.kode == row.getString("vedtaktypekode") }?.navn
+                        vedtaksTypeNavn = VedtaksType.values()
+                            .find { it.kode == row.getString("vedtaktypekode") }?.navn
                             ?: ""
                     )
                 }.toList()
@@ -387,7 +388,7 @@ object InternDao {
                     Status.entries.find { it.name == row.getString("vedtakstatuskode") }
                         ?: Status.UKJENT,
                     KontraktPeriode(
-                        fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
+                        fraOgMedDato = requireNotNull(getNullableDate(row.getDate("fra_dato"))) { "Fikk null for fra_dato." },
                         tilOgMedDato = getNullableDate(row.getDate("til_dato"))
                     )
                 )
