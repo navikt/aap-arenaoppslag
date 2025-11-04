@@ -99,7 +99,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    needs: dev
+    needs: [ publiser-kontrakt, dev ]
     concurrency: prod-deploy
     uses: navikt/aap-workflows/.github/workflows/deploy.yml@main
     secrets: inherit
