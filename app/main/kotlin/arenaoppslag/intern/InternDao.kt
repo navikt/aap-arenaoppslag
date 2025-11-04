@@ -9,7 +9,10 @@ import java.sql.Date
 import java.time.LocalDate
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 
+// Tabellene i Arena er beskrevet her:
 //https://confluence.adeo.no/display/ARENA/Arena+-+Datamodell+-+Vedtak
+// Vi bruker views av disse tabellene, for AAP, definert her:
+//https://confluence.adeo.no/spaces/TEAMARENA/pages/553617512/ARENA-8716+03+-+L%C3%B8sningsbeskrivelse#ARENA871603L%C3%B8sningsbeskrivelse-Arbeidsavklaringspenger
 
 object InternDao {
     private const val selectMaksimumMedTidsbegrensning = """
