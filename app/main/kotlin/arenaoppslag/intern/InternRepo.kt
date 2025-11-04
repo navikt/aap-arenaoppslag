@@ -17,7 +17,7 @@ class InternRepo(private val dataSource: DataSource) {
         tilOgMedDato: LocalDate
     ): List<Periode> =
         dataSource.connection.use { con ->
-            InternDao.selectVedtakPerioder(
+            InternDao.selectVedtakMinimum(
                 personId = personId,
                 fraOgMedDato = fraOgMedDato,
                 tilOgMedDato = tilOgMedDato,

@@ -33,7 +33,6 @@ public enum class Kilde {
 }
 
 public enum class Status {
-    // Arena:
     AVSLU,
     FORDE,
     GODKJ,
@@ -43,13 +42,9 @@ public enum class Status {
     MOTAT,
     OPPRE,
     REGIS,
-
-    // Kelvin:
+    UKJENT,
     OPPRETTET,
     UTREDES,
     LØPENDE,
-    AVSLUTTET,
-
-    // Begge:
-    UKJENT,
+    AVSLUTTET
 }
