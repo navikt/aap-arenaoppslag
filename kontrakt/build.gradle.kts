@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 
 plugins {
+    id("aap.conventions")
     `maven-publish`
     `java-library`
 }
@@ -8,6 +9,14 @@ plugins {
 java {
     withSourcesJar()
 }
+
+// Håndteres eksplisitt for å sette duplicateStrategy, som ellers feiler
+(tasks.findByName("sourcesJar") as? Jar)?.apply {
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allSource)
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
 kotlin {
     explicitApi = ExplicitApiMode.Warning
 }
