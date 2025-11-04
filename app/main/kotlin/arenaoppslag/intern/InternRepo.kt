@@ -11,7 +11,13 @@ class InternRepo(private val dataSource: DataSource) {
             InternDao.selectPersonMedFnrEksisterer(personId, con)
         }
 
-    fun hentMinimumLøsning(
+    fun hentKanBehandlesIKelvin(personId: String): Boolean =
+        dataSource.connection.use { con ->
+            // TODO ny spørring her, og med sakId
+            InternDao.selectPersonMedFnrEksisterer(personId, con)
+        }
+
+    fun hentPerioder(
         personId: String,
         fraOgMedDato: LocalDate,
         tilOgMedDato: LocalDate

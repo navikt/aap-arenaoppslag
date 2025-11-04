@@ -6,6 +6,11 @@ public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
 
+public data class PersonKanBehandlesIKelvinResponse(
+    val kanBehandles: Boolean,
+    val sisteArenaSakId: String? // siste avsluttede sak i Arena for personen
+)
+
 public data class VedtakResponse(
     val perioder: List<Periode>
 )
