@@ -10,9 +10,9 @@ import java.time.LocalDate
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 
 // Tabellene i Arena er beskrevet her:
-//https://confluence.adeo.no/display/ARENA/Arena+-+Datamodell+-+Vedtak
-// Vi bruker views av disse tabellene, for AAP, definert her:
-//https://confluence.adeo.no/spaces/TEAMARENA/pages/553617512/ARENA-8716+03+-+L%C3%B8sningsbeskrivelse#ARENA871603L%C3%B8sningsbeskrivelse-Arbeidsavklaringspenger
+// https://confluence.adeo.no/display/ARENA/Arena+-+Datamodell+-+Vedtak
+// Vi bruker views av disse tabellene for AAP, definert her:
+// https://confluence.adeo.no/spaces/TEAMARENA/pages/553617512/ARENA-8716+03+-+L%C3%B8sningsbeskrivelse#ARENA871603L%C3%B8sningsbeskrivelse-Arbeidsavklaringspenger
 
 object InternDao {
     private const val selectMaksimumMedTidsbegrensning = """
@@ -79,7 +79,7 @@ object InternDao {
           AND anmerkningkode  = 'FSNN'
     """
 
-    private const val selectSentMeldekort = """
+    private const val selectForSentMeldekort = """
         SELECT sum(verdi)
           FROM anmerkning
         WHERE tabellnavnalias = 'MKORT'
@@ -207,8 +207,8 @@ object InternDao {
         }
     }
 
-    fun selectSentMeldekort(meldekortId: String, connection: Connection): Boolean {
-        return connection.prepareStatement(selectSentMeldekort).use { preparedStatement ->
+    fun selectForSentMeldekort(meldekortId: String, connection: Connection): Boolean {
+        return connection.prepareStatement(selectForSentMeldekort).use { preparedStatement ->
             preparedStatement.setString(1, meldekortId)
 
             val resultSet = preparedStatement.executeQuery()
@@ -221,7 +221,7 @@ object InternDao {
     }
 
 
-    fun selectVedtakMinimum(
+    fun selectVedtakPerioder(
         personId: String,
         fraOgMedDato: LocalDate,
         tilOgMedDato: LocalDate,
@@ -236,12 +236,10 @@ object InternDao {
                 val resultSet = preparedStatement.executeQuery()
 
                 val perioder = resultSet.map { row ->
-
                     Periode(
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato")),
                     )
-
                 }.toList()
 
                 perioder
@@ -275,7 +273,7 @@ object InternDao {
                             timerArbeidet = row.getFloat("timer_arbeidet").toDouble(),
                             annenReduksjon = AnnenReduksjon(
                                 selectSykedagerMeldekort(meldekortId, connection).toFloat(),
-                                selectSentMeldekort(meldekortId, connection),
+                                selectForSentMeldekort(meldekortId, connection),
                                 selectFraværMeldekort(meldekortId, connection).toFloat()
                             )
                         ),
@@ -366,9 +364,9 @@ object InternDao {
                         beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
                         barnMedStonad = vedtakFakta.barnmston,
                         vedtaksTypeKode = row.getString("vedtaktypekode"),
-                        vedtaksTypeNavn = VedtaksType.values()
+                        vedtaksTypeNavn = VedtaksType.entries
                             .find { it.kode == row.getString("vedtaktypekode") }?.navn
-                            ?: ""
+                            ?: "" // FIXME om vi ikke finner navn bør vi logge feil
                     )
                 }.toList()
                 Maksimum(vedtak)

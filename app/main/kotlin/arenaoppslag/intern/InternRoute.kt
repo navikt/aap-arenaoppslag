@@ -24,7 +24,7 @@ fun Route.intern(datasource: DataSource) {
                 val request = DefaultJsonMapper.fromJson<InternVedtakRequest>(string)
                 call.respond(
                     KontraktVedtakResponse(
-                        perioder = internRepo.hentMinimumLøsning(
+                        perioder = internRepo.hentPerioder(
                             request.personidentifikator,
                             request.fraOgMedDato,
                             request.tilOgMedDato
@@ -76,7 +76,7 @@ fun Route.intern(datasource: DataSource) {
             val request = DefaultJsonMapper.fromJson<SakerRequest>(string)
             val saker = request.personidentifikatorer.flatMap { personidentifikator ->
                 internRepo.hentSaker(personidentifikator)
-            }
+            }.distinctBy { it.sakId }
             call.respond(saker)
         }
     }
