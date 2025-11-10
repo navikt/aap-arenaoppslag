@@ -6,6 +6,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import java.sql.Connection
 import java.sql.Date
+import java.sql.ResultSet
 import java.time.LocalDate
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 
@@ -79,7 +80,7 @@ object InternDao {
           AND anmerkningkode  = 'FSNN'
     """
 
-    private const val selectSentMeldekort = """
+    private const val selectForSentMeldekort = """
         SELECT sum(verdi)
           FROM anmerkning
         WHERE tabellnavnalias = 'MKORT'
@@ -207,8 +208,8 @@ object InternDao {
         }
     }
 
-    fun selectSentMeldekort(meldekortId: String, connection: Connection): Boolean {
-        return connection.prepareStatement(selectSentMeldekort).use { preparedStatement ->
+    fun selectForSentMeldekort(meldekortId: String, connection: Connection): Boolean {
+        return connection.prepareStatement(selectForSentMeldekort).use { preparedStatement ->
             preparedStatement.setString(1, meldekortId)
 
             val resultSet = preparedStatement.executeQuery()
@@ -221,7 +222,7 @@ object InternDao {
     }
 
 
-    fun selectVedtakMinimum(
+    fun selectVedtakPerioder(
         personId: String,
         fraOgMedDato: LocalDate,
         tilOgMedDato: LocalDate,
@@ -236,7 +237,6 @@ object InternDao {
                 val resultSet = preparedStatement.executeQuery()
 
                 val perioder = resultSet.map { row ->
-
                     Periode(
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato")),
@@ -275,7 +275,7 @@ object InternDao {
                             timerArbeidet = row.getFloat("timer_arbeidet").toDouble(),
                             annenReduksjon = AnnenReduksjon(
                                 selectSykedagerMeldekort(meldekortId, connection).toFloat(),
-                                selectSentMeldekort(meldekortId, connection),
+                                selectForSentMeldekort(meldekortId, connection),
                                 selectFraværMeldekort(meldekortId, connection).toFloat()
                             )
                         ),
@@ -351,6 +351,7 @@ object InternDao {
                             til_dato = tilOgMedDato
                         )
                     )
+                    val vedtaktypekode = row.getString("vedtaktypekode")
                     Vedtak(
                         vedtaksId = vedtakId.toString(),
                         utbetaling = utbetalinger,
@@ -385,17 +386,18 @@ object InternDao {
         connection.prepareStatement(selectSaksIdByFnr).use { preparedStatement ->
             preparedStatement.setString(1, personidentifikator)
             val resultSet = preparedStatement.executeQuery()
-            return resultSet.map { row ->
-                SakStatus(
-                    row.getString("sak_id"),
-                    Status.entries.find { it.name == row.getString("vedtakstatuskode") }
-                        ?: Status.UKJENT,
-                    KontraktPeriode(
-                        fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
-                        tilOgMedDato = getNullableDate(row.getDate("til_dato"))
-                    )
-                )
-            }.toList()
+            return resultSet.map { row -> mapperForSakStatus(row) }.toList()
         }
     }
+
+    private fun mapperForSakStatus(row: ResultSet): SakStatus = SakStatus(
+        row.getString("sak_id"),
+        Status.entries.find { it.name == row.getString("vedtakstatuskode") }
+            ?: Status.UKJENT,
+        KontraktPeriode(
+            fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
+            tilOgMedDato = getNullableDate(row.getDate("til_dato"))
+        )
+    )
+
 }

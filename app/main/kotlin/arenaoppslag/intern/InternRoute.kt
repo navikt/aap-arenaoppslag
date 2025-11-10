@@ -15,7 +15,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse as KontraktVedtakR
 val logger = LoggerFactory.getLogger("App")
 
 fun Route.intern(datasource: DataSource) {
-    val internRepo = InternRepo(datasource)
+    val arenaRepository = ArenaRepository(datasource)
 
     route("/intern") {
         route("/perioder") {
@@ -24,7 +24,7 @@ fun Route.intern(datasource: DataSource) {
                 val request = DefaultJsonMapper.fromJson<InternVedtakRequest>(string)
                 call.respond(
                     KontraktVedtakResponse(
-                        perioder = internRepo.hentMinimumLøsning(
+                        perioder = arenaRepository.hentPerioder(
                             request.personidentifikator,
                             request.fraOgMedDato,
                             request.tilOgMedDato
@@ -37,7 +37,7 @@ fun Route.intern(datasource: DataSource) {
                 val request = DefaultJsonMapper.fromJson<InternVedtakRequest>(string)
                 call.respond(
                     PerioderMed11_17Response(
-                        perioder = internRepo.hentPeriodeInkludert11_17(
+                        perioder = arenaRepository.hentPeriodeInkludert11_17(
                             request.personidentifikator,
                             request.fraOgMedDato,
                             request.tilOgMedDato
@@ -53,7 +53,7 @@ fun Route.intern(datasource: DataSource) {
             call.respond(
                 PersonEksistererIAAPArena(
                     request.personidentifikatorer.map { personidentifikator ->
-                        internRepo.hentEksistererIAAPArena(personidentifikator)
+                        arenaRepository.hentEksistererIAAPArena(personidentifikator)
                     }.any { it.equals(true) }
                 )
             )
@@ -63,7 +63,7 @@ fun Route.intern(datasource: DataSource) {
             val string = call.receive<String>()
             val request = DefaultJsonMapper.fromJson<InternVedtakRequest>(string)
             call.respond(
-                internRepo.hentMaksimumsløsning(
+                arenaRepository.hentMaksimumsløsning(
                     request.personidentifikator,
                     request.fraOgMedDato,
                     request.tilOgMedDato
@@ -75,7 +75,7 @@ fun Route.intern(datasource: DataSource) {
             val string = call.receive<String>()
             val request = DefaultJsonMapper.fromJson<SakerRequest>(string)
             val saker = request.personidentifikatorer.flatMap { personidentifikator ->
-                internRepo.hentSaker(personidentifikator)
+                arenaRepository.hentSaker(personidentifikator)
             }
             call.respond(saker)
         }

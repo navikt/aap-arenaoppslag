@@ -9,7 +9,7 @@ class FellesordningenDaoTest : H2TestBase() {
 
     @Test
     fun test() {
-        val alleVedtak = InternDao.selectVedtakMinimum(
+        val alleVedtak = InternDao.selectVedtakPerioder(
             personId = "1",
             fraOgMedDato = LocalDate.of(2022, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
