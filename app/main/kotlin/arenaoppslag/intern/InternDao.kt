@@ -44,8 +44,7 @@ object InternDao {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
     """
 
-    // FIXME verifiser spørringen med Arena-folket
-    private const val selectKunNyeSakerByFnr = """
+    private const val selectKunSakerMedRelevanteRettighetskoder = """
         SELECT vedtakstatuskode, sak_id, fra_dato, til_dato
           FROM vedtak
          WHERE person_id = 
@@ -53,7 +52,6 @@ object InternDao {
                   FROM person 
                  WHERE fodselsnr = ?) 
            AND rettighetkode NOT IN (?)
-           AND (til_dato is NULL OR til_dato > ?)
     """
 
     private const val hentBeregningsgrunnlag = """
@@ -403,7 +401,7 @@ object InternDao {
 
 
     private val historiskeRettighetskoderIArena = listOf(
-        // Alle disse utløp før 1/1/2022
+        // Alle disse har kun rettighetsperioder utløpt før 1/1/2022
         "AA116", // Behov for bistand
         "ABOUT", // Boutgifter
         "ATIO", // Tilsyn - barn over 10 år
@@ -414,13 +412,12 @@ object InternDao {
         "AATFOR", // Tvungen forvaltning
         "AUNDM" // Bøker og undervisningsmatriell
     ).toTypedArray()
-    fun selectPersonMedNyeSaker(personidentifikator: String, nyeSakerEtter: LocalDate, connection: Connection): List<SakStatus> {
+    fun selectPersonMedRelevanteRettighetskoder(personidentifikator: String, connection: Connection): List<SakStatus> {
         val historiskeRettighetskoder = connection.createArrayOf("VARCHAR", historiskeRettighetskoderIArena)
 
-        connection.prepareStatement(selectKunNyeSakerByFnr).use { preparedStatement ->
+        connection.prepareStatement(selectKunSakerMedRelevanteRettighetskoder).use { preparedStatement ->
             preparedStatement.setString(1, personidentifikator)
             preparedStatement.setArray(2, historiskeRettighetskoder)
-            preparedStatement.setDate(3, Date.valueOf(nyeSakerEtter))
             val resultSet = preparedStatement.executeQuery()
             return resultSet.map { row -> mapperForSakStatus(row) }
         }

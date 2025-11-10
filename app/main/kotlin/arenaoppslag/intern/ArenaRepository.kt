@@ -22,7 +22,7 @@ class ArenaRepository(private val dataSource: DataSource) {
 
         runCatching {
             // Sjekk med vår nye logikk om personen kan behandles i Kelvin
-            val nyeRegler = hentKanBehandlesIKelvin(personId, LocalDate.now())
+            val nyeRegler = hentKanBehandlesIKelvin(personId)
             if (eksistererEtterGamleRegler) {
                 prometheus.counter("api_intern_gammel_regel_match").increment()
             }
@@ -40,15 +40,13 @@ class ArenaRepository(private val dataSource: DataSource) {
         return eksistererEtterGamleRegler
     }
 
-    private val minsteAlderIMåneder = 40L
-    fun hentKanBehandlesIKelvin(personId: String, søknadMottatPå: LocalDate): KanBehandlesIKelvinDao {
-        val nyeSakerEtter = søknadMottatPå.minusMonths(minsteAlderIMåneder) // Saker må ha tilDato før dette
-        val forNyeArenaSaker = dataSource.connection.use { con ->
-            InternDao.selectPersonMedNyeSaker(personId, nyeSakerEtter, con)
+    fun hentKanBehandlesIKelvin(personId: String): KanBehandlesIKelvinDao {
+        val relevanteArenaSaker = dataSource.connection.use { con ->
+            InternDao.selectPersonMedRelevanteRettighetskoder(personId, con)
         }
-        val kanBehandles = forNyeArenaSaker.isEmpty()
+        val kanBehandles = relevanteArenaSaker.isEmpty()
 
-        val nyesteSak = finnNyesteSakId(forNyeArenaSaker)
+        val nyesteSak = finnNyesteSakId(relevanteArenaSaker)
 
         return KanBehandlesIKelvinDao(kanBehandles, personId, nyesteSak)
     }
@@ -72,7 +70,7 @@ class ArenaRepository(private val dataSource: DataSource) {
 
     fun rateBegrensetHentKanBehandlesIKelvin(personId: String, søknadMottattPå: LocalDate): KanBehandlesIKelvinDao {
         // Vurder etter nye regler om personen kan behandles i Kelvin
-        val personenKanBehandlesIKelvin = hentKanBehandlesIKelvin(personId, søknadMottattPå)
+        val personenKanBehandlesIKelvin = hentKanBehandlesIKelvin(personId)
         // Midlertidig: Begrens hvor mange personer vi tar inn i Kelvin
         return if (personenKanBehandlesIKelvin.kanBehandles && RateBegrenser.personenTasMed(personId)) {
             personenKanBehandlesIKelvin
