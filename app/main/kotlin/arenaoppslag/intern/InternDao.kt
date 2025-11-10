@@ -365,10 +365,10 @@ object InternDao {
                         ),
                         beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
                         barnMedStonad = vedtakFakta.barnmston,
-                        vedtaksTypeKode = row.getString("vedtaktypekode"),
-                        vedtaksTypeNavn = VedtaksType.values()
-                            .find { it.kode == row.getString("vedtaktypekode") }?.navn
-                            ?: ""
+                        vedtaksTypeKode = vedtaktypekode,
+                        vedtaksTypeNavn = VedtaksType.entries
+                            .find { it.kode == vedtaktypekode }?.navn
+                            ?: error("Ukjent verdi vedtaktypekode=$vedtaktypekode")
                     )
                 }.toList()
                 Maksimum(vedtak)
