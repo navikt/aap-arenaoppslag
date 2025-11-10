@@ -5,19 +5,23 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import java.time.LocalDate
 import javax.sql.DataSource
 
-class InternRepo(private val dataSource: DataSource) {
-    fun hentEksistererIAAPArena(personId: String): Boolean =
-        dataSource.connection.use { con ->
+class ArenaRepository(private val dataSource: DataSource) {
+
+    fun hentEksistererIAAPArena(personId: String): Boolean {
+
+        return dataSource.connection.use { con ->
             InternDao.selectPersonMedFnrEksisterer(personId, con)
         }
+    }
 
-    fun hentMinimumLøsning(
+
+    fun hentPerioder(
         personId: String,
         fraOgMedDato: LocalDate,
         tilOgMedDato: LocalDate
     ): List<Periode> =
         dataSource.connection.use { con ->
-            InternDao.selectVedtakMinimum(
+            InternDao.selectVedtakPerioder(
                 personId = personId,
                 fraOgMedDato = fraOgMedDato,
                 tilOgMedDato = tilOgMedDato,
