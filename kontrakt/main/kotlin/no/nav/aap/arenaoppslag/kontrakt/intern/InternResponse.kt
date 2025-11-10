@@ -32,6 +32,13 @@ public data class SakStatus(
     val kilde: Kilde = Kilde.ARENA
 )
 
+public data class ArenaSak(
+    val sakId: String,
+    val statusKode: String,
+    val periode: Periode,
+    val rettighetkode: String
+)
+
 public enum class Kilde {
     ARENA,
     KELVIN

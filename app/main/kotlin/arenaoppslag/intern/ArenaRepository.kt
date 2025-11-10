@@ -2,6 +2,7 @@ package arenaoppslag.intern
 
 import arenaoppslag.Metrics.prometheus
 import arenaoppslag.modeller.Maksimum
+import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
@@ -51,12 +52,12 @@ class ArenaRepository(private val dataSource: DataSource) {
         return KanBehandlesIKelvinDao(kanBehandles, personId, nyesteSak)
     }
 
-    private fun finnNyesteSakId(arenaSaker: List<SakStatus>): String {
+    internal fun finnNyesteSakId(arenaSaker: List<ArenaSak>): String? {
         val sakerMedSluttDato = arenaSaker.filter { it.periode.tilOgMedDato != null }
         // Hvis saker uten tilOgMedDato finnes, ta den nyeste av disse basert på db-order:
         val nyesteSak = arenaSaker.findLast { it.periode.tilOgMedDato == null }?.sakId
         // ellers ta den nyeste saken basert på tilOgMedDato
-            ?: sakerMedSluttDato.sortedBy { it.periode.tilOgMedDato }.last().sakId
+            ?: sakerMedSluttDato.sortedBy { it.periode.tilOgMedDato }.lastOrNull()?.sakId
         return nyesteSak
     }
 
