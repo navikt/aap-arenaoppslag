@@ -44,6 +44,18 @@ object InternDao {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
     """
 
+    // FIXME verifiser spørringen med Arena-folket
+    private const val selectKunNyeSakerByFnr = """
+        SELECT vedtakstatuskode, sak_id, fra_dato, til_dato
+          FROM vedtak
+         WHERE person_id = 
+               (SELECT person_id 
+                  FROM person 
+                 WHERE fodselsnr = ?) 
+           AND rettighetkode NOT IN (?)
+           AND (til_dato is NULL OR til_dato > ?)
+    """
+
     private const val hentBeregningsgrunnlag = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
@@ -241,7 +253,6 @@ object InternDao {
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato")),
                     )
-
                 }.toList()
 
                 perioder
@@ -388,6 +399,32 @@ object InternDao {
             val resultSet = preparedStatement.executeQuery()
             return resultSet.map { row -> mapperForSakStatus(row) }.toList()
         }
+    }
+
+
+    private val historiskeRettighetskoderIArena = listOf(
+        // Alle disse utløp før 1/1/2022
+        "AA116", // Behov for bistand
+        "ABOUT", // Boutgifter
+        "ATIO", // Tilsyn - barn over 10 år
+        "ATIU", // Tilsyn - barn under 10 år
+        "AHJMR", // Hjemreise
+        "ATIF", // Tilsyn - familiemedlemmer
+        "AFLYT", // Flytting
+        "AATFOR", // Tvungen forvaltning
+        "AUNDM" // Bøker og undervisningsmatriell
+    ).toTypedArray()
+    fun selectPersonMedNyeSaker(personidentifikator: String, nyeSakerEtter: LocalDate, connection: Connection): List<SakStatus> {
+        val historiskeRettighetskoder = connection.createArrayOf("VARCHAR", historiskeRettighetskoderIArena)
+
+        connection.prepareStatement(selectKunNyeSakerByFnr).use { preparedStatement ->
+            preparedStatement.setString(1, personidentifikator)
+            preparedStatement.setArray(2, historiskeRettighetskoder)
+            preparedStatement.setDate(3, Date.valueOf(nyeSakerEtter))
+            val resultSet = preparedStatement.executeQuery()
+            return resultSet.map { row -> mapperForSakStatus(row) }
+        }
+
     }
 
     private fun mapperForSakStatus(row: ResultSet): SakStatus = SakStatus(
