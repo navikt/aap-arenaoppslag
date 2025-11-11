@@ -7,6 +7,7 @@ import com.zaxxer.hikari.HikariDataSource
 import java.sql.ResultSet
 import javax.sql.DataSource
 
+
 internal object Hikari {
 
     fun create(dbConfig: DbConfig): DataSource =
