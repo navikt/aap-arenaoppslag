@@ -3,12 +3,19 @@ package arenaoppslag
 import kotlin.io.path.Path
 import kotlin.io.path.readText
 
-data class Config(
+data class AppConfig(
     val proxyUrl: String = getEnvVar("HTTP_PROXY"),
     val enableProxy: Boolean = true,
     val database: DbConfig = DbConfig(),
-    val azure: AzureConfig = AzureConfig()
-)
+    val azure: AzureConfig = AzureConfig(),
+) {
+    companion object {
+        // Vi endrer ktor sin default-verdi som er "antall CPUer" synlige for JVM-en, som normalt er antall tilgjengelige kjener på container-hosten.
+        // Dette kan gi et for høyt antall tråder i forhold. På den andre siden har vi en del venting på IO (db, http-auth).
+        // Sett den til en balansert verdi:
+        val ktorParallellitet: Int = 4 // defaulter ellers til 2 pga "-XX:ActiveProcessorCount=2" i Dockerfile
+    }
+}
 
 data class DbConfig(
     val url: String = runCatching { Path(getEnvVar("DB_JDBC_URL_PATH")).readText() }.getOrElse {

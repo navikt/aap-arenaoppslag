@@ -7,7 +7,6 @@ import com.zaxxer.hikari.HikariDataSource
 import java.sql.ResultSet
 import javax.sql.DataSource
 
-
 internal object Hikari {
 
     fun create(dbConfig: DbConfig): DataSource =
@@ -15,15 +14,17 @@ internal object Hikari {
             jdbcUrl = dbConfig.url
             username = dbConfig.username
             password = dbConfig.password
-            minimumIdle = 1
+            driverClassName = dbConfig.driver
             initializationFailTimeout = 5000
             idleTimeout = 10001
             connectionTimeout = 1000
             maxLifetime = 30001
-            driverClassName = dbConfig.driver
             connectionTestQuery = "SELECT 1 FROM DUAL"
+            // performance:
+            // do not set minimumIdle, it defaults to maximumPoolSize, matching hikaricp performance recommendations
+            isReadOnly = true
+            isAutoCommit = true // performance optimization for read-only operations, saves transaction work
             metricRegistry = Metrics.prometheus
-            maximumPoolSize = 10
         })
 }
 

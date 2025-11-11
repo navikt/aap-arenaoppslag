@@ -6,7 +6,7 @@ import arenaoppslag.intern.intern
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages
-import io.ktor.http.HttpHeaders
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.engine.*
@@ -16,11 +16,12 @@ import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
-import java.util.UUID
+import java.util.*
 import javax.sql.DataSource
 
 val logger = LoggerFactory.getLogger("App")
@@ -31,12 +32,22 @@ object Metrics{
 
 fun main() {
     Thread.currentThread()
-        .setUncaughtExceptionHandler { _, e -> logger.error("Uhåndtert feil", e)}
-    embeddedServer(Netty, port = 8080, module = Application::server).start(wait = true)
+        .setUncaughtExceptionHandler { _, e -> logger.error("Uhåndtert feil", e) }
+    embeddedServer(Netty, configure = {
+        // Vi følger ktor sin metodikk for å regne ut tuning parametre som funksjon av parallellitet
+        // https://github.com/ktorio/ktor/blob/3.3.2/ktor-server/ktor-server-core/common/src/io/ktor/server/engine/ApplicationEngine.kt#L30
+        connectionGroupSize = AppConfig.ktorParallellitet / 2 + 1
+        workerGroupSize = AppConfig.ktorParallellitet / 2 + 1
+        callGroupSize = AppConfig.ktorParallellitet
+
+        connector {
+            port = 8080
+        }
+    }, module = Application::server).start(wait = true)
 }
 
 fun Application.server(
-    config: Config = Config(),
+    config: AppConfig = AppConfig(),
     datasource: DataSource = Hikari.create(config.database)
 ) {
     install(CallId) {
@@ -60,7 +71,10 @@ fun Application.server(
         filter { call -> call.request.path().startsWith("/actuator").not() }
     }
 
-    install(MicrometerMetrics) { registry = prometheus }
+    install(MicrometerMetrics) {
+        registry = prometheus
+        meterBinders += LogbackMetrics()
+    }
 
     statusPages()
 

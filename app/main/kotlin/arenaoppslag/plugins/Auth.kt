@@ -1,6 +1,6 @@
 package arenaoppslag.plugins
 
-import arenaoppslag.Config
+import arenaoppslag.AppConfig
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import io.ktor.http.*
@@ -13,7 +13,7 @@ import java.net.ProxySelector
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
-fun Application.authentication(config: Config) {
+fun Application.authentication(config: AppConfig) {
     val proxyUri = URI.create(config.proxyUrl)
 
     val jwkProvider: JwkProvider = if(config.enableProxy) {
