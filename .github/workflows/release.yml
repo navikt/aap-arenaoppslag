@@ -27,7 +27,7 @@ jobs:
     secrets: inherit
 
   publiser-kontrakt:
-    needs: gradle
+    needs: [gradle, dev]
     permissions:
       contents: write
       packages: write
