@@ -17,28 +17,30 @@ class ArenaRepository(private val dataSource: DataSource) {
     }
 
     fun hentEksistererIAAPArena(personId: String): Boolean {
-        val eksistererEtterGamleRegler = dataSource.connection.use { con ->
+        val kanIkkeBehandlesEtterGammelRegel = dataSource.connection.use { con ->
             InternDao.selectPersonMedFnrEksisterer(personId, con)
         }
 
         runCatching {
             // Sjekk med vår nye logikk om personen kan behandles i Kelvin
-            val nyeRegler = hentKanBehandlesIKelvin(personId)
-            if (eksistererEtterGamleRegler) {
+            val nyRegel = hentKanBehandlesIKelvin(personId)
+            if (kanIkkeBehandlesEtterGammelRegel) {
                 prometheus.counter("api_intern_gammel_regel_match").increment()
             }
-            if (nyeRegler.kanBehandles) {
+            if (nyRegel.kanBehandles) {
                 prometheus.counter("api_intern_ny_regel_1_match").increment()
             }
 
-            if (eksistererEtterGamleRegler && nyeRegler.kanBehandles) {
-                logger.info("Person avvist av gamle regler ble tatt inn av nye regler, sakId=${nyeRegler.sakId}")
+            val godkjentKunAvNyeRegler = kanIkkeBehandlesEtterGammelRegel && nyRegel.kanBehandles
+            if (godkjentKunAvNyeRegler) {
+                logger.info("Person avvist av gammel regel ble tatt inn av ny regel, sakId=${nyRegel.sakId}")
+                prometheus.counter("api_intern_antall_ekstra_ved_ny_regel").increment()
             }
         }.onFailure {
             logger.warn("Feil i ny spørring på arena-historikk", it)
         }
 
-        return eksistererEtterGamleRegler
+        return kanIkkeBehandlesEtterGammelRegel
     }
 
     fun hentKanBehandlesIKelvin(personId: String): KanBehandlesIKelvinDao {
