@@ -2,6 +2,7 @@ package arenaoppslag
 
 import kotlin.io.path.Path
 import kotlin.io.path.readText
+import kotlin.time.Duration.Companion.seconds
 
 data class AppConfig(
     val proxyUrl: String = getEnvVar("HTTP_PROXY"),
@@ -14,6 +15,18 @@ data class AppConfig(
         // Dette kan gi et for høyt antall tråder i forhold. På den andre siden har vi en del venting på IO (db, http-auth).
         // Sett den til en balansert verdi:
         val ktorParallellitet: Int = 4 // defaulter ellers til 2 pga "-XX:ActiveProcessorCount=2" i Dockerfile
+
+        // Matcher terminationGracePeriodSeconds for podden i Kubernetes-manifestet ("nais.yaml")
+        private val kubernetesTimeout = 30.seconds
+
+        // Tid før ktor avslutter uansett. Må være litt mindre enn `kubernetesTimeout`.
+        val shutdownTimeout = kubernetesTimeout - 2.seconds
+
+        // Tid appen får til å fullføre påbegynte requests, jobber etc. Må være mindre enn `endeligShutdownTimeout`.
+        val shutdownGracePeriod = shutdownTimeout - 3.seconds
+
+        // Tid appen får til å avslutte Motor, Kafka, etc
+        val stansArbeidTimeout = shutdownGracePeriod - 1.seconds
     }
 }
 

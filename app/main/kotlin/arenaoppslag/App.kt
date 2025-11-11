@@ -6,6 +6,7 @@ import arenaoppslag.intern.intern
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -40,6 +41,9 @@ fun main() {
         workerGroupSize = AppConfig.ktorParallellitet / 2 + 1
         callGroupSize = AppConfig.ktorParallellitet
 
+        shutdownGracePeriod = AppConfig.shutdownGracePeriod.inWholeMilliseconds
+        shutdownTimeout = AppConfig.shutdownTimeout.inWholeMilliseconds
+
         connector {
             port = 8080
         }
@@ -60,8 +64,7 @@ fun Application.server(
         level = Level.INFO
         format { call ->
             val status = call.response.status()
-            val errorBody =
-                if (status?.value != null && status.value > 499) ", ErrorBody: ${call.response}" else ""
+            val errorBody = if (status?.value != null && status.value > 499) ", ErrorBody: ${call.response}" else ""
             val httpMethod = call.request.httpMethod.value
             val userAgent = call.request.headers["User-Agent"]
             val callId = call.request.header("x-callid") ?: call.request.header("nav-callId") ?: "ukjent"
@@ -72,8 +75,8 @@ fun Application.server(
     }
 
     install(MicrometerMetrics) {
-        registry = prometheus
         meterBinders += LogbackMetrics()
+        registry = prometheus
     }
 
     statusPages()
@@ -87,6 +90,21 @@ fun Application.server(
 
         authenticate {
             intern(datasource)
+        }
+    }
+
+    monitor.subscribe(ApplicationStopPreparing) { environment ->
+        environment.log.info("ktor forbereder seg på å stoppe.")
+    }
+    monitor.subscribe(ApplicationStopping) { environment ->
+        environment.log.info("ktor stopper nå å ta imot nye requester, og lar mottatte requester kjøre frem til timeout.")
+    }
+    monitor.subscribe(ApplicationStopped) { environment ->
+        environment.log.info("ktor har fullført nedstoppingen sin. Eventuelle requester og annet arbeid som ikke ble fullført innen timeout ble avbrutt.")
+        try {
+            (datasource as? HikariDataSource)?.close() // en annen type i Test enn i Prod
+        } catch (_: Exception) {
+            // Ignorert
         }
     }
 }
