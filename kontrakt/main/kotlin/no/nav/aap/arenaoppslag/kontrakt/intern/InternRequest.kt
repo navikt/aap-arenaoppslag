@@ -11,3 +11,8 @@ public data class InternVedtakRequest(
 public data class SakerRequest (
     val personidentifikatorer: List<String>
 )
+
+public data class KanBehandleSoknadIKelvin (
+    val personidentifikatorer: List<String>,
+    val virkningstidspunkt: LocalDate, // datoen søknaden ble mottatt, feks. per post
+)

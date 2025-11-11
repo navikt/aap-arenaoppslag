@@ -48,6 +48,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.6")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.4.240")
+    testImplementation("io.mockk:mockk:1.14.6")
 }
 
 tasks {
