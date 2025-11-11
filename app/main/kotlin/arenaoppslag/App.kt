@@ -93,6 +93,9 @@ fun Application.server(
         }
     }
 
+    monitor.subscribe(ApplicationStarted) { environment ->
+        environment.log.info("ktor har startet opp.")
+    }
     monitor.subscribe(ApplicationStopPreparing) { environment ->
         environment.log.info("ktor forbereder seg på å stoppe.")
     }
