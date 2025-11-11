@@ -35,7 +35,7 @@ class ArenaRepository(private val dataSource: DataSource) {
                 logger.info("Person avvist av gamle regler ble tatt inn av nye regler, sakId=${nyeRegler.sakId}")
             }
         }.onFailure {
-            logger.error("Feil i ny spørring på arena-historik", it)
+            logger.warn("Feil i ny spørring på arena-historikk", it)
         }
 
         return eksistererEtterGamleRegler
@@ -53,11 +53,11 @@ class ArenaRepository(private val dataSource: DataSource) {
     }
 
     internal fun finnNyesteSakId(arenaSaker: List<ArenaSak>): String? {
-        val sakerMedSluttDato = arenaSaker.filter { it.periode.tilOgMedDato != null }
+        val sakerMedSluttDato = arenaSaker.filter { it.tilDato != null }
         // Hvis saker uten tilOgMedDato finnes, ta den nyeste av disse basert på db-order:
-        val nyesteSak = arenaSaker.findLast { it.periode.tilOgMedDato == null }?.sakId
+        val nyesteSak = arenaSaker.findLast { it.tilDato == null }?.sakId
         // ellers ta den nyeste saken basert på tilOgMedDato
-            ?: sakerMedSluttDato.sortedBy { it.periode.tilOgMedDato }.lastOrNull()?.sakId
+            ?: sakerMedSluttDato.sortedBy { it.tilDato }.lastOrNull()?.sakId
         return nyesteSak
     }
 

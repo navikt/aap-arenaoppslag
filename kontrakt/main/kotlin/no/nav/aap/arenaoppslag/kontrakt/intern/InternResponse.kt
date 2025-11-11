@@ -1,6 +1,7 @@
 package no.nav.aap.arenaoppslag.kontrakt.intern
 
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
+import java.time.LocalDate
 
 public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
@@ -35,7 +36,8 @@ public data class SakStatus(
 public data class ArenaSak(
     val sakId: String,
     val statusKode: String,
-    val periode: Periode,
+    val fraOgMed: LocalDate?,
+    val tilDato: LocalDate?,
     val rettighetkode: String
 )
 

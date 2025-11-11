@@ -3,14 +3,12 @@ package arenaoppslag.intern
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
-import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.LocalDate
 import javax.sql.DataSource
-import kotlin.random.Random
 
 @ExtendWith(MockKExtension::class)
 class ArenaRepositoryTest {
@@ -39,7 +37,7 @@ class ArenaRepositoryTest {
                 testSak(teller++, LocalDate.now().plusYears(1)),
                 testSak(teller++, LocalDate.now().plusYears(3)),
                 testSak(teller, LocalDate.now().plusYears(2)),
-                )
+            )
         )
         assertThat(nyeste).isEqualTo("2")
     }
@@ -52,15 +50,16 @@ class ArenaRepositoryTest {
                 testSak(teller++, LocalDate.now().plusYears(1)),
                 testSak(teller++, null),
                 testSak(teller, LocalDate.now().plusYears(2)),
-                )
+            )
         )
         assertThat(nyeste).isEqualTo("2")
     }
 
-    private fun testSak(sakId: Int, tilOgMedDato: LocalDate?) = ArenaSak(
+    private fun testSak(sakId: Int, tilDato: LocalDate?) = ArenaSak(
         sakId.toString(),
         "AKTIV",
-        Periode(LocalDate.now().minusYears(5), tilOgMedDato),
+        LocalDate.now().minusYears(5),
+        tilDato = tilDato,
         "AAP"
     )
 

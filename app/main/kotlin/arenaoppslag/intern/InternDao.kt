@@ -61,6 +61,7 @@ object InternDao {
 
     @Language("OracleSql")
     // Oracle støtter ikke dynamiske liste, så vi må hardkode inn rettighetkodene her
+    // OBS: tabellen i Prod har forekomster av at til_dato er før fra_dato
     private val selectKunSakerMedRelevanteRettighetskoder = """
         SELECT vedtakstatuskode, sak_id, fra_dato, til_dato, rettighetkode
           FROM vedtak
@@ -211,7 +212,7 @@ object InternDao {
                     PeriodeMed11_17(
                         Periode(
                             fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                            tilOgMedDato = getNullableDate(row.getDate("til_dato")),
+                            tilOgMedDato = fraDato(row.getDate("til_dato")),
                         ),
                         aktivitetsfaseKode = row.getString("aktfasekode"),
                         aktivitetsfaseNavn = row.getString("aktfasenavn"),
@@ -279,7 +280,7 @@ object InternDao {
                 val perioder = resultSet.map { row ->
                     Periode(
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                        tilOgMedDato = getNullableDate(row.getDate("til_dato")),
+                        tilOgMedDato = fraDato(row.getDate("til_dato")),
                     )
                 }.toList()
 
@@ -404,7 +405,7 @@ object InternDao {
                             rettighetsType = row.getString("aktfasekode"),
                             periode = Periode(
                                 fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                                tilOgMedDato = getNullableDate(row.getDate("til_dato"))
+                                tilOgMedDato = fraDato(row.getDate("til_dato"))
                             ),
                             beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
                             barnMedStonad = vedtakFakta.barnmston,
@@ -419,7 +420,7 @@ object InternDao {
         return maksimum
     }
 
-    private fun getNullableDate(date: Date?): LocalDate? {
+    private fun fraDato(date: Date?): LocalDate? {
         if (date == null) return null
         return date.toLocalDate()
     }
@@ -471,18 +472,16 @@ object InternDao {
         Status.entries.find { it.name == row.getString("vedtakstatuskode") }
             ?: Status.UKJENT,
         KontraktPeriode(
-            fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
-            tilOgMedDato = getNullableDate(row.getDate("til_dato"))
+            fraOgMedDato = fraDato(row.getDate("fra_dato")),
+            tilOgMedDato = fraDato(row.getDate("til_dato"))
         )
     )
 
     private fun mapperForArenasak(row: ResultSet): ArenaSak = ArenaSak(
         row.getString("sak_id"),
         row.getString("vedtakstatuskode"),
-        KontraktPeriode(
-            fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
-            tilOgMedDato = getNullableDate(row.getDate("til_dato"))
-        ),
+        fraDato(row.getDate("fra_dato")),
+        tilDato = fraDato(row.getDate("til_dato")),
         rettighetkode = row.getString("rettighetkode")
     )
 
