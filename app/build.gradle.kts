@@ -4,11 +4,11 @@ import org.gradle.kotlin.dsl.withType
 plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.2.2"
-    id("io.ktor.plugin") version "3.3.1"
+    id("io.ktor.plugin") version "3.3.2"
     application
 }
 
-val ktorVersion = "3.3.1"
+val ktorVersion = "3.3.2"
 
 application {
     mainClass.set("arenaoppslag.AppKt")
@@ -34,7 +34,7 @@ dependencies {
     implementation("no.nav.aap.kelvin:json:1.0.418")
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.15.5")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.16.0")
     implementation("ch.qos.logback:logback-classic:1.5.20")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.1")
 
@@ -43,8 +43,8 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("com.nimbusds:nimbus-jose-jwt:10.5")
-    testImplementation("org.flywaydb:flyway-core:11.15.0")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:10.6")
+    testImplementation("org.flywaydb:flyway-core:11.16.0")
     testImplementation("org.assertj:assertj-core:3.27.6")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.4.240")
