@@ -25,16 +25,16 @@ class ArenaRepository(private val dataSource: DataSource) {
             // Sjekk med vår nye logikk om personen kan behandles i Kelvin
             val nyRegel = hentKanBehandlesIKelvin(personId)
             if (kanIkkeBehandlesEtterGammelRegel) {
-                prometheus.counter("api_intern_gammel_regel_match").increment()
+                prometheus.counter("arenaoppslag_gammel_regel_match").increment()
             }
             if (nyRegel.kanBehandles) {
-                prometheus.counter("api_intern_ny_regel_1_match").increment()
+                prometheus.counter("arenaoppslag_ny_regel_1_match").increment()
             }
 
             val godkjentKunAvNyeRegler = kanIkkeBehandlesEtterGammelRegel && nyRegel.kanBehandles
             if (godkjentKunAvNyeRegler) {
                 logger.info("Person avvist av gammel regel ble tatt inn av ny regel, sakId=${nyRegel.sakId}")
-                prometheus.counter("api_intern_antall_ekstra_ved_ny_regel").increment()
+                prometheus.counter("arenaoppslag_bare_ny_regel_match").increment()
             }
         }.onFailure {
             logger.warn("Feil i ny spørring på arena-historikk", it)
