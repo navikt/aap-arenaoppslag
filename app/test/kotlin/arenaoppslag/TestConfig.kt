@@ -12,8 +12,8 @@ internal object TestConfig {
         driver = "org.h2.Driver"
     )
 
-    fun default(fakes: Fakes): Config {
-        return Config(
+    fun default(fakes: Fakes): AppConfig {
+        return AppConfig(
             proxyUrl = "http://localhost",
             enableProxy = false,
             database = oracleH2,
