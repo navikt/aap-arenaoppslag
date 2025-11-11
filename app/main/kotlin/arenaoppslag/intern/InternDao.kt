@@ -2,8 +2,11 @@ package arenaoppslag.intern
 
 import arenaoppslag.datasource.map
 import arenaoppslag.modeller.*
+import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
+import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
@@ -16,7 +19,8 @@ import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 // https://confluence.adeo.no/spaces/TEAMARENA/pages/553617512/ARENA-8716+03+-+L%C3%B8sningsbeskrivelse#ARENA871603L%C3%B8sningsbeskrivelse-Arbeidsavklaringspenger
 
 object InternDao {
-    private const val selectMaksimumMedTidsbegrensning = """
+    @Language("OracleSql")
+    private val selectMaksimumMedTidsbegrensning = """
         SELECT vedtak_id, til_dato, fra_dato, vedtaktypekode, vedtakstatuskode, sak_id, aktfasekode 
           FROM vedtak 
          WHERE person_id = 
@@ -30,9 +34,10 @@ object InternDao {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND (til_dato >= ? OR til_dato IS NULL) 
            AND fra_dato <= ?
-    """
+    """.trimIndent()
 
-    private const val selectSaksIdByFnr = """
+    @Language("OracleSql")
+    private val selectSaksIdByFnr = """
         SELECT vedtakstatuskode, sak_id, fra_dato, til_dato
           FROM vedtak
          WHERE person_id = 
@@ -42,21 +47,46 @@ object InternDao {
            AND rettighetkode = 'AAP'
            AND vedtaktypekode IN ('O', 'E', 'G', 'S')
            AND (fra_dato <= til_dato OR til_dato IS NULL)
-    """
+    """.trimIndent()
 
-    private const val hentBeregningsgrunnlag = """
+    @Language("OracleSql")
+    private val selectAlleSakerByFnr = """
+        SELECT vedtakstatuskode, sak_id, fra_dato, til_dato, rettighetkode
+          FROM vedtak
+         WHERE person_id = 
+               (SELECT person_id 
+                  FROM person 
+                 WHERE fodselsnr = ?) 
+    """.trimIndent()
+
+    @Language("OracleSql")
+    // Oracle støtter ikke dynamiske liste, så vi må hardkode inn rettighetkodene her
+    private val selectKunSakerMedRelevanteRettighetskoder = """
+        SELECT vedtakstatuskode, sak_id, fra_dato, til_dato, rettighetkode
+          FROM vedtak
+         WHERE person_id = 
+               (SELECT person_id 
+                  FROM person 
+                 WHERE fodselsnr = ?) 
+           AND rettighetkode NOT IN ('AA116', 'ABOUT', 'ATIO', 'ATIU', 'AHJMR', 'ATIF', 'AFLYT', 'AATFOR', 'AUNDM')
+    """.trimIndent()
+
+    @Language("OracleSql")
+    private val hentBeregningsgrunnlag = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
              WHERE vedtak_id = ? AND vedtakfaktakode IN ('GRUNN')
-    """
+    """.trimIndent()
 
-    private const val hentVedtakfakta = """
+    @Language("OracleSql")
+    private val hentVedtakfakta = """
         SELECT vedtakfaktakode, vedtakverdi
             FROM vedtakfakta 
              WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS', 'BARNMSTON', 'DAGSFSAM')
-    """
+    """.trimIndent()
 
-    private const val selectVedtakMedTidsbegrensningSql = """
+    @Language("OracleSql")
+    private val selectVedtakMedTidsbegrensningSql = """
         SELECT til_dato, fra_dato
           FROM vedtak 
          WHERE person_id = 
@@ -70,35 +100,39 @@ object InternDao {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND (til_dato >= ? OR til_dato IS NULL) 
            AND fra_dato <= ?
-    """
+    """.trimIndent()
 
-    private const val selectSykedagerMeldekort = """
+    @Language("OracleSql")
+    private val selectSykedagerMeldekort = """
         SELECT sum(verdi)
           FROM anmerkning
         WHERE tabellnavnalias = 'MKORT'
           AND objekt_id       = ?
           AND anmerkningkode  = 'FSNN'
-    """
+    """.trimIndent()
 
-    private const val selectForSentMeldekort = """
+    @Language("OracleSql")
+    private val selectForSentMeldekort = """
         SELECT sum(verdi)
           FROM anmerkning
         WHERE tabellnavnalias = 'MKORT'
           AND objekt_id       = ?
           AND anmerkningkode  = 'SENN'
-    """
+    """.trimIndent()
 
-    private const val selectFraværMeldekort = """
+    @Language("OracleSql")
+    private val selectFraværMeldekort = """
         SELECT sum(verdi)
           FROM anmerkning
         WHERE tabellnavnalias = 'MKORT'
           AND objekt_id       = ?
           AND anmerkningkode  = 'FXNN'
-    """
+    """.trimIndent()
     //Syk=FSNN', fravære = 'FXNN' og for sent = 'SENN'
 
+    @Language("OracleSql")
     //henter timer arbeidet for bruker x mellom y og z dato gruppert på meldekortperiode
-    private const val selectTimerArbeidetIMeldekortPeriode = """
+    private val selectTimerArbeidetIMeldekortPeriode = """
         SELECT 
             SUM(mkd.timer_arbeidet) AS timer_arbeidet,
             p.meldekort_id,
@@ -120,9 +154,10 @@ object InternDao {
             p.dato_periode_til >= ? AND p.dato_periode_fra <= ?
         GROUP BY
             p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
-    """
+    """.trimIndent()
 
-    private const val selectVedtakMedTidsbegrensningMed11_17Sql = """
+    @Language("OracleSql")
+    private val selectVedtakMedTidsbegrensningMed11_17Sql = """
         SELECT v.til_dato, v.fra_dato, af.aktfasenavn, v.aktfasekode
           FROM vedtak v
           JOIN aktivitetfase af ON v.aktfasekode = af.aktfasekode
@@ -137,23 +172,25 @@ object InternDao {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND (til_dato >= ? OR til_dato IS NULL) 
            AND fra_dato <= ?
-    """
+    """.trimIndent()
 
-    private const val selectPersonMedFnrEksisterer = """
+    @Language("OracleSql")
+    private val selectPersonMedFnrEksisterer = """
         SELECT * 
         FROM person 
         WHERE fodselsnr = ?
-    """
+    """.trimIndent()
 
     fun selectPersonMedFnrEksisterer(
         personIdent: String,
         connection: Connection
     ): Boolean {
-        return connection.prepareStatement(selectPersonMedFnrEksisterer).use { preparedStatement ->
-            preparedStatement.setString(1, personIdent)
-            val resultSet = preparedStatement.executeQuery()
-            resultSet.next()
-        }
+        return connection.prepareStatement(selectPersonMedFnrEksisterer)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, personIdent)
+                val resultSet = preparedStatement.executeQuery()
+                resultSet.next()
+            }
     }
 
     fun selectVedtakMedTidsbegrensningOg11_17(
@@ -185,40 +222,43 @@ object InternDao {
     }
 
     fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
-        return connection.prepareStatement(selectSykedagerMeldekort).use { preparedStatement ->
-            preparedStatement.setString(1, meldekortId)
+        return connection.prepareStatement(selectSykedagerMeldekort)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, meldekortId)
 
-            val resultSet = preparedStatement.executeQuery()
+                val resultSet = preparedStatement.executeQuery()
 
-            resultSet.map { row ->
-                row.getInt(1)
-            }.firstOrNull() ?: 0
-        }
+                resultSet.map { row ->
+                    row.getInt(1)
+                }.firstOrNull() ?: 0
+            }
     }
 
     fun selectFraværMeldekort(meldekortId: String, connection: Connection): Int {
-        return connection.prepareStatement(selectFraværMeldekort).use { preparedStatement ->
-            preparedStatement.setString(1, meldekortId)
+        return connection.prepareStatement(selectFraværMeldekort)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, meldekortId)
 
-            val resultSet = preparedStatement.executeQuery()
+                val resultSet = preparedStatement.executeQuery()
 
-            resultSet.map { row ->
-                row.getInt(1)
-            }.firstOrNull() ?: 0
-        }
+                resultSet.map { row ->
+                    row.getInt(1)
+                }.firstOrNull() ?: 0
+            }
     }
 
     fun selectForSentMeldekort(meldekortId: String, connection: Connection): Boolean {
-        return connection.prepareStatement(selectForSentMeldekort).use { preparedStatement ->
-            preparedStatement.setString(1, meldekortId)
+        return connection.prepareStatement(selectForSentMeldekort)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, meldekortId)
 
-            val resultSet = preparedStatement.executeQuery()
+                val resultSet = preparedStatement.executeQuery()
 
-            val forSent = resultSet.map { row ->
-                row.getInt(1)
-            }.firstOrNull() ?: 0
-            forSent > 0
-        }
+                val forSent = resultSet.map { row ->
+                    row.getInt(1)
+                }.firstOrNull() ?: 0
+                forSent > 0
+            }
     }
 
 
@@ -241,7 +281,6 @@ object InternDao {
                         fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
                         tilOgMedDato = getNullableDate(row.getDate("til_dato")),
                     )
-
                 }.toList()
 
                 perioder
@@ -267,7 +306,7 @@ object InternDao {
 
                 val resultSet = preparedStatement.executeQuery()
 
-                return resultSet.map { row ->
+                resultSet.map { row ->
                     //hent andmerking for sent meldekort
                     val meldekortId = row.getString("meldekort_id")
                     UtbetalingMedMer(
@@ -292,35 +331,37 @@ object InternDao {
     }
 
     fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection): Int {
-        return connection.prepareStatement(hentBeregningsgrunnlag).use { preparedStatement ->
-            preparedStatement.setInt(1, vedtakId)
-            val resultSet = preparedStatement.executeQuery()
-            var beregningsgrunnlag: Int? = null
-            resultSet.map { row ->
-                if (row.getString("vedtakfaktakode") == "GRUNN") {
-                    beregningsgrunnlag = row.getInt("vedtakverdi")
+        return connection.prepareStatement(hentBeregningsgrunnlag)
+            .use { preparedStatement ->
+                preparedStatement.setInt(1, vedtakId)
+                val resultSet = preparedStatement.executeQuery()
+                var beregningsgrunnlag: Int? = null
+                resultSet.map { row ->
+                    if (row.getString("vedtakfaktakode") == "GRUNN") {
+                        beregningsgrunnlag = row.getInt("vedtakverdi")
+                    }
                 }
+                return@use beregningsgrunnlag ?: 0
             }
-            return@use beregningsgrunnlag ?: 0
-        }
     }
 
     fun selectVedtakFakta(vedtakId: Int, connection: Connection): VedtakFakta {
-        return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
-            preparedStatement.setInt(1, vedtakId)
-            val resultSet = preparedStatement.executeQuery()
-            val vedtakfakta = VedtakFakta(0, 0, 0, 0, 0)
-            resultSet.map { row ->
-                when (row.getString("vedtakfaktakode")) {
-                    "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
-                    "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
-                    "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
-                    "BARNMSTON" -> vedtakfakta.barnmston = row.getInt("vedtakverdi")
-                    "DAGSFSAM" -> vedtakfakta.dagsfsam = row.getInt("vedtakverdi")
+        return connection.prepareStatement(hentVedtakfakta)
+            .use { preparedStatement ->
+                preparedStatement.setInt(1, vedtakId)
+                val resultSet = preparedStatement.executeQuery()
+                val vedtakfakta = VedtakFakta(0, 0, 0, 0, 0)
+                resultSet.map { row ->
+                    when (row.getString("vedtakfaktakode")) {
+                        "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
+                        "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
+                        "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
+                        "BARNMSTON" -> vedtakfakta.barnmston = row.getInt("vedtakverdi")
+                        "DAGSFSAM" -> vedtakfakta.dagsfsam = row.getInt("vedtakverdi")
+                    }
                 }
+                vedtakfakta
             }
-            vedtakfakta
-        }
     }
 
     fun selectVedtakMaksimum(
@@ -330,50 +371,51 @@ object InternDao {
         connection: Connection
     ): Maksimum {
         val maksimum =
-            connection.prepareStatement(selectMaksimumMedTidsbegrensning).use { preparedStatement ->
-                preparedStatement.setString(1, personId)
-                preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
-                preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
+            connection.prepareStatement(selectMaksimumMedTidsbegrensning)
+                .use { preparedStatement ->
+                    preparedStatement.setString(1, personId)
+                    preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
+                    preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
-                val resultSet = preparedStatement.executeQuery()
-                val utbetalinger = mutableListOf<UtbetalingMedMer>()
-                val vedtak = resultSet.map { row ->
-                    val vedtakId = row.getInt("vedtak_id")
-                    val vedtakFakta = selectVedtakFakta(vedtakId, connection)
-                    utbetalinger.addAll(
-                        selectUtbetalingVedVedtakId(
-                            connection = connection,
-                            barnetiTillegg = vedtakFakta.barntill,
-                            dagsats = vedtakFakta.dagsmbt,
-                            personId = personId,
-                            vedtakId = row.getInt("vedtak_id"),
-                            fra_Dato = fraOgMedDato,
-                            til_dato = tilOgMedDato
+                    val resultSet = preparedStatement.executeQuery()
+                    val utbetalinger = mutableListOf<UtbetalingMedMer>()
+                    val vedtak = resultSet.map { row ->
+                        val vedtakId = row.getInt("vedtak_id")
+                        val vedtakFakta = selectVedtakFakta(vedtakId, connection)
+                        utbetalinger.addAll(
+                            selectUtbetalingVedVedtakId(
+                                connection = connection,
+                                barnetiTillegg = vedtakFakta.barntill,
+                                dagsats = vedtakFakta.dagsmbt,
+                                personId = personId,
+                                vedtakId = row.getInt("vedtak_id"),
+                                fra_Dato = fraOgMedDato,
+                                til_dato = tilOgMedDato
+                            )
                         )
-                    )
-                    val vedtaktypekode = row.getString("vedtaktypekode")
-                    Vedtak(
-                        vedtaksId = vedtakId.toString(),
-                        utbetaling = utbetalinger,
-                        dagsats = vedtakFakta.dagsfsam,
-                        status = row.getString("vedtakstatuskode"),
-                        saksnummer = row.getString("sak_id"),
-                        vedtaksdato = row.getString("fra_dato"),
-                        rettighetsType = row.getString("aktfasekode"),
-                        periode = Periode(
-                            fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                            tilOgMedDato = getNullableDate(row.getDate("til_dato"))
-                        ),
-                        beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
-                        barnMedStonad = vedtakFakta.barnmston,
-                        vedtaksTypeKode = vedtaktypekode,
-                        vedtaksTypeNavn = VedtaksType.entries
-                            .find { it.kode == vedtaktypekode }?.navn
-                            ?: error("Ukjent verdi vedtaktypekode=$vedtaktypekode")
-                    )
-                }.toList()
-                Maksimum(vedtak)
-            }
+                        val vedtaktypekode = row.getString("vedtaktypekode")
+                        Vedtak(
+                            vedtaksId = vedtakId.toString(),
+                            utbetaling = utbetalinger,
+                            dagsats = vedtakFakta.dagsfsam,
+                            status = row.getString("vedtakstatuskode"),
+                            saksnummer = row.getString("sak_id"),
+                            vedtaksdato = row.getString("fra_dato"),
+                            rettighetsType = row.getString("aktfasekode"),
+                            periode = Periode(
+                                fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                                tilOgMedDato = getNullableDate(row.getDate("til_dato"))
+                            ),
+                            beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
+                            barnMedStonad = vedtakFakta.barnmston,
+                            vedtaksTypeKode = vedtaktypekode,
+                            vedtaksTypeNavn = VedtaksType.entries
+                                .find { it.kode == vedtaktypekode }?.navn
+                                ?: error("Ukjent verdi vedtaktypekode=$vedtaktypekode")
+                        )
+                    }.toList()
+                    Maksimum(vedtak)
+                }
         return maksimum
     }
 
@@ -383,11 +425,45 @@ object InternDao {
     }
 
     fun selectSaker(personidentifikator: String, connection: Connection): List<SakStatus> {
-        connection.prepareStatement(selectSaksIdByFnr).use { preparedStatement ->
-            preparedStatement.setString(1, personidentifikator)
-            val resultSet = preparedStatement.executeQuery()
-            return resultSet.map { row -> mapperForSakStatus(row) }.toList()
-        }
+        connection.prepareStatement(selectSaksIdByFnr)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, personidentifikator)
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForSakStatus(row) }.toList()
+            }
+    }
+
+    @TestOnly
+    internal fun selectAlleSaker(personidentifikator: String, connection: Connection): List<ArenaSak> {
+        connection.prepareStatement(selectAlleSakerByFnr)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, personidentifikator)
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForArenasak(row) }.toList()
+            }
+    }
+
+    @TestOnly
+    internal val historiskeRettighetkoderIArena = setOf(
+        // Alle disse har kun rettighetsperioder utløpt før 1/1/2022
+        "AA116", // Behov for bistand
+        "ABOUT", // Boutgifter
+        "ATIO", // Tilsyn - barn over 10 år
+        "ATIU", // Tilsyn - barn under 10 år
+        "AHJMR", // Hjemreise
+        "ATIF", // Tilsyn - familiemedlemmer
+        "AFLYT", // Flytting
+        "AATFOR", // Tvungen forvaltning
+        "AUNDM" // Bøker og undervisningsmatriell
+    )
+
+    fun selectPersonMedRelevanteRettighetskoder(personidentifikator: String, connection: Connection): List<ArenaSak> {
+        connection.prepareStatement(selectKunSakerMedRelevanteRettighetskoder)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, personidentifikator)
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForArenasak(row) }
+            }
     }
 
     private fun mapperForSakStatus(row: ResultSet): SakStatus = SakStatus(
@@ -398,6 +474,16 @@ object InternDao {
             fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
             tilOgMedDato = getNullableDate(row.getDate("til_dato"))
         )
+    )
+
+    private fun mapperForArenasak(row: ResultSet): ArenaSak = ArenaSak(
+        row.getString("sak_id"),
+        row.getString("vedtakstatuskode"),
+        KontraktPeriode(
+            fraOgMedDato = getNullableDate(row.getDate("fra_dato")),
+            tilOgMedDato = getNullableDate(row.getDate("til_dato"))
+        ),
+        rettighetkode = row.getString("rettighetkode")
     )
 
 }

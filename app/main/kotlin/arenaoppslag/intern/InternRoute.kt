@@ -4,8 +4,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
+import no.nav.aap.arenaoppslag.kontrakt.intern.PersonKanBehandlesIKelvinResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
@@ -57,6 +59,18 @@ fun Route.intern(datasource: DataSource) {
                     }.any { it.equals(true) }
                 )
             )
+        }
+        post("/person/aap/soknad/kan_behandles_i_kelvin") {
+            logger.info("Sjekker om det er mulig å opprette AAP-sak i Kelvin for person, gitt Arena-historikk")
+            val string = call.receive<String>()
+            val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string)
+            val arenaData = request.personidentifikatorer.map { personidentifikator ->
+                arenaRepository.rateBegrensetHentKanBehandlesIKelvin(personidentifikator, request.virkningstidspunkt)
+            }
+            val sisteArenaSakId = arenaData.firstNotNullOfOrNull { it.sakId }
+
+            val response = PersonKanBehandlesIKelvinResponse(arenaData.all { it.kanBehandles }, sisteArenaSakId)
+            call.respond(response)
         }
         post("/maksimum") {
             logger.info("Henter maksimum")

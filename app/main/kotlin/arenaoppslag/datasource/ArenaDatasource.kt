@@ -1,7 +1,7 @@
 package arenaoppslag.datasource
 
 import arenaoppslag.DbConfig
-import arenaoppslag.prometheus
+import arenaoppslag.Metrics
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import java.sql.ResultSet
@@ -20,12 +20,11 @@ internal object Hikari {
             connectionTimeout = 1000
             maxLifetime = 30001
             connectionTestQuery = "SELECT 1 FROM DUAL"
-            metricRegistry = prometheus
             // performance:
-            maximumPoolSize = 12 // default: 10
             // do not set minimumIdle, it defaults to maximumPoolSize, matching hikaricp performance recommendations
             isReadOnly = true
             isAutoCommit = true // performance optimization for read-only operations, saves transaction work
+            metricRegistry = Metrics.prometheus
         })
 }
 

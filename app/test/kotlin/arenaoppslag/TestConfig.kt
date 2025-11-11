@@ -8,7 +8,7 @@ internal object TestConfig {
     internal val oracleH2 = DbConfig(
         username = "sa",
         password = "",
-        url = "jdbc:h2:mem:request_no;MODE=Oracle",
+        url = "jdbc:h2:mem:request_no;MODE=Oracle;TRACE_LEVEL_SYSTEM_OUT=2",
         driver = "org.h2.Driver"
     )
 

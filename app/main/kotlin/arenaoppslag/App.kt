@@ -1,5 +1,6 @@
 package arenaoppslag
 
+import arenaoppslag.Metrics.prometheus
 import arenaoppslag.datasource.Hikari
 import arenaoppslag.intern.intern
 import arenaoppslag.plugins.authentication
@@ -25,7 +26,9 @@ import javax.sql.DataSource
 
 val logger = LoggerFactory.getLogger("App")
 
-val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+object Metrics{
+    val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+}
 
 fun main() {
     Thread.currentThread()
@@ -61,8 +64,7 @@ fun Application.server(
                 if (status?.value != null && status.value > 499) ", ErrorBody: ${call.response}" else ""
             val httpMethod = call.request.httpMethod.value
             val userAgent = call.request.headers["User-Agent"]
-            val callId =
-                call.request.header("x-callid") ?: call.request.header("nav-callId") ?: "ukjent"
+            val callId = call.request.header("x-callid") ?: call.request.header("nav-callId") ?: "ukjent"
             val path = call.request.path()
             "Status: $status$errorBody, HTTP method: $httpMethod, User agent: $userAgent, Call id: $callId, Path: $path"
         }

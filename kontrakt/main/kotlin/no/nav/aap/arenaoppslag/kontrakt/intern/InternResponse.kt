@@ -6,6 +6,11 @@ public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
 
+public data class PersonKanBehandlesIKelvinResponse(
+    val kanBehandles: Boolean,
+    val nyesteArenaSakId: String? // nyeste Arena-sak for personen, dersom noen finnes
+)
+
 public data class VedtakResponse(
     val perioder: List<Periode>
 )
@@ -25,6 +30,13 @@ public data class SakStatus(
     val statusKode: Status,
     val periode: Periode,
     val kilde: Kilde = Kilde.ARENA
+)
+
+public data class ArenaSak(
+    val sakId: String,
+    val statusKode: String,
+    val periode: Periode,
+    val rettighetkode: String
 )
 
 public enum class Kilde {
