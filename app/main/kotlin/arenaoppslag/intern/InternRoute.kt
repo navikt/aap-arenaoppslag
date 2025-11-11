@@ -49,7 +49,7 @@ fun Route.intern(datasource: DataSource) {
             }
         }
         post("/person/aap/eksisterer") {
-            logger.info("Sjekker om person eksisterer")
+            logger.info("Sjekker om person eksisterer i AAP-Arena")
             val string = call.receive<String>()
             val request = DefaultJsonMapper.fromJson<SakerRequest>(string)
             call.respond(
