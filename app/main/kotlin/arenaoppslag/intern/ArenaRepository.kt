@@ -17,21 +17,22 @@ class ArenaRepository(private val dataSource: DataSource) {
     }
 
     fun hentEksistererIAAPArena(personId: String): Boolean {
-        val kanIkkeBehandlesEtterGammelRegel = dataSource.connection.use { con ->
+        val finnesIArenaEtterGammelRegel = dataSource.connection.use { con ->
             InternDao.selectPersonMedFnrEksisterer(personId, con)
         }
 
         runCatching {
             // Sjekk med vår nye logikk om personen kan behandles i Kelvin
             val nyRegel = hentKanBehandlesIKelvin(personId)
-            if (kanIkkeBehandlesEtterGammelRegel) {
+            if (finnesIArenaEtterGammelRegel) {
                 prometheus.counter("arenaoppslag_gammel_regel_match").increment()
             }
-            if (!nyRegel.kanBehandles) {
+            val finnesIArenaEtterNyRegel = !nyRegel.kanBehandles
+            if (finnesIArenaEtterNyRegel) {
                 prometheus.counter("arenaoppslag_ny_regel_1_match").increment()
             }
 
-            val godkjentKunAvNyeRegler = kanIkkeBehandlesEtterGammelRegel && nyRegel.kanBehandles
+            val godkjentKunAvNyeRegler = finnesIArenaEtterGammelRegel && nyRegel.kanBehandles
             if (godkjentKunAvNyeRegler) {
                 logger.info("Person avvist etter gammel regel ble tatt inn av ny regel, sakId=${nyRegel.sakId}")
                 prometheus.counter("arenaoppslag_inntak_etter_ny_regel").increment()
@@ -40,7 +41,7 @@ class ArenaRepository(private val dataSource: DataSource) {
             logger.warn("Feil i ny spørring på arena-historikk", it)
         }
 
-        return kanIkkeBehandlesEtterGammelRegel
+        return finnesIArenaEtterGammelRegel
     }
 
     fun hentKanBehandlesIKelvin(personId: String): KanBehandlesIKelvinDao {
