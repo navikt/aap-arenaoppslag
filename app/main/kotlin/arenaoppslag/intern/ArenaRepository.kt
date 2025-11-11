@@ -27,14 +27,14 @@ class ArenaRepository(private val dataSource: DataSource) {
             if (kanIkkeBehandlesEtterGammelRegel) {
                 prometheus.counter("arenaoppslag_gammel_regel_match").increment()
             }
-            if (nyRegel.kanBehandles) {
+            if (!nyRegel.kanBehandles) {
                 prometheus.counter("arenaoppslag_ny_regel_1_match").increment()
             }
 
             val godkjentKunAvNyeRegler = kanIkkeBehandlesEtterGammelRegel && nyRegel.kanBehandles
             if (godkjentKunAvNyeRegler) {
-                logger.info("Person avvist av gammel regel ble tatt inn av ny regel, sakId=${nyRegel.sakId}")
-                prometheus.counter("arenaoppslag_bare_ny_regel_match").increment()
+                logger.info("Person avvist etter gammel regel ble tatt inn av ny regel, sakId=${nyRegel.sakId}")
+                prometheus.counter("arenaoppslag_inntak_etter_ny_regel").increment()
             }
         }.onFailure {
             logger.warn("Feil i ny spørring på arena-historikk", it)
