@@ -60,8 +60,12 @@ object InternDao {
     """.trimIndent()
 
     @Language("OracleSql")
-    // Oracle støtter ikke dynamiske liste, så vi må hardkode inn rettighetkodene her
-    // OBS: tabellen i Prod har forekomster av at til_dato er før fra_dato
+    // Oracle støtter ikke dynamiske liste, så vi hardkoder inn rettighetkodene i spørringen.
+    // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
+    // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
+    // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse med
+    // spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller tiltakspenger.
+    // Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et gyldig vedtak i samme periode.
     private val selectKunSakerMedRelevanteRettighetskoder = """
         SELECT vedtakstatuskode, sak_id, fra_dato, til_dato, rettighetkode
           FROM vedtak
@@ -70,6 +74,8 @@ object InternDao {
                   FROM person 
                  WHERE fodselsnr = ?) 
            AND rettighetkode NOT IN ('AA116', 'ABOUT', 'ATIO', 'ATIU', 'AHJMR', 'ATIF', 'AFLYT', 'AATFOR', 'AUNDM')
+           AND (fra_dato <= til_dato OR til_dato IS NULL)
+           AND NOT (fra_dato IS NULL AND til_dato IS NULL)
     """.trimIndent()
 
     @Language("OracleSql")

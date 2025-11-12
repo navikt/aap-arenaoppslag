@@ -3,6 +3,7 @@ package arenaoppslag.intern
 import arenaoppslag.intern.InternDao.historiskeRettighetkoderIArena
 import arenaoppslag.util.H2TestBase
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
@@ -48,4 +49,15 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val relevanteSaker = InternDao.selectPersonMedRelevanteRettighetskoder(testPerson, h2.connection)
         assertThat(relevanteSaker).hasSize(1)
     }
+
+    // Gammel regel for å sjekke om person finnes i Arena
+    @Test
+    fun `returnerer true om person eksisterer`() {
+        val personId = "1"
+        val personEksisterer = InternDao.selectPersonMedFnrEksisterer(personId, h2.connection)
+        assertEquals(true, personEksisterer)
+        val personEksistererIkke = InternDao.selectPersonMedFnrEksisterer("2", h2.connection)
+        assertEquals(false, personEksistererIkke)
+    }
+
 }
