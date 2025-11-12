@@ -73,7 +73,7 @@ object InternDao {
                (SELECT person_id 
                   FROM person 
                  WHERE fodselsnr = ?) 
-           AND rettighetkode NOT IN ('AA116', 'ABOUT', 'ATIO', 'ATIU', 'AHJMR', 'ATIF', 'AFLYT', 'AATFOR', 'AUNDM')
+           AND rettighetkode IN ('AA115', 'AAP')
            AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND NOT (fra_dato IS NULL AND til_dato IS NULL)
     """.trimIndent()
