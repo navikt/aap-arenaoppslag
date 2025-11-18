@@ -36,6 +36,7 @@ public data class SakStatus(
 public data class ArenaSak(
     val sakId: String,
     val statusKode: String,
+    val vedtaktypeKode: String,
     val fraOgMed: LocalDate?,
     val tilDato: LocalDate?,
     val rettighetkode: String

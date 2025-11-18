@@ -10,7 +10,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
 
     @Test
     fun `ingen saker for person som ikke finnes`() {
-        val alleVedtak = InternDao.selectPersonMedRelevanteRettighetskoder(
+        val alleVedtak = InternDao.selectPersonMedRelevantHistorikk(
             "finnes_ikke",
             h2.connection
         )
@@ -24,7 +24,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2)
 
-        val relevanteSaker = InternDao.selectPersonMedRelevanteRettighetskoder(testPerson, h2.connection)
+        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, h2.connection)
         assertThat(relevanteSaker).isEmpty()
     }
 
@@ -35,7 +35,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).isEmpty() // ingen historiske koder
 
-        val relevanteSaker = InternDao.selectPersonMedRelevanteRettighetskoder(testPerson, h2.connection)
+        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, h2.connection)
         assertThat(relevanteSaker).hasSize(2)
     }
 
@@ -46,7 +46,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2) // noen historiske koder
 
-        val relevanteSaker = InternDao.selectPersonMedRelevanteRettighetskoder(testPerson, h2.connection)
+        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, h2.connection)
         assertThat(relevanteSaker).hasSize(1)
     }
 

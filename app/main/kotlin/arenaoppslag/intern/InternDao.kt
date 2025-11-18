@@ -51,7 +51,7 @@ object InternDao {
 
     @Language("OracleSql")
     private val selectAlleSakerByFnr = """
-        SELECT vedtakstatuskode, sak_id, fra_dato, til_dato, rettighetkode
+        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode
           FROM vedtak
          WHERE person_id = 
                (SELECT person_id 
@@ -60,22 +60,22 @@ object InternDao {
     """.trimIndent()
 
     @Language("OracleSql")
-    // Oracle støtter ikke dynamiske liste, så vi hardkoder inn rettighetkodene i spørringen.
     // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
     // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
     // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse med
     // spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller tiltakspenger.
     // Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et gyldig vedtak i samme periode.
-    private val selectKunSakerMedRelevanteRettighetskoder = """
-        SELECT vedtakstatuskode, sak_id, fra_dato, til_dato, rettighetkode
+    // OBS 3: Rader med status "S" stans kan ha null til_dato og blir inkludert her.
+    private val selectKunVedtakForPersonMedRelevantHistorikk = """
+        SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
           FROM vedtak
          WHERE person_id = 
                (SELECT person_id 
                   FROM person 
                  WHERE fodselsnr = ?) 
            AND rettighetkode IN ('AA115', 'AAP')
-           AND (fra_dato <= til_dato OR til_dato IS NULL)
-           AND NOT (fra_dato IS NULL AND til_dato IS NULL)
+           AND (fra_dato <= til_dato OR til_dato IS NULL) -- ikke ugyldiggjorte vedtak, men inkluder stans med null til_dato
+           AND NOT (fra_dato IS NULL AND til_dato IS NULL) -- ikke etterregistrerte vedtak
     """.trimIndent()
 
     @Language("OracleSql")
@@ -464,8 +464,8 @@ object InternDao {
         "AUNDM" // Bøker og undervisningsmatriell
     )
 
-    fun selectPersonMedRelevanteRettighetskoder(personidentifikator: String, connection: Connection): List<ArenaSak> {
-        connection.prepareStatement(selectKunSakerMedRelevanteRettighetskoder)
+    fun selectPersonMedRelevantHistorikk(personidentifikator: String, connection: Connection): List<ArenaSak> {
+        connection.prepareStatement(selectKunVedtakForPersonMedRelevantHistorikk)
             .use { preparedStatement ->
                 preparedStatement.setString(1, personidentifikator)
                 val resultSet = preparedStatement.executeQuery()
@@ -486,6 +486,7 @@ object InternDao {
     private fun mapperForArenasak(row: ResultSet): ArenaSak = ArenaSak(
         row.getString("sak_id"),
         row.getString("vedtakstatuskode"),
+        row.getString("vedtaktypekode"),
         fraDato(row.getDate("fra_dato")),
         tilDato = fraDato(row.getDate("til_dato")),
         rettighetkode = row.getString("rettighetkode")

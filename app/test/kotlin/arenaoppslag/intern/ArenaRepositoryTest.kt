@@ -57,6 +57,7 @@ class ArenaRepositoryTest {
 
     private fun testSak(sakId: Int, tilDato: LocalDate?) = ArenaSak(
         sakId.toString(),
+        "O",
         "AKTIV",
         LocalDate.now().minusYears(5),
         tilDato = tilDato,
