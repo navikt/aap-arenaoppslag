@@ -95,7 +95,7 @@ jobs:
       vars: .nais/dev.yml
 
   prod:
-    if: github.event.pull_request.merged || github.event_name == 'push'  || github.event.inputs.cluster == 'prod-gcp'
+    if: (github.event.pull_request.merged || github.event_name == 'push'  || github.event.inputs.cluster == 'prod-gcp') && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       id-token: write
