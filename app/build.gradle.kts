@@ -4,7 +4,7 @@ import org.gradle.kotlin.dsl.withType
 plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.2.2"
-    id("io.ktor.plugin") version "3.3.2"
+    id("io.ktor.plugin") version "3.3.3"
     application
 }
 
@@ -44,7 +44,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:10.6")
-    testImplementation("org.flywaydb:flyway-core:11.17.1")
+    testImplementation("org.flywaydb:flyway-core:11.17.2")
     testImplementation("org.assertj:assertj-core:3.27.6")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.4.240")
