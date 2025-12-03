@@ -5,13 +5,17 @@ import arenaoppslag.util.H2TestBase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
+
+    private val testDato = LocalDate.parse("2025-12-15")
 
     @Test
     fun `ingen saker for person som ikke finnes`() {
         val alleVedtak = InternDao.selectPersonMedRelevantHistorikk(
             "finnes_ikke",
+            testDato,
             h2.connection
         )
         assertThat(alleVedtak).isEmpty()
@@ -24,7 +28,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2)
 
-        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, h2.connection)
+        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
         assertThat(relevanteSaker).isEmpty()
     }
 
@@ -35,7 +39,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).isEmpty() // ingen historiske koder
 
-        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, h2.connection)
+        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
         assertThat(relevanteSaker).hasSize(2)
     }
 
@@ -46,7 +50,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2) // noen historiske koder
 
-        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, h2.connection)
+        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
         assertThat(relevanteSaker).hasSize(1)
     }
 

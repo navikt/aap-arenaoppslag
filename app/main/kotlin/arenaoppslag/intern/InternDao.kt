@@ -472,7 +472,11 @@ object InternDao {
         "AUNDM" // Bøker og undervisningsmatriell
     )
 
-    fun selectPersonMedRelevantHistorikk(personidentifikator: String, connection: Connection): List<ArenaSak> {
+    fun selectPersonMedRelevantHistorikk(
+        personidentifikator: String,
+        søknadMottattPå: LocalDate,
+        connection: Connection
+    ): List<ArenaSak> {
         connection.prepareStatement(selectKunVedtakForPersonMedRelevantHistorikk)
             .use { preparedStatement ->
                 preparedStatement.setString(1, personidentifikator)
