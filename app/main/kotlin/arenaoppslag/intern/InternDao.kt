@@ -7,11 +7,14 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
+import org.slf4j.LoggerFactory
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
 import java.time.LocalDate
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
+
+private val log = LoggerFactory.getLogger(InternDao::class.java)
 
 // Tabellene i Arena er beskrevet her:
 // https://confluence.adeo.no/display/ARENA/Arena+-+Datamodell+-+Vedtak
@@ -338,6 +341,7 @@ object InternDao {
     }
 
     fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection): Int {
+        log.info("Henter beregningsgrunnlag for vedtak $vedtakId.")
         return connection.prepareStatement(hentBeregningsgrunnlag)
             .use { preparedStatement ->
                 preparedStatement.setInt(1, vedtakId)
@@ -377,6 +381,7 @@ object InternDao {
         tilOgMedDato: LocalDate,
         connection: Connection
     ): Maksimum {
+        log.info("Henter maksimumvedtak for periode $fraOgMedDato - $tilOgMedDato.")
         val maksimum =
             connection.prepareStatement(selectMaksimumMedTidsbegrensning)
                 .use { preparedStatement ->
@@ -386,8 +391,10 @@ object InternDao {
 
                     val resultSet = preparedStatement.executeQuery()
                     val utbetalinger = mutableListOf<UtbetalingMedMer>()
+                    var c = 0;
                     val vedtak = resultSet.map { row ->
                         val vedtakId = row.getInt("vedtak_id")
+                        log.info("Henter utbetalinger for vedtak $vedtakId. Iterasjon nr $c.")
                         val vedtakFakta = selectVedtakFakta(vedtakId, connection)
                         utbetalinger.addAll(
                             selectUtbetalingVedVedtakId(
@@ -401,6 +408,7 @@ object InternDao {
                             )
                         )
                         val vedtaktypekode = row.getString("vedtaktypekode")
+                        c++;
                         Vedtak(
                             vedtaksId = vedtakId.toString(),
                             utbetaling = utbetalinger,
