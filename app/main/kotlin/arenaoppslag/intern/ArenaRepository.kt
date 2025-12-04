@@ -1,10 +1,8 @@
 package arenaoppslag.intern
 
-import arenaoppslag.Metrics.prometheus
 import arenaoppslag.modeller.Maksimum
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
-import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import javax.sql.DataSource
 
@@ -12,41 +10,16 @@ data class KanBehandlesIKelvinDao(val kanBehandles: Boolean, val personIdentifik
 
 
 class ArenaRepository(private val dataSource: DataSource) {
-    companion object {
-        private val logger = LoggerFactory.getLogger(ArenaRepository::class.java)
-    }
 
     fun hentEksistererIAAPArena(personId: String): Boolean {
-        val finnesIArenaEtterGammelRegel = dataSource.connection.use { con ->
+        return dataSource.connection.use { con ->
             InternDao.selectPersonMedFnrEksisterer(personId, con)
         }
-
-        runCatching {
-            // Sjekk med vår nye logikk om personen kan behandles i Kelvin
-            val nyRegel = hentKanBehandlesIKelvin(personId)
-            if (finnesIArenaEtterGammelRegel) {
-                prometheus.counter("arenaoppslag_gammel_regel_match").increment()
-            }
-            val finnesIArenaEtterNyRegel = !nyRegel.kanBehandles
-            if (finnesIArenaEtterNyRegel) {
-                prometheus.counter("arenaoppslag_ny_regel_1_match").increment()
-            }
-
-            val godkjentKunAvNyeRegler = finnesIArenaEtterGammelRegel && nyRegel.kanBehandles
-            if (godkjentKunAvNyeRegler) {
-                logger.info("Person avvist etter gammel regel ble tatt inn av ny regel, sakId=${nyRegel.sakId}")
-                prometheus.counter("arenaoppslag_inntak_etter_ny_regel").increment()
-            }
-        }.onFailure {
-            logger.warn("Feil i ny spørring på arena-historikk", it)
-        }
-
-        return finnesIArenaEtterGammelRegel
     }
 
-    fun hentKanBehandlesIKelvin(personId: String): KanBehandlesIKelvinDao {
+    fun hentKanBehandlesIKelvin(personId: String, søknadMottattPå: LocalDate): KanBehandlesIKelvinDao {
         val relevanteArenaSaker = dataSource.connection.use { con ->
-            InternDao.selectPersonMedRelevantHistorikk(personId, con)
+            InternDao.selectPersonMedRelevantHistorikk(personId, søknadMottattPå, con)
         }
         val kanBehandles = relevanteArenaSaker.isEmpty()
 
@@ -74,7 +47,7 @@ class ArenaRepository(private val dataSource: DataSource) {
 
     fun rateBegrensetHentKanBehandlesIKelvin(personId: String, søknadMottattPå: LocalDate): KanBehandlesIKelvinDao {
         // Vurder etter nye regler om personen kan behandles i Kelvin
-        val personenKanBehandlesIKelvin = hentKanBehandlesIKelvin(personId)
+        val personenKanBehandlesIKelvin = hentKanBehandlesIKelvin(personId, søknadMottattPå)
         // Midlertidig: Begrens hvor mange personer vi tar inn i Kelvin
         return if (personenKanBehandlesIKelvin.kanBehandles && RateBegrenser.personenTasMed(personId)) {
             personenKanBehandlesIKelvin
