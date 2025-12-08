@@ -8,11 +8,6 @@ metadata:
     komponent: datadeling
 spec:
   image: {{image}}
-  replicas:
-    cpuThresholdPercentage: 90
-    disableAutoScaling: true
-    max: 2
-    min: 2
   azure:
     application:
       enabled: true
