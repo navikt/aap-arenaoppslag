@@ -3,7 +3,7 @@ import org.gradle.kotlin.dsl.withType
 
 plugins {
     id("aap.conventions")
-    id("com.gradleup.shadow") version "9.2.2"
+    id("com.gradleup.shadow") version "9.3.0"
     id("io.ktor.plugin") version "3.3.3"
     application
 }
