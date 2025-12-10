@@ -17,8 +17,9 @@ import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 private val log = LoggerFactory.getLogger(InternDao::class.java)
 
 // Tabellene i Arena er beskrevet her:
-// https://confluence.adeo.no/display/ARENA/Arena+-+Datamodell+-+Vedtak
-// Vi bruker views av disse tabellene for AAP, definert her:
+// https://confluence.adeo.no/spaces/ARENA/pages/122716553/Arena+-+Datamodell
+// Vi bruker views av disse tabellene for AAP, definert her.
+// Disse har samme felt som tabellene.
 // https://confluence.adeo.no/spaces/TEAMARENA/pages/553617512/ARENA-8716+03+-+L%C3%B8sningsbeskrivelse#ARENA871603L%C3%B8sningsbeskrivelse-Arbeidsavklaringspenger
 
 object InternDao {
