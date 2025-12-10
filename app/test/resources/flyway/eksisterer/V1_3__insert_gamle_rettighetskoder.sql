@@ -12,7 +12,8 @@ insert into PERSON(PERSON_ID, FODSELSNR) values(996, 'kun_nye');
 insert into VEDTAK (VEDTAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO, TIL_DATO)
 values
     ('995555', 'IVERK', 'O', 'JA', 'AAP', '996', to_date('27.08.2020', 'DD.MM.RRRR'),NULL),
-    ('995556', 'AVSLU', 'O', 'JA', 'AAP', '996', to_date('27.08.2019', 'DD.MM.RRRR'),to_date('01.01.2022', 'DD.MM.RRRR'));
+    ('995556', 'AVSLU', 'O', 'JA', 'AA115', '996', to_date('27.08.2019', 'DD.MM.RRRR'),to_date('01.01.2025', 'DD.MM.RRRR')),
+    ('995557', 'IVERK', 'S', 'JA', 'AA115', '996', to_date('27.08.2024', 'DD.MM.RRRR'),NULL);
 
 
 -- person med vedtak med forskjellige vedtakstype-kode
