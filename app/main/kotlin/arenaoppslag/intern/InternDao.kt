@@ -85,7 +85,8 @@ object InternDao {
                 (VEDTAKTYPEKODE !='S' AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer
                 OR 
                 (VEDTAKTYPEKODE ='S' AND (til_dato >= ? OR til_dato IS NULL)) -- ekstra tidsbuffer for stans
-               )
+                )
+            AND NOT (til_dato IS NULL and fra_dato <= DATE '2020-01-01') -- filtrer ut åpen slutt hvis veldig gammel
     """.trimIndent()
 
     @Language("OracleSql")
