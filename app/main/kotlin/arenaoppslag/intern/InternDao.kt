@@ -69,6 +69,7 @@ object InternDao {
     // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse med
     // spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller tiltakspenger.
     // Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et gyldig vedtak i samme periode.
+    // Noen spesialutbetalinger har fra_dato og til_dato også, sett i arena-q2.
     // OBS 3: Rader med status "S" stans kan ha null til_dato og blir inkludert her.
     private val selectKunVedtakForPersonMedRelevantHistorikk = """
         SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
@@ -77,9 +78,14 @@ object InternDao {
                (SELECT person_id 
                   FROM person 
                  WHERE fodselsnr = ?) 
-           AND rettighetkode IN ('AA115', 'AAP')
-           AND (fra_dato <= til_dato OR til_dato IS NULL) -- ikke ugyldiggjorte vedtak, men inkluder stans med null til_dato
-           AND NOT (fra_dato IS NULL AND til_dato IS NULL) -- ikke etterregistrerte vedtak
+           AND rettighetkode IN ('AA115', 'AAP', 'KLAG1', 'KLAG2', 'TILBBET') 
+           AND (fra_dato <= til_dato OR til_dato IS NULL) -- filtrer ut ugyldiggjorte vedtak, men inkluder stans med null til_dato
+           AND NOT (fra_dato IS NULL AND til_dato IS NULL) -- filtrer ut etterregistrerte vedtak
+           AND ( 
+                (VEDTAKTYPEKODE !='S' AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer
+                OR 
+                (VEDTAKTYPEKODE ='S' AND (til_dato >= ? OR til_dato IS NULL)) -- ekstra tidsbuffer for stans
+               )
     """.trimIndent()
 
     @Language("OracleSql")
@@ -473,14 +479,20 @@ object InternDao {
         "AUNDM" // Bøker og undervisningsmatriell
     )
 
+    const val tidsBufferUkerGenerell = 78L
+    const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
     fun selectPersonMedRelevantHistorikk(
         personidentifikator: String,
         søknadMottattPå: LocalDate,
         connection: Connection
     ): List<ArenaSak> {
+        val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
+        val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
         connection.prepareStatement(selectKunVedtakForPersonMedRelevantHistorikk)
             .use { preparedStatement ->
                 preparedStatement.setString(1, personidentifikator)
+                preparedStatement.setDate(2, Date.valueOf(tidsBufferGenerell))
+                preparedStatement.setDate(3, Date.valueOf(nyesteTillateStans))
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenasak(row) }
             }

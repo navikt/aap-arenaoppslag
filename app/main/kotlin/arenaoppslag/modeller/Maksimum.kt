@@ -4,6 +4,7 @@ import arenaoppslag.intern.Periode
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum as KontraktMaksimum
 
 
+// Dao models
 data class Maksimum(
     val vedtak: List<Vedtak>,
 ) {

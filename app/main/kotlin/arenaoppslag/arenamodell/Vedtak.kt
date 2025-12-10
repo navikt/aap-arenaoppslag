@@ -2,7 +2,7 @@ package arenaoppslag.arenamodell
 
 import java.time.LocalDate
 
-data class Vedtak(
+data class Vedtak( // FIXME brukes ikke?
     val vedtakId: Int,
     val sakId: Int,
     val vedtakstatuskode: String,

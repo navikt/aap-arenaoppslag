@@ -40,7 +40,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         assertThat(kunHistoriske).isEmpty() // ingen historiske koder
 
         val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
-        assertThat(relevanteSaker).hasSize(2)
+        assertThat(relevanteSaker).hasSize(3)
     }
 
     @Test
