@@ -12,7 +12,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `ingen vedtaks-perioder blir hentet ut for personer som ikke er tilknyttet noe vedtak`() {
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "ingenvedtak",
+            fodselsnr = "ingenvedtak",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
@@ -29,7 +29,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "123",
+            fodselsnr = "123",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
@@ -46,7 +46,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "321",
+            fodselsnr = "321",
             fraOgMedDato = LocalDate.of(2009, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
             h2.connection
@@ -63,7 +63,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "321",
+            fodselsnr = "321",
             fraOgMedDato = LocalDate.of(2019, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
             h2.connection
@@ -79,14 +79,14 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
         )
 
         val alleVedtakLeftOverlap = InternDao.selectVedtakPerioder(
-            personId = "123",
+            fodselsnr = "123",
             fraOgMedDato = LocalDate.of(2022, 2, 1),
             tilOgMedDato = LocalDate.of(2022, 10, 31),
             h2.connection
         )
 
         val alleVedtakRightOverlap = InternDao.selectVedtakPerioder(
-            personId = "123",
+            fodselsnr = "123",
             fraOgMedDato = LocalDate.of(2023, 6, 1),
             tilOgMedDato = LocalDate.of(2024, 10, 31),
             h2.connection
@@ -99,7 +99,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `ingen vedtaks-perioder blir hentet ut for personer som har invalid vedtak (feil VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE)`() {
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "invalid",
+            fodselsnr = "invalid",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
@@ -115,7 +115,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "somevalid",
+            fodselsnr = "somevalid",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
@@ -132,7 +132,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "statuskode",
+            fodselsnr = "statuskode",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
@@ -151,7 +151,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "typekode",
+            fodselsnr = "typekode",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection
@@ -168,7 +168,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
-            personId = "nulltildato",
+            fodselsnr = "nulltildato",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
             h2.connection

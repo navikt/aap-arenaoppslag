@@ -57,10 +57,10 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
     // Gammel regel for å sjekke om person finnes i Arena
     @Test
     fun `returnerer true om person eksisterer`() {
-        val personId = "1"
-        val personEksisterer = InternDao.selectPersonMedFnrEksisterer(personId, h2.connection)
+        val fodselsnr = "1"
+        val personEksisterer = InternDao.selectPersonMedFnrEksisterer(fodselsnr, h2.connection)
         assertEquals(true, personEksisterer)
-        val personEksistererIkke = InternDao.selectPersonMedFnrEksisterer("2", h2.connection)
+        val personEksistererIkke = InternDao.selectPersonMedFnrEksisterer("2012012031", h2.connection)
         assertEquals(false, personEksistererIkke)
     }
 

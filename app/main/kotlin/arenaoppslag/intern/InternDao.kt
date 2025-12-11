@@ -200,12 +200,12 @@ object InternDao {
     """.trimIndent()
 
     fun selectPersonMedFnrEksisterer(
-        personIdent: String,
+        fodselsnr: String,
         connection: Connection
     ): Boolean {
         return connection.prepareStatement(selectPersonMedFnrEksisterer)
             .use { preparedStatement ->
-                preparedStatement.setString(1, personIdent)
+                preparedStatement.setString(1, fodselsnr)
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.next()
             }
@@ -281,14 +281,14 @@ object InternDao {
 
 
     fun selectVedtakPerioder(
-        personId: String,
+        fodselsnr: String,
         fraOgMedDato: LocalDate,
         tilOgMedDato: LocalDate,
         connection: Connection
     ): List<Periode> {
         return connection.prepareStatement(selectVedtakMedTidsbegrensningSql)
             .use { preparedStatement ->
-                preparedStatement.setString(1, personId)
+                preparedStatement.setString(1, fodselsnr)
                 preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
                 preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
