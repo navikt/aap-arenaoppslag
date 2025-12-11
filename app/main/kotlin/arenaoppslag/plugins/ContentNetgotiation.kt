@@ -1,6 +1,5 @@
 package arenaoppslag.plugins
 
-import arenaoppslag.arenamodell.Vedtak
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.ktor.serialization.jackson.*
@@ -14,7 +13,6 @@ fun Application.contentNegotiation() {
             registerModule(JavaTimeModule())
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             registerSubtypes(
-                Vedtak::class.java,
                 VedtakResponse::class.java
             )
         }
