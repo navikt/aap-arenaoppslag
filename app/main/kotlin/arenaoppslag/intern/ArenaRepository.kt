@@ -11,9 +11,9 @@ data class KanBehandlesIKelvinDao(val kanBehandles: Boolean, val personIdentifik
 
 class ArenaRepository(private val dataSource: DataSource) {
 
-    fun hentEksistererIAAPArena(personId: String): Boolean {
+    fun hentEksistererIAAPArena(fodselsnr: String): Boolean {
         return dataSource.connection.use { con ->
-            InternDao.selectPersonMedFnrEksisterer(personId, con)
+            InternDao.selectPersonMedFnrEksisterer(fodselsnr, con)
         }
     }
 
@@ -65,7 +65,7 @@ class ArenaRepository(private val dataSource: DataSource) {
     ): List<Periode> =
         dataSource.connection.use { con ->
             InternDao.selectVedtakPerioder(
-                personId = personId,
+                fodselsnr = personId,
                 fraOgMedDato = fraOgMedDato,
                 tilOgMedDato = tilOgMedDato,
                 connection = con
