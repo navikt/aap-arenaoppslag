@@ -17,8 +17,6 @@ object RelevantHistorikkDao {
     // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse med
     // spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller tiltakspenger.
     // Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et gyldig vedtak i samme periode.
-    // Noen spesialutbetalinger har fra_dato og til_dato også, sett i arena-q2.
-    // OBS 3: Rader med status "S" stans kan ha null til_dato og blir inkludert her.
     @Language("OracleSql")
     val selectKunAAPVedtakForPersonMedRelevantHistorikk = """
         SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
