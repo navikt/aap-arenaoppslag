@@ -71,7 +71,7 @@ object RelevantHistorikkDao {
     @Language("OracleSql")
     val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
         -- spesialutbetalinger har nyeste dato i fra_dato-feltet, så vi bytter dem om her
-        SELECT v.sak_id, vedtakstatuskode, vedtaktypekode, v.til_dato as fra_dato, v.fra_dato as til_dato, rettighetkode
+        SELECT v.sak_id, vedtakstatuskode, vedtaktypekode, v.til_dato as fra_dato, v.fra_dato as til_dato, 'SPESIAL' as rettighetkode
           from sim_utbetalingsgrunnlag fu join vedtak v on v.vedtak_id=fu.vedtak_id 
         WHERE v.person_id = 
                (SELECT person_id 
