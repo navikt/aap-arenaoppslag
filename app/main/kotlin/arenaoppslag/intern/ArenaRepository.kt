@@ -19,7 +19,7 @@ class ArenaRepository(private val dataSource: DataSource) {
 
     fun hentKanBehandlesIKelvin(personId: String, søknadMottattPå: LocalDate): KanBehandlesIKelvinDao {
         val relevanteArenaSaker = dataSource.connection.use { con ->
-            InternDao.selectPersonMedRelevantHistorikk(personId, søknadMottattPå, con)
+            RelevantHistorikkDao.selectPersonMedRelevantHistorikk(personId, søknadMottattPå, con)
         }
         val kanBehandles = relevanteArenaSaker.isEmpty()
 

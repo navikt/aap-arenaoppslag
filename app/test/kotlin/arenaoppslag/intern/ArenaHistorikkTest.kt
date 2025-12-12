@@ -1,6 +1,6 @@
 package arenaoppslag.intern
 
-import arenaoppslag.intern.InternDao.historiskeRettighetkoderIArena
+import arenaoppslag.intern.RelevantHistorikkDao.historiskeRettighetkoderIArena
 import arenaoppslag.util.H2TestBase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -13,7 +13,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
 
     @Test
     fun `ingen saker for person som ikke finnes`() {
-        val alleVedtak = InternDao.selectPersonMedRelevantHistorikk(
+        val alleVedtak = RelevantHistorikkDao.selectPersonMedRelevantHistorikk(
             "finnes_ikke",
             testDato,
             h2.connection
@@ -28,7 +28,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2)
 
-        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
+        val relevanteSaker = RelevantHistorikkDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
         assertThat(relevanteSaker).isEmpty()
     }
 
@@ -39,7 +39,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).isEmpty() // ingen historiske koder
 
-        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
+        val relevanteSaker = RelevantHistorikkDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
         assertThat(relevanteSaker).hasSize(2)
     }
 
@@ -50,7 +50,7 @@ class ArenaHistorikkTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer")
         val kunHistoriske = alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2) // noen historiske koder
 
-        val relevanteSaker = InternDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
+        val relevanteSaker = RelevantHistorikkDao.selectPersonMedRelevantHistorikk(testPerson, testDato, h2.connection)
         assertThat(relevanteSaker).hasSize(1)
     }
 
