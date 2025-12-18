@@ -11,74 +11,107 @@ import java.time.LocalDate
 import kotlin.use
 
 object RelevantHistorikkDao {
+    private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
 
     // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
     // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
     // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse med
     // spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller tiltakspenger.
-    // Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et gyldig vedtak i samme periode.
+    // Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et ordinært vedtak i samme periode.
     @Language("OracleSql")
     val selectKunAAPVedtakForPersonMedRelevantHistorikk = """
         SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
-          FROM vedtak
-        WHERE person_id = 
-               (SELECT person_id 
-                  FROM person 
-                 WHERE fodselsnr = ?) 
-              AND 
-               rettighetkode IN ('AA115', 'AAP') 
-               AND (fra_dato <= til_dato OR til_dato IS NULL) -- filtrer ut ugyldiggjorte vedtak, men inkluder stans med null til_dato
-               AND NOT (fra_dato IS NULL AND til_dato IS NULL) -- filtrer ut etterregistrerte vedtak
-               AND ( 
-                    (vedtaktypekode !='S' AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer
-                        OR
-                    (vedtaktypekode = 'S' AND (til_dato >= ? OR til_dato IS NULL)) -- ekstra tidsbuffer for stans
-                    )
-               AND NOT (til_dato IS NULL AND fra_dato >= DATE '2020-01-01') -- filtrer ut åpen slutt kun hvis veldig gammel
+          FROM vedtak v JOIN person p on p.person_id=v.person_id
+        
+        WHERE p.fodselsnr IN ($FNR_LISTE_TOKEN)
+          AND rettighetkode IN ('AA115', 'AAP') 
+          AND (fra_dato <= til_dato OR til_dato IS NULL) -- filtrer ut ugyldiggjorte vedtak, men inkluder vedtak med null til_dato, som Stans
+          AND NOT (fra_dato IS NULL AND til_dato IS NULL) -- filtrer ut etterregistrerte vedtak
+          AND ( 
+                (vedtaktypekode !='S' AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer
+                  OR
+                (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for stans
+              )
     """.trimIndent()
 
-    // Disse vedtakstatuskodene forekommer på klager og er datoer:  K_INNVF K_TDATO KLAGEFRIST K_FDATO
     @Language("OracleSql")
     val selectKunKlagerForPersonMedRelevantHistorikk = """
-        -- K_TDATO settes kun når klagen er avsluttet?
-        SELECT v.sak_id, vedtakstatuskode, vedtaktypekode, null as fra_dato, TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato, 
-        rettighetkode,
-          FROM vedtak v
-          join vedtakfakta vf on v.vedtak_id = vf.vedtak_id
-        WHERE v.person_id = 
-               (SELECT person_id 
-                  FROM person 
-                 WHERE fodselsnr = ?) 
-                
-           AND rettighetkode IN ('KLAG1', 'KLAG2')
-           AND vf.vedtakfaktakode = 'K_TDATO' 
-           AND ( TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? OR vf.vedtakverdi is null )  
+    -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres?
+    -- Dersom den er null, er klagen fortsatt under behandling.
+    SELECT
+        v.sak_id,
+        vedtakstatuskode,
+        vedtaktypekode,
+        NULL                                  AS fra_dato,
+        TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
+        v.rettighetkode
+    FROM
+        vedtak v
+        JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
+        JOIN person      p ON p.person_id = v.person_id
+    WHERE
+        p.fodselsnr IN ($FNR_LISTE_TOKEN)
+        AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
+        AND vf.vedtakfaktakode = 'INNVF'
+        -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
+        -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. 
+        AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
+        AND v.utfallkode NOT IN ('JA') -- dersom klagen er innvilget regnes den her som ikke relevant. Kan evt legge til TRUKK og andre koder her senere. 
+    """.trimIndent()
+
+    @Language("OracleSql")
+    val selectKunAnkerForPersonMedRelevantHistorikk = """
+    SELECT
+        sak_id,
+        vedtakstatuskode,
+        vedtaktypekode,
+        fra_dato,
+        til_dato,
+        rettighetkode
+    FROM
+        vedtak v
+        JOIN person p ON p.person_id = v.person_id
+    WHERE
+        p.fodselsnr IN ( $FNR_LISTE_TOKEN )
+        AND rettighetkode IN ( 'ANKE' )
+        AND ( fra_dato >= ? OR fra_dato IS NULL ) -- tilbakebetaling har bare fra_dato       
     """.trimIndent()
 
     @Language("OracleSql")
     val selectKunTilbakebetalingerForPersonMedRelevantHistorikk = """
-        SELECT v.sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
-          FROM vedtak v
-        WHERE v.person_id = 
-               (SELECT person_id 
-                  FROM person 
-                 WHERE fodselsnr = ?) 
-                 
-        AND rettighetkode IN ('TILBBET')
-        AND (fra_dato >= ? or fra_dato IS NULL) -- tilbakebetaling har bare fra_dato           
+    SELECT
+        sak_id,
+        vedtakstatuskode,
+        vedtaktypekode,
+        fra_dato,
+        til_dato,
+        rettighetkode
+    FROM
+        vedtak v
+        JOIN person p ON p.person_id = v.person_id
+    WHERE
+        p.fodselsnr IN ($FNR_LISTE_TOKEN)
+        AND rettighetkode IN ( 'TILBBET' )
+        AND ( fra_dato >= ? OR fra_dato IS NULL ) -- tilbakebetaling har bare fra_dato           
     """.trimIndent()
 
     @Language("OracleSql")
     val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
-        -- spesialutbetalinger har nyeste dato i fra_dato-feltet, så vi bytter dem om her
-        SELECT v.sak_id, vedtakstatuskode, vedtaktypekode, v.til_dato as fra_dato, v.fra_dato as til_dato, 'SPESIAL' as rettighetkode
-          from sim_utbetalingsgrunnlag fu join vedtak v on v.vedtak_id=fu.vedtak_id 
-        WHERE v.person_id = 
-               (SELECT person_id 
-                  FROM person 
-                 WHERE fodselsnr = ?) 
-                 
-        AND (v.til_dato >= ? or v.til_dato IS NULL) -- til og fra byttet om
+    -- spesialutbetalinger har nyeste dato i fra_dato-feltet, så vi bytter dem om her
+    SELECT
+        v.sak_id,
+        vedtakstatuskode,
+        vedtaktypekode,
+        v.til_dato AS fra_dato,
+        v.fra_dato AS til_dato,
+        'SPESIAL' AS rettighetkode
+    FROM
+        sim_utbetalingsgrunnlag fu
+        JOIN vedtak v ON v.vedtak_id = fu.vedtak_id
+        JOIN person p ON p.person_id = v.person_id
+    WHERE
+        p.fodselsnr IN ( $FNR_LISTE_TOKEN )
+        AND ( v.til_dato >= ? OR v.til_dato IS NULL ) -- til og fra byttet om
     """.trimIndent()
 
 
@@ -96,20 +129,26 @@ object RelevantHistorikkDao {
         "AUNDM" // Bøker og undervisningsmatriell
     )
 
+    private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummer: List<String>): String {
+        // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte i spørringen her
+        val allePersonensFodselsnummer = fodselsnummer.joinToString(separator = ",") { "'$it'" }
+        return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
+    }
+
     const val tidsBufferUkerGenerell = 78L
     const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
     fun selectPersonMedRelevantHistorikk(
-        personidentifikator: String,
+        fodselsnummer: List<String>,
         søknadMottattPå: LocalDate,
         connection: Connection
     ): List<ArenaSak> {
         val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
         val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
-        connection.prepareStatement(selectKunAAPVedtakForPersonMedRelevantHistorikk)
+        val query = queryMedFodselsnummerListe(selectKunAAPVedtakForPersonMedRelevantHistorikk, fodselsnummer)
+        connection.prepareStatement(query)
             .use { preparedStatement ->
-                preparedStatement.setString(1, personidentifikator)
-                preparedStatement.setDate(2, Date.valueOf(tidsBufferGenerell))
-                preparedStatement.setDate(3, Date.valueOf(nyesteTillateStans))
+                preparedStatement.setDate(1, Date.valueOf(tidsBufferGenerell))
+                preparedStatement.setDate(2, Date.valueOf(nyesteTillateStans))
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenasak(row) }
             }
