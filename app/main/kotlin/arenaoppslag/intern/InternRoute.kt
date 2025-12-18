@@ -7,7 +7,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonKanBehandlesIKelvinResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
@@ -60,16 +60,13 @@ fun Route.intern(datasource: DataSource) {
                 )
             )
         }
-        post("/person/aap/soknad/kan_behandles_i_kelvin") {
-            logger.info("Sjekker om det er mulig å opprette AAP-sak i Kelvin for person, gitt Arena-historikk")
+        post("/person/aap/signifikant-historikk") {
+            logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for ny saksbehandling i Kelvin")
             val string = call.receive<String>()
             val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string)
-            val arenaData = request.personidentifikatorer.map { personidentifikator ->
-                arenaRepository.hentKanBehandlesIKelvin(personidentifikator, request.virkningstidspunkt)
-            }
-            val sisteArenaSakId = arenaData.firstNotNullOfOrNull { it.sakId }
+            val arenaData = arenaRepository.hentKanBehandlesIKelvin(request.personidentifikatorer, request.virkningstidspunkt)
 
-            val response = PersonKanBehandlesIKelvinResponse(arenaData.all { it.kanBehandles }, sisteArenaSakId)
+            val response = PersonHarSignifikantAAPArenaHistorikk(arenaData.kanBehandles, arenaData.arenaSakIdListe)
             call.respond(response)
         }
         post("/maksimum") {

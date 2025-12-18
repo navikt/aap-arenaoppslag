@@ -13,7 +13,7 @@ insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLK
 values
     ('995555', 3, 'IVERK', 'O', 'JA', 'AAP', '996', to_date('27.08.2019', 'DD.MM.RRRR'),NULL),
     ('995556', 4, 'AVSLU', 'O', 'JA', 'AA115', '996', to_date('27.08.2019', 'DD.MM.RRRR'),to_date('01.01.2025', 'DD.MM.RRRR')),
-    ('995557', 5, 'IVERK', 'S', 'JA', 'AA115', '996', to_date('27.08.2024', 'DD.MM.RRRR'),NULL);
+    ('995557', 5, 'IVERK', 'S', 'JA', 'AA115', '996', to_date('27.08.2019', 'DD.MM.RRRR'),NULL);
 
 
 -- person med vedtak med forskjellige vedtakstype-kode
@@ -25,7 +25,7 @@ values
     ('994445', 7, 'IVERK', 'E', 'JA', 'AHJMR', '997', to_date('27.08.2022', 'DD.MM.RRRR'),to_date('04.02.2024', 'DD.MM.RRRR')),
     ('994446', 8, 'IVERK', 'G', 'JA', 'AAP', '997', to_date('31.12.2022', 'DD.MM.RRRR'),NULL),
     -- disse tre skal filtreres ut
-    ('994447', 9, 'IVERK', 'G', 'JA', 'AAP', '997', to_date('31.12.2016', 'DD.MM.RRRR'),NULL),
+    ('994447', 9, 'IVERK', 'S', 'JA', 'AAP', '997', to_date('31.12.2016', 'DD.MM.RRRR'),NULL),
     ('994448', 10, 'IVERK', 'G', 'JA', 'AAP', '997', NULL,NULL),
     ('994449', 11, 'IVERK', 'G', 'JA', 'AAP', '997', to_date('03.01.2020', 'DD.MM.RRRR'),to_date('31.12.2017', 'DD.MM.RRRR'));
 

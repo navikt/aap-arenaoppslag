@@ -7,9 +7,9 @@ public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
 
-public data class PersonKanBehandlesIKelvinResponse(
-    val kanBehandles: Boolean,
-    val nyesteArenaSakId: String? // nyeste Arena-sak for personen, dersom noen relevante finnes
+public data class PersonHarSignifikantAAPArenaHistorikk(
+    val harSignifikantHistorikk: Boolean,
+    val signifikanteSaker: List<String> // signifikante Arena-saker, sortert på dato, nyeste først
 )
 
 public data class VedtakResponse(
