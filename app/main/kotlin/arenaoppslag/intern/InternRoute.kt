@@ -7,7 +7,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonKanBehandlesIKelvinResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
@@ -66,7 +66,7 @@ fun Route.intern(datasource: DataSource) {
             val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string)
             val arenaData = arenaRepository.hentKanBehandlesIKelvin(request.personidentifikatorer, request.virkningstidspunkt)
 
-            val response = PersonKanBehandlesIKelvinResponse(arenaData.kanBehandles, arenaData.arenaSakIdListe)
+            val response = PersonHarSignifikantAAPArenaHistorikk(arenaData.kanBehandles, arenaData.arenaSakIdListe)
             call.respond(response)
         }
         post("/maksimum") {
