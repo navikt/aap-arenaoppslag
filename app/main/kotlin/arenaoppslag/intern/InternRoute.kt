@@ -64,12 +64,9 @@ fun Route.intern(datasource: DataSource) {
             logger.info("Sjekker om det er mulig å opprette AAP-sak i Kelvin for person, gitt Arena-historikk")
             val string = call.receive<String>()
             val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string)
-            val arenaData = request.personidentifikatorer.map { personidentifikator ->
-                arenaRepository.hentKanBehandlesIKelvin(personidentifikator, request.virkningstidspunkt)
-            }
-            val sisteArenaSakId = arenaData.firstNotNullOfOrNull { it.sakId }
+            val arenaData = arenaRepository.hentKanBehandlesIKelvin(request.personidentifikatorer, request.virkningstidspunkt)
 
-            val response = PersonKanBehandlesIKelvinResponse(arenaData.all { it.kanBehandles }, sisteArenaSakId)
+            val response = PersonKanBehandlesIKelvinResponse(arenaData.kanBehandles, arenaData.arenaSakIdListe)
             call.respond(response)
         }
         post("/maksimum") {

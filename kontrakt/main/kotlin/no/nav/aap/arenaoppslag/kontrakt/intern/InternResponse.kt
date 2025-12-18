@@ -9,7 +9,7 @@ public data class PersonEksistererIAAPArena(
 
 public data class PersonKanBehandlesIKelvinResponse(
     val kanBehandles: Boolean,
-    val nyesteArenaSakId: String? // nyeste Arena-sak for personen, dersom noen relevante finnes
+    val nyesteArenaSakId: List<String> // nyeste Arena-sak for personen, dersom noen relevante finnes
 )
 
 public data class VedtakResponse(

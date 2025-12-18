@@ -6,7 +6,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import java.time.LocalDate
 import javax.sql.DataSource
 
-data class KanBehandlesIKelvinDao(val kanBehandles: Boolean, val personIdentifikator: String, val sakId: String?)
+data class KanBehandlesIKelvinDao(val kanBehandles: Boolean, val arenaSakIdListe: List<String>)
 
 
 class ArenaRepository(private val dataSource: DataSource) {
@@ -17,24 +17,23 @@ class ArenaRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentKanBehandlesIKelvin(personId: String, søknadMottattPå: LocalDate): KanBehandlesIKelvinDao {
+    fun hentKanBehandlesIKelvin(personIdentifikatorer: List<String>, søknadMottattPå: LocalDate): KanBehandlesIKelvinDao {
         val relevanteArenaSaker = dataSource.connection.use { con ->
-            RelevantHistorikkDao.selectPersonMedRelevantHistorikk(personId, søknadMottattPå, con)
+            RelevantHistorikkDao.selectPersonMedRelevantHistorikk(personIdentifikatorer, søknadMottattPå, con)
         }
         val kanBehandles = relevanteArenaSaker.isEmpty()
 
-        val nyesteSak = finnNyesteSakId(relevanteArenaSaker)
+        val sorterteArenaSaker = sorterSaker(relevanteArenaSaker).map { it.sakId }.distinct()
 
-        return KanBehandlesIKelvinDao(kanBehandles, personId, nyesteSak)
+        return KanBehandlesIKelvinDao(kanBehandles, sorterteArenaSaker)
     }
 
-    internal fun finnNyesteSakId(arenaSaker: List<ArenaSak>): String? {
-        val sakerMedSluttDato = arenaSaker.filter { it.tilDato != null }
-        // Hvis saker uten tilOgMedDato finnes, ta den nyeste av disse basert på db-order:
-        val nyesteSak = arenaSaker.findLast { it.tilDato == null }?.sakId
-        // ellers ta den nyeste saken basert på tilOgMedDato
-            ?: sakerMedSluttDato.sortedBy { it.tilDato }.lastOrNull()?.sakId
-        return nyesteSak
+    internal fun sorterSaker(arenaSaker: List<ArenaSak>): List<ArenaSak> {
+        // Hvis saker uten tilOgMedDato finnes, sorter disse basert på db-order
+        val sakerUtenSluttDato = arenaSaker.filter { it.tilDato == null }.reversed() // i reversed db-order (eldste først)
+        // Hvis saker uten tilOgMedDato finnes, sorter disse synkende på dato (=eldste først)
+        val sakerMedSluttDato = arenaSaker.filter { it.tilDato != null }.sortedBy { it.tilDato }
+        return sakerUtenSluttDato + sakerMedSluttDato;
     }
 
     fun hentPerioder(

@@ -25,34 +25,34 @@ class ArenaRepositoryTest {
 
     @Test
     fun `Sortering av relevante saker tar tom liste`() {
-        val nyeste = underTest.finnNyesteSakId(emptyList())
-        assertThat(nyeste).isNull()
+        val nyeste = underTest.sorterSaker(emptyList())
+        assertThat(nyeste).isEmpty()
     }
 
     @Test
     fun `Sortering av relevante saker tar liste med datoer`() {
         var teller = 1
-        val nyeste = underTest.finnNyesteSakId(
+        val nyeste = underTest.sorterSaker(
             listOf(
                 testSak(teller++, LocalDate.now().plusYears(1)),
                 testSak(teller++, LocalDate.now().plusYears(3)),
                 testSak(teller, LocalDate.now().plusYears(2)),
             )
         )
-        assertThat(nyeste).isEqualTo("2")
+        assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("1", "3", "2"))
     }
 
     @Test
     fun `Sortering av relevante saker prioriterer null`() {
         var teller = 1
-        val nyeste = underTest.finnNyesteSakId(
+        val nyeste = underTest.sorterSaker(
             listOf(
                 testSak(teller++, LocalDate.now().plusYears(1)),
                 testSak(teller++, null),
                 testSak(teller, LocalDate.now().plusYears(2)),
             )
         )
-        assertThat(nyeste).isEqualTo("2")
+        assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "1", "3"))
     }
 
     private fun testSak(sakId: Int, tilDato: LocalDate?) = ArenaSak(
