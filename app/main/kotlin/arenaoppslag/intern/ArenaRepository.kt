@@ -37,27 +37,6 @@ class ArenaRepository(private val dataSource: DataSource) {
         return nyesteSak
     }
 
-    private object RateBegrenser {
-        private val INNSLIPP_PROSENT = 20
-
-        fun personenTasMed(personId: String): Boolean {
-            return INNSLIPP_PROSENT >= (personId.hashCode() % 100 + 1)
-        }
-    }
-
-    fun rateBegrensetHentKanBehandlesIKelvin(personId: String, søknadMottattPå: LocalDate): KanBehandlesIKelvinDao {
-        // Vurder etter nye regler om personen kan behandles i Kelvin
-        val personenKanBehandlesIKelvin = hentKanBehandlesIKelvin(personId, søknadMottattPå)
-        // Midlertidig: Begrens hvor mange personer vi tar inn i Kelvin
-        return if (personenKanBehandlesIKelvin.kanBehandles && RateBegrenser.personenTasMed(personId)) {
-            personenKanBehandlesIKelvin
-        } else {
-            // Negativt svar for å begrense antall personer som tas inn i Kelvin
-            KanBehandlesIKelvinDao(false, personId, null)
-        }
-
-    }
-
     fun hentPerioder(
         personId: String,
         fraOgMedDato: LocalDate,

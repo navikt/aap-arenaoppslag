@@ -65,7 +65,7 @@ fun Route.intern(datasource: DataSource) {
             val string = call.receive<String>()
             val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string)
             val arenaData = request.personidentifikatorer.map { personidentifikator ->
-                arenaRepository.rateBegrensetHentKanBehandlesIKelvin(personidentifikator, request.virkningstidspunkt)
+                arenaRepository.hentKanBehandlesIKelvin(personidentifikator, request.virkningstidspunkt)
             }
             val sisteArenaSakId = arenaData.firstNotNullOfOrNull { it.sakId }
 
