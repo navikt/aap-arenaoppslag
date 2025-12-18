@@ -8,11 +8,11 @@ import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
 import java.sql.Date
 import java.time.LocalDate
-import kotlin.use
 
 object RelevantHistorikkDao {
     private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
 
+    // S1: Hent alle AAP-vedtak med relevant historikk for personen
     // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
     // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
     // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse med
@@ -21,7 +21,9 @@ object RelevantHistorikkDao {
     @Language("OracleSql")
     val selectKunAAPVedtakForPersonMedRelevantHistorikk = """
         SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
-          FROM vedtak v JOIN person p on p.person_id=v.person_id
+          FROM 
+              vedtak v 
+              JOIN person p on p.person_id=v.person_id
         
         WHERE p.fodselsnr IN ($FNR_LISTE_TOKEN)
           AND v.utfallkode != 'AVBRUTT'
@@ -33,8 +35,10 @@ object RelevantHistorikkDao {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
+           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato >=?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
     """.trimIndent()
 
+    // S2: Hent alle AAP-klager med relevant historikk for personen
     @Language("OracleSql")
     val selectKunKlagerForPersonMedRelevantHistorikk = """
     -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres. 
@@ -43,7 +47,7 @@ object RelevantHistorikkDao {
         v.sak_id,
         vedtakstatuskode,
         vedtaktypekode,
-        NULL                                  AS fra_dato,
+        CAST(NULL AS DATE)                    AS fra_dato,
         TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
         v.rettighetkode
     FROM
@@ -58,70 +62,92 @@ object RelevantHistorikkDao {
         -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
         -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. 
         AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
-        AND v.utfallkode NOT IN ('JA') -- dersom klagen er innvilget regnes den her som ikke relevant. Kan evt legge til TRUKK og andre koder her senere.
-         -- TODO vi må også ha en tidsbuffer her, for å fange opp klager som nylig er godkjent, men ikke fulgt opp med nytt vedtak enda. 3 mnd statisk buffer?
-        
+        -- Dersom klagen ble innvilget eller avlyst etc. (utfallkoder utenom 'NEI') for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
+        AND NOT (v.utfallkode != 'NEI' AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6))
+        -- TODO må verifisere bruk av v.utfallkode - den er kanskje tvilsom eller omvendt av forventet
+        -- K_UTFALL har verdiene: TRUKK NEI null JA DELVIS OPPHEVET AVVIST
     """.trimIndent()
 
+    // S3: Hent alle AAP-anker med relevant historikk for personen
     @Language("OracleSql")
     val selectKunAnkerForPersonMedRelevantHistorikk = """
-    SELECT
-        sak_id,
+        SELECT
+        v.sak_id,
         vedtakstatuskode,
         vedtaktypekode,
-        fra_dato,
-        til_dato,
-        rettighetkode
+        CAST(NULL AS DATE)                    AS fra_dato,
+        TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
+        v.rettighetkode
     FROM
         vedtak v
-        JOIN person p ON p.person_id = v.person_id
+        JOIN person      p ON p.person_id = v.person_id
+        JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
     WHERE
         p.fodselsnr IN ($FNR_LISTE_TOKEN)
-        AND utfallkode != 'AVBRUTT'
         AND rettighetkode = 'ANKE'
-        -- TODO vi må se på kjennelsesdato i vedtakfakta og si at det skal være bra lenge siden den, feks 5 år?
+        AND utfallkode != 'AVBRUTT'
+        AND vf.vedtakfaktakode = 'KJREGDATO'
+        AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? ) -- stor tidsbuffer her, da det kan ankes oppover i rettsvesenet.
+        -- Dersom anken ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
+        AND NOT exists ( SELECT 1 FROM vedtakfakta vf_innvilget
+          WHERE
+              vf_innvilget.vedtak_id = v.vedtak_id
+              AND vf_innvilget.vedtakfaktakode = 'KJENNELSE'
+              AND vf_innvilget.vedtakverdi = 'JA' -- kanskje også DELVIS eller andre verdier?
+              AND EXISTS ( SELECT 1 FROM vedtakfakta vf_innvilget_dt
+                  WHERE
+                      vf_innvilget_dt.vedtak_id = v.vedtak_id  -- det samme vedtaket
+                      AND vf_innvilget_dt.vedtakfaktakode = 'KJREGDATO' -- sin registrerte dato
+                      AND TO_DATE(vf_innvilget_dt.vedtakverdi, 'DD-MM-YYYY') <= add_months( trunc(sysdate), -6 ) -- er 6 mnd eller eldre
+          )
+          
     """.trimIndent()
 
+    // S4: Hent alle tilbakebetalinger med relevant historikk for personen
     @Language("OracleSql")
     val selectKunTilbakebetalingerForPersonMedRelevantHistorikk = """
-    SELECT
-        sak_id,
-        vedtakstatuskode,
-        vedtaktypekode,
-        fra_dato,
-        til_dato,
-        rettighetkode
-    FROM
-        vedtak v
-        JOIN person p ON p.person_id = v.person_id
-    WHERE
-        p.fodselsnr IN ($FNR_LISTE_TOKEN)
-        AND utfallkode != 'AVBRUTT'
-        AND rettighetkode = 'TILBBET'
-        AND ( fra_dato >= ? OR fra_dato IS NULL ) -- tilbakebetaling har bare fra_dato      
-             -- har dette noe å si for nye søknader, at brukeren måtte betale tilbake et beløp? 
-    """.trimIndent()
-
-    @Language("OracleSql")
-    val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
-    -- spesialutbetalinger har nyeste dato i fra_dato-feltet, så vi bytter dem om her
-    -- TODO: sjekk om det virkelig er tilfellet, i q1 
     SELECT
         v.sak_id,
         vedtakstatuskode,
         vedtaktypekode,
-        v.til_dato AS fra_dato,
-        v.fra_dato AS til_dato,
+        CAST(NULL AS DATE)                    AS fra_dato,
+        TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
+        v.rettighetkode
+    FROM
+        vedtak v
+        JOIN person p ON p.person_id = v.person_id
+        JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
+    WHERE
+        p.fodselsnr IN ($FNR_LISTE_TOKEN)
+        AND rettighetkode = 'TILBBET'
+        AND utfallkode != 'AVBRUTT'
+        AND vf.vedtakfaktakode = 'INNVF'
+        -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
+        AND (vf.vedtakverdi IS NULL)
+    """.trimIndent()
+
+    // S5: Hent alle spesialutbetalinger med relevant historikk for personen
+    @Language("OracleSql")
+    val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
+    SELECT
+        v.sak_id,
+        vedtakstatuskode,
+        vedtaktypekode,
+        CAST(NULL AS DATE)                    AS fra_dato,
+        TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
         'SPESIAL' AS rettighetkode
     FROM
         sim_utbetalingsgrunnlag fu
         JOIN vedtak v ON v.vedtak_id = fu.vedtak_id
         JOIN person p ON p.person_id = v.person_id
+        JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
     WHERE
         p.fodselsnr IN ($FNR_LISTE_TOKEN)
         AND v.utfallkode != 'AVBRUTT'
-        AND ( v.til_dato >= ? OR v.til_dato IS NULL ) -- til og fra byttet om
-    """.trimIndent()
+        AND vf.vedtakfaktakode = 'INNVF'
+        -- Vi regner vedtak med null INNVF som åpne, ellers ikke
+        AND (vf.vedtakverdi IS NULL)    
+        """.trimIndent()
 
 
     @TestOnly
@@ -158,6 +184,7 @@ object RelevantHistorikkDao {
             .use { preparedStatement ->
                 preparedStatement.setDate(1, Date.valueOf(tidsBufferGenerell))
                 preparedStatement.setDate(2, Date.valueOf(nyesteTillateStans))
+                preparedStatement.setDate(3, Date.valueOf(tidsBufferGenerell))
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenasak(row) }
             }
