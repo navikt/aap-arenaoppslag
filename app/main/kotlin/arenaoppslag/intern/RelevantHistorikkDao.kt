@@ -24,19 +24,20 @@ object RelevantHistorikkDao {
           FROM vedtak v JOIN person p on p.person_id=v.person_id
         
         WHERE p.fodselsnr IN ($FNR_LISTE_TOKEN)
-          AND rettighetkode IN ('AA115', 'AAP') 
+          AND v.utfallkode != 'AVBRUTT'
+          AND v.rettighetkode IN ('AA115', 'AAP') 
           AND (fra_dato <= til_dato OR til_dato IS NULL) -- filtrer ut ugyldiggjorte vedtak, men inkluder vedtak med null til_dato, som Stans
           AND NOT (fra_dato IS NULL AND til_dato IS NULL) -- filtrer ut etterregistrerte vedtak
           AND ( 
-                (vedtaktypekode !='S' AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer
+                (vedtaktypekode IN ('O','E','G') AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for stans
+                (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
     """.trimIndent()
 
     @Language("OracleSql")
     val selectKunKlagerForPersonMedRelevantHistorikk = """
-    -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres?
+    -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres. 
     -- Dersom den er null, er klagen fortsatt under behandling.
     SELECT
         v.sak_id,
@@ -51,12 +52,15 @@ object RelevantHistorikkDao {
         JOIN person      p ON p.person_id = v.person_id
     WHERE
         p.fodselsnr IN ($FNR_LISTE_TOKEN)
+        AND v.utfallkode != 'AVBRUTT'
         AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
         AND vf.vedtakfaktakode = 'INNVF'
         -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
         -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. 
         AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
-        AND v.utfallkode NOT IN ('JA') -- dersom klagen er innvilget regnes den her som ikke relevant. Kan evt legge til TRUKK og andre koder her senere. 
+        AND v.utfallkode NOT IN ('JA') -- dersom klagen er innvilget regnes den her som ikke relevant. Kan evt legge til TRUKK og andre koder her senere.
+         -- TODO vi må også ha en tidsbuffer her, for å fange opp klager som nylig er godkjent, men ikke fulgt opp med nytt vedtak enda. 3 mnd statisk buffer?
+        
     """.trimIndent()
 
     @Language("OracleSql")
@@ -72,9 +76,10 @@ object RelevantHistorikkDao {
         vedtak v
         JOIN person p ON p.person_id = v.person_id
     WHERE
-        p.fodselsnr IN ( $FNR_LISTE_TOKEN )
-        AND rettighetkode IN ( 'ANKE' )
-        AND ( fra_dato >= ? OR fra_dato IS NULL ) -- tilbakebetaling har bare fra_dato       
+        p.fodselsnr IN ($FNR_LISTE_TOKEN)
+        AND utfallkode != 'AVBRUTT'
+        AND rettighetkode = 'ANKE'
+        -- TODO vi må se på kjennelsesdato i vedtakfakta og si at det skal være bra lenge siden den, feks 5 år?
     """.trimIndent()
 
     @Language("OracleSql")
@@ -91,13 +96,16 @@ object RelevantHistorikkDao {
         JOIN person p ON p.person_id = v.person_id
     WHERE
         p.fodselsnr IN ($FNR_LISTE_TOKEN)
-        AND rettighetkode IN ( 'TILBBET' )
-        AND ( fra_dato >= ? OR fra_dato IS NULL ) -- tilbakebetaling har bare fra_dato           
+        AND utfallkode != 'AVBRUTT'
+        AND rettighetkode = 'TILBBET'
+        AND ( fra_dato >= ? OR fra_dato IS NULL ) -- tilbakebetaling har bare fra_dato      
+             -- har dette noe å si for nye søknader, at brukeren måtte betale tilbake et beløp? 
     """.trimIndent()
 
     @Language("OracleSql")
     val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
     -- spesialutbetalinger har nyeste dato i fra_dato-feltet, så vi bytter dem om her
+    -- TODO: sjekk om det virkelig er tilfellet, i q1 
     SELECT
         v.sak_id,
         vedtakstatuskode,
@@ -110,7 +118,8 @@ object RelevantHistorikkDao {
         JOIN vedtak v ON v.vedtak_id = fu.vedtak_id
         JOIN person p ON p.person_id = v.person_id
     WHERE
-        p.fodselsnr IN ( $FNR_LISTE_TOKEN )
+        p.fodselsnr IN ($FNR_LISTE_TOKEN)
+        AND v.utfallkode != 'AVBRUTT'
         AND ( v.til_dato >= ? OR v.til_dato IS NULL ) -- til og fra byttet om
     """.trimIndent()
 
