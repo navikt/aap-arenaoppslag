@@ -30,9 +30,9 @@ class ArenaRepository(private val dataSource: DataSource) {
 
     internal fun sorterSaker(arenaSaker: List<ArenaSak>): List<ArenaSak> {
         // Hvis saker uten tilOgMedDato finnes, sorter disse basert på db-order
-        val sakerUtenSluttDato = arenaSaker.filter { it.tilDato == null }.reversed() // i reversed db-order (eldste først)
-        // Hvis saker uten tilOgMedDato finnes, sorter disse synkende på dato (=eldste først)
-        val sakerMedSluttDato = arenaSaker.filter { it.tilDato != null }.sortedBy { it.tilDato }
+        val sakerUtenSluttDato = arenaSaker.filter { it.tilDato == null }.reversed() // i reversed db-order (nyeste først)
+        // Hvis saker uten tilOgMedDato finnes, sorter disse synkende på dato (=nyeste først)
+        val sakerMedSluttDato = arenaSaker.filter { it.tilDato != null }.sortedByDescending { it.tilDato }
         return sakerUtenSluttDato + sakerMedSluttDato;
     }
 

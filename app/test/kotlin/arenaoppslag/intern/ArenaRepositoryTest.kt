@@ -39,7 +39,7 @@ class ArenaRepositoryTest {
                 testSak(teller, LocalDate.now().plusYears(2)),
             )
         )
-        assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("1", "3", "2"))
+        assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "3", "1"))
     }
 
     @Test
@@ -52,7 +52,7 @@ class ArenaRepositoryTest {
                 testSak(teller, LocalDate.now().plusYears(2)),
             )
         )
-        assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "1", "3"))
+        assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "3", "1"))
     }
 
     private fun testSak(sakId: Int, tilDato: LocalDate?) = ArenaSak(
