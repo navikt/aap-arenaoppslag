@@ -120,7 +120,7 @@ object RelevantHistorikkDao {
         AND utfallkode != 'AVBRUTT'
         AND vf.vedtakfaktakode = 'INNVF'
         -- Vi regner vedtak med null INNVF som åpne, ellers ikke.    
-        AND (vf.vedtakverdi IS NULL)
+        AND vf.vedtakverdi IS NULL
     """.trimIndent()
 
     // S5: Hent alle spesialutbetalinger med relevant historikk for personen
@@ -143,7 +143,7 @@ object RelevantHistorikkDao {
         AND v.utfallkode != 'AVBRUTT'
         AND vf.vedtakfaktakode = 'INNVF'
         -- Vi regner vedtak med null INNVF som åpne, ellers ikke
-        AND (vf.vedtakverdi IS NULL)    
+        AND vf.vedtakverdi IS NULL    
         """.trimIndent()
 
 
