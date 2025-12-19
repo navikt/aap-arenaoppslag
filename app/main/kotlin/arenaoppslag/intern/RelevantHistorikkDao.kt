@@ -60,12 +60,15 @@ object RelevantHistorikkDao {
         AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
         AND vf.vedtakfaktakode = 'INNVF'
         -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
-        -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. 
+        -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
         AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
-        -- Dersom klagen ble innvilget eller avlyst etc. (utfallkoder utenom 'NEI') for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
-        AND NOT (v.utfallkode != 'NEI' AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6))
-        -- TODO må verifisere bruk av v.utfallkode - den er kanskje tvilsom eller omvendt av forventet
-        -- K_UTFALL har verdiene: TRUKK NEI null JA DELVIS OPPHEVET AVVIST
+        -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
+        -- Vi bruker vedtakfaktakode=K_UTFALL fremfor utfallkode=JA her, fordi vi ser uventet utfallkode for noen innvilgede klager i produksjon.
+        AND NOT EXISTS(SELECT 1 from vedtakfakta vf_innvilget WHERE vf_innvilget.vedtakfaktakode = 'K_UTFALL' 
+            AND vf_innvilget.vedtak_id = v.vedtak_id -- samme vedtaket
+            AND vf_innvilget.vedtakverdi = 'JA' -- er innvilget (kan evt utvides med flere verdier)
+            AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) -- er minst 6 mnd siden
+            )
     """.trimIndent()
 
     // S3: Hent alle AAP-anker med relevant historikk for personen
@@ -89,18 +92,12 @@ object RelevantHistorikkDao {
         AND vf.vedtakfaktakode = 'KJREGDATO'
         AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? ) -- stor tidsbuffer her, da det kan ankes oppover i rettsvesenet.
         -- Dersom anken ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
-        AND NOT exists ( SELECT 1 FROM vedtakfakta vf_innvilget
-          WHERE
-              vf_innvilget.vedtak_id = v.vedtak_id
-              AND vf_innvilget.vedtakfaktakode = 'KJENNELSE'
-              AND vf_innvilget.vedtakverdi = 'JA' -- kanskje også DELVIS eller andre verdier?
-              AND EXISTS ( SELECT 1 FROM vedtakfakta vf_innvilget_dt
-                  WHERE
-                      vf_innvilget_dt.vedtak_id = v.vedtak_id  -- det samme vedtaket
-                      AND vf_innvilget_dt.vedtakfaktakode = 'KJREGDATO' -- sin registrerte dato
-                      AND TO_DATE(vf_innvilget_dt.vedtakverdi, 'DD-MM-YYYY') <= add_months( trunc(sysdate), -6 ) -- er 6 mnd eller eldre
-          )
-          
+        -- Vi bruker vedtakfaktakode=KJENNELSE fremfor vedtak.utfallkode=JA her, fordi vi ser uventet utfallkode for noen innvilgede anker i produksjon.
+        AND NOT EXISTS(SELECT 1 from vedtakfakta vf_innvilget WHERE vf_innvilget.vedtakfaktakode = 'KJENNELSE' 
+            AND vf_innvilget.vedtak_id = v.vedtak_id -- samme vedtaket
+            AND vf_innvilget.vedtakverdi = 'JA' -- er innvilget (kan evt utvides med flere verdier)
+            AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) -- er minst 6 mnd siden
+            )
     """.trimIndent()
 
     // S4: Hent alle tilbakebetalinger med relevant historikk for personen
