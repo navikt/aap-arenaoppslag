@@ -119,7 +119,7 @@ object RelevantHistorikkDao {
         AND rettighetkode = 'TILBBET'
         AND utfallkode != 'AVBRUTT'
         AND vf.vedtakfaktakode = 'INNVF'
-        -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
+        -- Vi regner vedtak med null INNVF som åpne, ellers ikke.    
         AND (vf.vedtakverdi IS NULL)
     """.trimIndent()
 
