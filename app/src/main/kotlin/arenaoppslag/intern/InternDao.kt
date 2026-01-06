@@ -1,7 +1,12 @@
 package arenaoppslag.intern
 
 import arenaoppslag.datasource.map
-import arenaoppslag.modeller.*
+import arenaoppslag.modeller.AnnenReduksjon
+import arenaoppslag.modeller.Maksimum
+import arenaoppslag.modeller.Reduksjon
+import arenaoppslag.modeller.UtbetalingMedMer
+import arenaoppslag.modeller.Vedtak
+import arenaoppslag.modeller.VedtaksType
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
@@ -253,7 +258,6 @@ object InternDao {
             }
     }
 
-
     fun selectVedtakPerioder(
         fodselsnr: String,
         fraOgMedDato: LocalDate,
@@ -278,7 +282,6 @@ object InternDao {
                 perioder
             }
     }
-
 
     fun selectUtbetalingVedVedtakId(
         vedtakId: Int,
@@ -416,10 +419,7 @@ object InternDao {
         return maksimum
     }
 
-    private fun fraDato(date: Date?): LocalDate? {
-        if (date == null) return null
-        return date.toLocalDate()
-    }
+    private fun fraDato(date: Date?) = date?.toLocalDate()
 
     fun selectSaker(personidentifikator: String, connection: Connection): List<SakStatus> {
         connection.prepareStatement(selectSaksIdByFnr)
