@@ -17,9 +17,12 @@ class ArenaRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentKanBehandlesIKelvin(personIdentifikatorer: List<String>, søknadMottattPå: LocalDate): KanBehandlesIKelvinDao {
+    fun hentKanBehandlesIKelvin(personIdentifikatorer: List<String>, søknadMottattPå: LocalDate):
+            KanBehandlesIKelvinDao {
         val relevanteArenaSaker = dataSource.connection.use { con ->
-            RelevantHistorikkDao.selectPersonMedRelevantHistorikk(personIdentifikatorer, søknadMottattPå, con)
+            RelevantHistorikkDao.selectPersonMedRelevantHistorikk(
+                personIdentifikatorer, søknadMottattPå, con
+            )
         }
         val kanBehandles = relevanteArenaSaker.isEmpty()
 
@@ -30,10 +33,10 @@ class ArenaRepository(private val dataSource: DataSource) {
 
     internal fun sorterSaker(arenaSaker: List<ArenaSak>): List<ArenaSak> {
         // Hvis saker uten tilDato finnes, sorter disse basert på db-order
-        val sakerUtenSluttDato = arenaSaker.filter { it.tilDato == null }.reversed() // i reversed db-order (=nyeste først)
+        val utenSluttdato = arenaSaker.filter { it.tilDato == null }.reversed() // i reversed db-order (=nyeste først)
         // Hvis saker med tilDato finnes, sorter disse synkende på dato (=nyeste først)
-        val sakerMedSluttDato = arenaSaker.filter { it.tilDato != null }.sortedByDescending { it.tilDato }
-        return sakerUtenSluttDato + sakerMedSluttDato;
+        val medSluttdato = arenaSaker.filter { it.tilDato != null }.sortedByDescending { it.tilDato }
+        return utenSluttdato + medSluttdato;
     }
 
     fun hentPerioder(

@@ -3,11 +3,7 @@ package arenaoppslag.intern
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
-import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.*
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -65,7 +61,9 @@ fun Route.intern(datasource: DataSource) {
             logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
             val string = call.receive<String>()
             val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string) //todo stream
-            val response = relevantHistorikkService.hentRelevanteSakerForPerson(request.personidentifikatorer, request.virkningstidspunkt)
+            val response = relevantHistorikkService.hentRelevanteSakerForPerson(
+                request.personidentifikatorer, request.virkningstidspunkt
+            )
             call.respond(response)
         }
         post("/maksimum") {

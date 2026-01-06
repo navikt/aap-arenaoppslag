@@ -11,8 +11,9 @@ data class AppConfig(
     val azure: AzureConfig = AzureConfig(),
 ) {
     companion object {
-        // Vi endrer ktor sin default-verdi som er "antall CPUer" synlige for JVM-en, som normalt er antall tilgjengelige kjener på container-hosten.
-        // Dette kan gi et for høyt antall tråder i forhold. På den andre siden har vi en del venting på IO (db, http-auth).
+        // Vi endrer ktor sin default-verdi som er "antall CPUer" synlige for JVM-en, som normalt er antall
+        // tilgjengelige kjener på container-hosten. Dette kan gi et for høyt antall tråder i forhold. På den andre
+        // siden har vi en del venting på IO (db, http-auth).
         // Sett den til en balansert verdi:
         const val ktorParallellitet: Int = 4 // defaulter ellers til 2 pga "-XX:ActiveProcessorCount=2" i Dockerfile
 

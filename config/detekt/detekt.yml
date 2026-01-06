@@ -305,16 +305,16 @@ naming:
   ClassNaming:
     active: true
     aliases: ['ClassName']
-    classPattern: '[A-Z][a-zA-Z0-9]*'
+    classPattern: '[A-ZØÆÅ][A-ZÆØÅæøåa-z0-9_]*'
   ConstructorParameterNaming:
     active: true
-    parameterPattern: '[a-z][A-Za-z0-9]*'
-    privateParameterPattern: '[a-z][A-Za-z0-9]*'
+    parameterPattern: '[a-zæøå][A-ZÆØÅæøåa-z0-9_]*'
+    privateParameterPattern: '[a-zæøå][A-ZÆØÅæøåa-z0-9_]*'
     excludeClassPattern: '$^'
   EnumNaming:
     active: true
     aliases: ['EnumEntryName']
-    enumEntryPattern: '[A-Z][_a-zA-Z0-9]*'
+    enumEntryPattern: '[A-ZØÆÅ][_A-ZÆØÅæøåa-z0-9_]*'
   ForbiddenClassName:
     active: false
     forbiddenName: []
@@ -330,11 +330,11 @@ naming:
     active: true
     aliases: ['FunctionName']
     excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
-    functionPattern: '[a-z][a-zA-Z0-9]*'
+    functionPattern: '[a-zæøå][A-ZÆØÅæøåa-z0-9_]*'
     excludeClassPattern: '$^'
   FunctionParameterNaming:
     active: true
-    parameterPattern: '[a-z][A-Za-z0-9]*'
+    parameterPattern: '[a-zæøå][A-ZÆØÅæøåa-z0-9_]*'
     excludeClassPattern: '$^'
   InvalidPackageDeclaration:
     active: true
@@ -343,7 +343,7 @@ naming:
     requireRootInDeclaration: false
   LambdaParameterNaming:
     active: false
-    parameterPattern: '[a-z][A-Za-z0-9]*|_'
+    parameterPattern: '[a-zæøå][A-ZÆØÅæøåa-z0-9_]*|_'
   MatchingDeclarationName:
     active: true
     mustBeFirst: true
@@ -368,18 +368,18 @@ naming:
   ObjectPropertyNaming:
     active: true
     aliases: ['ObjectPropertyName']
-    constantPattern: '[A-Za-z][_A-Za-z0-9]*'
-    propertyPattern: '[A-Za-z][_A-Za-z0-9]*'
-    privatePropertyPattern: '(_)?[A-Za-z][_A-Za-z0-9]*'
+    constantPattern: '[A-ZØÆÅa-zæøå][_A-ZÆØÅæøåa-z0-9_]*'
+    propertyPattern: '[A-ZØÆÅa-zæøå][_A-ZÆØÅæøåa-z0-9_]*'
+    privatePropertyPattern: '(_)?[A-ZØÆÅa-zæøå][_A-ZÆØÅæøåa-z0-9_]*'
   PackageNaming:
     active: true
     aliases: ['PackageName']
-    packagePattern: '[a-z]+(\.[a-z][A-Za-z0-9]*)*'
+    packagePattern: '[a-zæøå]+(\.[a-zæøå][A-ZÆØÅæøåa-z0-9_]*)*'
   TopLevelPropertyNaming:
     active: true
-    constantPattern: '[A-Z][_A-Z0-9]*'
-    propertyPattern: '[A-Za-z][_A-Za-z0-9]*'
-    privatePropertyPattern: '_?[A-Za-z][_A-Za-z0-9]*'
+    constantPattern: '[A-ZØÆÅ][_A-ZØÆÅ0-9]*'
+    propertyPattern: '[A-ZØÆÅa-zæøå][_A-ZÆØÅæøåa-z0-9_]*'
+    privatePropertyPattern: '_?[A-ZØÆÅa-zæøå][_A-ZÆØÅæøåa-z0-9_]*'
   VariableMaxLength:
     active: false
     maximumVariableNameLength: 64
@@ -389,8 +389,8 @@ naming:
   VariableNaming:
     active: true
     aliases: ['PropertyName']
-    variablePattern: '[a-z][A-Za-z0-9]*'
-    privateVariablePattern: '(_)?[a-z][A-Za-z0-9]*'
+    variablePattern: '[a-zæøå][A-ZÆØÅæøåa-z0-9_]*'
+    privateVariablePattern: '(_)?[a-zæøå][A-ZÆØÅæøåa-z0-9_]*'
     excludeClassPattern: '$^'
 
 performance:
@@ -851,3 +851,4 @@ style:
     active: true
     excludeImports:
       - 'java.util.*'
+      - 'io.ktor.*'

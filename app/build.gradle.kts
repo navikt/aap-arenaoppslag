@@ -16,6 +16,7 @@ application {
 
 detekt {
     ignoreFailures = true
+    autoCorrect = true
 }
 
 tasks.withType<dev.detekt.gradle.Detekt>().configureEach {

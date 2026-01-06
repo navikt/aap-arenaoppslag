@@ -7,8 +7,9 @@ import com.zaxxer.hikari.HikariDataSource
 import java.sql.ResultSet
 import javax.sql.DataSource
 
-internal object Hikari {
+internal object ArenaDatasource {
 
+    @Suppress("MagicNumber")
     fun create(dbConfig: DbConfig): DataSource =
         HikariDataSource(HikariConfig().apply {
             jdbcUrl = dbConfig.url
