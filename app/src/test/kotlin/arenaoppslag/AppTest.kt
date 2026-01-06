@@ -8,6 +8,7 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.request
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.testing.*
@@ -43,6 +44,7 @@ class AppTest : H2TestBase() {
 
                 assertEquals(HttpStatusCode.OK, res.status)
 
+                println(res.body<String>())
                 val alleVedtak = res.body<VedtakResponse>()
 
                 assertEquals(1, alleVedtak.perioder.size)

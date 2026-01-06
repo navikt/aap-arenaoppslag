@@ -27,7 +27,7 @@ import javax.sql.DataSource
 
 val logger = LoggerFactory.getLogger("App")
 
-object Metrics{
+object Metrics {
     val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 }
 
@@ -100,10 +100,12 @@ fun Application.server(
         environment.log.info("ktor forbereder seg på å stoppe.")
     }
     monitor.subscribe(ApplicationStopping) { environment ->
-        environment.log.info("ktor stopper nå å ta imot nye requester, og lar mottatte requester kjøre frem til timeout.")
+        environment.log.info("ktor stopper nå å ta imot nye requester, " +
+                "og lar mottatte requester kjøre frem til timeout.")
     }
     monitor.subscribe(ApplicationStopped) { environment ->
-        environment.log.info("ktor har fullført nedstoppingen sin. Eventuelle requester og annet arbeid som ikke ble fullført innen timeout ble avbrutt.")
+        environment.log.info("ktor har fullført nedstoppingen sin. " +
+                "Eventuelle requester og annet arbeid som ikke ble fullført innen timeout ble avbrutt.")
         try {
             (datasource as? HikariDataSource)?.close() // en annen type i Test enn i Prod
         } catch (_: Exception) {

@@ -15,9 +15,10 @@ object RelevantHistorikkDao {
     // S1: Hent alle AAP-vedtak med relevant historikk for personen
     // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
     // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
-    // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse med
-    // spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller tiltakspenger.
-    // Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et ordinært vedtak i samme periode.
+    // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse
+    // med spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller
+    // tiltakspenger. Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et ordinært vedtak i samme
+    // periode.
     @Language("OracleSql")
     val hentRelevanteAAPVedtakForPerson = """
         SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode

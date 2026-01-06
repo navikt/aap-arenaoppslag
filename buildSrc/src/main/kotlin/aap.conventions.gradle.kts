@@ -62,9 +62,3 @@ val toolchainLauncher = javaToolchains.launcherFor {
 }
 tasks.withType<Test>().configureEach { javaLauncher.set(toolchainLauncher) }
 tasks.withType<JavaExec>().configureEach { javaLauncher.set(toolchainLauncher) }
-
-
-kotlin.sourceSets["main"].kotlin.srcDirs("main/kotlin")
-kotlin.sourceSets["test"].kotlin.srcDirs("test/kotlin")
-sourceSets["main"].resources.srcDirs("main/resources")
-sourceSets["test"].resources.srcDirs("test/resources")

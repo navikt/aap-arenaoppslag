@@ -286,15 +286,15 @@ object InternDao {
         barnetiTillegg: Int,
         dagsats: Int,
         personId: String,
-        fra_Dato: LocalDate,
-        til_dato: LocalDate
+        fraDato: LocalDate,
+        tilDato: LocalDate
     ): List<UtbetalingMedMer> {
         return connection.prepareStatement(selectTimerArbeidetIMeldekortPeriode)
             .use { preparedStatement ->
                 preparedStatement.setInt(1, vedtakId)
                 preparedStatement.setString(2, personId)
-                preparedStatement.setDate(3, Date.valueOf(fra_Dato))
-                preparedStatement.setDate(4, Date.valueOf(til_dato))
+                preparedStatement.setDate(3, Date.valueOf(fraDato))
+                preparedStatement.setDate(4, Date.valueOf(tilDato))
 
                 val resultSet = preparedStatement.executeQuery()
 
@@ -385,8 +385,8 @@ object InternDao {
                                 dagsats = vedtakFakta.dagsmbt,
                                 personId = personId,
                                 vedtakId = row.getInt("vedtak_id"),
-                                fra_Dato = fraOgMedDato,
-                                til_dato = tilOgMedDato
+                                fraDato = fraOgMedDato,
+                                tilDato = tilOgMedDato
                             )
                         )
                         val vedtaktypekode = row.getString("vedtaktypekode")
