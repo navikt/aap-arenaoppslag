@@ -2,7 +2,12 @@ package arenaoppslag
 
 import arenaoppslag.Metrics.prometheus
 import arenaoppslag.datasource.ArenaDatasource
-import arenaoppslag.intern.intern
+import arenaoppslag.intern.ArenaRepository
+import arenaoppslag.intern.ArenaService
+import arenaoppslag.intern.maksimum
+import arenaoppslag.intern.perioder
+import arenaoppslag.intern.person
+import arenaoppslag.intern.saker
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages
@@ -62,17 +67,7 @@ fun Application.server(
 
     install(CallLogging) {
         callIdMdc("call-id")
-        level = Level.INFO
-        format { call ->
-            val status = call.response.status()
-            val errorBody = if (status?.isSuccess() == false) ", ErrorBody: ${call.response}" else ""
-            val httpMethod = call.request.httpMethod.value
-            val userAgent = call.request.userAgent()
-            val callId = call.request.header("x-callid") ?: call.request.header("nav-callId") ?: "ukjent"
-            val path = call.request.path()
-            "Status: $status$errorBody, HTTP method: $httpMethod, User agent: $userAgent, Call id: $callId, Path: $path"
-        }
-        filter { call -> call.request.path().startsWith("/actuator").not() }
+        doLogCall()
     }
 
     install(MicrometerMetrics) {
@@ -90,7 +85,14 @@ fun Application.server(
         actuator(prometheus)
 
         authenticate {
-            intern(datasource)
+            val arenaRepository = ArenaRepository(datasource)
+            val arenaService = ArenaService(arenaRepository)
+            route("/intern") {
+                maksimum(arenaService)
+                perioder(arenaService)
+                person(arenaService)
+                saker(arenaService)
+            }
         }
     }
 
@@ -101,16 +103,34 @@ fun Application.server(
         environment.log.info("ktor forbereder seg på å stoppe.")
     }
     monitor.subscribe(ApplicationStopping) { environment ->
-        environment.log.info("ktor stopper nå å ta imot nye requester, " +
-                "og lar mottatte requester kjøre frem til timeout.")
+        environment.log.info(
+            "ktor stopper nå å ta imot nye requester, " +
+                    "og lar mottatte requester kjøre frem til timeout."
+        )
     }
     monitor.subscribe(ApplicationStopped) { environment ->
-        environment.log.info("ktor har fullført nedstoppingen sin. " +
-                "Eventuelle requester og annet arbeid som ikke ble fullført innen timeout ble avbrutt.")
+        environment.log.info(
+            "ktor har fullført nedstoppingen sin. " +
+                    "Eventuelle requester og annet arbeid som ikke ble fullført innen timeout ble avbrutt."
+        )
         try {
             (datasource as? HikariDataSource)?.close() // en annen type i Test enn i Prod
         } catch (_: Exception) {
             // Ignorert
         }
     }
+}
+
+private fun CallLoggingConfig.doLogCall() {
+    level = Level.INFO
+    format { call ->
+        val status = call.response.status()
+        val errorBody = if (status?.isSuccess() == false) ", ErrorBody: ${call.response}" else ""
+        val httpMethod = call.request.httpMethod.value
+        val userAgent = call.request.userAgent()
+        val callId = call.request.header("x-callid") ?: call.request.header("nav-callId") ?: "ukjent"
+        val path = call.request.path()
+        "Status: $status$errorBody, HTTP method: $httpMethod, User agent: $userAgent, Call id: $callId, Path: $path"
+    }
+    filter { call -> call.request.path().startsWith("/actuator").not() }
 }
