@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.time.LocalDate
 
-class FellesordningenDaoTest : H2TestBase() {
+class InternDaoTest : H2TestBase() {
 
     @Test
     fun test() {

@@ -47,7 +47,7 @@ fun Application.azure() {
     }
 }
 
-@Suppress("PropertyName")
+@Suppress("PropertyName", "ConstructorParameterNaming")
 data class TestToken(
     val access_token: String,
     val refresh_token: String = "very.secure.token",

@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 
 class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
@@ -97,7 +98,8 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     }
 
     @Test
-    fun `ingen vedtaks-perioder blir hentet ut for personer som har invalid vedtak (feil VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE)`() {
+    fun `ingen vedtaks-perioder blir hentet ut for personer som har invalid vedtak`() {
+        // feil VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE
         val alleVedtak = InternDao.selectVedtakPerioder(
             fodselsnr = "invalid",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
@@ -111,7 +113,10 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `en person som har blanding av invalid of valid vedtak, får bare de som er valid`() {
         val forventetVedtaksperioder = listOf(
-            Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 2, 4))
+            Periode(
+                LocalDate.of(2022, 8, 30),
+                LocalDate.of(2023, 2, 4)
+            )
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
@@ -127,8 +132,14 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `hente vedtak med forskjellige gyldige vedtaksstatus-koder`() {
         val forventetVedtaksperioder = listOf(
-            Periode(LocalDate.of(2022, 8, 27), LocalDate.of(2023, 2, 4)),
-            Periode(LocalDate.of(2019, 8, 27), LocalDate.of(2023, 1, 1))
+            Periode(
+                LocalDate.of(2022, 8, 27),
+                LocalDate.of(2023, 2, 4)
+            ),
+            Periode(
+                LocalDate.of(2019, 8, 27),
+                LocalDate.of(2023, 1, 1)
+            )
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
@@ -145,9 +156,18 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `hente vedtak med forskjellige gyldige vedtakstype-koder`() {
         val forventetVedtaksperioder = listOf(
-            Periode(LocalDate.of(2022, 8, 27), LocalDate.of(2023, 2, 4)),
-            Periode(LocalDate.of(2019, 8, 27), LocalDate.of(2022, 2, 4)),
-            Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
+            Periode(
+                LocalDate.of(2022, 8, 27),
+                LocalDate.of(2023, 2, 4)
+            ),
+            Periode(
+                LocalDate.of(2019, 8, 27),
+                LocalDate.of(2022, 2, 4)
+            ),
+            Periode(
+                LocalDate.of(2019, 12, 31),
+                LocalDate.of(2023, 1, 1)
+            )
         )
 
         val alleVedtak = InternDao.selectVedtakPerioder(
@@ -180,7 +200,13 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `hente aktfasePerioder`() {
         val forventetVedtaksperioder = listOf(
-            SakStatus(sakId = "0",Status.IVERK,no.nav.aap.arenaoppslag.kontrakt.modeller.Periode(LocalDate.of(2022, 8, 30), null))
+            SakStatus(
+                sakId = "0", Status.IVERK,
+                KontraktPeriode(
+                    LocalDate.of(2022, 8, 30),
+                    null
+                )
+            )
         )
 
         val alleVedtak = InternDao.selectSaker(
