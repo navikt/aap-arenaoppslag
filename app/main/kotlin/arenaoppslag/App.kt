@@ -64,9 +64,9 @@ fun Application.server(
         level = Level.INFO
         format { call ->
             val status = call.response.status()
-            val errorBody = if (status?.value != null && status.value > 499) ", ErrorBody: ${call.response}" else ""
+            val errorBody = if (status?.isSuccess() == false) ", ErrorBody: ${call.response}" else ""
             val httpMethod = call.request.httpMethod.value
-            val userAgent = call.request.headers["User-Agent"]
+            val userAgent = call.request.userAgent()
             val callId = call.request.header("x-callid") ?: call.request.header("nav-callId") ?: "ukjent"
             val path = call.request.path()
             "Status: $status$errorBody, HTTP method: $httpMethod, User agent: $userAgent, Call id: $callId, Path: $path"
