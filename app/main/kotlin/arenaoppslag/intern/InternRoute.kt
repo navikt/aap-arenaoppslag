@@ -7,17 +7,18 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.komponenter.json.DefaultJsonMapper
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse as KontraktVedtakResponse
 
-val logger = LoggerFactory.getLogger("App")
+val logger: Logger = LoggerFactory.getLogger("App")
 
 fun Route.intern(datasource: DataSource) {
     val arenaRepository = ArenaRepository(datasource)
+    val relevantHistorikkService = RelevantHistorikkService(arenaRepository)
 
     route("/intern") {
         route("/perioder") {
@@ -56,17 +57,15 @@ fun Route.intern(datasource: DataSource) {
                 PersonEksistererIAAPArena(
                     request.personidentifikatorer.map { personidentifikator ->
                         arenaRepository.hentEksistererIAAPArena(personidentifikator)
-                    }.any { it.equals(true) }
+                    }.any { it.equals(true) } // todo simplify
                 )
             )
         }
         post("/person/aap/signifikant-historikk") {
-            logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for ny saksbehandling i Kelvin")
+            logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
             val string = call.receive<String>()
-            val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string)
-            val arenaData = arenaRepository.hentKanBehandlesIKelvin(request.personidentifikatorer, request.virkningstidspunkt)
-
-            val response = PersonHarSignifikantAAPArenaHistorikk(arenaData.kanBehandles, arenaData.arenaSakIdListe)
+            val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string) //todo stream
+            val response = relevantHistorikkService.hentRelevanteSakerForPerson(request.personidentifikatorer, request.virkningstidspunkt)
             call.respond(response)
         }
         post("/maksimum") {
