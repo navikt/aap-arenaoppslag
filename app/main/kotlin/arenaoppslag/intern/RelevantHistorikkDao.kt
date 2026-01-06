@@ -19,7 +19,7 @@ object RelevantHistorikkDao {
     // spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller tiltakspenger.
     // Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et ordinært vedtak i samme periode.
     @Language("OracleSql")
-    val selectKunAAPVedtakForPersonMedRelevantHistorikk = """
+    val hentRelevanteAAPVedtakForPerson = """
         SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
           FROM 
               vedtak v 
@@ -119,7 +119,7 @@ object RelevantHistorikkDao {
         AND rettighetkode = 'TILBBET'
         AND utfallkode != 'AVBRUTT'
         AND vf.vedtakfaktakode = 'INNVF'
-        -- Vi regner vedtak med null INNVF som åpne, ellers ikke.    
+        -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
         AND vf.vedtakverdi IS NULL
     """.trimIndent()
 
@@ -142,7 +142,7 @@ object RelevantHistorikkDao {
         p.fodselsnr IN ($FNR_LISTE_TOKEN)
         AND v.utfallkode != 'AVBRUTT'
         AND vf.vedtakfaktakode = 'INNVF'
-        -- Vi regner vedtak med null INNVF som åpne, ellers ikke
+        -- Vi regner spesialutbetalinger med null INNVF som åpne, ellers ikke
         AND vf.vedtakverdi IS NULL    
         """.trimIndent()
 
@@ -161,22 +161,22 @@ object RelevantHistorikkDao {
         "AUNDM" // Bøker og undervisningsmatriell
     )
 
-    private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummer: List<String>): String {
+    private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: List<String>): String {
         // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte i spørringen her
-        val allePersonensFodselsnummer = fodselsnummer.joinToString(separator = ",") { "'$it'" }
+        val allePersonensFodselsnummer = fodselsnummerene.joinToString(separator = ",") { "'$it'" }
         return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
     }
 
     const val tidsBufferUkerGenerell = 78L
     const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
     fun selectPersonMedRelevantHistorikk(
-        fodselsnummer: List<String>,
+        fodselsnummerene: List<String>,
         søknadMottattPå: LocalDate,
         connection: Connection
     ): List<ArenaSak> {
         val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
         val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
-        val query = queryMedFodselsnummerListe(selectKunAAPVedtakForPersonMedRelevantHistorikk, fodselsnummer)
+        val query = queryMedFodselsnummerListe(hentRelevanteAAPVedtakForPerson, fodselsnummerene)
         connection.prepareStatement(query)
             .use { preparedStatement ->
                 preparedStatement.setDate(1, Date.valueOf(tidsBufferGenerell))
