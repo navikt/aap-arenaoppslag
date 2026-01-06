@@ -13,6 +13,7 @@ import java.net.ProxySelector
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
+@Suppress("MagicNumber")
 fun Application.authentication(config: AppConfig) {
     val proxyUri = URI.create(config.proxyUrl)
 

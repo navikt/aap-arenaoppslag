@@ -1,7 +1,7 @@
 package arenaoppslag
 
 import arenaoppslag.Metrics.prometheus
-import arenaoppslag.datasource.Hikari
+import arenaoppslag.datasource.ArenaDatasource
 import arenaoppslag.intern.intern
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
@@ -31,6 +31,7 @@ object Metrics {
     val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 }
 
+@Suppress("MagicNumber")
 fun main() {
     Thread.currentThread()
         .setUncaughtExceptionHandler { _, e -> logger.error("Uhåndtert feil", e) }
@@ -52,7 +53,7 @@ fun main() {
 
 fun Application.server(
     config: AppConfig = AppConfig(),
-    datasource: DataSource = Hikari.create(config.database)
+    datasource: DataSource = ArenaDatasource.create(config.database)
 ) {
     install(CallId) {
         retrieveFromHeader(HttpHeaders.XCorrelationId)

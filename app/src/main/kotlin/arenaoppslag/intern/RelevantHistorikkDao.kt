@@ -163,7 +163,8 @@ object RelevantHistorikkDao {
     )
 
     private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: List<String>): String {
-        // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte i spørringen her
+        // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte
+        // i spørringen her
         val allePersonensFodselsnummer = fodselsnummerene.joinToString(separator = ",") { "'$it'" }
         return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
     }
