@@ -1,10 +1,10 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.kotlin.dsl.withType
 
 plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.3.0"
     id("io.ktor.plugin") version "3.3.3"
+    id("dev.detekt")
     application
 }
 
@@ -12,6 +12,14 @@ val ktorVersion = "3.3.3"
 
 application {
     mainClass.set("arenaoppslag.AppKt")
+}
+
+detekt {
+    ignoreFailures = true
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    jvmTarget.set("21")
 }
 
 dependencies {
