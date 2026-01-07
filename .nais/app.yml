@@ -44,9 +44,6 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: api
-          cluster: {{cluster}}-gcp
-          namespace: aap
         - application: api-intern
           cluster: {{cluster}}-gcp
           namespace: aap
