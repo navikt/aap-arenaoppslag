@@ -1,18 +1,15 @@
 package arenaoppslag.intern
 
 import arenaoppslag.util.H2TestBase
-import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
-import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 
-class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
+class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `ingen vedtaks-perioder blir hentet ut for personer som ikke er tilknyttet noe vedtak`() {
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "ingenvedtak",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -29,7 +26,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 8, 30))
         )
 
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "123",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -46,7 +43,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
         )
 
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "321",
             fraOgMedDato = LocalDate.of(2009, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
@@ -63,7 +60,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
         )
 
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "321",
             fraOgMedDato = LocalDate.of(2019, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
@@ -79,14 +76,14 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 8, 30))
         )
 
-        val alleVedtakLeftOverlap = InternDao.selectVedtakPerioder(
+        val alleVedtakLeftOverlap = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "123",
             fraOgMedDato = LocalDate.of(2022, 2, 1),
             tilOgMedDato = LocalDate.of(2022, 10, 31),
             h2.connection
         )
 
-        val alleVedtakRightOverlap = InternDao.selectVedtakPerioder(
+        val alleVedtakRightOverlap = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "123",
             fraOgMedDato = LocalDate.of(2023, 6, 1),
             tilOgMedDato = LocalDate.of(2024, 10, 31),
@@ -100,7 +97,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `ingen vedtaks-perioder blir hentet ut for personer som har invalid vedtak`() {
         // feil VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "invalid",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -119,7 +116,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             )
         )
 
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "somevalid",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -142,7 +139,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             )
         )
 
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "statuskode",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -170,7 +167,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             )
         )
 
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "typekode",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -187,7 +184,7 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), null)
         )
 
-        val alleVedtak = InternDao.selectVedtakPerioder(
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
             fodselsnr = "nulltildato",
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
@@ -198,22 +195,15 @@ class InternDaoMinimumTest : H2TestBase("flyway/minimumtest") {
     }
 
     @Test
-    fun `hente aktfasePerioder`() {
-        val forventetVedtaksperioder = listOf(
-            SakStatus(
-                sakId = "0", Status.IVERK,
-                KontraktPeriode(
-                    LocalDate.of(2022, 8, 30),
-                    null
-                )
-            )
-        )
-
-        val alleVedtak = InternDao.selectSaker(
-            personidentifikator = "nulltildato",
+    fun testVedtakPerioder() {
+        val alleVedtak = PeriodeDao.selectVedtakPerioder(
+            fodselsnr = "1",
+            fraOgMedDato = LocalDate.of(2022, 10, 1),
+            tilOgMedDato = LocalDate.of(2023, 12, 31),
             h2.connection
         )
 
-        assertEquals(forventetVedtaksperioder, alleVedtak)
+        assertEquals(1, alleVedtak.size)
     }
+
 }

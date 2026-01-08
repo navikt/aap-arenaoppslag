@@ -1,12 +1,12 @@
 package arenaoppslag.intern
 
 import arenaoppslag.datasource.map
-import arenaoppslag.intern.InternDao.mapperForArenasak
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
 import java.sql.Date
+import java.sql.ResultSet
 import java.time.LocalDate
 
 object RelevantHistorikkDao {
@@ -188,4 +188,59 @@ object RelevantHistorikkDao {
                 return resultSet.map { row -> mapperForArenasak(row) }
             }
     }
+
+    fun mapperForArenasak(row: ResultSet): ArenaSak = ArenaSak(
+        row.getString("sak_id"),
+        row.getString("vedtakstatuskode"),
+        row.getString("vedtaktypekode"),
+        fraDato(row.getDate("fra_dato")),
+        tilDato = fraDato(row.getDate("til_dato")),
+        rettighetkode = row.getString("rettighetkode")
+    )
+
+    private fun fraDato(date: Date?) = date?.toLocalDate()
+
+    @Language("OracleSql")
+    private val selectPersonMedFnrEksisterer = """
+        SELECT * 
+        FROM person 
+        WHERE fodselsnr = ?
+    """.trimIndent()
+
+    fun selectPersonMedFnrEksisterer(
+        fodselsnr: String,
+        connection: Connection
+    ): Boolean {
+        return connection.prepareStatement(selectPersonMedFnrEksisterer)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, fodselsnr)
+                val resultSet = preparedStatement.executeQuery()
+                resultSet.next()
+            }
+    }
+
+    @Language("OracleSql")
+    private val selectAlleSakerByFnr = """
+        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode
+          FROM vedtak
+         WHERE person_id = 
+               (SELECT person_id 
+                  FROM person 
+                 WHERE fodselsnr = ?) 
+    """.trimIndent()
+
+
+    @TestOnly
+    internal fun selectAlleSaker(personidentifikator: String, connection: Connection): List<ArenaSak> {
+        connection.prepareStatement(selectAlleSakerByFnr)
+            .use { preparedStatement ->
+                preparedStatement.setString(1, personidentifikator)
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForArenasak(row) }.toList()
+            }
+    }
+
 }
+
+data class KanBehandlesIKelvinDao(val kanBehandles: Boolean, val arenaSakIdListe: List<String>)
+

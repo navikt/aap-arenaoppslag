@@ -25,9 +25,6 @@ data class AppConfig(
 
         // Tid appen får til å fullføre påbegynte requests, jobber etc. Må være mindre enn `endeligShutdownTimeout`.
         val shutdownGracePeriod = shutdownTimeout - 3.seconds
-
-        // Tid appen får til å avslutte Motor, Kafka, etc
-        val stansArbeidTimeout = shutdownGracePeriod - 1.seconds
     }
 }
 

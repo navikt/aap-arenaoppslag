@@ -6,14 +6,12 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import java.time.LocalDate
 import javax.sql.DataSource
 
-data class KanBehandlesIKelvinDao(val kanBehandles: Boolean, val arenaSakIdListe: List<String>)
-
 
 class ArenaRepository(private val dataSource: DataSource) {
 
     fun hentEksistererIAAPArena(fodselsnr: String): Boolean {
         return dataSource.connection.use { con ->
-            InternDao.selectPersonMedFnrEksisterer(fodselsnr, con)
+            RelevantHistorikkDao.selectPersonMedFnrEksisterer(fodselsnr, con)
         }
     }
 
@@ -36,7 +34,7 @@ class ArenaRepository(private val dataSource: DataSource) {
         val utenSluttdato = arenaSaker.filter { it.tilDato == null }.reversed() // i reversed db-order (=nyeste først)
         // Hvis saker med tilDato finnes, sorter disse synkende på dato (=nyeste først)
         val medSluttdato = arenaSaker.filter { it.tilDato != null }.sortedByDescending { it.tilDato }
-        return utenSluttdato + medSluttdato;
+        return utenSluttdato + medSluttdato
     }
 
     fun hentPerioder(
@@ -45,7 +43,7 @@ class ArenaRepository(private val dataSource: DataSource) {
         tilOgMedDato: LocalDate
     ): List<Periode> =
         dataSource.connection.use { con ->
-            InternDao.selectVedtakPerioder(
+            PeriodeDao.selectVedtakPerioder(
                 fodselsnr = personId,
                 fraOgMedDato = fraOgMedDato,
                 tilOgMedDato = tilOgMedDato,
@@ -59,7 +57,7 @@ class ArenaRepository(private val dataSource: DataSource) {
         tilOgMedDato: LocalDate
     ): List<PeriodeMed11_17> =
         dataSource.connection.use { con ->
-            InternDao.selectVedtakMedTidsbegrensningOg11_17(
+            PeriodeDao.selectVedtakMedTidsbegrensningOg11_17(
                 personId,
                 fraOgMedDato,
                 tilOgMedDato,
@@ -73,12 +71,12 @@ class ArenaRepository(private val dataSource: DataSource) {
         tilOgMedDato: LocalDate
     ): Maksimum =
         dataSource.connection.use { con ->
-            InternDao.selectVedtakMaksimum(personId, fraOgMedDato, tilOgMedDato, con)
+            MaksimumDao.selectVedtakMaksimum(personId, fraOgMedDato, tilOgMedDato, con)
         }
 
     fun hentSaker(personidentifikator: String): List<SakStatus> {
         return dataSource.connection.use { con ->
-            InternDao.selectSaker(personidentifikator, con)
+            SakerDao.selectSaker(personidentifikator, con)
         }
     }
 }
