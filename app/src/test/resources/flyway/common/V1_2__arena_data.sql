@@ -18,11 +18,17 @@ Insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, REG_DAT
                     TEKNISK_VEDTAK, DATO_INNSTILT, ER_UTLAND)
 values ('36905537', '13489616', 'IVERK', 'O', to_date('30.08.2022', 'DD.MM.RRRR'), 'KSB0502',
         to_date('30.08.2022', 'DD.MM.RRRR'), 'MNA0502', 'JA', 'Syntetisert rettighet', 'KSB0502', '0502', '2022',
-        '73981', '5', 'AAP', 'UGJEN', '31028783', null, to_date('30.08.2022', 'DD.MM.RRRR'), '36905534', null,
+        '73981', '5', 'AAP', 'UVUP', '31028783', null, to_date('30.08.2022', 'DD.MM.RRRR'), '36905534', null,
         '4873545', 'MNA0502', null, 'N', null, null, null, null, null, to_date('30.08.2022', 'DD.MM.RRRR'),
         to_date('30.08.2023', 'DD.MM.RRRR'), null,
         'N', null, null, 'MNA0502', null, to_date('17.09.2022', 'DD.MM.RRRR'), 'N');
 
+Insert into AKTIVITETFASE (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL) values ('UA','Under arbeidsavklaring',to_date('29-JAN-10','DD-MON-RR'),to_date('31-DEC-99','DD-MON-RR'));
+Insert into AKTIVITETFASE (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL) values ('SPE','Sykepengeerstatning',to_date('29-JAN-10','DD-MON-RR'),to_date('31-DEC-99','DD-MON-RR'));
+Insert into AKTIVITETFASE (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL) values ('IKKE','Ikke spesif. aktivitetsfase',to_date('01-JAN-60','DD-MON-RR'),to_date('01-JAN-99','DD-MON-RR'));
+Insert into AKTIVITETFASE (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL) values ('UVUP','Vurdering for uføre',to_date('29-JAN-10','DD-MON-RR'),to_date('31-DEC-99','DD-MON-RR'));
+Insert into AKTIVITETFASE (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL) values ('AU','Arbeidsutprøving',to_date('29-JAN-10','DD-MON-RR'),to_date('31-DEC-99','DD-MON-RR'));
+Insert into AKTIVITETFASE (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL) values ('FA','Ferdig avklart',to_date('29-JAN-10','DD-MON-RR'),to_date('31-DEC-99','DD-MON-RR'));
 
 Insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI, REG_DATO, REG_USER, MOD_DATO, MOD_USER, PERSON_ID,
                          PARTISJON)
