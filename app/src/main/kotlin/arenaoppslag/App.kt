@@ -88,9 +88,9 @@ fun Application.server(
             val arenaRepository = ArenaRepository(datasource)
             val arenaService = ArenaService(arenaRepository)
             route("/intern") {
-                maksimum(arenaService)
                 perioder(arenaService)
                 person(arenaService)
+                maksimum(arenaService)
                 saker(arenaService)
             }
         }
