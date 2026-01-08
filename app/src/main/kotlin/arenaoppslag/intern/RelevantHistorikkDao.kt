@@ -30,7 +30,7 @@ object RelevantHistorikkDao {
           AND v.utfallkode != 'AVBRUTT'
           AND v.rettighetkode IN ('AA115', 'AAP') 
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
-          AND NOT ((fra_dato IS NULL AND til_dato IS NULL) AND vedtakstatuskode NOT IN ('MOTAT', 'REGIS')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
+          AND NOT ((fra_dato IS NULL AND til_dato IS NULL) AND vedtakstatuskode NOT IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
                 (vedtaktypekode IN ('O','E','G') AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer
                   OR
@@ -129,14 +129,14 @@ object RelevantHistorikkDao {
     val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
     SELECT
         v.sak_id,
-        vedtakstatuskode,
-        vedtaktypekode,
+        v.vedtakstatuskode,
+        v.vedtaktypekode,
         CAST(NULL AS DATE)                    AS fra_dato,
         TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
         'SPESIAL' AS rettighetkode
     FROM
-        sim_utbetalingsgrunnlag fu
-        JOIN vedtak v ON v.vedtak_id = fu.vedtak_id
+        spesialutbetaling su
+        JOIN vedtak v ON v.vedtak_id = su.vedtak_id
         JOIN person p ON p.person_id = v.person_id
         JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
     WHERE
