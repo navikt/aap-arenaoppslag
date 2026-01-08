@@ -29,8 +29,8 @@ object RelevantHistorikkDao {
         WHERE p.fodselsnr IN ($FNR_LISTE_TOKEN)
           AND v.utfallkode != 'AVBRUTT'
           AND v.rettighetkode IN ('AA115', 'AAP') 
-          AND (fra_dato <= til_dato OR til_dato IS NULL) -- filtrer ut ugyldiggjorte vedtak, men inkluder vedtak med null til_dato, som Stans
-          AND NOT (fra_dato IS NULL AND til_dato IS NULL) -- filtrer ut etterregistrerte vedtak
+          AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
+          AND NOT ((fra_dato IS NULL AND til_dato IS NULL) AND vedtakstatuskode NOT IN ('MOTAT', 'REGIS')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
                 (vedtaktypekode IN ('O','E','G') AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer
                   OR
