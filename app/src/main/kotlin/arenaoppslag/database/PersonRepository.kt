@@ -1,5 +1,6 @@
 package arenaoppslag.database
 
+import arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
@@ -7,19 +8,52 @@ import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
 import java.time.LocalDate
+import javax.sql.DataSource
 
-object RelevantHistorikkDao {
-    private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
 
-    // S1: Hent alle AAP-vedtak med relevant historikk for personen
-    // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
-    // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
-    // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i forbindelse
-    // med spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP, dagpenger eller
-    // tiltakspenger. Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et ordinært vedtak i samme
-    // periode.
-    @Language("OracleSql")
-    val hentRelevanteAAPVedtakForPerson = """
+class PersonRepository(private val dataSource: DataSource) {
+
+    fun hentEksistererIAAPArena(fodselsnr: String): Boolean {
+        return dataSource.connection.use { con ->
+            selectPersonMedFnrEksisterer(fodselsnr, con)
+        }
+    }
+
+    fun hentRelevanteArenaSaker(personIdentifikatorer: List<String>, søknadMottattPå: LocalDate): List<ArenaSak> {
+        val relevanteArenaSaker = dataSource.connection.use { con ->
+            selectPersonMedRelevantHistorikk(
+                personIdentifikatorer, søknadMottattPå, con
+            )
+        }
+        return relevanteArenaSaker
+    }
+
+    companion object {
+        @TestOnly
+        val historiskeRettighetkoderIArena = setOf(
+            // Alle disse har kun rettighetsperioder utløpt før 1/1/2022
+            "AA116", // Behov for bistand
+            "ABOUT", // Boutgifter
+            "ATIO", // Tilsyn - barn over 10 år
+            "ATIU", // Tilsyn - barn under 10 år
+            "AHJMR", // Hjemreise
+            "ATIF", // Tilsyn - familiemedlemmer
+            "AFLYT", // Flytting
+            "AATFOR", // Tvungen forvaltning
+            "AUNDM" // Bøker og undervisningsmatriell
+        )
+
+        private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
+
+        // S1: Hent alle AAP-vedtak med relevant historikk for personen
+        // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
+        // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
+        // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i
+        // forbindelse med spesialutbetaling for perioder hvor det allerede finnes et ytelsesvedtak i Arena, AAP,
+        // dagpenger eller tiltakspenger. Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et ordinært
+        // vedtak i samme periode.
+        @Language("OracleSql")
+        val hentRelevanteAAPVedtakForPerson = """
         SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
           FROM 
               vedtak v 
@@ -38,9 +72,9 @@ object RelevantHistorikkDao {
            AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato >=?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
     """.trimIndent()
 
-    // S2: Hent alle AAP-klager med relevant historikk for personen
-    @Language("OracleSql")
-    val selectKunKlagerForPersonMedRelevantHistorikk = """
+        // S2: Hent alle AAP-klager med relevant historikk for personen
+        @Language("OracleSql")
+        val selectKunKlagerForPersonMedRelevantHistorikk = """
     -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres. 
     -- Dersom den er null, er klagen fortsatt under behandling.
     SELECT
@@ -71,9 +105,9 @@ object RelevantHistorikkDao {
             )
     """.trimIndent()
 
-    // S3: Hent alle AAP-anker med relevant historikk for personen
-    @Language("OracleSql")
-    val selectKunAnkerForPersonMedRelevantHistorikk = """
+        // S3: Hent alle AAP-anker med relevant historikk for personen
+        @Language("OracleSql")
+        val selectKunAnkerForPersonMedRelevantHistorikk = """
         SELECT
         v.sak_id,
         vedtakstatuskode,
@@ -100,9 +134,9 @@ object RelevantHistorikkDao {
             )
     """.trimIndent()
 
-    // S4: Hent alle tilbakebetalinger med relevant historikk for personen
-    @Language("OracleSql")
-    val selectKunTilbakebetalingerForPersonMedRelevantHistorikk = """
+        // S4: Hent alle tilbakebetalinger med relevant historikk for personen
+        @Language("OracleSql")
+        val selectKunTilbakebetalingerForPersonMedRelevantHistorikk = """
     SELECT
         v.sak_id,
         vedtakstatuskode,
@@ -123,9 +157,9 @@ object RelevantHistorikkDao {
         AND vf.vedtakverdi IS NULL
     """.trimIndent()
 
-    // S5: Hent alle spesialutbetalinger med relevant historikk for personen
-    @Language("OracleSql")
-    val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
+        // S5: Hent alle spesialutbetalinger med relevant historikk for personen
+        @Language("OracleSql")
+        val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
     SELECT
         v.sak_id,
         v.vedtakstatuskode,
@@ -147,99 +181,58 @@ object RelevantHistorikkDao {
         """.trimIndent()
 
 
-    @TestOnly
-    internal val historiskeRettighetkoderIArena = setOf(
-        // Alle disse har kun rettighetsperioder utløpt før 1/1/2022
-        "AA116", // Behov for bistand
-        "ABOUT", // Boutgifter
-        "ATIO", // Tilsyn - barn over 10 år
-        "ATIU", // Tilsyn - barn under 10 år
-        "AHJMR", // Hjemreise
-        "ATIF", // Tilsyn - familiemedlemmer
-        "AFLYT", // Flytting
-        "AATFOR", // Tvungen forvaltning
-        "AUNDM" // Bøker og undervisningsmatriell
-    )
+        private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: List<String>): String {
+            // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte
+            // i spørringen her
+            val allePersonensFodselsnummer = fodselsnummerene.joinToString(separator = ",") { "'$it'" }
+            return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
+        }
 
-    private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: List<String>): String {
-        // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte
-        // i spørringen her
-        val allePersonensFodselsnummer = fodselsnummerene.joinToString(separator = ",") { "'$it'" }
-        return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
-    }
-
-    const val tidsBufferUkerGenerell = 78L
-    const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
-    fun selectPersonMedRelevantHistorikk(
-        fodselsnummerene: List<String>,
-        søknadMottattPå: LocalDate,
-        connection: Connection
-    ): List<ArenaSak> {
-        val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
-        val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
-        val query = queryMedFodselsnummerListe(hentRelevanteAAPVedtakForPerson, fodselsnummerene)
-        connection.prepareStatement(query)
-            .use { preparedStatement ->
+        const val tidsBufferUkerGenerell = 78L
+        const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
+        fun selectPersonMedRelevantHistorikk(
+            fodselsnummerene: List<String>, søknadMottattPå: LocalDate, connection: Connection
+        ): List<ArenaSak> {
+            val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
+            val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
+            val query = queryMedFodselsnummerListe(hentRelevanteAAPVedtakForPerson, fodselsnummerene)
+            connection.prepareStatement(query).use { preparedStatement ->
                 preparedStatement.setDate(1, Date.valueOf(tidsBufferGenerell))
                 preparedStatement.setDate(2, Date.valueOf(nyesteTillateStans))
                 preparedStatement.setDate(3, Date.valueOf(tidsBufferGenerell))
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenasak(row) }
             }
-    }
+        }
 
-    fun mapperForArenasak(row: ResultSet): ArenaSak = ArenaSak(
-        row.getString("sak_id"),
-        row.getString("vedtakstatuskode"),
-        row.getString("vedtaktypekode"),
-        fraDato(row.getDate("fra_dato")),
-        tilDato = fraDato(row.getDate("til_dato")),
-        rettighetkode = row.getString("rettighetkode")
-    )
+        fun mapperForArenasak(row: ResultSet): ArenaSak = ArenaSak(
+            row.getString("sak_id"),
+            row.getString("vedtakstatuskode"),
+            row.getString("vedtaktypekode"),
+            fraDato(row.getDate("fra_dato")),
+            tilDato = fraDato(row.getDate("til_dato")),
+            rettighetkode = row.getString("rettighetkode")
+        )
 
-    private fun fraDato(date: Date?) = date?.toLocalDate()
 
-    @Language("OracleSql")
-    private val selectPersonMedFnrEksisterer = """
+        @Language("OracleSql")
+        private val selectPersonMedFnrEksisterer = """
         SELECT * 
         FROM person 
         WHERE fodselsnr = ?
     """.trimIndent()
 
-    fun selectPersonMedFnrEksisterer(
-        fodselsnr: String,
-        connection: Connection
-    ): Boolean {
-        return connection.prepareStatement(selectPersonMedFnrEksisterer)
-            .use { preparedStatement ->
+        fun selectPersonMedFnrEksisterer(
+            fodselsnr: String, connection: Connection
+        ): Boolean {
+            return connection.prepareStatement(selectPersonMedFnrEksisterer).use { preparedStatement ->
                 preparedStatement.setString(1, fodselsnr)
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.next()
             }
-    }
-
-    @Language("OracleSql")
-    private val selectAlleSakerByFnr = """
-        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode
-          FROM vedtak
-         WHERE person_id = 
-               (SELECT person_id 
-                  FROM person 
-                 WHERE fodselsnr = ?) 
-    """.trimIndent()
+        }
 
 
-    @TestOnly
-    internal fun selectAlleSaker(personidentifikator: String, connection: Connection): List<ArenaSak> {
-        connection.prepareStatement(selectAlleSakerByFnr)
-            .use { preparedStatement ->
-                preparedStatement.setString(1, personidentifikator)
-                val resultSet = preparedStatement.executeQuery()
-                return resultSet.map { row -> mapperForArenasak(row) }.toList()
-            }
     }
 
 }
-
-data class KanBehandlesIKelvinDao(val kanBehandles: Boolean, val arenaSakIdListe: List<String>)
-

@@ -1,6 +1,5 @@
 package arenaoppslag.database
 
-import arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -8,7 +7,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 
-class SakerDaoTest : H2TestBase("flyway/minimumtest") {
+class SakRepositoryTest : H2TestBase("flyway/minimumtest") {
 
     @Test
     fun `hente aktfasePerioder`() {
@@ -21,10 +20,9 @@ class SakerDaoTest : H2TestBase("flyway/minimumtest") {
                 )
             )
         )
-
-        val alleVedtak = SakerDao.selectSaker(
+        val sakRepository = SakRepository(h2)
+        val alleVedtak = sakRepository.hentSakStatuser(
             personidentifikator = "nulltildato",
-            h2.connection
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtak)

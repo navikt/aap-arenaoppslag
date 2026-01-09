@@ -1,5 +1,6 @@
 package arenaoppslag.database
 
+import arenaoppslag.ArenaService
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
@@ -11,16 +12,20 @@ import java.time.LocalDate
 import javax.sql.DataSource
 
 @ExtendWith(MockKExtension::class)
-class ArenaRepositoryTest {
+class ArenaServiceTest {
 
     @MockK(relaxed = true)
-    private lateinit var dataSource: DataSource
+    private lateinit var datasource: DataSource
 
-    private lateinit var underTest: ArenaRepository
+    private lateinit var underTest: ArenaService
 
     @BeforeEach
     fun setUp() {
-        underTest = ArenaRepository(dataSource)
+        val personRepository = PersonRepository(datasource)
+        val maksimumRepository = MaksimumRepository(datasource)
+        val periodeRepository = PeriodeRepository(datasource)
+        val sakRepository = SakRepository(datasource)
+        underTest = ArenaService(personRepository, maksimumRepository, periodeRepository, sakRepository)
     }
 
     @Test
