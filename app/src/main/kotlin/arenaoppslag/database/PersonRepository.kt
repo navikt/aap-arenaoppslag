@@ -69,7 +69,7 @@ class PersonRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato >=?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
     """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -162,22 +162,20 @@ class PersonRepository(private val dataSource: DataSource) {
         val selectKunSpesialutbetalingerForPersonMedRelevantHistorikk = """
     SELECT
         v.sak_id,
-        v.vedtakstatuskode,
-        v.vedtaktypekode,
-        CAST(NULL AS DATE)                    AS fra_dato,
-        TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
+        su.vedtakstatuskode,
+        CAST(NULL AS VARCHAR2(10))  AS vedtaktypekode, 
+        su.dato_fra,
+        su.dato_til,
         'SPESIAL' AS rettighetkode
     FROM
         spesialutbetaling su
-        JOIN vedtak v ON v.vedtak_id = su.vedtak_id
-        JOIN person p ON p.person_id = v.person_id
-        JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
+        JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
+        JOIN person p ON p.person_id = su.person_id
     WHERE
         p.fodselsnr IN ($FNR_LISTE_TOKEN)
-        AND v.utfallkode != 'AVBRUTT'
-        AND vf.vedtakfaktakode = 'INNVF'
-        -- Vi regner spesialutbetalinger med null INNVF som åpne, ellers ikke
-        AND vf.vedtakverdi IS NULL    
+        -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
+        -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
+        AND (su.dato_utbetaling is null OR su.dato_utbetaling <= ADD_MONTHS(TRUNC(SYSDATE), -3) )
         """.trimIndent()
 
 
