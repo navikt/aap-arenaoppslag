@@ -164,8 +164,8 @@ class PersonRepository(private val dataSource: DataSource) {
         v.sak_id,
         su.vedtakstatuskode,
         CAST(NULL AS VARCHAR2(10))  AS vedtaktypekode, 
-        su.dato_fra,
-        su.dato_til,
+        su.dato_fra AS fra_dato,
+        su.dato_til AS til_dato,
         'SPESIAL' AS rettighetkode
     FROM
         spesialutbetaling su
@@ -175,9 +175,29 @@ class PersonRepository(private val dataSource: DataSource) {
         p.fodselsnr IN ($FNR_LISTE_TOKEN)
         -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
         -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
-        AND (su.dato_utbetaling is null OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
+        AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
         """.trimIndent()
 
+        // S6: Hent uferdige spesialutbetalinger for personen, hvor kun simulering av utbetaling er gjort
+        @Language("OracleSql")
+        val selectKunUferdigeSpesialutbetalingerForPerson = """
+        SELECT
+            v.sak_id, 
+            v.vedtakstatuskode, 
+            v.vedtakstatuskode, 
+            ssu.dato_periode_fra AS fra_dato,
+            ssu.dato_periode_til AS til_dato,
+            'SPESIAL' AS rettighetkode
+        FROM
+            spesialutbetaling su
+            RIGHT JOIN sim_utbetalingsgrunnlag ssu ON su.person_id = ssu.person_id
+            JOIN vedtak v ON ssu.vedtak_id = v.vedtak_id
+            JOIN person p ON p.person_id = ssu.person_id
+        WHERE 
+            p.fodselsnr IN ($FNR_LISTE_TOKEN)
+            AND su.person_id IS NULL -- personen finnes ikke enda i SPESIALUTBETALINGER, og kommer kanskje senere 
+            and ssu.reg_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
+        """.trimIndent()
 
         private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: List<String>): String {
             // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte
