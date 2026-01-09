@@ -1,7 +1,8 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
-import arenaoppslag.datasource.map
-import arenaoppslag.intern.DbDato.fraDato
+import arenaoppslag.database.DbDato.fraDato
+import arenaoppslag.modeller.Periode
+import arenaoppslag.modeller.PeriodeMed11_17
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.Date

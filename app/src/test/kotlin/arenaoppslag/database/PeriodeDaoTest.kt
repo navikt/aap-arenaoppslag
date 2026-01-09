@@ -1,6 +1,6 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
-import arenaoppslag.util.H2TestBase
+import arenaoppslag.modeller.Periode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

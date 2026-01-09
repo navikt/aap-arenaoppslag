@@ -1,6 +1,5 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
-import arenaoppslag.datasource.map
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly

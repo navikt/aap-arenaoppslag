@@ -1,4 +1,4 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
 import java.sql.Date
 

@@ -1,13 +1,8 @@
 package arenaoppslag
 
 import arenaoppslag.Metrics.prometheus
-import arenaoppslag.datasource.ArenaDatasource
-import arenaoppslag.intern.ArenaRepository
-import arenaoppslag.intern.ArenaService
-import arenaoppslag.intern.maksimum
-import arenaoppslag.intern.perioder
-import arenaoppslag.intern.person
-import arenaoppslag.intern.saker
+import arenaoppslag.database.ArenaDatasource
+import arenaoppslag.database.ArenaRepository
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages

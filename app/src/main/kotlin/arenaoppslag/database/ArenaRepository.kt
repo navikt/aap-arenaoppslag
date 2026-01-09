@@ -1,6 +1,8 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
 import arenaoppslag.modeller.Maksimum
+import arenaoppslag.modeller.Periode
+import arenaoppslag.modeller.PeriodeMed11_17
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import java.time.LocalDate

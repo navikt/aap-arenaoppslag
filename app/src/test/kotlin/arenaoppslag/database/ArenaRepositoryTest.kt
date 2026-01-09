@@ -1,4 +1,4 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension

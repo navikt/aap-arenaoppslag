@@ -1,6 +1,6 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
-import arenaoppslag.util.H2TestBase
+import arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import org.junit.jupiter.api.Assertions.assertEquals
