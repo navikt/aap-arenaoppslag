@@ -37,3 +37,5 @@ data class PeriodeMed11_17(
         )
     }
 }
+
+data class KanBehandlesIKelvin(val kanBehandles: Boolean, val arenaSakIdListe: List<String>)

@@ -3,17 +3,25 @@ package arenaoppslag.database
 import arenaoppslag.modeller.Periode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
+class PeriodeRepositoryTest : H2TestBase("flyway/minimumtest") {
+
+    lateinit var periodeRepository: PeriodeRepository
+
+    @BeforeEach
+    fun setUp() {
+        periodeRepository = PeriodeRepository(h2)
+    }
+
     @Test
     fun `ingen vedtaks-perioder blir hentet ut for personer som ikke er tilknyttet noe vedtak`() {
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "ingenvedtak",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            h2.connection
+            personId = "ingenvedtak",
         )
 
         assertThat(alleVedtak).isEmpty()
@@ -26,11 +34,10 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 8, 30))
         )
 
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "123",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            h2.connection
+            personId = "123",
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtak)
@@ -43,11 +50,10 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
         )
 
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "321",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2009, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
-            h2.connection
+            personId = "321",
         )
 
         assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
@@ -60,11 +66,10 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1))
         )
 
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "321",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2019, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
-            h2.connection
+            personId = "321",
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtak)
@@ -76,18 +81,16 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), LocalDate.of(2023, 8, 30))
         )
 
-        val alleVedtakLeftOverlap = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "123",
+        val alleVedtakLeftOverlap = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2022, 2, 1),
             tilOgMedDato = LocalDate.of(2022, 10, 31),
-            h2.connection
+            personId = "123",
         )
 
-        val alleVedtakRightOverlap = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "123",
+        val alleVedtakRightOverlap = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2023, 6, 1),
             tilOgMedDato = LocalDate.of(2024, 10, 31),
-            h2.connection
+            personId = "123",
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtakLeftOverlap)
@@ -97,11 +100,10 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `ingen vedtaks-perioder blir hentet ut for personer som har invalid vedtak`() {
         // feil VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "invalid",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            h2.connection
+            personId = "invalid",
         )
 
         assertThat(alleVedtak).isEmpty()
@@ -111,16 +113,14 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
     fun `en person som har blanding av invalid of valid vedtak, får bare de som er valid`() {
         val forventetVedtaksperioder = listOf(
             Periode(
-                LocalDate.of(2022, 8, 30),
-                LocalDate.of(2023, 2, 4)
+                LocalDate.of(2022, 8, 30), LocalDate.of(2023, 2, 4)
             )
         )
 
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "somevalid",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            h2.connection
+            personId = "somevalid",
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtak)
@@ -130,20 +130,16 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
     fun `hente vedtak med forskjellige gyldige vedtaksstatus-koder`() {
         val forventetVedtaksperioder = listOf(
             Periode(
-                LocalDate.of(2022, 8, 27),
-                LocalDate.of(2023, 2, 4)
-            ),
-            Periode(
-                LocalDate.of(2019, 8, 27),
-                LocalDate.of(2023, 1, 1)
+                LocalDate.of(2022, 8, 27), LocalDate.of(2023, 2, 4)
+            ), Periode(
+                LocalDate.of(2019, 8, 27), LocalDate.of(2023, 1, 1)
             )
         )
 
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "statuskode",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            h2.connection
+            personId = "statuskode",
         )
 
         assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
@@ -154,24 +150,18 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
     fun `hente vedtak med forskjellige gyldige vedtakstype-koder`() {
         val forventetVedtaksperioder = listOf(
             Periode(
-                LocalDate.of(2022, 8, 27),
-                LocalDate.of(2023, 2, 4)
-            ),
-            Periode(
-                LocalDate.of(2019, 8, 27),
-                LocalDate.of(2022, 2, 4)
-            ),
-            Periode(
-                LocalDate.of(2019, 12, 31),
-                LocalDate.of(2023, 1, 1)
+                LocalDate.of(2022, 8, 27), LocalDate.of(2023, 2, 4)
+            ), Periode(
+                LocalDate.of(2019, 8, 27), LocalDate.of(2022, 2, 4)
+            ), Periode(
+                LocalDate.of(2019, 12, 31), LocalDate.of(2023, 1, 1)
             )
         )
 
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "typekode",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            h2.connection
+            personId = "typekode",
         )
 
         assertEquals(forventetVedtaksperioder.size, alleVedtak.size)
@@ -184,11 +174,10 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
             Periode(LocalDate.of(2022, 8, 30), null)
         )
 
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "nulltildato",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            h2.connection
+            personId = "nulltildato",
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtak)
@@ -196,11 +185,10 @@ class PeriodeDaoTest : H2TestBase("flyway/minimumtest") {
 
     @Test
     fun testVedtakPerioder() {
-        val alleVedtak = PeriodeDao.selectVedtakPerioder(
-            fodselsnr = "1",
+        val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2022, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
-            h2.connection
+            personId = "1",
         )
 
         assertEquals(1, alleVedtak.size)
