@@ -1,13 +1,12 @@
 package arenaoppslag
 
 import arenaoppslag.client.ArenaOppslagGateway
+import arenaoppslag.database.H2TestBase
 import arenaoppslag.util.AzureTokenGen
 import arenaoppslag.util.Fakes
-import arenaoppslag.util.H2TestBase
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
@@ -20,6 +19,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -143,7 +143,6 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
         val config = TestConfig.default(Fakes())
         val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
         testApplication {
-            environment { MapApplicationConfig("ktor.test.timeout" to "0") }
             application { server(config, h2) }
             val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
 
@@ -156,10 +155,10 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
             expectSuccess = true // Kaster exception for 4xx og 5xx svar, altså feiler testen
 
             install(ContentNegotiation) {
-                jackson {
-                    disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                    registerModule(JavaTimeModule())
-                }
+                register(
+                    ContentType.Application.Json,
+                    JacksonConverter(DefaultJsonMapper.objectMapper())
+                )
             }
         }
 

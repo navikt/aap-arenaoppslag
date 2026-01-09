@@ -1,7 +1,6 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
-import arenaoppslag.datasource.map
-import arenaoppslag.intern.DbDato.fraDato
+import arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import org.intellij.lang.annotations.Language

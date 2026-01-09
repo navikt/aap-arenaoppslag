@@ -1,5 +1,6 @@
-package arenaoppslag.intern
+package arenaoppslag
 
+import arenaoppslag.database.ArenaRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
@@ -22,7 +23,7 @@ class ArenaService(private val arenaRepository: ArenaRepository) {
         return PersonEksistererIAAPArena(
             personidentifikatorer.map { personidentifikator ->
                 arenaRepository.hentEksistererIAAPArena(personidentifikator)
-            }.any { it.equals(true) } // todo simplify
+            }.any { it }
         )
 
     }
