@@ -1,13 +1,11 @@
 package arenaoppslag
 
 import arenaoppslag.Metrics.prometheus
-import arenaoppslag.datasource.ArenaDatasource
-import arenaoppslag.intern.ArenaRepository
-import arenaoppslag.intern.ArenaService
-import arenaoppslag.intern.maksimum
-import arenaoppslag.intern.perioder
-import arenaoppslag.intern.person
-import arenaoppslag.intern.saker
+import arenaoppslag.database.ArenaDatasource
+import arenaoppslag.database.PersonRepository
+import arenaoppslag.database.MaksimumRepository
+import arenaoppslag.database.PeriodeRepository
+import arenaoppslag.database.SakRepository
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages
@@ -85,8 +83,11 @@ fun Application.server(
         actuator(prometheus)
 
         authenticate {
-            val arenaRepository = ArenaRepository(datasource)
-            val arenaService = ArenaService(arenaRepository)
+            val personRepository = PersonRepository(datasource)
+            val maksimumRepository = MaksimumRepository(datasource)
+            val periodeRepository = PeriodeRepository(datasource)
+            val sakRepository = SakRepository(datasource)
+            val arenaService = ArenaService(personRepository, maksimumRepository, periodeRepository, sakRepository)
             route("/intern") {
                 perioder(arenaService)
                 person(arenaService)
