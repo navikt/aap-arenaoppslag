@@ -10,7 +10,7 @@ import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.config.*
 import io.ktor.server.testing.*
-import no.nav.aap.arenaoppslag.kontrakt.ekstern.EksternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
@@ -34,7 +34,7 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     @Test
     fun `Henter ut perioder for fellesordningen`() {
         withTestServer { gateway ->
-            val request = EksternVedtakRequest(
+            val request = InternVedtakRequest(
                 personidentifikator = kjentPerson,
                 fraOgMedDato = LocalDate.of(2022, 10, 1),
                 tilOgMedDato = LocalDate.of(2023, 12, 31)
@@ -48,7 +48,7 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     @Test
     fun `Henter ut perioder 11-17 for fellesordningen`() {
         withTestServer { gateway ->
-            val request = EksternVedtakRequest(
+            val request = InternVedtakRequest(
                 personidentifikator = kjentPerson,
                 fraOgMedDato = LocalDate.of(2022, 1, 1),
                 tilOgMedDato = LocalDate.of(2023, 12, 31)
@@ -62,7 +62,7 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     @Test
     fun `Henter ut maksimumsvedtak for fellesordningen`() {
         withTestServer { gateway ->
-            val request = EksternVedtakRequest(
+            val request = InternVedtakRequest(
                 personidentifikator = kjentPerson,
                 fraOgMedDato = LocalDate.of(2022, 10, 1),
                 tilOgMedDato = LocalDate.of(2023, 12, 31)
