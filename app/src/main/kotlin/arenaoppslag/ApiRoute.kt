@@ -3,7 +3,7 @@ package arenaoppslag
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.ekstern.EksternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
@@ -16,7 +16,7 @@ import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 fun Route.perioder(arenaService: ArenaService) {
     route("/perioder") {
         post {
-            val request: EksternVedtakRequest = call.receive()
+            val request: InternVedtakRequest = call.receive()
             val response: VedtakResponse = arenaService.hentPerioder(
                 request.personidentifikator,
                 request.fraOgMedDato,
@@ -26,7 +26,7 @@ fun Route.perioder(arenaService: ArenaService) {
             call.respond(response)
         }
         post("/11-17") {
-            val request: EksternVedtakRequest = call.receive()
+            val request: InternVedtakRequest = call.receive()
             val response: PerioderMed11_17Response = arenaService.hent11_17Perioder(
                 request.personidentifikator,
                 request.fraOgMedDato,
@@ -61,7 +61,7 @@ fun Route.person(arenaService: ArenaService) {
 fun Route.maksimum(arenaService: ArenaService) {
     post("/maksimum") {
         logger.info("Henter maksimum")
-        val request: EksternVedtakRequest = call.receive()
+        val request: InternVedtakRequest = call.receive()
         val response: Maksimum = arenaService.hentMaksimum(
             request.personidentifikator,
             request.fraOgMedDato,

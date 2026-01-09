@@ -9,7 +9,7 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import no.nav.aap.arenaoppslag.kontrakt.ekstern.EksternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
@@ -28,14 +28,18 @@ private val objectMapper =
 
 class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val httpClient: HttpClient) {
     suspend fun hentPerioder(
-        vedtakRequest: EksternVedtakRequest
-    ): VedtakResponse = gjørArenaOppslag<VedtakResponse, EksternVedtakRequest>(
+        vedtakRequest: InternVedtakRequest
+
+    ): VedtakResponse = gjørArenaOppslag<VedtakResponse, InternVedtakRequest
+>(
         "/intern/perioder", vedtakRequest
     ).getOrThrow()
 
     suspend fun hentPerioderInkludert11_17(
-        req: EksternVedtakRequest,
-    ): PerioderMed11_17Response = gjørArenaOppslag<PerioderMed11_17Response, EksternVedtakRequest>(
+        req: InternVedtakRequest
+,
+    ): PerioderMed11_17Response = gjørArenaOppslag<PerioderMed11_17Response, InternVedtakRequest
+>(
         "/intern/perioder/11-17", req
     ).getOrThrow()
 
@@ -61,8 +65,10 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         ).getOrThrow()
 
     suspend fun hentMaksimum(
-        req: EksternVedtakRequest
-    ): Maksimum = gjørArenaOppslag<Maksimum, EksternVedtakRequest>(
+        req: InternVedtakRequest
+
+    ): Maksimum = gjørArenaOppslag<Maksimum, InternVedtakRequest
+>(
         "/intern/maksimum", req
     ).getOrThrow()
 
