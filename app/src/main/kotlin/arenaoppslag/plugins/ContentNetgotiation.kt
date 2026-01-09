@@ -9,11 +9,12 @@ import no.nav.aap.arenaoppslag.kontrakt.ekstern.VedtakResponse
 
 fun Application.contentNegotiation() {
     install(ContentNegotiation) {
+        // jackson{DefaultJsonMapper.objectMapper()} // istedenfor
         jackson {
             registerModule(JavaTimeModule())
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             registerSubtypes(
-                VedtakResponse::class.java
+                VedtakResponse::class.java // TODO dette er ikke en subtype. Fjernes?
             )
         }
     }
