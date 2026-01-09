@@ -175,7 +175,7 @@ class PersonRepository(private val dataSource: DataSource) {
         p.fodselsnr IN ($FNR_LISTE_TOKEN)
         -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
         -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
-        AND (su.dato_utbetaling is null OR su.dato_utbetaling <= ADD_MONTHS(TRUNC(SYSDATE), -3) )
+        AND (su.dato_utbetaling is null OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
         """.trimIndent()
 
 
