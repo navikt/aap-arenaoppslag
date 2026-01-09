@@ -57,7 +57,7 @@ fun Route.person(arenaService: ArenaService) {
     post("/person/aap/signifikant-historikk") {
         logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
         val string = call.receive<String>()
-        val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string) //todo stream
+        val request = DefaultJsonMapper.fromJson<KanBehandleSoknadIKelvin>(string)
         val response: PersonHarSignifikantAAPArenaHistorikk = arenaService.hentRelevanteSakerForPerson(
             request.personidentifikatorer,
             request.virkningstidspunkt
@@ -87,6 +87,7 @@ fun Route.saker(arenaService: ArenaService) {
         logger.info("Henter saker")
         val string = call.receive<String>()
         val request = DefaultJsonMapper.fromJson<SakerRequest>(string)
+        //val request: SakerRequest = call.receive() // bruk denne heller TODO
         val response: List<SakStatus> = arenaService.hentSaker(request.personidentifikatorer)
 
         call.respond(response)

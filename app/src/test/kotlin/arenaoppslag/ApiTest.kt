@@ -7,9 +7,9 @@ import arenaoppslag.util.H2TestBase
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.ktor.client.*
-import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.jackson.*
+import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.kontrakt.ekstern.EksternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
@@ -88,7 +88,7 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     @Test
     fun `Henter ut saker by fnr, ukjent person`() {
         withTestServer { gateway ->
-            val sakerForUkjentPerson: List<SakStatus>  = gateway.hentSakerByFnr(
+            val sakerForUkjentPerson: List<SakStatus> = gateway.hentSakerByFnr(
                 SakerRequest(
                     personidentifikatorer = listOf(ukjentPerson)
                 )
@@ -143,6 +143,7 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
         val config = TestConfig.default(Fakes())
         val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
         testApplication {
+            environment { MapApplicationConfig("ktor.test.timeout" to "0") }
             application { server(config, h2) }
             val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
 
@@ -153,12 +154,6 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     private val ApplicationTestBuilder.jsonHttpClient: HttpClient
         get() = createClient {
             expectSuccess = true // Kaster exception for 4xx og 5xx svar, altså feiler testen
-
-            install(HttpTimeout) {
-                requestTimeoutMillis = 5_000
-                connectTimeoutMillis = 5_000
-                socketTimeoutMillis = 5_000
-            }
 
             install(ContentNegotiation) {
                 jackson {
