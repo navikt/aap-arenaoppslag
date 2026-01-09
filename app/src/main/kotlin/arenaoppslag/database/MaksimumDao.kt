@@ -1,12 +1,13 @@
-package arenaoppslag.intern
+package arenaoppslag.database
 
-import arenaoppslag.datasource.map
-import arenaoppslag.intern.DbDato.fraDato
+import arenaoppslag.database.DbDato.fraDato
 import arenaoppslag.modeller.AnnenReduksjon
 import arenaoppslag.modeller.Maksimum
+import arenaoppslag.modeller.Periode
 import arenaoppslag.modeller.Reduksjon
 import arenaoppslag.modeller.UtbetalingMedMer
 import arenaoppslag.modeller.Vedtak
+import arenaoppslag.modeller.VedtakFakta
 import arenaoppslag.modeller.VedtaksType
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory

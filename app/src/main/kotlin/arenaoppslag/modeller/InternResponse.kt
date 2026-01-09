@@ -1,5 +1,6 @@
-package arenaoppslag.intern
+package arenaoppslag.modeller
 
+import no.nav.aap.arenaoppslag.kontrakt.intern.PeriodeMed11_17
 import java.time.LocalDate
 
 
@@ -28,8 +29,8 @@ data class PeriodeMed11_17(
     val aktivitetsfaseKode: String,
     val aktivitetsfaseNavn: String
 ) {
-    fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.intern.PeriodeMed11_17 {
-        return no.nav.aap.arenaoppslag.kontrakt.intern.PeriodeMed11_17(
+    fun tilKontrakt(): PeriodeMed11_17 {
+        return PeriodeMed11_17(
             periode = periode.tilKontrakt(),
             aktivitetsfaseKode = aktivitetsfaseKode,
             aktivitetsfaseNavn = aktivitetsfaseNavn
