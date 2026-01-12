@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("aap.conventions")
-    id("com.gradleup.shadow") version "9.3.0"
+    id("com.gradleup.shadow") version "9.3.1"
     id("io.ktor.plugin") version "3.3.3"
     id("dev.detekt")
     application
@@ -44,7 +44,7 @@ dependencies {
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
     implementation("io.micrometer:micrometer-registry-prometheus:1.16.1")
-    implementation("ch.qos.logback:logback-classic:1.5.23")
+    implementation("ch.qos.logback:logback-classic:1.5.24")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.26.0.0.0")
@@ -52,8 +52,8 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("com.nimbusds:nimbus-jose-jwt:10.6")
-    testImplementation("org.flywaydb:flyway-core:11.20.0")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:10.7")
+    testImplementation("org.flywaydb:flyway-core:11.20.1")
     testImplementation("org.assertj:assertj-core:3.27.6")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.4.240")
