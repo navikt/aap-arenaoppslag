@@ -1,11 +1,12 @@
 package arenaoppslag
 
 import arenaoppslag.Metrics.prometheus
-import arenaoppslag.database.ArenaDatasource
-import arenaoppslag.database.PersonRepository
-import arenaoppslag.database.MaksimumRepository
-import arenaoppslag.database.PeriodeRepository
-import arenaoppslag.database.SakRepository
+import arenaoppslag.aap.ArenaService
+import arenaoppslag.aap.database.ArenaDatasource
+import arenaoppslag.aap.database.MaksimumRepository
+import arenaoppslag.aap.database.PeriodeRepository
+import arenaoppslag.aap.database.PersonRepository
+import arenaoppslag.aap.database.SakRepository
 import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages
@@ -83,9 +84,11 @@ fun Application.server(
         actuator(prometheus)
 
         authenticate {
+            // Bruker ikke RepositoryRegistry fra Kelvin-komponenter fordi vi er på Oracle DB her,
+            // med annet opplegg for parameterized queries
+            val periodeRepository = PeriodeRepository(datasource)
             val personRepository = PersonRepository(datasource)
             val maksimumRepository = MaksimumRepository(datasource)
-            val periodeRepository = PeriodeRepository(datasource)
             val sakRepository = SakRepository(datasource)
             val arenaService = ArenaService(personRepository, maksimumRepository, periodeRepository, sakRepository)
             route("/intern") {

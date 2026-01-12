@@ -1,6 +1,8 @@
 package arenaoppslag.database
 
-import arenaoppslag.database.PersonRepository.Companion.historiskeRettighetkoderIArena
+import arenaoppslag.aap.database.PersonRepository
+import arenaoppslag.aap.database.PersonRepository.Companion.historiskeRettighetkoderIArena
+import arenaoppslag.aap.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -62,6 +64,13 @@ class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer
         assertThat(kunHistoriske).hasSize(2) // noen historiske koder
 
         val relevanteSaker = personRepository.hentRelevanteArenaSaker(testPerson, testDato)
+        assertThat(relevanteSaker).hasSize(1)
+    }
+
+    @Test
+    fun `kombinert spørring for relevant historikk kjører uten feil`(){
+        val testPerson = listOf("blanding")
+        val relevanteSaker = personRepository.hentAlleRelevanteSaker(testPerson, testDato)
         assertThat(relevanteSaker).hasSize(1)
     }
 

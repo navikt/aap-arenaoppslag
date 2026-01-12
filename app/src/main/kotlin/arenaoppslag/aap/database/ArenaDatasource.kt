@@ -1,4 +1,4 @@
-package arenaoppslag.database
+package arenaoppslag.aap.database
 
 import arenaoppslag.DbConfig
 import arenaoppslag.Metrics

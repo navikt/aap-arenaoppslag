@@ -1,6 +1,7 @@
 package arenaoppslag.database
 
-import arenaoppslag.modeller.Periode
+import arenaoppslag.aap.database.PeriodeRepository
+import arenaoppslag.aap.modeller.Periode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach

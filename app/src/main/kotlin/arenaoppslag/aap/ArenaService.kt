@@ -1,9 +1,9 @@
-package arenaoppslag
+package arenaoppslag.aap
 
-import arenaoppslag.database.MaksimumRepository
-import arenaoppslag.database.PeriodeRepository
-import arenaoppslag.database.PersonRepository
-import arenaoppslag.database.SakRepository
+import arenaoppslag.aap.database.MaksimumRepository
+import arenaoppslag.aap.database.PeriodeRepository
+import arenaoppslag.aap.database.PersonRepository
+import arenaoppslag.aap.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
