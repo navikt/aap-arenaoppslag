@@ -1,4 +1,4 @@
-package arenaoppslag.modeller
+package arenaoppslag.aap.modeller
 
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum as KontraktMaksimum
 

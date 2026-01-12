@@ -1,6 +1,10 @@
 package arenaoppslag.database
 
-import arenaoppslag.ArenaService
+import arenaoppslag.aap.ArenaService
+import arenaoppslag.aap.database.MaksimumRepository
+import arenaoppslag.aap.database.PeriodeRepository
+import arenaoppslag.aap.database.PersonRepository
+import arenaoppslag.aap.database.SakRepository
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
