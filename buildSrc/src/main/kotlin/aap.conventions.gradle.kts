@@ -33,7 +33,7 @@ tasks {
 
     (findByName("jar") as? Jar)?.apply {
         // Bruk et unikt navn for jar-filen til hver submodul, for å unngå navnekollisjoner i multi-modul prosjekt,
-        // gjennom at vi ikke bruker samme navn, feks. "kontrakt.jar" og "api.jar" er brukt i flere moduler.
+        // gjennom at vi ikke bruker samme navn, feks. "kontrakt.jar" og "api.jar", i flere moduler.
         // Dette unngår feil av typen "Entry <name>.jar is a duplicate but no duplicate handling strategy has been set"
         // Alternativet er å unngå å bruke det eksakt samme navnet på submoduler fra forskjellige moduler,
         // som feks "kontrakt".
