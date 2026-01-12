@@ -10,7 +10,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("App")
-private val secureLog: Logger = LoggerFactory.getLogger("secureLog")
+private val secureLog: Logger = LoggerFactory.getLogger("team-logs")
 
 data class FeilRespons(
     val melding: String

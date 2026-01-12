@@ -39,14 +39,16 @@ spec:
       destinations:
         - id: elastic
         - id: loki
-  secureLogs:
-    enabled: true
   accessPolicy:
     inbound:
       rules:
         - application: api-intern
           cluster: {{cluster}}-gcp
           namespace: aap
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
   webproxy: true
   ingresses:
     - {{ingress}}
