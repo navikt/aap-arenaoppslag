@@ -33,9 +33,10 @@ tasks {
 
     (findByName("jar") as? Jar)?.apply {
         // Bruk et unikt navn for jar-filen til hver submodul, for å unngå navnekollisjoner i multi-modul prosjekt,
-        // gjennom at vi ikke bruker samme navn, feks. "kontrakt.jar" "api.jar" i flere moduler.
+        // gjennom at vi ikke bruker samme navn, feks. "kontrakt.jar" og "api.jar" er brukt i flere moduler.
         // Dette unngår feil av typen "Entry <name>.jar is a duplicate but no duplicate handling strategy has been set"
-        // Alternativet er å unngå å bruke det eksakt samme navnet på moduler i forskjellige prosjekter, som feks "kontrakt".
+        // Alternativet er å unngå å bruke det eksakt samme navnet på submoduler fra forskjellige moduler,
+        // som feks "kontrakt".
         archiveBaseName.set("${rootProject.name}-${project.name}")
     }
 }
@@ -46,6 +47,15 @@ kotlin {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
         languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_2)
+
+        // Bruk et unikt navn for <submodule>.kotlin_module for hvert submodul, for å unngå navnekollisjoner i
+        // multi-modul prosjekt, hvor vi inkluderer flere av våre kotlin-moduler i samme jar-fil eller
+        // på samme runtime classpath. Kroneksempelet er "kontrakt.kotlin_module" fra både behandlingsflyt, brev,
+        // meldekort og andre steder.
+        // Dette gjør at vi kan beholde informasjonen for hver kotlin_module, og kotlin-reflect og andre verktøy
+        // fungerer som forventet. Alternativet er å unngå å bruke det eksakt samme navnet på submoduler fra
+        // forskjellige moduler, som feks "kontrakt".
+        moduleName.set("${rootProject.name}-${project.name}")
     }
 }
 
