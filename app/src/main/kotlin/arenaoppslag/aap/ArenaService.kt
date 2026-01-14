@@ -19,16 +19,19 @@ class ArenaService(
     private val periodeRepository: PeriodeRepository,
     private val sakRepository: SakRepository
 ) {
-    fun hentRelevanteSakerForPerson(
+    fun signifikanteSakerForPerson(
         personIdentifikatorer: List<String>, virkningstidspunkt: LocalDate
     ): PersonHarSignifikantAAPArenaHistorikk {
-        val relevanteArenaSaker = personRepository.hentRelevanteArenaSaker(personIdentifikatorer, virkningstidspunkt)
+        val relevanteArenaSaker = personRepository.hentAlleSignifikanteSakerForPerson(
+                personIdentifikatorer,
+                virkningstidspunkt
+            )
 
-        val kanBehandles = relevanteArenaSaker.isEmpty()
+        val kanBehandlesIKelvin = relevanteArenaSaker.isEmpty()
         val arenaSakIdListe = sorterSaker(relevanteArenaSaker).map { it.sakId }.distinct()
 
         return PersonHarSignifikantAAPArenaHistorikk(
-            kanBehandles, arenaSakIdListe
+            kanBehandlesIKelvin, arenaSakIdListe
         )
     }
 

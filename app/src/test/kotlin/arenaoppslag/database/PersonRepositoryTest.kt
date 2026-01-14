@@ -24,7 +24,7 @@ class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer
 
     @Test
     fun `ingen saker for person som ikke finnes`() {
-        val alleVedtak = personRepository.hentRelevanteArenaSaker(
+        val alleVedtak = personRepository.hentAlleSignifikanteSakerForPerson(
             listOf("finnes_ikke"),
             testDato,
         )
@@ -39,7 +39,7 @@ class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer
             alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2)
 
-        val relevanteSaker = personRepository.hentRelevanteArenaSaker(testPerson, testDato)
+        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPerson, testDato)
         assertThat(relevanteSaker).isEmpty()
     }
 
@@ -51,7 +51,7 @@ class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer
             alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).isEmpty() // ingen historiske koder
 
-        val relevanteSaker = personRepository.hentRelevanteArenaSaker(testPerson, testDato)
+        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPerson, testDato)
         assertThat(relevanteSaker).hasSize(2)
     }
 
@@ -63,14 +63,14 @@ class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer
             alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2) // noen historiske koder
 
-        val relevanteSaker = personRepository.hentRelevanteArenaSaker(testPerson, testDato)
+        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPerson, testDato)
         assertThat(relevanteSaker).hasSize(1)
     }
 
     @Test
     fun `kombinert spørring for relevant historikk kjører uten feil`(){
         val testPerson = listOf("blanding")
-        val relevanteSaker = personRepository.hentAlleRelevanteSaker(testPerson, testDato)
+        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPerson, testDato)
         assertThat(relevanteSaker).hasSize(1)
     }
 

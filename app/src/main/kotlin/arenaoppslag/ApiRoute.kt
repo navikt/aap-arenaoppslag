@@ -50,7 +50,7 @@ fun Route.person(arenaService: ArenaService) {
     post("/person/aap/signifikant-historikk") {
         logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
         val request: KanBehandleSoknadIKelvin = call.receive()
-        val response: PersonHarSignifikantAAPArenaHistorikk = arenaService.hentRelevanteSakerForPerson(
+        val response: PersonHarSignifikantAAPArenaHistorikk = arenaService.signifikanteSakerForPerson(
             request.personidentifikatorer,
             request.virkningstidspunkt
         )

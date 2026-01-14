@@ -19,20 +19,12 @@ class PersonRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentRelevanteArenaSaker(personIdentifikatorer: List<String>, søknadMottattPå: LocalDate): List<ArenaSak> {
-        val relevanteArenaSaker = dataSource.connection.use { con ->
-            selectPersonMedRelevantHistorikk(
-                personIdentifikatorer, søknadMottattPå, con
-            )
-        }
-        return relevanteArenaSaker
-    }
-
-    fun hentAlleRelevanteSaker(personIdentifikatorer: List<String>, søknadMottattPå: LocalDate): List<ArenaSak> {
+    fun hentAlleSignifikanteSakerForPerson(
+        personIdentifikatorer: List<String>, søknadMottattPå: LocalDate
+    ): List<ArenaSak> {
         return dataSource.connection.use { con ->
-            hentAllRelevantHistorikkForPerson(personIdentifikatorer, søknadMottattPå, con)
+            hentAlleSignifikanteSakerForPerson(personIdentifikatorer, søknadMottattPå, con)
         }
-
     }
 
     companion object {
@@ -215,22 +207,7 @@ class PersonRepository(private val dataSource: DataSource) {
 
         const val tidsBufferUkerGenerell = 78L
         const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
-        fun selectPersonMedRelevantHistorikk(
-            fodselsnummerene: List<String>, søknadMottattPå: LocalDate, connection: Connection
-        ): List<ArenaSak> {
-            val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
-            val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
-            val query = queryMedFodselsnummerListe(selectKunRelevanteVedtak, fodselsnummerene)
-            connection.prepareStatement(query).use { preparedStatement ->
-                preparedStatement.setDate(1, Date.valueOf(tidsBufferGenerell))
-                preparedStatement.setDate(2, Date.valueOf(nyesteTillateStans))
-                preparedStatement.setDate(3, Date.valueOf(tidsBufferGenerell))
-                val resultSet = preparedStatement.executeQuery()
-                return resultSet.map { row -> mapperForArenasak(row) }
-            }
-        }
-
-        fun hentAllRelevantHistorikkForPerson(
+        fun hentAlleSignifikanteSakerForPerson(
             personidentifikatorer: List<String>, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaSak> {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
