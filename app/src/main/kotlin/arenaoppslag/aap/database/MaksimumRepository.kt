@@ -231,9 +231,9 @@ class MaksimumRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
                 val resultSet = preparedStatement.executeQuery()
-                val utbetalinger = mutableListOf<UtbetalingMedMer>()
                 var c = 0
                 val vedtak = resultSet.map { row ->
+                    val utbetalinger = mutableListOf<UtbetalingMedMer>()
                     val vedtakId = row.getInt("vedtak_id")
                     log.info("Henter utbetalinger for vedtak $vedtakId. Iterasjon nr $c.")
                     val vedtakFakta = selectVedtakFakta(vedtakId, connection)
