@@ -85,7 +85,7 @@ class PersonRepository(private val dataSource: DataSource) {
             v.rettighetkode
         FROM
             vedtak v
-            JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
+            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
             JOIN person      p ON p.person_id = v.person_id
         WHERE
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
@@ -117,7 +117,7 @@ class PersonRepository(private val dataSource: DataSource) {
         FROM
             vedtak v
             JOIN person      p ON p.person_id = v.person_id
-            JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
+            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
             AND rettighetkode = 'ANKE'
@@ -146,7 +146,7 @@ class PersonRepository(private val dataSource: DataSource) {
         FROM
             vedtak v
             JOIN person p ON p.person_id = v.person_id
-            JOIN vedtakfakta vf ON v.vedtak_id = vf.vedtak_id
+            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
             AND rettighetkode = 'TILBBET'
@@ -186,11 +186,11 @@ class PersonRepository(private val dataSource: DataSource) {
             v.vedtakstatuskode, 
             ssu.dato_periode_fra AS fra_dato,
             ssu.dato_periode_til AS til_dato,
-            'SPESIAL' AS rettighetkode
+            'SIM_SPESIAL' AS rettighetkode
         FROM
-            spesialutbetaling su
-            RIGHT JOIN sim_utbetalingsgrunnlag ssu ON su.person_id = ssu.person_id
-            JOIN vedtak v ON ssu.vedtak_id = v.vedtak_id
+            sim_utbetalingsgrunnlag ssu
+            LEFT JOIN spesialutbetaling su ON su.person_id = ssu.person_id
+            JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
             JOIN person p ON p.person_id = ssu.person_id
         WHERE 
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
@@ -220,7 +220,7 @@ class PersonRepository(private val dataSource: DataSource) {
                     selectKunRelevanteTilbakebetalinger,
                     selectKunRelevanteSpesialutbetalinger,
                     selectKunRelevanteUferdigeSpesialutbetalinger
-                ).joinToString("\nUNION\n"), personidentifikatorer
+                ).joinToString("\nUNION ALL\n"), personidentifikatorer
             )
 
             connection.prepareStatement(query).use { preparedStatement ->
