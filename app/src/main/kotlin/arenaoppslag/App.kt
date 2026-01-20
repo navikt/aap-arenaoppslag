@@ -7,11 +7,13 @@ import arenaoppslag.aap.database.MaksimumRepository
 import arenaoppslag.aap.database.PeriodeRepository
 import arenaoppslag.aap.database.PersonRepository
 import arenaoppslag.aap.database.SakRepository
+import arenaoppslag.plugins.MdcKeys
 import arenaoppslag.plugins.authentication
-import arenaoppslag.plugins.contentNegotiation
+import arenaoppslag.plugins.bruker
 import arenaoppslag.plugins.statusPages
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.http.*
+import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.engine.*
@@ -19,13 +21,14 @@ import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
+import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
+import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
-import org.slf4j.event.Level
 import java.util.*
 import javax.sql.DataSource
 
@@ -37,8 +40,7 @@ object Metrics {
 
 @Suppress("MagicNumber")
 fun main() {
-    Thread.currentThread()
-        .setUncaughtExceptionHandler { _, e -> logger.error("Uhåndtert feil", e) }
+    Thread.currentThread().setUncaughtExceptionHandler { _, e -> logger.error("Uhåndtert feil", e) }
     embeddedServer(Netty, configure = {
         // Vi følger ktor sin metodikk for å regne ut tuning parametre som funksjon av parallellitet
         // https://github.com/ktorio/ktor/blob/3.3.2/ktor-server/ktor-server-core/common/src/io/ktor/server/engine/ApplicationEngine.kt#L30
@@ -56,29 +58,30 @@ fun main() {
 }
 
 fun Application.server(
-    config: AppConfig = AppConfig(),
-    datasource: DataSource = ArenaDatasource.create(config.database)
+    config: AppConfig = AppConfig(), datasource: DataSource = ArenaDatasource.create(config.database)
 ) {
+    statusPages()
+
+    install(MicrometerMetrics) {
+        registry = prometheus
+        meterBinders += LogbackMetrics()
+    }
+    install(ContentNegotiation) {
+        register(ContentType.Application.Json, JacksonConverter(objectMapper = DefaultJsonMapper.objectMapper(), true))
+    }
+    install(CallLogging) {
+        callIdMdc(MdcKeys.CallId)
+        // For å unngå rare tegn i loggene
+        disableDefaultColors()
+        filter { call -> call.request.path().startsWith("/actuator").not() }
+        mdc(MdcKeys.User) { call -> runCatching { call.bruker().ident }.getOrNull() }
+    }
     install(CallId) {
         retrieveFromHeader(HttpHeaders.XCorrelationId)
         generate { UUID.randomUUID().toString() }
     }
 
-    install(CallLogging) {
-        callIdMdc("call-id")
-        doLogCall()
-    }
-
-    install(MicrometerMetrics) {
-        meterBinders += LogbackMetrics()
-        registry = prometheus
-    }
-
-    statusPages()
-
     authentication(config)
-
-    contentNegotiation()
 
     routing {
         actuator(prometheus)
@@ -123,18 +126,4 @@ fun Application.server(
             // Ignorert
         }
     }
-}
-
-private fun CallLoggingConfig.doLogCall() {
-    level = Level.INFO
-    format { call ->
-        val status = call.response.status()
-        val errorBody = if (status?.isSuccess() == false) ", ErrorBody: ${call.response}" else ""
-        val httpMethod = call.request.httpMethod.value
-        val userAgent = call.request.userAgent()
-        val callId = call.request.header("x-callid") ?: call.request.header("nav-callId") ?: "ukjent"
-        val path = call.request.path()
-        "Status: $status$errorBody, HTTP method: $httpMethod, User agent: $userAgent, Call id: $callId, Path: $path"
-    }
-    filter { call -> call.request.path().startsWith("/actuator").not() }
 }
