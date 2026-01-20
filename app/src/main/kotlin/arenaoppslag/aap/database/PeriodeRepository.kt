@@ -13,10 +13,10 @@ import javax.sql.DataSource
 class PeriodeRepository(private val dataSource: DataSource) {
 
     fun hentPerioder(
-        personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
+        fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
     ): List<Periode> = dataSource.connection.use { con ->
         selectVedtakPerioder(
-            fodselsnr = personId, fraOgMedDato = fraOgMedDato, tilOgMedDato = tilOgMedDato, connection = con
+            fodselsnr = fodselsnr, fraOgMedDato = fraOgMedDato, tilOgMedDato = tilOgMedDato, connection = con
         )
     }
 
