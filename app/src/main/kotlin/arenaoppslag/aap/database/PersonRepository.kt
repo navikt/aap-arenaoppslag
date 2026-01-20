@@ -2,6 +2,7 @@ package arenaoppslag.aap.database
 
 import arenaoppslag.aap.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
+import no.nav.aap.arenaoppslag.kontrakt.intern.Person
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
@@ -27,6 +28,12 @@ class PersonRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentAlle(): List<Person> {
+        return dataSource.connection.use { con ->
+            hentAllePersoner(con)
+        }
+    }
+
     companion object {
         @TestOnly
         val historiskeRettighetkoderIArena = setOf(
@@ -41,6 +48,10 @@ class PersonRepository(private val dataSource: DataSource) {
             "AATFOR", // Tvungen forvaltning
             "AUNDM" // Bøker og undervisningsmatriell
         )
+
+        // TODO kanskje skal vi først slå opp person_id for disse fnr-ene,
+        //  og så bruke person_id i stedet for fnr i de andre spørringene?
+        //  og cache person-id lokalt i ArenaService?
 
         private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
 
@@ -90,6 +101,7 @@ class PersonRepository(private val dataSource: DataSource) {
         WHERE
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
             AND v.utfallkode != 'AVBRUTT'
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå string-til-dato konvertering for veldig gamle rader
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
@@ -97,10 +109,11 @@ class PersonRepository(private val dataSource: DataSource) {
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
             -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
             -- Vi bruker vedtakfaktakode=K_UTFALL fremfor utfallkode=JA her, fordi vi ser uventet utfallkode for noen innvilgede klager i produksjon.
-            AND NOT EXISTS(SELECT 1 from vedtakfakta vf_innvilget WHERE vf_innvilget.vedtakfaktakode = 'K_UTFALL' 
-                AND vf_innvilget.vedtak_id = v.vedtak_id -- samme vedtaket
-                AND vf_innvilget.vedtakverdi = 'JA' -- er innvilget (kan evt utvides med flere verdier)
-                AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) -- er minst 6 mnd siden
+            AND NOT EXISTS(SELECT 1 from vedtakfakta vf_innvilget 
+                WHERE vf_innvilget.vedtak_id = v.vedtak_id -- samme vedtaket 
+                    AND vf_innvilget.vedtakfaktakode = 'K_UTFALL'
+                    AND vf_innvilget.vedtakverdi = 'JA' -- er innvilget (kan evt utvides med flere verdier)
+                    AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) -- er minst 6 mnd siden
                 )
         """.trimIndent()
 
@@ -122,18 +135,21 @@ class PersonRepository(private val dataSource: DataSource) {
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
             AND rettighetkode = 'ANKE'
             AND utfallkode != 'AVBRUTT'
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå string-til-dato konvertering for veldig gamle rader
             AND vf.vedtakfaktakode = 'KJREGDATO'
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ADD_MONTHS(TRUNC(SYSDATE), -36) ) -- stor tidsbuffer her, da det kan ankes oppover i rettsvesenet.
             -- Dersom anken ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
             -- Vi bruker vedtakfaktakode=KJENNELSE fremfor vedtak.utfallkode=JA her, fordi vi ser uventet utfallkode for noen innvilgede anker i produksjon.
-            AND NOT EXISTS(SELECT 1 from vedtakfakta vf_innvilget WHERE vf_innvilget.vedtakfaktakode = 'KJENNELSE' 
-                AND vf_innvilget.vedtak_id = v.vedtak_id -- samme vedtaket
-                AND vf_innvilget.vedtakverdi = 'JA' -- er innvilget (kan evt utvides med flere verdier)
-                AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) -- er minst 6 mnd siden
+            AND NOT EXISTS(SELECT 1 from vedtakfakta vf_innvilget 
+                WHERE vf_innvilget.vedtak_id = v.vedtak_id -- samme vedtaket 
+                    AND vf_innvilget.vedtakfaktakode = 'KJENNELSE'
+                    AND vf_innvilget.vedtakverdi = 'JA' -- er innvilget (kan evt utvides med flere verdier)
+                    AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) -- er minst 6 mnd siden
                 )
         """.trimIndent()
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
+        // MERK: denne spørringen går veldig tregt, av ukjent grunn
         @Language("OracleSql")
         val selectKunRelevanteTilbakebetalinger = """
         SELECT
@@ -150,12 +166,14 @@ class PersonRepository(private val dataSource: DataSource) {
         WHERE
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
             AND rettighetkode = 'TILBBET'
-            AND utfallkode != 'AVBRUTT'
+            AND utfallkode != 'AVBRUTT'            
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
             AND vf.vedtakverdi IS NULL
         """.trimIndent()
 
+        // TODO kan kanskje droppe å joine med vedtak for å få sak_id, men heller ta det som et query etterpå,
+        // for å hente sak_id for alle vedtak_id vi får her?
         // S5: Hent alle spesialutbetalinger med relevant historikk for personen
         @Language("OracleSql")
         val selectKunRelevanteSpesialutbetalinger = """
@@ -175,6 +193,8 @@ class PersonRepository(private val dataSource: DataSource) {
             -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
             -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
             AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
+            -- MERK: ingen index i spesialutbetaling på reg_dato eller andre dato-felt, så blir tregt
+
         """.trimIndent()
 
         // S6: Hent uferdige spesialutbetalinger for personen, hvor kun simulering av utbetaling er gjort
@@ -194,9 +214,25 @@ class PersonRepository(private val dataSource: DataSource) {
             JOIN person p ON p.person_id = ssu.person_id
         WHERE 
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
+            -- MERK: ingen index i sim_utbetalingsgrunnlag på reg_dato eller andre felt, så blir tregt
             AND su.person_id IS NULL -- personen finnes ikke enda i SPESIALUTBETALINGER, og kommer kanskje senere 
-            and ssu.reg_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
+            AND ssu.reg_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
         """.trimIndent()
+
+
+        fun hentAllePersoner(connection: Connection): List<Person> {
+            val query = "SELECT fodselsnr, fornavn, etternavn FROM person"
+            connection.prepareStatement(query).use { preparedStatement ->
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row ->
+                    Person(
+                        personIdentifikator = row.getString("fodselsnr"),
+                        fornavn = row.getString("fornavn"),
+                        etternavn = row.getString("etternavn")
+                    )
+                }
+            }
+        }
 
         private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: List<String>): String {
             // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte

@@ -12,6 +12,8 @@ public data class PersonHarSignifikantAAPArenaHistorikk(
     val signifikanteSaker: List<String> // signifikante Arena-saker, sortert på dato, nyeste først
 )
 
+public data class Person(val personIdentifikator: String, val fornavn:String, val etternavn: String)
+
 public data class VedtakResponse(
     val perioder: List<Periode>
 )
