@@ -8,9 +8,11 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
+import no.nav.aap.arenaoppslag.kontrakt.intern.Person
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import org.jetbrains.annotations.TestOnly
 import java.time.LocalDate
 
 class ArenaService(
@@ -19,6 +21,12 @@ class ArenaService(
     private val periodeRepository: PeriodeRepository,
     private val sakRepository: SakRepository
 ) {
+
+    @TestOnly
+    fun hentAllePersoner(): List<Person> {
+        return personRepository.hentAlle()
+    }
+
     fun signifikanteSakerForPerson(
         personIdentifikatorer: List<String>, virkningstidspunkt: LocalDate
     ): PersonHarSignifikantAAPArenaHistorikk {
