@@ -7,26 +7,26 @@ import arenaoppslag.aap.database.MaksimumRepository
 import arenaoppslag.aap.database.PeriodeRepository
 import arenaoppslag.aap.database.PersonRepository
 import arenaoppslag.aap.database.SakRepository
-import arenaoppslag.plugins.authentication
 import arenaoppslag.plugins.contentNegotiation
 import arenaoppslag.plugins.statusPages
+import com.papsign.ktor.openapigen.model.info.ContactModel
+import com.papsign.ktor.openapigen.model.info.InfoModel
+import com.papsign.ktor.openapigen.route.apiRouting
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.engine.*
-import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
-import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
-import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
+import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureConfig
+import no.nav.aap.komponenter.server.commonKtorModule
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
-import java.util.*
 import javax.sql.DataSource
 
 val logger = LoggerFactory.getLogger("App")
@@ -59,26 +59,26 @@ fun Application.server(
     config: AppConfig = AppConfig(),
     datasource: DataSource = ArenaDatasource.create(config.database)
 ) {
-    install(CallId) {
-        retrieveFromHeader(HttpHeaders.XCorrelationId)
-        generate { UUID.randomUUID().toString() }
-    }
-
-    install(CallLogging) {
-        callIdMdc("call-id")
-        doLogCall()
-    }
-
-    install(MicrometerMetrics) {
-        meterBinders += LogbackMetrics()
-        registry = prometheus
-    }
-
     statusPages()
 
-    authentication(config)
-
     contentNegotiation()
+
+    val azureConfig = AzureConfig(
+        issuer = config.azure.issuer,
+        jwksUri = config.azure.jwksUri,
+        clientId = config.azure.clientId,
+    )
+    commonKtorModule(
+        prometheus, azureConfig, infoModel = InfoModel(
+            title = "aap-arenaoppslag",
+            description = "aap-arenaoppslag tilbyr et internt API for henting av AAP-data fra Arena. \n" +
+                    "Bruker Azure til autentisering.",
+            contact = ContactModel(
+                name = "Team AAP",
+                url = "https://github.com/navikt/aap-arenaoppslag",
+            )
+        )
+    )
 
     routing {
         actuator(prometheus)
@@ -91,11 +91,13 @@ fun Application.server(
             val maksimumRepository = MaksimumRepository(datasource)
             val sakRepository = SakRepository(datasource)
             val arenaService = ArenaService(personRepository, maksimumRepository, periodeRepository, sakRepository)
-            route("/intern") {
-                perioder(arenaService)
-                person(arenaService)
-                maksimum(arenaService)
-                saker(arenaService)
+            apiRouting {
+                route("/intern") {
+                    perioder(arenaService)
+                    person(arenaService)
+                    maksimum(arenaService)
+                    saker(arenaService)
+                }
             }
         }
     }

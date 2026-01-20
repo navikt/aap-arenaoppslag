@@ -38,9 +38,11 @@ dependencies {
     implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
     implementation("io.ktor:ktor-server-call-logging-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-call-id:$ktorVersion")
+    implementation("io.ktor:ktor-server-swagger:$ktorVersion")
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     implementation("no.nav.aap.kelvin:json:1.0.482")
+    implementation("no.nav.aap.kelvin:server:1.0.482")
 
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
     implementation("io.micrometer:micrometer-registry-prometheus:1.16.1")
@@ -49,6 +51,8 @@ dependencies {
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.26.0.0.0")
     implementation("com.zaxxer:HikariCP:7.0.2")
+
+    implementation("no.nav:ktor-openapi-generator:1.0.136")
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
@@ -61,7 +65,6 @@ dependencies {
 }
 
 tasks {
-
     withType<ShadowJar> {
         // Duplikate class og ressurs-filer kan skape runtime-feil, fordi JVM-en velger den første på classpath
         // ved duplikater, og det kan være noe annet enn vår kode (og libs vi bruker) forventer.
