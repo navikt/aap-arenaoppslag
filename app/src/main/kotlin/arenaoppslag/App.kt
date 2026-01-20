@@ -27,6 +27,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureC
 import no.nav.aap.komponenter.server.commonKtorModule
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
+import java.net.URI
 import javax.sql.DataSource
 
 val logger = LoggerFactory.getLogger("App")

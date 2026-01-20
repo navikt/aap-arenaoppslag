@@ -48,6 +48,7 @@ data class AzureConfig(
     val jwksUri: String = getEnvVar("AZURE_OPENID_CONFIG_JWKS_URI"),
     val issuer: String = getEnvVar("AZURE_OPENID_CONFIG_ISSUER"),
     val clientId: String = getEnvVar("AZURE_APP_CLIENT_ID")
+    // TODO kan clientSecret og tokenEndpoint hentes ut på samme måte?
 )
 
 private fun getEnvVar(envar: String) = System.getenv(envar) ?: error("missing envvar $envar")
