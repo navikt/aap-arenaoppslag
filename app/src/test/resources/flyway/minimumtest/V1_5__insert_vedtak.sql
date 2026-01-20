@@ -1,0 +1,128 @@
+-- hente ut gyldig minimumstruktur for enkelt vedtak
+insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
+values (1, '123', 'Bestesen', 'Test');
+
+Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
+                 DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
+                 AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
+values ('1', 'AA', DATE '2022-02-02', 'IMB0826', DATE '2023-02-22',
+        'MM0826', 'PERS', '1', '2021', '1', null, 'INAKT', null, null, null, 'IMB0826', '0826', null,
+        DATE '2023-02-22', null, 'N');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
+                    TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
+values ('1234', 1, 'IVERK', 'O', 'JA', 'AAP', '1', DATE '2022-08-30',
+        DATE '2023-08-30', '4402', 1, '2021', 1, 'IKKE', DATE '2022-08-30');
+
+
+-- hente ut gyldige minimumsstrukturer for flere vedtak
+insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
+values (2, '321', 'Nestemannsen', 'Tjøstil');
+Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
+                 DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
+                 AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
+values ('2', 'AA', DATE '2022-02-02', 'IMB0826', DATE '2023-02-22',
+        'MM0826', 'PERS', '2', '2021', '2', null, 'INAKT', null, null, null, 'IMB0826', '0826', null,
+        DATE '2023-02-22', null, 'N');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
+                    TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
+values ('4321', 2, 'IVERK', 'O', 'JA', 'AAP', '2', DATE '2010-08-27',
+        DATE '2018-02-04', '4402', 2, '2021', 1, 'IKKE', DATE '2022-08-30'),
+
+       ('12345', 2, 'IVERK', 'O', 'JA', 'AAP', '2', DATE '2019-12-31',
+        DATE '2023-01-01', '4402', 2, '2021', 2, 'IKKE', DATE '2022-08-30');
+
+
+-- person uten vedtak
+insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
+values (3, 'ingenvedtak', 'Inga', 'Vedtaksløs');
+
+
+-- person med vedtak som ikke er valid
+insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
+values (4, 'invalid', 'Ingvild', 'Invalid');
+
+-- gjenbruker sak_id fra over her
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
+                    TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
+
+values ('1333', 2, 'IVERK', 'A', 'JA', 'AAP', '4', DATE '2010-08-27',
+        DATE '2023-02-04', '4402', 2, '2021', 4, 'IKKE', DATE '2010-08-27'),
+       ('1334', 2, 'IVERK', 'N', 'JA', 'AAP', '4', DATE '2010-08-28',
+        DATE '2023-02-04', '4402', 2, '2021', 5, 'IKKE', DATE '2010-08-27'),
+       ('1335', 2, 'IVERK', 'O', 'NEI', 'AAP', '4', DATE '2010-08-29',
+        DATE '2023-02-04', '4402', 2, '2021', 6, 'IKKE', DATE '2010-08-27'),
+       ('1336', 2, 'IVERK', 'O', 'JA', 'OOP', '4', DATE '2010-08-30',
+        DATE '2023-02-04', '4402', 2, '2021', 7, 'IKKE', DATE '2010-08-27');
+
+
+-- person med blanding av invalid og valid vedtak
+insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
+values (5, 'somevalid', 'Blanding Von', 'Vedtak');
+
+Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
+                 DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
+                 AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
+values ('3', 'AA', DATE '2022-02-02', 'IMB0826', DATE '2023-02-22',
+        'MM0826', 'PERS', '5', '2021', '3', null, 'INAKT', null, null, null, 'IMB0826', '0826', null,
+        DATE '2023-02-22', null, 'N');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
+                    TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
+values ('27', 3, 'KONT', 'O', 'JA', 'AAP', '5', DATE '2022-08-27',
+        DATE '2023-02-04', '4402', 3, '2021', 8, 'IKKE', DATE '2022-08-27'),
+       ('28', 3, 'IVERK', 'N', 'JA', 'AAP', '5', DATE '2022-08-28',
+        DATE '2023-02-04', '4402', 3, '2021', 9, 'IKKE', DATE '2022-08-27'),
+       ('29', 3, 'IVERK', 'O', 'NEI', 'AAP', '5', DATE '2022-08-29',
+        DATE '2023-02-04', '4402', 3, '2021', 10, 'IKKE', DATE '2022-08-27'),
+       -- gyldig vedtak i denne sammenhengen:
+       ('30', 3, 'IVERK', 'O', 'JA', 'AAP', '5', DATE '2022-08-30',
+        DATE '2023-02-04', '4402', 3, '2021', 12, 'IKKE', DATE '2022-08-27'),
+
+       ('31', 3, 'IVERK', 'O', 'JA', 'OOP', '5', DATE '2022-08-31',
+        DATE '2023-02-04', '4402', 3, '2021', 11, 'IKKE', DATE '2022-08-27');
+
+
+
+-- person med vedtak med forskjellige vedtak statuskoder
+insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
+values (6, 'statuskode', 'Forskjellig', 'Status');
+Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
+                 DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
+                 AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
+values ('4', 'AA', DATE '2022-02-02', 'IMB0826', DATE '2023-02-22',
+        'MM0826', 'PERS', '6', '2021', '4', null, 'INAKT', null, null, null, 'IMB0826', '0826', null,
+        DATE '2023-02-22', null, 'N');
+
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
+                    TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
+values ('5555', 2, 'IVERK', 'O', 'JA', 'AAP', '6', DATE '2022-08-27',
+        DATE '2023-02-04', '4402', 2, '2021', 13, 'IKKE', DATE '2022-08-30'),
+       ('5556', 2, 'AVSLU', 'O', 'JA', 'AAP', '6', DATE '2019-08-27',
+        DATE '2023-01-01', '4402', 2, '2021', 14, 'IKKE', DATE '2022-08-30');
+
+
+-- person med vedtak med forskjellige vedtakstype-kode
+insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
+values (7, 'typekode', 'Varierende', 'Type');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
+                    TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
+values ('4444', 4, 'IVERK', 'O', 'JA', 'AAP', '7', DATE '2022-08-27',
+        DATE '2023-02-04', '4402', 4, '2021', 15, 'IKKE', DATE '2022-08-30'),
+       ('4445', 4, 'IVERK', 'E', 'JA', 'AAP', '7', DATE '2019-08-27',
+        DATE '2022-02-04', '4402', 4, '2021', 16, 'IKKE', DATE '2019-08-30'),
+       ('4446', 4, 'IVERK', 'G', 'JA', 'AAP', '7', DATE '2019-12-31',
+        DATE '2023-01-01', '4402', 4, '2021', 17, 'IKKE', DATE '2019-08-30');
+
+
+--- vedtak med null til-dato
+insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
+values (8, 'nulltildato', 'Nullis', 'Tildato');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
+                    TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
+values ('5', 4, 'IVERK', 'O', 'JA', 'AAP', '8', DATE '2022-08-30', NULL,
+        '4402', 4, '2021', 18, 'IKKE', DATE '2022-08-30');

@@ -14,7 +14,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest") {
     fun `hente aktfasePerioder`() {
         val forventetVedtaksperioder = listOf(
             SakStatus(
-                sakId = "0", Status.IVERK,
+                sakId = "4", Status.IVERK,
                 KontraktPeriode(
                     LocalDate.of(2022, 8, 30),
                     null
