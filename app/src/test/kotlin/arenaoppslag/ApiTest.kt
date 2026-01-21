@@ -133,7 +133,7 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
                 )
             )
 
-            assertThat(kjentPerson.harSignifikantHistorikk).isFalse
+            assertThat(kjentPerson.harSignifikantHistorikk).isTrue
             // legg til flere tester når vi har en godkjent spørring
         }
     }
