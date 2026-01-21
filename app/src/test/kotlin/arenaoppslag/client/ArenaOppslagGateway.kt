@@ -10,10 +10,10 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
@@ -51,9 +51,9 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         ).getOrThrow()
 
     suspend fun personHarSignifikantAAPArenaHistorikk(
-        req: KanBehandleSoknadIKelvin
-    ): PersonHarSignifikantAAPArenaHistorikk =
-        gjørArenaOppslag<PersonHarSignifikantAAPArenaHistorikk, KanBehandleSoknadIKelvin>(
+        req: SignifikanteSakerRequest
+    ): SignifikanteSakerResponse =
+        gjørArenaOppslag<SignifikanteSakerResponse, SignifikanteSakerRequest>(
             "/intern/person/aap/signifikant-historikk", req
         ).getOrThrow()
 

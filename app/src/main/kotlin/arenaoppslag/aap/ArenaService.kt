@@ -7,7 +7,7 @@ import arenaoppslag.aap.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
@@ -29,7 +29,7 @@ class ArenaService(
 
     fun signifikanteSakerForPerson(
         personIdentifikatorer: List<String>, virkningstidspunkt: LocalDate
-    ): PersonHarSignifikantAAPArenaHistorikk {
+    ): SignifikanteSakerResponse {
         val relevanteArenaSaker = personRepository.hentAlleSignifikanteSakerForPerson(
                 personIdentifikatorer,
                 virkningstidspunkt
@@ -38,9 +38,7 @@ class ArenaService(
         val harSignifikantHistorikk = relevanteArenaSaker.isNotEmpty()
         val arenaSakIdListe = sorterSaker(relevanteArenaSaker).map { it.sakId }.distinct()
 
-        return PersonHarSignifikantAAPArenaHistorikk(
-            harSignifikantHistorikk, arenaSakIdListe
-        )
+        return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
 
     internal fun sorterSaker(arenaSaker: List<ArenaSak>): List<ArenaSak> {

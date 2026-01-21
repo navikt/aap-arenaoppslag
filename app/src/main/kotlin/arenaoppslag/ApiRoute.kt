@@ -5,10 +5,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
@@ -49,8 +49,8 @@ fun Route.person(arenaService: ArenaService) {
     }
     post("/person/aap/signifikant-historikk") {
         logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
-        val request: KanBehandleSoknadIKelvin = call.receive()
-        val response: PersonHarSignifikantAAPArenaHistorikk = arenaService.signifikanteSakerForPerson(
+        val request: SignifikanteSakerRequest = call.receive()
+        val response: SignifikanteSakerResponse = arenaService.signifikanteSakerForPerson(
             request.personidentifikatorer,
             request.virkningstidspunkt
         )

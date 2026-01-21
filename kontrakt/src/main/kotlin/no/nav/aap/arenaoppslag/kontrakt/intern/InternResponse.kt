@@ -7,7 +7,7 @@ public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
 
-public data class PersonHarSignifikantAAPArenaHistorikk(
+public data class SignifikanteSakerResponse(
     val harSignifikantHistorikk: Boolean,
     val signifikanteSaker: List<String> // signifikante Arena-saker, sortert på dato, nyeste først
 )

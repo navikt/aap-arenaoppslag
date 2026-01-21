@@ -8,13 +8,12 @@ import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
-import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.KanBehandleSoknadIKelvin
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonHarSignifikantAAPArenaHistorikk
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
@@ -126,8 +125,8 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     @Test
     fun `Person har relevant historikk i AAP-Arena`() {
         withTestServer { gateway ->
-            val kjentPerson: PersonHarSignifikantAAPArenaHistorikk = gateway.personHarSignifikantAAPArenaHistorikk(
-                KanBehandleSoknadIKelvin(
+            val kjentPerson: SignifikanteSakerResponse = gateway.personHarSignifikantAAPArenaHistorikk(
+                SignifikanteSakerRequest(
                     personidentifikatorer = listOf(kjentPerson),
                     virkningstidspunkt = LocalDate.of(2022, 10, 1),
                 )
