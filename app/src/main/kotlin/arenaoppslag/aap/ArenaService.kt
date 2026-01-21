@@ -35,11 +35,11 @@ class ArenaService(
                 virkningstidspunkt
             )
 
-        val kanBehandlesIKelvin = relevanteArenaSaker.isEmpty()
+        val harSignifikantHistorikk = relevanteArenaSaker.isNotEmpty()
         val arenaSakIdListe = sorterSaker(relevanteArenaSaker).map { it.sakId }.distinct()
 
         return PersonHarSignifikantAAPArenaHistorikk(
-            kanBehandlesIKelvin, arenaSakIdListe
+            harSignifikantHistorikk, arenaSakIdListe
         )
     }
 
