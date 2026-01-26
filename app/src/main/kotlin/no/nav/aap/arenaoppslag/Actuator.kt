@@ -1,4 +1,4 @@
-package arenaoppslag
+package no.nav.aap.arenaoppslag
 
 import io.ktor.http.*
 import io.ktor.server.response.*
@@ -11,10 +11,10 @@ fun Route.actuator(prometheus: PrometheusMeterRegistry) {
             call.respond(prometheus.scrape())
         }
         get("/live") {
-            call.respond(HttpStatusCode.OK, "arenaoppslag")
+            call.respond(HttpStatusCode.OK, "no/nav/aap/arenaoppslag")
         }
         get("/ready") {
-            call.respond(HttpStatusCode.OK, "arenaoppslag")
+            call.respond(HttpStatusCode.OK, "no/nav/aap/arenaoppslag")
         }
     }
 }

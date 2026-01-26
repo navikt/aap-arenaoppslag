@@ -1,8 +1,8 @@
 package arenaoppslag.database
 
-import arenaoppslag.aap.database.PersonRepository
-import arenaoppslag.aap.database.PersonRepository.Companion.historiskeRettighetkoderIArena
-import arenaoppslag.aap.database.SakRepository
+import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.database.PersonRepository.Companion.historiskeRettighetkoderIArena
+import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals

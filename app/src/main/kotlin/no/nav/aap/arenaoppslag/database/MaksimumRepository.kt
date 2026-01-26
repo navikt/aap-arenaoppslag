@@ -1,14 +1,14 @@
-package arenaoppslag.aap.database
+package no.nav.aap.arenaoppslag.database
 
-import arenaoppslag.aap.database.DbDato.fraDato
-import arenaoppslag.aap.modeller.AnnenReduksjon
-import arenaoppslag.aap.modeller.Maksimum
-import arenaoppslag.aap.modeller.Periode
-import arenaoppslag.aap.modeller.Reduksjon
-import arenaoppslag.aap.modeller.UtbetalingMedMer
-import arenaoppslag.aap.modeller.Vedtak
-import arenaoppslag.aap.modeller.VedtakFakta
-import arenaoppslag.aap.modeller.VedtaksType
+import no.nav.aap.arenaoppslag.database.DbDato.fraDato
+import no.nav.aap.arenaoppslag.modeller.AnnenReduksjon
+import no.nav.aap.arenaoppslag.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.Periode
+import no.nav.aap.arenaoppslag.modeller.Reduksjon
+import no.nav.aap.arenaoppslag.modeller.UtbetalingMedMer
+import no.nav.aap.arenaoppslag.modeller.Vedtak
+import no.nav.aap.arenaoppslag.modeller.VedtakFakta
+import no.nav.aap.arenaoppslag.modeller.VedtaksType
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.sql.Connection

@@ -1,11 +1,10 @@
-package arenaoppslag.aap.database
+package no.nav.aap.arenaoppslag.database
 
-import arenaoppslag.DbConfig
-import arenaoppslag.Metrics
+import no.nav.aap.arenaoppslag.DbConfig
+import no.nav.aap.arenaoppslag.Metrics
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import java.sql.ResultSet
-import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds

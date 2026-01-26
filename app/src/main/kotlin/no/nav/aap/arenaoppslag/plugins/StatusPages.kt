@@ -1,4 +1,4 @@
-package arenaoppslag.plugins
+package no.nav.aap.arenaoppslag.plugins
 
 import com.fasterxml.jackson.core.JacksonException
 import io.ktor.http.HttpStatusCode

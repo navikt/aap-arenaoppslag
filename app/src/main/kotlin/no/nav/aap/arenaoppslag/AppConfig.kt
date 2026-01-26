@@ -1,4 +1,4 @@
-package arenaoppslag
+package no.nav.aap.arenaoppslag
 
 import kotlin.io.path.Path
 import kotlin.io.path.readText

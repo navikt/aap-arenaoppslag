@@ -1,6 +1,6 @@
-package arenaoppslag.plugins
+package no.nav.aap.arenaoppslag.plugins
 
-import arenaoppslag.AppConfig
+import no.nav.aap.arenaoppslag.AppConfig
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import io.ktor.http.*

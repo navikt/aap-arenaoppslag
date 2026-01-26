@@ -1,6 +1,6 @@
-package arenaoppslag.aap.database
+package no.nav.aap.arenaoppslag.database
 
-import arenaoppslag.aap.database.DbDato.fraDato
+import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
