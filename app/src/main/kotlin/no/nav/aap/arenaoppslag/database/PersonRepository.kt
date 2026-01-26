@@ -7,9 +7,11 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
 import java.sql.Date
+import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.time.LocalDate
 import javax.sql.DataSource
+import kotlin.time.Duration.Companion.minutes
 
 
 class PersonRepository(private val dataSource: DataSource) {
@@ -48,6 +50,12 @@ class PersonRepository(private val dataSource: DataSource) {
             "AATFOR", // Tvungen forvaltning
             "AUNDM" // Bøker og undervisningsmatriell
         )
+
+        private fun Connection.createParameterizedQuery(queryString: String): PreparedStatement {
+            val query = prepareStatement(queryString)
+            query.queryTimeout = 90 // set a timeout in seconds, to avoid long running queries
+            return query
+        }
 
         // TODO kanskje skal vi først slå opp person_id for disse fnr-ene,
         //  og så bruke person_id i stedet for fnr i de andre spørringene?
@@ -222,7 +230,7 @@ class PersonRepository(private val dataSource: DataSource) {
 
         fun hentAllePersoner(connection: Connection): List<Person> {
             val query = "SELECT fodselsnr, fornavn, etternavn FROM person"
-            connection.prepareStatement(query).use { preparedStatement ->
+            connection.createParameterizedQuery(query).use { preparedStatement ->
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row ->
                     Person(
@@ -259,7 +267,9 @@ class PersonRepository(private val dataSource: DataSource) {
                 ).joinToString("\nUNION ALL\n"), personidentifikatorer
             )
 
-            connection.prepareStatement(query).use { preparedStatement ->
+            connection.createParameterizedQuery(query).apply {
+                queryTimeout = 15.minutes.inWholeSeconds.toInt()
+            }.use { preparedStatement ->
                 var p = 1 // parameter-indeks
                 // vedtak
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
@@ -293,7 +303,7 @@ class PersonRepository(private val dataSource: DataSource) {
         fun selectPersonMedFnrEksisterer(
             fodselsnr: String, connection: Connection
         ): Boolean {
-            return connection.prepareStatement(selectPersonMedFnrEksisterer).use { preparedStatement ->
+            return connection.createParameterizedQuery(selectPersonMedFnrEksisterer).use { preparedStatement ->
                 preparedStatement.setString(1, fodselsnr)
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.next()
