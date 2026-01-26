@@ -1,16 +1,15 @@
-package arenaoppslag
+package no.nav.aap.arenaoppslag
 
-import arenaoppslag.Metrics.prometheus
-import arenaoppslag.aap.ArenaService
-import arenaoppslag.aap.database.ArenaDatasource
-import arenaoppslag.aap.database.MaksimumRepository
-import arenaoppslag.aap.database.PeriodeRepository
-import arenaoppslag.aap.database.PersonRepository
-import arenaoppslag.aap.database.SakRepository
-import arenaoppslag.plugins.MdcKeys
-import arenaoppslag.plugins.authentication
-import arenaoppslag.plugins.bruker
-import arenaoppslag.plugins.statusPages
+import no.nav.aap.arenaoppslag.Metrics.prometheus
+import no.nav.aap.arenaoppslag.database.ArenaDatasource
+import no.nav.aap.arenaoppslag.database.MaksimumRepository
+import no.nav.aap.arenaoppslag.database.PeriodeRepository
+import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.plugins.MdcKeys
+import no.nav.aap.arenaoppslag.plugins.authentication
+import no.nav.aap.arenaoppslag.plugins.bruker
+import no.nav.aap.arenaoppslag.plugins.statusPages
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*

@@ -18,6 +18,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.server
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals

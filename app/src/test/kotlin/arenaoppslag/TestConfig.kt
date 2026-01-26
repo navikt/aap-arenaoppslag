@@ -2,6 +2,9 @@ package arenaoppslag
 
 import arenaoppslag.util.Fakes
 import arenaoppslag.util.port
+import no.nav.aap.arenaoppslag.AppConfig
+import no.nav.aap.arenaoppslag.AzureConfig
+import no.nav.aap.arenaoppslag.DbConfig
 import java.net.URI
 
 internal object TestConfig {

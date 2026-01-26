@@ -1,12 +1,12 @@
 package arenaoppslag.database
 
-import arenaoppslag.aap.ArenaService
-import arenaoppslag.aap.database.MaksimumRepository
-import arenaoppslag.aap.database.PeriodeRepository
-import arenaoppslag.aap.database.PersonRepository
-import arenaoppslag.aap.database.SakRepository
+import no.nav.aap.arenaoppslag.ArenaService
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import no.nav.aap.arenaoppslag.database.MaksimumRepository
+import no.nav.aap.arenaoppslag.database.PeriodeRepository
+import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

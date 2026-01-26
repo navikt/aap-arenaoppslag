@@ -1,4 +1,4 @@
-package arenaoppslag.aap.database
+package no.nav.aap.arenaoppslag.database
 
 import java.sql.Date
 
