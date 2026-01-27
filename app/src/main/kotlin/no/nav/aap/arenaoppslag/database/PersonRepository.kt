@@ -53,7 +53,7 @@ class PersonRepository(private val dataSource: DataSource) {
 
         private fun Connection.createParameterizedQuery(queryString: String): PreparedStatement {
             val query = prepareStatement(queryString)
-            query.queryTimeout = 90 // set a timeout in seconds, to avoid long running queries
+            query.queryTimeout = 600 // set a timeout in seconds, to avoid long running queries
             return query
         }
 

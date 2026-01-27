@@ -30,10 +30,10 @@ internal object ArenaDatasource {
             isAutoCommit = true // performance optimization for read-only operations, saves transaction work
             metricRegistry = Metrics.prometheus
 
-            // Ikke vent for alltid på svar fra Oracle
+            // By default, there is no read timeout, and an application might hang indefinitely in case of a network failure.
             addDataSourceProperty(
                 "oracle.jdbc.ReadTimeout",
-                2.minutes.inWholeMilliseconds.toString()
+                12.minutes.inWholeMilliseconds.toString()
             )
         })
 }
