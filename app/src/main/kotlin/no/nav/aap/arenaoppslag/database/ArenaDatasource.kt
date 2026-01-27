@@ -18,8 +18,8 @@ internal object ArenaDatasource {
             username = dbConfig.username
             password = dbConfig.password
             driverClassName = dbConfig.driver
-            initializationFailTimeout = 5.seconds.inWholeMilliseconds
-            connectionTimeout = 1.seconds.inWholeMilliseconds
+            initializationFailTimeout = 15.seconds.inWholeMilliseconds
+            connectionTimeout = 5.seconds.inWholeMilliseconds
             keepaliveTime = 2.minutes.inWholeMilliseconds
             maxLifetime = 5.minutes.inWholeMilliseconds
             connectionTestQuery = "SELECT 1 FROM DUAL"
@@ -29,6 +29,12 @@ internal object ArenaDatasource {
             isReadOnly = true
             isAutoCommit = true // performance optimization for read-only operations, saves transaction work
             metricRegistry = Metrics.prometheus
+
+            // By default, there is no read timeout, and an application might hang indefinitely in case of a network failure.
+            addDataSourceProperty(
+                "oracle.jdbc.ReadTimeout",
+                12.minutes.inWholeMilliseconds.toString()
+            )
         })
 }
 
