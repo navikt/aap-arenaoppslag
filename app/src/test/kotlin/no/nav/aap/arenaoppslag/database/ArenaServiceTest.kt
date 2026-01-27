@@ -1,4 +1,4 @@
-package arenaoppslag.database
+package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.ArenaService
 import io.mockk.impl.annotations.MockK

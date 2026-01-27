@@ -1,4 +1,4 @@
-package arenaoppslag.util
+package no.nav.aap.arenaoppslag.util
 
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm

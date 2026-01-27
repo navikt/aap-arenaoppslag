@@ -1,8 +1,6 @@
-package arenaoppslag.database
+package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.HistorikkRepository.Companion.historiskeRettighetkoderIArena
-import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

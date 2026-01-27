@@ -1,12 +1,11 @@
-package arenaoppslag
+package no.nav.aap.arenaoppslag
 
-import arenaoppslag.util.Fakes
-import arenaoppslag.util.port
+import no.nav.aap.arenaoppslag.util.Fakes
+import no.nav.aap.arenaoppslag.util.port
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import no.nav.aap.arenaoppslag.server
 
 fun main() {
     val fakes = Fakes()

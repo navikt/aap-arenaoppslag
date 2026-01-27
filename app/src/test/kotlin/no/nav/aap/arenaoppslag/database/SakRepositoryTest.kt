@@ -1,6 +1,5 @@
-package arenaoppslag.database
+package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import org.junit.jupiter.api.Assertions.assertEquals

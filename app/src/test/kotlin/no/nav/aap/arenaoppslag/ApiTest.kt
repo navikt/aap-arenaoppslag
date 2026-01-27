@@ -1,9 +1,9 @@
-package arenaoppslag
+package no.nav.aap.arenaoppslag
 
-import arenaoppslag.client.ArenaOppslagGateway
-import arenaoppslag.database.H2TestBase
-import arenaoppslag.util.AzureTokenGen
-import arenaoppslag.util.Fakes
+import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
+import no.nav.aap.arenaoppslag.database.H2TestBase
+import no.nav.aap.arenaoppslag.util.AzureTokenGen
+import no.nav.aap.arenaoppslag.util.Fakes
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.http.*
@@ -18,7 +18,6 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
-import no.nav.aap.arenaoppslag.server
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
