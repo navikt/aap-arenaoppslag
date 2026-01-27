@@ -1,7 +1,6 @@
-package arenaoppslag.database
+package no.nav.aap.arenaoppslag.database
 
-import arenaoppslag.TestConfig
-import no.nav.aap.arenaoppslag.database.ArenaDatasource
+import no.nav.aap.arenaoppslag.TestConfig
 import org.flywaydb.core.Flyway
 import javax.sql.DataSource
 

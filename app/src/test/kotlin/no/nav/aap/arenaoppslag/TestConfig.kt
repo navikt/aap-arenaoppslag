@@ -1,10 +1,7 @@
-package arenaoppslag
+package no.nav.aap.arenaoppslag
 
-import arenaoppslag.util.Fakes
-import arenaoppslag.util.port
-import no.nav.aap.arenaoppslag.AppConfig
-import no.nav.aap.arenaoppslag.AzureConfig
-import no.nav.aap.arenaoppslag.DbConfig
+import no.nav.aap.arenaoppslag.util.Fakes
+import no.nav.aap.arenaoppslag.util.port
 import java.net.URI
 
 internal object TestConfig {
@@ -23,7 +20,7 @@ internal object TestConfig {
             azure = AzureConfig(
                 jwksUri = URI.create("http://localhost:${fakes.azure.port()}/jwks").toString(),
                 issuer = "azure",
-                clientId = "arenaoppslag"
+                clientId = "no/nav/aap/arenaoppslag"
             )
         )
     }

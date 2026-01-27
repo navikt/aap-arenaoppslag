@@ -1,4 +1,4 @@
-package arenaoppslag.util
+package no.nav.aap.arenaoppslag.util
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
@@ -38,7 +38,7 @@ fun Application.azure() {
     }
     routing {
         post("/token") {
-            val token = AzureTokenGen("azure", "arenaoppslag").generate()
+            val token = AzureTokenGen("azure", "no/nav/aap/arenaoppslag").generate()
             call.respond(TestToken(access_token = token))
         }
         get("/jwks") {

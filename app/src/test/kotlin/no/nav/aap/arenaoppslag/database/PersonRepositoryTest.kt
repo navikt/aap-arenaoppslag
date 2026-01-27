@@ -1,6 +1,5 @@
-package arenaoppslag.database
+package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.database.PersonRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
