@@ -11,7 +11,7 @@ plugins {
 val ktorVersion = "3.3.3"
 
 application {
-    mainClass.set("arenaoppslag.AppKt")
+    mainClass.set("no.nav.aap.arenaoppslag.AppKt")
 }
 
 detekt {
