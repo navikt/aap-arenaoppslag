@@ -3,6 +3,7 @@ package arenaoppslag.database
 import no.nav.aap.arenaoppslag.ArenaService
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -29,7 +30,14 @@ class ArenaServiceTest {
         val maksimumRepository = MaksimumRepository(datasource)
         val periodeRepository = PeriodeRepository(datasource)
         val sakRepository = SakRepository(datasource)
-        underTest = ArenaService(personRepository, maksimumRepository, periodeRepository, sakRepository)
+        val historikkRepository = HistorikkRepository(datasource)
+        underTest = ArenaService(
+            personRepository,
+            maksimumRepository,
+            periodeRepository,
+            sakRepository,
+            historikkRepository
+        )
     }
 
     @Test
