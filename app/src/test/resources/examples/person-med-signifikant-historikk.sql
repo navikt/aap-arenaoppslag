@@ -1,4 +1,3 @@
-
 -- Eksempelspørring for å finne ut om en person har nyere historikk i Arena
 -- som kan være signifikant for om personen kan tas inn i Kelvin eller ikke.
 
@@ -18,7 +17,7 @@ WHERE v.person_id = ?
         OR
     (vedtaktypekode = 'S' AND (fra_dato >= DATE '2024-01-01' OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
     )
-  AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= DATE '2024-06-15')                       -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+  AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= DATE '2024-06-15')     -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
 UNION ALL
 -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres.
 -- Dersom den er null, er klagen fortsatt under behandling.
@@ -115,9 +114,5 @@ FROM sim_utbetalingsgrunnlag ssu
 WHERE ssu.person_id = ?
   -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
   AND su.person_id IS NULL -- personen finnes ikke enda i SPESIALUTBETALINGER, og kommer kanskje senere
-  AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3)
--- ignorer gamle simuleringer som ikke ble noe av
-
--- parametre:
--- {1: 997, 2: DATE '2024-06-17', 3: DATE '2023-09-04', 4: DATE '2024-06-17', 5: 997, 6: DATE '2024-06-17', 7: 997, 8: 997, 9: 997, 10: 997};
-
+  AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
+;
