@@ -67,7 +67,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -197,7 +197,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
         WHERE 
             ssu.person_id = ?
-            -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre felt, så blir tregt
+            -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
             AND su.person_id IS NULL -- personen finnes ikke enda i SPESIALUTBETALINGER, og kommer kanskje senere 
             AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
         """.trimIndent()
