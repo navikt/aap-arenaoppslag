@@ -31,7 +31,7 @@ class ArenaService(
         personIdentifikatorer: List<String>, virkningstidspunkt: LocalDate
     ): SignifikanteSakerResponse {
         val relevanteArenaSaker = personRepository.hentAlleSignifikanteSakerForPerson(
-                personIdentifikatorer,
+                personIdentifikatorer.toSet(),
                 virkningstidspunkt
             )
 
@@ -50,10 +50,8 @@ class ArenaService(
     }
 
     fun personEksistererIAapArena(personidentifikatorer: List<String>): PersonEksistererIAAPArena {
-        return PersonEksistererIAAPArena(personidentifikatorer.map { personidentifikator ->
-            personRepository.hentEksistererIAAPArena(personidentifikator)
-        }.any { it })
-
+        val personId = personRepository.hentPersonIdHvisEksisterer(personidentifikatorer.toSet())
+        return PersonEksistererIAAPArena(personId != null)
     }
 
     fun hentPerioder(personidentifikator: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
