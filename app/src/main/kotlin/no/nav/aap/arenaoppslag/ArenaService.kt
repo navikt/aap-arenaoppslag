@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag
 
+import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -19,7 +20,8 @@ class ArenaService(
     private val personRepository: PersonRepository,
     private val maksimumRepository: MaksimumRepository,
     private val periodeRepository: PeriodeRepository,
-    private val sakRepository: SakRepository
+    private val sakRepository: SakRepository,
+    private val historikkRepository: HistorikkRepository
 ) {
 
     @TestOnly
@@ -36,7 +38,7 @@ class ArenaService(
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
         }
 
-        val relevanteArenaSaker = personRepository.hentAlleSignifikanteSakerForPerson(
+        val relevanteArenaSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(
                 personId,
                 virkningstidspunkt
             )

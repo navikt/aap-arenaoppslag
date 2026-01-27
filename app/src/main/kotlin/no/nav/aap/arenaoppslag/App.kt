@@ -26,6 +26,7 @@ import io.ktor.server.routing.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
+import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -92,7 +93,8 @@ fun Application.server(
             val personRepository = PersonRepository(datasource)
             val maksimumRepository = MaksimumRepository(datasource)
             val sakRepository = SakRepository(datasource)
-            val arenaService = ArenaService(personRepository, maksimumRepository, periodeRepository, sakRepository)
+            val historikkRepository = HistorikkRepository(datasource)
+            val arenaService = ArenaService(personRepository, maksimumRepository, periodeRepository, sakRepository, historikkRepository)
             route("/intern") {
                 perioder(arenaService)
                 person(arenaService)
