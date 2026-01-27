@@ -22,17 +22,17 @@ class PersonRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentPersonIdHvisEksisterer(fodselsnr: Set<String>): String? {
+    fun hentPersonIdHvisEksisterer(fodselsnr: Set<String>): Int? {
         return dataSource.connection.use { con ->
             return selectPersonIdFraFnr(fodselsnr, con)
         }
     }
 
     fun hentAlleSignifikanteSakerForPerson(
-        personIdentifikatorer: Set<String>, søknadMottattPå: LocalDate
+        personId: Int, `søknadMottattPå`: LocalDate
     ): List<ArenaSak> {
         return dataSource.connection.use { con ->
-            hentAlleSignifikanteSakerForPerson(personIdentifikatorer, søknadMottattPå, con)
+            hentAlleSignifikanteSakerForPerson(personId, søknadMottattPå, con)
         }
     }
 
@@ -69,7 +69,7 @@ class PersonRepository(private val dataSource: DataSource) {
 
         private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
 
-        fun selectPersonIdFraFnr(fodselsnr: Set<String>, connection: Connection): String? {
+        fun selectPersonIdFraFnr(fodselsnr: Set<String>, connection: Connection): Int? {
             val baseQuery = """
                 select person_id from person
                 where fodselsnr in ($FNR_LISTE_TOKEN)
@@ -78,7 +78,7 @@ class PersonRepository(private val dataSource: DataSource) {
 
             val liste = connection.createParameterizedQuery(query).use { preparedStatement ->
                 val resultSet = preparedStatement.executeQuery()
-                resultSet.map { row -> row.getString("person_id") }
+                resultSet.map { row -> row.getInt("person_id") }
             }
 
             require(liste.size <= 1) { "Forventet maks en person_id for fnr-liste" }
@@ -98,9 +98,8 @@ class PersonRepository(private val dataSource: DataSource) {
         SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
           FROM 
               vedtak v 
-              JOIN person p on p.person_id=v.person_id
         
-        WHERE p.fodselsnr IN ($FNR_LISTE_TOKEN)
+        WHERE v.person_id = ?
           AND v.utfallkode != 'AVBRUTT'
           AND v.rettighetkode IN ('AA115', 'AAP') 
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
@@ -128,9 +127,8 @@ class PersonRepository(private val dataSource: DataSource) {
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
-            JOIN person      p ON p.person_id = v.person_id
         WHERE
-            p.fodselsnr IN ($FNR_LISTE_TOKEN)
+            v.person_id = ?
             AND v.utfallkode != 'AVBRUTT'
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
             AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå string-til-dato konvertering for veldig gamle rader
@@ -160,10 +158,9 @@ class PersonRepository(private val dataSource: DataSource) {
             v.rettighetkode
         FROM
             vedtak v
-            JOIN person      p ON p.person_id = v.person_id
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
-            p.fodselsnr IN ($FNR_LISTE_TOKEN)
+            v.person_id = ?
             AND rettighetkode = 'ANKE'
             AND utfallkode != 'AVBRUTT'
             AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå string-til-dato konvertering for veldig gamle rader
@@ -192,10 +189,9 @@ class PersonRepository(private val dataSource: DataSource) {
             v.rettighetkode
         FROM
             vedtak v
-            JOIN person p ON p.person_id = v.person_id
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
-            p.fodselsnr IN ($FNR_LISTE_TOKEN)
+            v.person_id = ?
             AND rettighetkode = 'TILBBET'
             AND utfallkode != 'AVBRUTT'            
             AND vf.vedtakfaktakode = 'INNVF'
@@ -218,9 +214,8 @@ class PersonRepository(private val dataSource: DataSource) {
         FROM
             spesialutbetaling su
             JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
-            JOIN person p ON p.person_id = su.person_id
         WHERE
-            p.fodselsnr IN ($FNR_LISTE_TOKEN)
+            su.person_id = ?
             -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
             -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
             AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
@@ -242,10 +237,9 @@ class PersonRepository(private val dataSource: DataSource) {
             sim_utbetalingsgrunnlag ssu
             LEFT JOIN spesialutbetaling su ON su.person_id = ssu.person_id
             JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
-            JOIN person p ON p.person_id = ssu.person_id
         WHERE 
-            p.fodselsnr IN ($FNR_LISTE_TOKEN)
-            -- MERK: ingen index i sim_utbetalingsgrunnlag på reg_dato eller andre felt, så blir tregt
+            ssu.person_id = ?
+            -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre felt, så blir tregt
             AND su.person_id IS NULL -- personen finnes ikke enda i SPESIALUTBETALINGER, og kommer kanskje senere 
             AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
         """.trimIndent()
@@ -275,11 +269,11 @@ class PersonRepository(private val dataSource: DataSource) {
         const val tidsBufferUkerGenerell = 78L
         const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
         fun hentAlleSignifikanteSakerForPerson(
-            personidentifikatorer: Set<String>, søknadMottattPå: LocalDate, connection: Connection
+            personId: Int, `søknadMottattPå`: LocalDate, connection: Connection
         ): List<ArenaSak> {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
             val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
-            val query = queryMedFodselsnummerListe(
+            val query =
                 listOf(
                     selectKunRelevanteVedtak,
                     selectKunRelevanteKlager,
@@ -287,20 +281,28 @@ class PersonRepository(private val dataSource: DataSource) {
                     selectKunRelevanteTilbakebetalinger,
                     selectKunRelevanteSpesialutbetalinger,
                     selectKunRelevanteUferdigeSpesialutbetalinger
-                ).joinToString("\nUNION ALL\n"), personidentifikatorer
-            )
+                ).joinToString("\nUNION ALL\n")
 
             connection.createParameterizedQuery(query).apply {
                 queryTimeout = 15.minutes.inWholeSeconds.toInt()
             }.use { preparedStatement ->
                 var p = 1 // parameter-indeks
                 // vedtak
+                preparedStatement.setInt(p++, personId)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 preparedStatement.setDate(p++, Date.valueOf(nyesteTillateStans))
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 // klager
+                preparedStatement.setInt(p++, personId)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
-                // de andre del-spørringene har ikke parametre
+                // anker
+                preparedStatement.setInt(p++, personId)
+                // tilbakebetalinger
+                preparedStatement.setInt(p++, personId)
+                // spesialutbetalinger
+                preparedStatement.setInt(p++, personId)
+                // sim_utbetalingsgrunnlag
+                preparedStatement.setInt(p++, personId)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenasak(row) }

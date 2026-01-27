@@ -30,8 +30,14 @@ class ArenaService(
     fun signifikanteSakerForPerson(
         personIdentifikatorer: List<String>, virkningstidspunkt: LocalDate
     ): SignifikanteSakerResponse {
+        val personId: Int? = personRepository.hentPersonIdHvisEksisterer(personIdentifikatorer.toSet())
+        if (personId == null) {
+            // early out
+            return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
+        }
+
         val relevanteArenaSaker = personRepository.hentAlleSignifikanteSakerForPerson(
-                personIdentifikatorer.toSet(),
+                personId,
                 virkningstidspunkt
             )
 

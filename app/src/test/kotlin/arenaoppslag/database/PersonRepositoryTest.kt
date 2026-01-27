@@ -25,7 +25,7 @@ class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer
     @Test
     fun `ingen saker for person som ikke finnes`() {
         val alleVedtak = personRepository.hentAlleSignifikanteSakerForPerson(
-            setOf("finnes_ikke"),
+            personId = 54601 /* finnes ikke */,
             testDato,
         )
         assertThat(alleVedtak).isEmpty()
@@ -33,44 +33,47 @@ class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer
 
     @Test
     fun `ingen saker for person med kun vedtak på historiske rettighetkoder`() {
-        val testPerson = setOf("kun_gamle")
-        val alleSaker:List<ArenaSak> = testPerson.flatMap { sakRepository.hentSaker(it) }
+        val testPerson = "kun_gamle"
+        val testPersonId = 992
+        val alleSaker:List<ArenaSak> = sakRepository.hentSaker(testPerson)
         val kunHistoriske =
             alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2)
 
-        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPerson, testDato)
+        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
         assertThat(relevanteSaker).isEmpty()
     }
 
     @Test
     fun `finner saker for person med vedtak på kun nye rettighetkoder`() {
-        val testPerson = setOf("kun_nye")
-        val alleSaker = testPerson.flatMap { sakRepository.hentSaker(it) }
+        val testPersonFnr = "kun_nye"
+        val testPersonId = 996
+        val alleSaker = sakRepository.hentSaker(testPersonFnr)
         val kunHistoriske =
             alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).isEmpty() // ingen historiske koder
 
-        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPerson, testDato)
+        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
         assertThat(relevanteSaker).hasSize(2)
     }
 
     @Test
     fun `finner saker for person med vedtak på både nye og historiske rettighetkoder`() {
-        val testPerson = setOf("blanding")
-        val alleSaker = testPerson.flatMap { sakRepository.hentSaker(it) }
+        val testPersonFnr = "blanding"
+        val testPersonId = 997
+        val alleSaker = sakRepository.hentSaker(testPersonFnr)
         val kunHistoriske =
             alleSaker.map { it.rettighetkode }.filter { it in historiskeRettighetkoderIArena }
         assertThat(kunHistoriske).hasSize(2) // noen historiske koder
 
-        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPerson, testDato)
+        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
         assertThat(relevanteSaker).hasSize(1)
     }
 
     @Test
     fun `kombinert spørring for relevant historikk kjører uten feil`(){
-        val testPerson = setOf("blanding")
-        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPerson, testDato)
+        val testPersonId = 997
+        val relevanteSaker = personRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
         assertThat(relevanteSaker).hasSize(1)
     }
 
