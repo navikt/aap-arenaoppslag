@@ -57,6 +57,7 @@ class ArenaService(
         return utenSluttdato + medSluttdato
     }
 
+    // TODO vurder om vi skal cache en fnr->personId mapping her for å unngå gjentatte kall mot databasen
     fun personEksistererIAapArena(personidentifikatorer: List<String>): PersonEksistererIAAPArena {
         val personId = personRepository.hentPersonIdHvisEksisterer(personidentifikatorer.toSet())
         return PersonEksistererIAAPArena(personId != null)

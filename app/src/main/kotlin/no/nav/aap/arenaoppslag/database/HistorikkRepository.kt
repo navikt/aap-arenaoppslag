@@ -43,10 +43,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
             return query
         }
 
-        // TODO kanskje skal vi først slå opp person_id for disse fnr-ene,
-        //  og så bruke person_id i stedet for fnr i de andre spørringene?
-        //  og cache person-id lokalt i ArenaService?
-
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
         // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
@@ -62,7 +58,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         
         WHERE v.person_id = ?
           AND v.utfallkode != 'AVBRUTT'
-          AND v.rettighetkode IN ('AA115', 'AAP') 
+          AND v.rettighetkode IN ('AA115', 'AAP')
+          AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND NOT ((fra_dato IS NULL AND til_dato IS NULL) AND vedtakstatuskode NOT IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
@@ -92,7 +89,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND v.utfallkode != 'AVBRUTT'
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå string-til-dato konvertering for veldig gamle rader
+            AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
@@ -124,7 +121,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'ANKE'
             AND utfallkode != 'AVBRUTT'
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå string-til-dato konvertering for veldig gamle rader
+            AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'KJREGDATO'
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ADD_MONTHS(TRUNC(SYSDATE), -36) ) -- stor tidsbuffer her, da det kan ankes oppover i rettsvesenet.
             -- Dersom anken ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
@@ -155,6 +152,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'TILBBET'
             AND utfallkode != 'AVBRUTT'            
+            AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
             AND vf.vedtakverdi IS NULL
@@ -180,8 +178,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
             -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
             AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
-            -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så blir tregt
-
+            -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
         """.trimIndent()
 
         // S6: Hent uferdige spesialutbetalinger for personen, hvor kun simulering av utbetaling er gjort
