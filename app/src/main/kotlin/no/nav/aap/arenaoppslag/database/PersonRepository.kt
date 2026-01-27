@@ -22,8 +22,14 @@ class PersonRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentPersonIdHvisEksisterer(fodselsnr: Set<String>): String? {
+        return dataSource.connection.use { con ->
+            return selectPersonIdFraFnr(fodselsnr, con)
+        }
+    }
+
     fun hentAlleSignifikanteSakerForPerson(
-        personIdentifikatorer: List<String>, søknadMottattPå: LocalDate
+        personIdentifikatorer: Set<String>, søknadMottattPå: LocalDate
     ): List<ArenaSak> {
         return dataSource.connection.use { con ->
             hentAlleSignifikanteSakerForPerson(personIdentifikatorer, søknadMottattPå, con)
@@ -62,6 +68,23 @@ class PersonRepository(private val dataSource: DataSource) {
         //  og cache person-id lokalt i ArenaService?
 
         private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
+
+        fun selectPersonIdFraFnr(fodselsnr: Set<String>, connection: Connection): String? {
+            val baseQuery = """
+                select person_id from person
+                where fodselsnr in ($FNR_LISTE_TOKEN)
+                """
+            val query = queryMedFodselsnummerListe(baseQuery, fodselsnr)
+
+            val liste = connection.createParameterizedQuery(query).use { preparedStatement ->
+                val resultSet = preparedStatement.executeQuery()
+                resultSet.map { row -> row.getString("person_id") }
+            }
+
+            require(liste.size <= 1) { "Forventet maks en person_id for fnr-liste" }
+
+            return liste.firstOrNull()
+        }
 
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
@@ -109,8 +132,8 @@ class PersonRepository(private val dataSource: DataSource) {
         WHERE
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
             AND v.utfallkode != 'AVBRUTT'
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå string-til-dato konvertering for veldig gamle rader
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå string-til-dato konvertering for veldig gamle rader
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
@@ -201,7 +224,7 @@ class PersonRepository(private val dataSource: DataSource) {
             -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
             -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
             AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
-            -- MERK: ingen index i spesialutbetaling på reg_dato eller andre dato-felt, så blir tregt
+            -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så blir tregt
 
         """.trimIndent()
 
@@ -224,7 +247,7 @@ class PersonRepository(private val dataSource: DataSource) {
             p.fodselsnr IN ($FNR_LISTE_TOKEN)
             -- MERK: ingen index i sim_utbetalingsgrunnlag på reg_dato eller andre felt, så blir tregt
             AND su.person_id IS NULL -- personen finnes ikke enda i SPESIALUTBETALINGER, og kommer kanskje senere 
-            AND ssu.reg_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
+            AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
         """.trimIndent()
 
 
@@ -242,7 +265,7 @@ class PersonRepository(private val dataSource: DataSource) {
             }
         }
 
-        private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: List<String>): String {
+        private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: Set<String>): String {
             // Oracle lar oss ikke bruke liste-parameter i prepared statements, så vi bygger inn fødselsnumrene direkte
             // i spørringen her
             val allePersonensFodselsnummer = fodselsnummerene.joinToString(separator = ",") { "'$it'" }
@@ -252,7 +275,7 @@ class PersonRepository(private val dataSource: DataSource) {
         const val tidsBufferUkerGenerell = 78L
         const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
         fun hentAlleSignifikanteSakerForPerson(
-            personidentifikatorer: List<String>, søknadMottattPå: LocalDate, connection: Connection
+            personidentifikatorer: Set<String>, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaSak> {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
             val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
