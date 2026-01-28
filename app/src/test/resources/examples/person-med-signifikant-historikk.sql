@@ -18,7 +18,7 @@ WHERE v.person_id = ?
         OR
     (vedtaktypekode = 'S' AND (fra_dato >= DATE '2024-01-01' OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
     )
-  AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= '2024-06-15') -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+  AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= DATE '2024-06-15') -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
 
 UNION ALL
 
