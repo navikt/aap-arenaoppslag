@@ -94,14 +94,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
-            -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
-            -- Vi bruker vedtakfaktakode=K_UTFALL fremfor utfallkode=JA her, fordi vi ser uventet utfallkode for noen innvilgede klager i produksjon.
-            AND NOT EXISTS(SELECT 1 from vedtakfakta vf_innvilget 
-                WHERE vf_innvilget.vedtak_id = v.vedtak_id -- samme vedtaket 
-                    AND vf_innvilget.vedtakfaktakode = 'K_UTFALL'
-                    AND vf_innvilget.vedtakverdi = 'JA' -- er innvilget (kan evt utvides med flere verdier)
-                    AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) -- er minst 6 mnd siden
-                )
+            -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
+            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) AND v.utfallkode IN ('JA', 'DELVIS' ) )
         """.trimIndent()
 
         // S3: Hent alle AAP-anker med relevant historikk for personen
@@ -155,11 +149,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
-            AND vf.vedtakverdi IS NULL
+            AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
+            -- SPM: finnes det en dato eller annet vi kan lese for å vite når tilbakebetalingen er fullført av personen?
         """.trimIndent()
 
-        // TODO kan kanskje droppe å joine med vedtak for å få sak_id, men heller ta det som et query etterpå,
-        // for å hente sak_id for alle vedtak_id vi får her?
         // S5: Hent alle spesialutbetalinger med relevant historikk for personen
         @Language("OracleSql")
         val selectKunRelevanteSpesialutbetalinger = """
@@ -193,15 +186,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
             'SIM_SPESIAL' AS rettighetkode
         FROM
             sim_utbetalingsgrunnlag ssu
-            LEFT JOIN spesialutbetaling su ON su.person_id = ssu.person_id
             JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
         WHERE 
             ssu.person_id = ?
             -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
-            AND su.person_id IS NULL -- personen finnes ikke enda i SPESIALUTBETALINGER, og kommer kanskje senere 
             AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
+            -- SPM: er denne spørringen unødvendig, vil feks. et tilhørende vedtak for personen uansett  
+            -- finnes i Vedtak (TILBBET) eller i Spesialutbetaling?
         """.trimIndent()
-
 
         const val tidsBufferUkerGenerell = 78L
         const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
