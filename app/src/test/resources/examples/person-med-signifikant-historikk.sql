@@ -42,7 +42,7 @@ WHERE
   AND vf.vedtakfaktakode = 'INNVF'
   -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.
   -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
-  AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
+  AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= DATE '2024-06-15' )
   -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
   AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) AND v.utfallkode IN ('JA', 'DELVIS' ) )
 
@@ -132,5 +132,5 @@ WHERE
   -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
   AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
 -- SPM: er denne spørringen unødvendig, vil feks. et tilhørende vedtak for personen uansett
--- finnes i Vedtak (TILBBET) eller i Spesialutbetaling? {1: 4873545, 2: DATE '2021-04-03', 3: DATE '2020-06-20', 4: DATE '2021-04-03', 5: 4873545, 6: DATE '2021-04-03', 7: 4873545, 8: 4873545, 9: 4873545, 10: 4873545};
+-- finnes i Vedtak (TILBBET) eller i Spesialutbetaling?
 ;
