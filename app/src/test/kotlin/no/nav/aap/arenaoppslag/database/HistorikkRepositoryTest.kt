@@ -51,7 +51,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
         assertThat(kunHistoriske).isEmpty() // ingen historiske koder
 
         val relevanteSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
-        assertThat(relevanteSaker).hasSize(2)
+        assertThat(relevanteSaker).hasSize(3)
     }
 
     @Test
@@ -64,14 +64,14 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
         assertThat(kunHistoriske).hasSize(2) // noen historiske koder
 
         val relevanteSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
-        assertThat(relevanteSaker).hasSize(1)
+        assertThat(relevanteSaker).hasSize(2)
     }
 
     @Test
     fun `kombinert spørring for relevant historikk kjører uten feil`(){
         val testPersonId = 997
         val relevanteSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
-        assertThat(relevanteSaker).hasSize(1)
+        assertThat(relevanteSaker).hasSize(2)
     }
 
 }

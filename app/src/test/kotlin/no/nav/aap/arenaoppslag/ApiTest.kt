@@ -137,6 +137,20 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
         }
     }
 
+    @Test
+    fun `Person har IKKE relevant historikk i AAP-Arena`() {
+        withTestServer { gateway ->
+            val kjentPerson: SignifikanteSakerResponse = gateway.personHarSignifikantAAPArenaHistorikk(
+                SignifikanteSakerRequest(
+                    personidentifikatorer = listOf(ukjentPerson),
+                    virkningstidspunkt = LocalDate.of(2022, 10, 1),
+                )
+            )
+
+            assertThat(kjentPerson.harSignifikantHistorikk).isFalse
+        }
+    }
+
 
     private fun withTestServer(testBody: suspend (ArenaOppslagGateway) -> Unit) {
         val config = TestConfig.default(Fakes())
