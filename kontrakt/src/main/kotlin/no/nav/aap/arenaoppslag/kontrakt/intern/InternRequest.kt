@@ -8,11 +8,15 @@ public data class InternVedtakRequest(
     val tilOgMedDato: LocalDate = LocalDate.MAX
 )
 
-public data class SakerRequest (
+public data class SakerRequest(
     val personidentifikatorer: List<String>
 )
 
-public data class SignifikanteSakerRequest (
+public data class SignifikanteSakerRequest(
     val personidentifikatorer: List<String>,
     val virkningstidspunkt: LocalDate, // datoen søknaden ble mottatt, feks. per post
+)
+
+public data class NyereSakerRequest(
+    val personidentifikatorer: List<String>,
 )

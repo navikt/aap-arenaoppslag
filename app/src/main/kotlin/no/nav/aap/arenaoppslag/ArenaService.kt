@@ -6,6 +6,7 @@ import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
+import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
@@ -61,6 +62,20 @@ class ArenaService(
     fun personEksistererIAapArena(personidentifikatorer: List<String>): PersonEksistererIAAPArena {
         val personId = personRepository.hentPersonIdHvisEksisterer(personidentifikatorer.toSet())
         return PersonEksistererIAAPArena(personId != null)
+    }
+
+    fun personHarNyereHistorikk(personidentifikatorer: List<String>): NyereSakerResponse {
+        val personId: Int? = personRepository.hentPersonIdHvisEksisterer(personidentifikatorer.toSet())
+        if (personId == null) {
+            // early out
+            return NyereSakerResponse(false, emptyList())
+        }
+        val nyereSaker = historikkRepository.hentIkkeAvbrutteSakerSisteFemÅrForPerson(personId)
+
+        val harNyereHistorikk = nyereSaker.isNotEmpty()
+        val arenaSakIdListe = sorterSaker(nyereSaker).map { it.sakId }.distinct()
+
+        return NyereSakerResponse(harNyereHistorikk, arenaSakIdListe)
     }
 
     fun hentPerioder(personidentifikator: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
