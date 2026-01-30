@@ -155,7 +155,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
-            CAST(NULL AS DATE)                    AS til_dato,
+            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode
         FROM
             vedtak v
@@ -164,9 +164,18 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'ANKE'
             AND utfallkode != 'AVBRUTT'
-            AND v.MOD_DATO >= DATE '2020-01-01'
+            AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND vf.vedtakfaktakode = 'KJREGDATO'
+            AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ADD_MONTHS(TRUNC(SYSDATE), -36) ) -- stor tidsbuffer her, da det kan ankes oppover i rettsvesenet.
+            -- Dersom anken ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger.
+            -- Vi bruker vedtakfaktakode=KJENNELSE fremfor vedtak.utfallkode=JA her, fordi vi ser uventet utfallkode for noen innvilgede anker i produksjon.
+            AND NOT EXISTS(SELECT 1 from vedtakfakta vf_innvilget 
+                WHERE vf_innvilget.vedtak_id = v.vedtak_id -- samme vedtaket 
+                    AND vf_innvilget.vedtakfaktakode = 'KJENNELSE'
+                    AND vf_innvilget.vedtakverdi = 'JA' -- er innvilget (kan evt utvides med flere verdier)
+                    AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) -- er minst 6 mnd siden
+                )
         """.trimIndent()
-        // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
 
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
@@ -178,7 +187,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
-            CAST(NULL AS DATE)                    AS til_dato,
+            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode
         FROM
             vedtak v
@@ -187,9 +196,12 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'TILBBET'
             AND utfallkode != 'AVBRUTT'            
-            AND v.MOD_DATO >= DATE '2020-01-01'
+            AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND vf.vedtakfaktakode = 'INNVF'
+            -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
+            AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
+            -- SPM: finnes det en dato eller annet vi kan lese for å vite når tilbakebetalingen er fullført av personen?
         """.trimIndent()
-        // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
 
         // S5: Hent alle spesialutbetalinger med relevant historikk for personen
         @Language("OracleSql")
@@ -206,9 +218,11 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
         WHERE
             su.person_id = ?
-            AND su.MOD_DATO >= DATE '2020-01-01'
-      """.trimIndent()
-        // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
+            -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
+            -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
+            AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
+            -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
+        """.trimIndent()
 
         // S6: Hent uferdige spesialutbetalinger for personen, hvor kun simulering av utbetaling er gjort
         @Language("OracleSql")
