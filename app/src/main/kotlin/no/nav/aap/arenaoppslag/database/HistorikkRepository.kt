@@ -159,7 +159,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         SELECT
             v.sak_id,
             su.vedtakstatuskode,
-            CAST(NULL AS VARCHAR2(10))  AS vedtaktypekode, 
+            'O'  AS vedtaktypekode, 
             su.dato_fra AS fra_dato,
             su.dato_til AS til_dato,
             'SPESIAL' AS rettighetkode

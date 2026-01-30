@@ -3,11 +3,6 @@ package no.nav.aap.arenaoppslag.database
 import no.nav.aap.arenaoppslag.ArenaService
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import no.nav.aap.arenaoppslag.database.HistorikkRepository
-import no.nav.aap.arenaoppslag.database.MaksimumRepository
-import no.nav.aap.arenaoppslag.database.PeriodeRepository
-import no.nav.aap.arenaoppslag.database.PersonRepository
-import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
