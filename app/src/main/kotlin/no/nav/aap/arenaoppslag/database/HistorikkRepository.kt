@@ -3,7 +3,6 @@ package no.nav.aap.arenaoppslag.database
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
 import java.sql.Date
 import java.sql.PreparedStatement
@@ -13,6 +12,25 @@ import javax.sql.DataSource
 import kotlin.time.Duration.Companion.minutes
 
 class HistorikkRepository(private val dataSource: DataSource) {
+
+    fun hentIkkeAvbrutteSakerSisteFemÅrForPerson(personId: Int): List<ArenaSak> {
+        dataSource.connection.use { connection ->
+            connection.createParameterizedQuery(selectIkkeAvbrutteSisteFemÅr)
+                .use { preparedStatement ->
+                    var p = 1 // parameter-indeks
+                    // vedtak
+                    preparedStatement.setInt(p++, personId)
+                    // spesialutbetalinger
+                    preparedStatement.setInt(p++, personId)
+                    // sim_utbetalingsgrunnlag
+                    preparedStatement.setInt(p++, personId)
+
+                    val resultSet = preparedStatement.executeQuery()
+                    return resultSet.map { row -> mapperForArenasak(row) }
+                }
+
+        }
+    }
 
     fun hentAlleSignifikanteSakerForPerson(
         personId: Int, `søknadMottattPå`: LocalDate
@@ -26,9 +44,53 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         private fun Connection.createParameterizedQuery(queryString: String): PreparedStatement {
             val query = prepareStatement(queryString)
-            query.queryTimeout = 600 // set a timeout in seconds, to avoid long running queries
+            query.queryTimeout = 300 // set a timeout in seconds, to avoid long running queries
             return query
         }
+
+        @Language("OracleSql")
+        val selectIkkeAvbrutteSisteFemÅr = """            
+        SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
+        FROM
+            vedtak v
+        
+        WHERE v.person_id = ?
+          AND v.utfallkode != 'AVBRUTT'
+          AND v.rettighetkode IN ('AA115', 'AAP', 'KLAG1', 'KLAG2', 'ANKE', 'TILBBET')
+          AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60)
+        UNION ALL
+        
+        SELECT
+            v.sak_id,
+            su.vedtakstatuskode,
+            'O'  AS vedtaktypekode,
+            su.dato_fra AS fra_dato,
+            su.dato_til AS til_dato,
+            'SPESIAL' AS rettighetkode
+        FROM
+            spesialutbetaling su
+                JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
+        WHERE
+            su.person_id = ?
+            AND su.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60)
+        
+        UNION ALL
+        
+        SELECT
+            v.sak_id,
+            v.vedtakstatuskode,
+            v.vedtakstatuskode,
+            ssu.dato_periode_fra AS fra_dato,
+            ssu.dato_periode_til AS til_dato,
+            'SIM_SPESIAL' AS rettighetkode
+        FROM
+            sim_utbetalingsgrunnlag ssu
+                JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
+        WHERE
+           ssu.person_id = ?
+           AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
+""".trimIndent()
+
 
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
@@ -186,9 +248,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevanteUferdigeSpesialutbetalinger
                 ).joinToString("\nUNION ALL\n")
 
-            connection.createParameterizedQuery(query).apply {
-                queryTimeout = 15.minutes.inWholeSeconds.toInt()
-            }.use { preparedStatement ->
+            connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
                 // vedtak
                 preparedStatement.setInt(p++, personId)

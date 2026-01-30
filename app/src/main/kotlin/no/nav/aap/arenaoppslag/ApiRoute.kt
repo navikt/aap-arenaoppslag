@@ -4,12 +4,14 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 
@@ -56,6 +58,17 @@ fun Route.person(arenaService: ArenaService) {
 
         call.respond(response)
     }
+
+    post("/person/aap/nyere-historikk") {
+        logger.info("Sjekker om personen har AAP-Arena-historikk de siste fem år")
+        val request: NyereSakerRequest = call.receive()
+        val response: NyereSakerResponse = arenaService.personHarNyereHistorikk(
+            request.personidentifikatorer,
+        )
+
+        call.respond(response)
+    }
+
 }
 
 fun Route.maksimum(arenaService: ArenaService) {

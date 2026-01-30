@@ -1,23 +1,25 @@
 package no.nav.aap.arenaoppslag
 
-import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
-import no.nav.aap.arenaoppslag.database.H2TestBase
-import no.nav.aap.arenaoppslag.util.AzureTokenGen
-import no.nav.aap.arenaoppslag.util.Fakes
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.testing.*
+import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
+import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.util.AzureTokenGen
+import no.nav.aap.arenaoppslag.util.Fakes
 import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -133,7 +135,6 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
             )
 
             assertThat(kjentPerson.harSignifikantHistorikk).isTrue
-            // TODO legg til flere tester når vi har en godkjent spørring
         }
     }
 
@@ -148,6 +149,33 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
             )
 
             assertThat(kjentPerson.harSignifikantHistorikk).isFalse
+        }
+    }
+
+
+    @Test
+    fun `Person har nyere historikk i AAP-Arena`() {
+        withTestServer { gateway ->
+            val kjentPerson: NyereSakerResponse = gateway.personHarNyereAapArenaHistorikk(
+                NyereSakerRequest(
+                    personidentifikatorer = listOf(kjentPerson),
+                )
+            )
+
+            assertThat(kjentPerson.eksisterer).isTrue
+        }
+    }
+
+    @Test
+    fun `Person har IKKE nyere historikk i AAP-Arena`() {
+        withTestServer { gateway ->
+            val kjentPerson: NyereSakerResponse = gateway.personHarNyereAapArenaHistorikk(
+                NyereSakerRequest(
+                    personidentifikatorer = listOf(ukjentPerson),
+                )
+            )
+
+            assertThat(kjentPerson.eksisterer).isFalse
         }
     }
 

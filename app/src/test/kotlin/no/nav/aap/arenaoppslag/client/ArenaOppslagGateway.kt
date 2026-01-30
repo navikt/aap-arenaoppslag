@@ -1,6 +1,5 @@
 package no.nav.aap.arenaoppslag.client
 
-import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -10,14 +9,17 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import org.slf4j.LoggerFactory
 
 private val log = LoggerFactory.getLogger(ArenaOppslagGateway::class.java)
@@ -31,15 +33,14 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         vedtakRequest: InternVedtakRequest
 
     ): VedtakResponse = gjørArenaOppslag<VedtakResponse, InternVedtakRequest
->(
+            >(
         "/intern/perioder", vedtakRequest
     ).getOrThrow()
 
     suspend fun hentPerioderInkludert11_17(
-        req: InternVedtakRequest
-,
+        req: InternVedtakRequest,
     ): PerioderMed11_17Response = gjørArenaOppslag<PerioderMed11_17Response, InternVedtakRequest
->(
+            >(
         "/intern/perioder/11-17", req
     ).getOrThrow()
 
@@ -57,6 +58,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/intern/person/aap/signifikant-historikk", req
         ).getOrThrow()
 
+    suspend fun personHarNyereAapArenaHistorikk(
+        req: NyereSakerRequest
+    ): NyereSakerResponse =
+        gjørArenaOppslag<NyereSakerResponse, NyereSakerRequest>(
+            "/intern/person/aap/nyere-historikk", req
+        ).getOrThrow()
+
     suspend fun hentSakerByFnr(
         req: SakerRequest
     ): List<SakStatus> =
@@ -68,7 +76,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         req: InternVedtakRequest
 
     ): Maksimum = gjørArenaOppslag<Maksimum, InternVedtakRequest
->(
+            >(
         "/intern/maksimum", req
     ).getOrThrow()
 
@@ -98,7 +106,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             objectMapper.readValue<T>(arenaResponse.bodyAsText())
         }.onFailure { e ->
             when {
-                !fikkToken -> log.error("Fetch av token for Arena-oppslag feilet",e)
+                !fikkToken -> log.error("Fetch av token for Arena-oppslag feilet", e)
                 !fikkArenaData -> log.error("Fetch av Arena-data feilet for '$endepunkt'", e)
                 else -> {
                     log.error("Parsefeil for '$endepunkt'", e)

@@ -12,6 +12,11 @@ public data class SignifikanteSakerResponse(
     val signifikanteSaker: List<String> // signifikante Arena-saker, sortert på dato, nyeste først
 )
 
+public data class NyereSakerResponse(
+    val eksisterer: Boolean,
+    val saker: List<String> // moderne Arena-saker, sortert på dato, nyeste først
+)
+
 public data class Person(val personIdentifikator: String, val fornavn:String, val etternavn: String)
 
 public data class VedtakResponse(
