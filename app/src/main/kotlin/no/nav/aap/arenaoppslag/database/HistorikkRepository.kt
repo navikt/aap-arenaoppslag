@@ -155,7 +155,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
-            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
+            CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode
         FROM
             vedtak v
@@ -178,7 +178,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
-            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
+            CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode
         FROM
             vedtak v
