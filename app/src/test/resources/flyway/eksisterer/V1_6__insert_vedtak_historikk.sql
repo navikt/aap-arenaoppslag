@@ -22,9 +22,9 @@ Insert into SPESIALUTBETALING (SPESUTBETALING_ID, PERSON_ID, VEDTAK_ID, LOPENR, 
                                REG_DATO, REG_USER, MOD_DATO, MOD_USER, EKSTERNENHET_ID_ALTMOTTAKER, FERIEGRUNNLAG,
                                FERIEGRUNNLAGKODE, ORDINAER_YTELSE, REFERANSE_BILAG, STATUS_BILAG, STATUS_ANVIS_BILAG,
                                PARTISJON, VALGT_UTBET_TYPE, KATEGORI)
-values (5257602, 992, 9912345, 1, 'MSF4402', null, to_date('23-SEP-25', 'DD-MON-RR'), 'test', 1000, 'AAP', 'AAP',
-        'UA', 'INNST', 'INIT', null, to_date('01-JUN-25', 'DD-MON-RR'), to_date('16-JUN-25', 'DD-MON-RR'),
-        to_date('23-SEP-25', 'DD-MON-RR'), 'MSF4402', to_date('23-SEP-25', 'DD-MON-RR'), 'MSF4402', null, null, null,
+values (5257602, 992, 9912345, 1, 'MSF4402', null, to_date('23-SEP-19', 'DD-MON-RR'), 'test', 1000, 'AAP', 'AAP',
+        'UA', 'INNST', 'INIT', null, to_date('01-JUN-19', 'DD-MON-RR'), to_date('16-JUN-19', 'DD-MON-RR'),
+        to_date('23-SEP-19', 'DD-MON-RR'), 'MSF4402', to_date('23-SEP-19', 'DD-MON-RR'), 'MSF4402', null, null, null,
         'J', null, 'N', 'N', null, null, null);
 
 -- person med vedtak med forskjellige vedtak rettighetkoder
