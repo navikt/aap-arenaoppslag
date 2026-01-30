@@ -19,7 +19,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
     }
 
     @Test
-    fun `ingen saker for person som ikke finnes`() {
+    fun `ingen signifikante saker for person som ikke finnes`() {
         val alleVedtak = historikkRepository.hentAlleSignifikanteSakerForPerson(
             personId = 54601 /* finnes ikke */,
             testDato,
@@ -28,7 +28,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
     }
 
     @Test
-    fun `ingen saker for person med kun veldig gamle vedtak`() {
+    fun `ingen signifikante saker for person med kun veldig gamle vedtak`() {
         val testPerson = "kun_gamle"
         val testPersonId = 992
         val alleSaker:List<ArenaSak> = sakRepository.hentSaker(testPerson)
@@ -39,7 +39,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
     }
 
     @Test
-    fun `finner saker for person med kun nye vedtak`() {
+    fun `finner signifikante saker for person med kun nye vedtak`() {
         val testPersonFnr = "kun_nye"
         val testPersonId = 996
         val alleSaker = sakRepository.hentSaker(testPersonFnr)
@@ -50,19 +50,12 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
     }
 
     @Test
-    fun `finner saker for person med både gamle og nye vedtak`() {
+    fun `finner signifikante saker for person med både gamle og nye vedtak`() {
         val testPersonFnr = "blanding"
         val testPersonId = 997
         val alleSaker = sakRepository.hentSaker(testPersonFnr)
         assertThat(alleSaker).hasSize(6)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
-        assertThat(relevanteSaker).hasSize(3)
-    }
-
-    @Test
-    fun `kombinert spørring for relevant historikk kjører uten feil`(){
-        val testPersonId = 997
         val relevanteSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
         assertThat(relevanteSaker).hasSize(3)
     }
