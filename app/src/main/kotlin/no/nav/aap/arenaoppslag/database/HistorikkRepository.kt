@@ -54,7 +54,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtak v
         
         WHERE v.person_id = ?
-          AND (v.utfallkode IS  NULL OR v.utfallkode != 'AVBRUTT')
+          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP', 'KLAG1', 'KLAG2', 'ANKE', 'TILBBET')
           AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60)
         UNION ALL
@@ -105,7 +105,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
               vedtak v 
         
         WHERE v.person_id = ?
-          AND (v.utfallkode IS  NULL OR v.utfallkode != 'AVBRUTT')
+          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP')
           AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
@@ -135,7 +135,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             v.person_id = ?
-            AND (v.utfallkode IS  NULL OR v.utfallkode != 'AVBRUTT')
+            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
             AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
             AND vf.vedtakfaktakode = 'INNVF'
@@ -161,7 +161,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             v.person_id = ?
-            AND (v.utfallkode IS  NULL OR v.utfallkode != 'AVBRUTT')
+            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
             AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
@@ -186,9 +186,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND rettighetkode = 'TILBBET'
             AND utfallkode != 'AVBRUTT'            
             AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
-            AND vf.vedtakfaktakode = 'INNVF'
-            -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
-            AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
             -- SPM: finnes det en dato eller annet vi kan lese for å vite når tilbakebetalingen er fullført av personen?
             -- TODO: sjekk også til_dato og krev at den +3 mnd er i fremtiden
         """.trimIndent()
