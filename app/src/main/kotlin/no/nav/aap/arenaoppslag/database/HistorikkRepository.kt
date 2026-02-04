@@ -9,7 +9,6 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.time.LocalDate
 import javax.sql.DataSource
-import kotlin.time.Duration.Companion.minutes
 
 class HistorikkRepository(private val dataSource: DataSource) {
 
@@ -55,7 +54,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtak v
         
         WHERE v.person_id = ?
-          AND v.utfallkode != 'AVBRUTT'
+          AND (v.utfallkode IS  NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP', 'KLAG1', 'KLAG2', 'ANKE', 'TILBBET')
           AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60)
         UNION ALL
@@ -106,7 +105,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
               vedtak v 
         
         WHERE v.person_id = ?
-          AND v.utfallkode != 'AVBRUTT'
+          AND (v.utfallkode IS  NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP')
           AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
@@ -136,7 +135,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             v.person_id = ?
-            AND v.utfallkode != 'AVBRUTT'
+            AND (v.utfallkode IS  NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
             AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
             AND vf.vedtakfaktakode = 'INNVF'
@@ -162,11 +161,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             v.person_id = ?
+            AND (v.utfallkode IS  NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
-            AND utfallkode != 'AVBRUTT'
-            AND v.MOD_DATO >= DATE '2020-01-01'
+            AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
-        // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
 
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
@@ -187,7 +185,12 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'TILBBET'
             AND utfallkode != 'AVBRUTT'            
-            AND v.MOD_DATO >= DATE '2020-01-01'
+            AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND vf.vedtakfaktakode = 'INNVF'
+            -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
+            AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
+            -- SPM: finnes det en dato eller annet vi kan lese for å vite når tilbakebetalingen er fullført av personen?
+            -- TODO: sjekk også til_dato og krev at den +3 mnd er i fremtiden
         """.trimIndent()
         // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
 
@@ -206,9 +209,11 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
         WHERE
             su.person_id = ?
-            AND su.MOD_DATO >= DATE '2020-01-01'
-      """.trimIndent()
-        // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
+            -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
+            -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
+            AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
+            -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
+        """.trimIndent()
 
         // S6: Hent uferdige spesialutbetalinger for personen, hvor kun simulering av utbetaling er gjort
         @Language("OracleSql")
