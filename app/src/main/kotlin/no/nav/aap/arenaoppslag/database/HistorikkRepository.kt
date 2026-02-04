@@ -184,7 +184,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE
             v.person_id = ?
             AND rettighetkode = 'TILBBET'
-            AND utfallkode != 'AVBRUTT'            
+            AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
             AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND (v.til_dato is NULL OR v.til_dato <= ADD_MONTHS(TRUNC(SYSDATE), -6) )
             -- SPM: finnes det en dato eller annet vi kan lese for å vite når tilbakebetalingen er fullført av personen?
