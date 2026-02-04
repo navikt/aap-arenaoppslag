@@ -165,7 +165,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND rettighetkode = 'ANKE'
             AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
-
+        // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
         // MERK: denne spørringen går veldig tregt, av ukjent grunn
@@ -186,9 +186,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND rettighetkode = 'TILBBET'
             AND utfallkode != 'AVBRUTT'            
             AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND (v.til_dato is NULL OR v.til_dato <= ADD_MONTHS(TRUNC(SYSDATE), -6) )
             -- SPM: finnes det en dato eller annet vi kan lese for å vite når tilbakebetalingen er fullført av personen?
-            -- TODO: sjekk også til_dato og krev at den +3 mnd er i fremtiden
-        """.trimIndent()
+            """.trimIndent()
         // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
 
         // S5: Hent alle spesialutbetalinger med relevant historikk for personen
