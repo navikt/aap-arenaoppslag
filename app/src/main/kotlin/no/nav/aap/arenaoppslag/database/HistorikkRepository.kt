@@ -137,13 +137,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
+            AND v.MOD_DATO >= DATE '2022-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
             -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
-            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) AND v.utfallkode IN ('JA', 'DELVIS' ) )
+            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -3) AND v.utfallkode IN ('JA', 'DELVIS' ) )
         """.trimIndent()
 
         // S3: Hent alle AAP-anker med relevant historikk for personen
