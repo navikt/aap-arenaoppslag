@@ -163,9 +163,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
-            AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= DATE '2020-01-01' -- forsiktig tilnærming. Det er få anker.
         """.trimIndent()
-        // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
         // MERK: denne spørringen går veldig tregt, av ukjent grunn
