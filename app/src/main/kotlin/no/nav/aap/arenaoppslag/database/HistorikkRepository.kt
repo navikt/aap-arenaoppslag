@@ -90,7 +90,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
            AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
 """.trimIndent()
 
-
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
         // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
@@ -109,7 +108,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND v.rettighetkode IN ('AA115', 'AAP')
           AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
-          AND NOT ((fra_dato IS NULL AND til_dato IS NULL) AND vedtakstatuskode NOT IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
+          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
                 (vedtaktypekode IN ('O','E','G') AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer på 18 måneder
                   OR
@@ -119,6 +118,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
+        // Forbedringsmulighet: Vi kan se bort i fra klag1 for de som har klag2, angitt ved vedtak.vedtak_id_relatert
         @Language("OracleSql")
         val selectKunRelevanteKlager = """
         -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres. 
@@ -175,7 +175,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
-            CAST(NULL AS DATE)                    AS til_dato,
+            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode
         FROM
             vedtak v
@@ -185,10 +185,12 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND rettighetkode = 'TILBBET'
             AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
             AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
-            AND (v.til_dato is NULL OR v.til_dato <= ADD_MONTHS(TRUNC(SYSDATE), -6) )
+            AND vf.vedtakfaktakode = 'INNVF'
+            -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
+            AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
             -- SPM: finnes det en dato eller annet vi kan lese for å vite når tilbakebetalingen er fullført av personen?
+            AND (v.til_dato is NULL OR v.til_dato <= ADD_MONTHS(TRUNC(SYSDATE), -6) )
             """.trimIndent()
-        // FIXME forenklet spørring, en mer komplett versjon ligger i git-historikken
 
         // S5: Hent alle spesialutbetalinger med relevant historikk for personen
         @Language("OracleSql")
