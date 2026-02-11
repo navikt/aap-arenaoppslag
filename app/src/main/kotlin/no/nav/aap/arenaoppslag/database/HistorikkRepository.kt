@@ -186,10 +186,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
             AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
-            -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke.    
+            -- Vi regner tilbakebetalinger med null INNVF som åpne, dersom de enten mangler til_dato 
             AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
-            -- SPM: finnes det en dato eller annet vi kan lese for å vite når tilbakebetalingen er fullført av personen?
-            AND (v.til_dato is NULL OR v.til_dato <= ADD_MONTHS(TRUNC(SYSDATE), -6) )
             """.trimIndent()
 
         // S5: Hent alle spesialutbetalinger med relevant historikk for personen
