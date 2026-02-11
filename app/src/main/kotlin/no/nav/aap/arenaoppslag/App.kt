@@ -27,7 +27,6 @@ import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
 import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
-import no.nav.aap.komponenter.json.DefaultJsonMapper
 import org.slf4j.LoggerFactory
 import java.util.*
 import javax.sql.DataSource
