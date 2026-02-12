@@ -88,7 +88,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE
            ssu.person_id = ?
            AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
-""".trimIndent()
+        """.trimIndent()
 
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
