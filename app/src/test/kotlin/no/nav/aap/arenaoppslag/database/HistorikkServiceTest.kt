@@ -1,8 +1,8 @@
 package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.ArenaService
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import no.nav.aap.arenaoppslag.HistorikkService
 import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -12,27 +12,18 @@ import java.time.LocalDate
 import javax.sql.DataSource
 
 @ExtendWith(MockKExtension::class)
-class ArenaServiceTest {
+class HistorikkServiceTest {
 
     @MockK(relaxed = true)
     private lateinit var datasource: DataSource
 
-    private lateinit var underTest: ArenaService
+    private lateinit var underTest: HistorikkService
 
     @BeforeEach
     fun setUp() {
         val personRepository = PersonRepository(datasource)
-        val maksimumRepository = MaksimumRepository(datasource)
-        val periodeRepository = PeriodeRepository(datasource)
-        val sakRepository = SakRepository(datasource)
         val historikkRepository = HistorikkRepository(datasource)
-        underTest = ArenaService(
-            personRepository,
-            maksimumRepository,
-            periodeRepository,
-            sakRepository,
-            historikkRepository
-        )
+        underTest = HistorikkService(personRepository, historikkRepository)
     }
 
     @Test

@@ -58,13 +58,6 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/intern/person/aap/signifikant-historikk", req
         ).getOrThrow()
 
-    suspend fun personHarNyereAapArenaHistorikk(
-        req: NyereSakerRequest
-    ): NyereSakerResponse =
-        gjørArenaOppslag<NyereSakerResponse, NyereSakerRequest>(
-            "/intern/person/aap/nyere-historikk", req
-        ).getOrThrow()
-
     suspend fun hentSakerByFnr(
         req: SakerRequest
     ): List<SakStatus> =
@@ -79,6 +72,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             >(
         "/intern/maksimum", req
     ).getOrThrow()
+
+    suspend fun personHarNyereAapArenaHistorikk(
+        req: NyereSakerRequest
+    ): NyereSakerResponse =
+        gjørArenaOppslag<NyereSakerResponse, NyereSakerRequest>(
+            "/api/v1/person/nyere-historikk", req
+        ).getOrThrow()
 
     private suspend inline fun <reified T, reified V> gjørArenaOppslag(
         endepunkt: String, req: V

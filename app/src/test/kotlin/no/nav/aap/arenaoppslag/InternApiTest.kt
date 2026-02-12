@@ -5,6 +5,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.testing.*
+import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
 import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
+class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     companion object {
         const val ukjentPerson = "007"
         const val kjentPerson = "1"
@@ -152,33 +153,6 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     }
 
 
-    @Test
-    fun `Person har nyere historikk i AAP-Arena`() {
-        withTestServer { gateway ->
-            val kjentPerson: NyereSakerResponse = gateway.personHarNyereAapArenaHistorikk(
-                NyereSakerRequest(
-                    personidentifikatorer = listOf(kjentPerson),
-                )
-            )
-
-            assertThat(kjentPerson.eksisterer).isTrue
-        }
-    }
-
-    @Test
-    fun `Person har IKKE nyere historikk i AAP-Arena`() {
-        withTestServer { gateway ->
-            val kjentPerson: NyereSakerResponse = gateway.personHarNyereAapArenaHistorikk(
-                NyereSakerRequest(
-                    personidentifikatorer = listOf(ukjentPerson),
-                )
-            )
-
-            assertThat(kjentPerson.eksisterer).isFalse
-        }
-    }
-
-
     private fun withTestServer(testBody: suspend (ArenaOppslagGateway) -> Unit) {
         val config = TestConfig.default(Fakes())
         val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
@@ -189,17 +163,5 @@ class ApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
             testBody(gateway)
         }
     }
-
-    private val ApplicationTestBuilder.jsonHttpClient: HttpClient
-        get() = createClient {
-            expectSuccess = true // Kaster exception for 4xx og 5xx svar, altså feiler testen
-
-            install(ContentNegotiation) {
-                register(
-                    ContentType.Application.Json,
-                    JacksonConverter(DefaultJsonMapper.objectMapper())
-                )
-            }
-        }
 
 }

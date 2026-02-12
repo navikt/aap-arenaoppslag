@@ -1,5 +1,10 @@
 package no.nav.aap.arenaoppslag
 
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.ContentType
+import io.ktor.serialization.jackson.JacksonConverter
+import io.ktor.server.testing.ApplicationTestBuilder
 import no.nav.aap.arenaoppslag.util.Fakes
 import no.nav.aap.arenaoppslag.util.port
 import java.net.URI
@@ -24,4 +29,17 @@ internal object TestConfig {
             )
         )
     }
+
+    val ApplicationTestBuilder.jsonHttpClient: HttpClient
+        get() = createClient {
+            expectSuccess = true // Kaster exception for 4xx og 5xx svar, altså feiler testen
+
+            install(ContentNegotiation) {
+                register(
+                    ContentType.Application.Json,
+                    JacksonConverter(DefaultJsonMapper.objectMapper())
+                )
+            }
+        }
+
 }
