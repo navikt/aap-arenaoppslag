@@ -17,6 +17,8 @@ Vi bruker views av disse tabellene med filter for AAP, definert her.
 Disse har samme kolonner som tabellene.
 [Arena - løsningsbeskrivelse](https://confluence.adeo.no/spaces/TEAMARENA/pages/553617512/ARENA-8716+03+-+L%C3%B8sningsbeskrivelse#ARENA871603L%C3%B8sningsbeskrivelse-Arbeidsavklaringspenger)
 
+Se også [tabelldefinisjoner med kommentarer som beskriver hvert felt](https://github.com/navikt/aap-arenaoppslag/blob/main/app/src/test/resources/flyway/common/V1_1__arena_schema.sql). 
+
 # Henvendelser
 Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på GitHub. 
 
