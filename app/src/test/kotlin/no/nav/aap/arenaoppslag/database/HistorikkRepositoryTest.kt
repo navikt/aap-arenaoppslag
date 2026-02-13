@@ -20,7 +20,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
 
     @Test
     fun `ingen signifikante saker for person som ikke finnes`() {
-        val alleVedtak = historikkRepository.hentAlleSignifikanteSakerForPerson(
+        val alleVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
             personId = 54601 /* finnes ikke */,
             testDato,
         )
@@ -34,7 +34,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
         val alleSaker:List<ArenaSak> = sakRepository.hentSaker(testPerson)
         assertThat(alleSaker).hasSize(2)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
+        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
         assertThat(relevanteSaker).isEmpty()
     }
 
@@ -45,7 +45,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
         val alleSaker = sakRepository.hentSaker(testPersonFnr)
         assertThat(alleSaker).hasSize(3)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
+        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
         assertThat(relevanteSaker).hasSize(3)
     }
 
@@ -56,7 +56,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
         val alleSaker = sakRepository.hentSaker(testPersonFnr)
         assertThat(alleSaker).hasSize(6)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(testPersonId, testDato)
+        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
         assertThat(relevanteSaker).hasSize(2)
     }
 
