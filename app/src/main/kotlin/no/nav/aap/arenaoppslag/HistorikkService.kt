@@ -29,13 +29,22 @@ class HistorikkService(
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
         }
 
-        val relevanteArenaSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(
+        val relevanteArenaVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
             personId,
             virkningstidspunkt
         )
 
-        val harSignifikantHistorikk = relevanteArenaSaker.isNotEmpty()
-        val arenaSakIdListe = sorterSaker(relevanteArenaSaker).map { it.sakId }.distinct()
+        val harSignifikantHistorikk = relevanteArenaVedtak.isNotEmpty()
+        // TODO?
+        // Filtrere relevanteArenaVedtak - grupper per sak, og dersom vi har en sak med kun AA115 i, ingen AAP-vedtak:
+        // dropp den hvis den er eldre enn 6 måneder. Evt: dette gjøres av et eget endepunkt/felt i responsen.
+        // Dette kompenserer for at de ikke er lukket i Arena selv om de bør være det.
+
+        // TODO?
+        // Filtrere relevanteArenaVedtak - dersom det kun finnes vedtak som utgår om opptil 3 mnd, inkl et AA115,
+        // dropp dem, slik at listen blir tom. Evt: dette gjøres av et eget endepunkt/felt i responsen.
+        // Vi bør da ta inn dato for start av den nye ytelsesperioden.
+        val arenaSakIdListe = sorterSaker(relevanteArenaVedtak).map { it.sakId }.distinct()
 
         return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
