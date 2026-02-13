@@ -85,7 +85,9 @@ fun Application.server(
 
     authentication(config)
 
-    routing(datasource)
+    val internService = skapInternService(datasource)
+    val historikkService = skapHistorikkService(datasource)
+    routes(internService, historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
         environment.log.info("ktor har startet opp.")
@@ -112,27 +114,42 @@ fun Application.server(
     }
 }
 
-private fun Application.routing(datasource: DataSource) {
+// Bruker ikke RepositoryRegistry fra Kelvin-komponenter fordi vi er på Oracle DB her,
+// med annet opplegg for parameterized queries
+private fun skapInternService(datasource: DataSource): InternService {
+    val periodeRepository = PeriodeRepository(datasource)
+    val maksimumRepository = MaksimumRepository(datasource)
+    val sakRepository = SakRepository(datasource)
+
+    return InternService(
+        maksimumRepository, periodeRepository,
+        sakRepository
+    )
+}
+
+private fun skapHistorikkService(datasource: DataSource): HistorikkService {
+    val personRepository = PersonRepository(datasource)
+    val historikkRepository = HistorikkRepository(datasource)
+
+    return HistorikkService(personRepository, historikkRepository)
+}
+
+private fun Application.routes(
+    internService: InternService,
+    historikkService: HistorikkService
+) {
     routing {
         actuator(prometheus)
 
         authenticate {
-            // Bruker ikke RepositoryRegistry fra Kelvin-komponenter fordi vi er på Oracle DB her,
-            // med annet opplegg for parameterized queries
-            val periodeRepository = PeriodeRepository(datasource)
-            val personRepository = PersonRepository(datasource)
-            val maksimumRepository = MaksimumRepository(datasource)
-            val sakRepository = SakRepository(datasource)
-            val historikkRepository = HistorikkRepository(datasource)
-            val arenaService = ArenaService(
-                personRepository, maksimumRepository, periodeRepository,
-                sakRepository, historikkRepository
-            )
             route("/intern") {
-                perioder(arenaService)
-                person(arenaService)
-                maksimum(arenaService)
-                saker(arenaService)
+                perioder(internService)
+                person(historikkService)
+                maksimum(internService)
+                saker(internService)
+            }
+            route("/api/v1") {
+                historikk(historikkService)
             }
         }
     }
