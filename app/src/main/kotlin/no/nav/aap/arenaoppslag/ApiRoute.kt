@@ -5,6 +5,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
+import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 
@@ -16,6 +18,15 @@ fun Route.historikk(historikkService: HistorikkService) {
         val response: SignifikanteSakerResponse = historikkService.signifikanteSakerForPerson(
             request.personidentifikatorer, request.virkningstidspunkt
         )
+
+        call.respond(response)
+    }
+
+    post("/person/eksisterer") {
+        logger.info("Sjekker om person eksisterer i AAP-Arena")
+        val request: SakerRequest = call.receive()
+        val response: PersonEksistererIAAPArena =
+            historikkService.personEksistererIAapArena(request.personidentifikatorer)
 
         call.respond(response)
     }
