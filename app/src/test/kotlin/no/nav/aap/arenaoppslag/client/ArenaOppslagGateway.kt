@@ -48,14 +48,14 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         req: SakerRequest,
     ): PersonEksistererIAAPArena =
         gjørArenaOppslag<PersonEksistererIAAPArena, SakerRequest>(
-            "/intern/person/aap/eksisterer", req
+            "/api/v1/person/eksisterer", req
         ).getOrThrow()
 
     suspend fun personHarSignifikantAAPArenaHistorikk(
         req: SignifikanteSakerRequest
     ): SignifikanteSakerResponse =
         gjørArenaOppslag<SignifikanteSakerResponse, SignifikanteSakerRequest>(
-            "/intern/person/aap/signifikant-historikk", req
+            "/api/v1/person/signifikant-historikk", req
         ).getOrThrow()
 
     suspend fun hentSakerByFnr(

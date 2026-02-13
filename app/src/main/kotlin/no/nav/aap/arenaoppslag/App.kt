@@ -144,7 +144,6 @@ private fun Application.routes(
         authenticate {
             route("/intern") {
                 perioder(internService)
-                person(historikkService)
                 maksimum(internService)
                 saker(internService)
             }
