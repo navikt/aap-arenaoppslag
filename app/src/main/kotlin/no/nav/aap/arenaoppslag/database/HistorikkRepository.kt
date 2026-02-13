@@ -31,7 +31,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentAlleSignifikanteSakerForPerson(
+    fun hentAlleSignifikanteVedtakForPerson(
         personId: Int, `søknadMottattPå`: LocalDate
     ): List<ArenaSak> {
         return dataSource.connection.use { con ->

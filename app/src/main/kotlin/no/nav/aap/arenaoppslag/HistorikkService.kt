@@ -29,13 +29,13 @@ class HistorikkService(
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
         }
 
-        val relevanteArenaSaker = historikkRepository.hentAlleSignifikanteSakerForPerson(
+        val relevanteArenaVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
             personId,
             virkningstidspunkt
         )
 
-        val harSignifikantHistorikk = relevanteArenaSaker.isNotEmpty()
-        val arenaSakIdListe = sorterSaker(relevanteArenaSaker).map { it.sakId }.distinct()
+        val harSignifikantHistorikk = relevanteArenaVedtak.isNotEmpty()
+        val arenaSakIdListe = sorterSaker(relevanteArenaVedtak).map { it.sakId }.distinct()
 
         return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
