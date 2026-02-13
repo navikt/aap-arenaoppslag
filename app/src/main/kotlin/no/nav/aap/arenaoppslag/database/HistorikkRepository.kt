@@ -106,7 +106,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP')
-          AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+          AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
@@ -137,13 +137,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= DATE '2020-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -36) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
             -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
-            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) AND v.utfallkode IN ('JA', 'DELVIS' ) )
+            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -3) AND v.utfallkode IN ('JA', 'DELVIS' ) )
         """.trimIndent()
 
         // S3: Hent alle AAP-anker med relevant historikk for personen
@@ -163,7 +163,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
-            AND v.MOD_DATO >= DATE '2020-01-01' -- forsiktig tilnærming. Det er få anker.
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
@@ -184,7 +184,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'TILBBET'
             AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
-            AND v.MOD_DATO >= DATE '2021-01-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -36) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke 
             AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
@@ -211,9 +211,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
         """.trimIndent()
 
-        // S6: Hent uferdige spesialutbetalinger for personen, hvor kun simulering av utbetaling er gjort
+        // S6: Hent simulerte betalinger.
+        // Saksbehandler gjør noen ganger simuleringer før en reell betaling og vedtak opprettes.
         @Language("OracleSql")
-        val selectKunRelevanteUferdigeSpesialutbetalinger = """
+        val selectKunRelevanteSimulerteBetalinger = """
         SELECT
             v.sak_id, 
             v.vedtakstatuskode, 
@@ -228,8 +229,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
             ssu.person_id = ?
             -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
             AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
-            -- SPM: er denne spørringen unødvendig, vil feks. et tilhørende vedtak for personen uansett  
-            -- finnes i Vedtak (TILBBET) eller i Spesialutbetaling?
         """.trimIndent()
 
         const val tidsBufferUkerGenerell = 78L
@@ -246,7 +245,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevanteAnker,
                     selectKunRelevanteTilbakebetalinger,
                     selectKunRelevanteSpesialutbetalinger,
-                    selectKunRelevanteUferdigeSpesialutbetalinger
+                    selectKunRelevanteSimulerteBetalinger
                 ).joinToString("\nUNION ALL\n")
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
