@@ -3,12 +3,12 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.3.1"
-    id("io.ktor.plugin") version "3.3.3"
+    id("io.ktor.plugin") version "3.4.0"
     id("dev.detekt")
     application
 }
 
-val ktorVersion = "3.3.3"
+val ktorVersion = "3.4.0"
 
 application {
     mainClass.set("no.nav.aap.arenaoppslag.AppKt")
@@ -41,12 +41,12 @@ dependencies {
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.16.2")
-    implementation("ch.qos.logback:logback-classic:1.5.24")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.16.3")
+    implementation("ch.qos.logback:logback-classic:1.5.29")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
 
-    implementation("com.oracle.database.jdbc:ojdbc11:23.26.0.0.0")
+    implementation("com.oracle.database.jdbc:ojdbc11:23.26.1.0.0")
     implementation("com.zaxxer:HikariCP:7.0.2")
 
     testImplementation(kotlin("test"))
@@ -56,7 +56,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.4.240")
-    testImplementation("io.mockk:mockk:1.14.7")
+    testImplementation("io.mockk:mockk:1.14.9")
 }
 
 tasks {
