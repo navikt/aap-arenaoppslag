@@ -12,7 +12,7 @@ subprojects {
 }
 
 // Call the tasks of the subprojects
-for (taskName in listOf<String>("clean", "build", "assemble", "check")) {
+for (taskName in listOf<String>("clean", "build", "check")) {
     tasks.named(taskName) {
         dependsOn(subprojects.map { it.path + ":$taskName" })
     }

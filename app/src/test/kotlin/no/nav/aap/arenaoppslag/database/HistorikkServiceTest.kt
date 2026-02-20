@@ -1,7 +1,10 @@
 package no.nav.aap.arenaoppslag.database
 
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockk
+import io.mockk.verify
 import no.nav.aap.arenaoppslag.HistorikkService
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import org.assertj.core.api.Assertions.assertThat
@@ -65,6 +68,7 @@ class HistorikkServiceTest {
         LocalDate.now().minusYears(5),
         tilDato = tilDato,
         "AAP",
+        "Ja"
     )
 
 
