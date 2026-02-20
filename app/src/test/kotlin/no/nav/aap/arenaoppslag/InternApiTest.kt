@@ -1,16 +1,10 @@
 package no.nav.aap.arenaoppslag
 
-import io.ktor.client.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.http.*
-import io.ktor.serialization.jackson.*
 import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
 import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus

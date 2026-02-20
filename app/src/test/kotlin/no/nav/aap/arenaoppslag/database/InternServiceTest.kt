@@ -21,10 +21,8 @@ class InternServiceTest {
     fun setUp() {
         val maksimumRepository = MaksimumRepository(datasource)
         val periodeRepository = PeriodeRepository(datasource)
-        val sakRepository = SakRepository(datasource)
-        underTest = InternService(
-            maksimumRepository, periodeRepository, sakRepository
-        )
+        val vedtakRepository = VedtakRepository(datasource)
+        underTest = InternService(maksimumRepository, periodeRepository, vedtakRepository)
     }
 
     @Test

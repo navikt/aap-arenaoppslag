@@ -2,7 +2,7 @@ package no.nav.aap.arenaoppslag
 
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
-import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
@@ -12,7 +12,7 @@ import java.time.LocalDate
 class InternService(
     private val maksimumRepository: MaksimumRepository,
     private val periodeRepository: PeriodeRepository,
-    private val sakRepository: SakRepository
+    private val vedtakRepository: VedtakRepository
 ) {
 
     fun hentPerioder(personidentifikator: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
@@ -32,10 +32,11 @@ class InternService(
     }
 
     fun hentSaker(personidentifikatorer: List<String>): List<SakStatus> {
-        val saker = personidentifikatorer.flatMap { personidentifikator ->
-            sakRepository.hentSakStatuser(personidentifikator)
+        val vedtak = personidentifikatorer.flatMap { personidentifikator ->
+            vedtakRepository.hentVedtakStatuser(personidentifikator)
         }
-        return saker
+        // Merk: kontraktobjektet heter fra gammelt av feilaktig SakStatus, selv om det omhandler VedtakStatus
+        return vedtak.map { SakStatus(it.sakId, it.statusKode, it.periode, it.kilde) }
     }
 
     fun hentMaksimum(personidentifikator: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum {

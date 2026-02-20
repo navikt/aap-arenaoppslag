@@ -9,7 +9,7 @@ import javax.sql.DataSource
 class PersonRepository(private val dataSource: DataSource) {
 
     fun hentPersonIdHvisEksisterer(fodselsnr: Set<String>): Int? {
-        return dataSource.connection.use { con ->
+        dataSource.connection.use { con ->
             return selectPersonIdFraFnr(fodselsnr, con)
         }
     }
