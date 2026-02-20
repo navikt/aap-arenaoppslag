@@ -1,0 +1,65 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title Runtime deployments overview
+
+System_Boundary(arena, "Arena <FSS>") {
+    ContainerDb(arena_db, "Database", "Oracle 19")
+    Container(aap_tilgangsview, "AAP tilgangsview", "View")
+
+    Container(saksbehandling_arena, "Saksbehandling", "Component")
+    Container(oppgave_api, "Oppgave", "API")
+    Container(sak_api, "Sak", "API")
+    Container(sak_og_aktivitet_api, "Sak og aktivitet", "API")
+    Container(dsop_api, "DSOP", "API")
+    Container(other_apis, "Andre WS", "API")
+
+    Rel(aap_tilgangsview, arena_db, "queries")
+    Rel(dsop_api, arena_db, "queries")
+    Rel(oppgave_api, arena_db, "queries")
+    Rel(sak_api, arena_db, "queries")
+    Rel(sak_og_aktivitet_api, arena_db, "queries")
+    Rel(other_apis, arena_db, "queries")
+    Rel(saksbehandling_arena, arena_db, "queries")
+}
+
+
+System_Boundary(migrering, "Migrering") {
+    Container(arena_oppslag, "Arena-oppslag <FSS>", "Component")
+    note right of arena_oppslag : Adopter
+    Container(arena_visningsklient, "Arena-visningsklient <GCP>", "Component")
+    note right of arena_visningsklient : Opprett ny
+
+    Container(aap_fss_proxy, "fss-proxy <FSS>", "REST-proxy mot Arena-WS")
+    note right of aap_fss_proxy : Adopter
+
+    Rel(arena_oppslag, aap_tilgangsview, "queries")
+    Rel(arena_visningsklient, arena_oppslag, "HTTP/JSON")
+}
+
+System_Boundary(kelvin, "Kelvin <GCP>") {
+    ContainerDb(kelvin_db, "Behandlingsflyt-db", "Postgres")
+    Container(postmottak, "postmottak", "Fordeler innkommende søknader")
+    Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling")
+    Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
+    Container(api_intern, "api-intern", "API")
+
+    Rel(behandlingsflyt, kelvin_db, "JDBC")
+    Rel(saksbehandling_kelvin, behandlingsflyt, "HTTP/JSON")
+    Rel(postmottak, api_intern, "HTTP/JSON")
+    Rel(postmottak, aap_fss_proxy, "HTTP/JSON")
+    Rel(behandlingsflyt, api_intern, "HTTP/JSON")
+}
+
+Rel(api_intern, arena_oppslag, "HTTP/JSON")
+Rel(aap_fss_proxy, oppgave_api, "SOAP/XML")
+Rel(aap_fss_proxy, sak_api, "SOAP/XML")
+Rel(aap_fss_proxy, sak_og_aktivitet_api, "SOAP/XML")
+
+
+Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
+
+Rel(saksbehandler, saksbehandling_kelvin, "Bruker")
+Rel(saksbehandler, saksbehandling_arena, "Bruker")
+Rel(saksbehandler, arena_visningsklient, "Bruker")
+
+@enduml
