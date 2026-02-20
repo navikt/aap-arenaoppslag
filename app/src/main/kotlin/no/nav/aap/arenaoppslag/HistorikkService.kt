@@ -1,5 +1,8 @@
 package no.nav.aap.arenaoppslag
 
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Tag
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
@@ -33,6 +36,7 @@ class HistorikkService(
             personId,
             virkningstidspunkt
         )
+        rapporterMetrikkerForSignifikanteVedtak(signifikanteVedtak)
 
         val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
         val arenaSakIdListe = sorterVedtak(signifikanteVedtak).map { it.sakId }.distinct()
@@ -40,6 +44,11 @@ class HistorikkService(
         return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
 
+    private fun rapporterMetrikkerForSignifikanteVedtak(vedtakene: List<no.nav.aap.arenaoppslag.kontrakt.intern.ArenaVedtak>) {
+        vedtakene.forEach {
+            Metrics.prometheus.rapporterMetrikkerForSignifikanteVedtak(it)
+        }
+    }
     internal fun sorterVedtak(vedtak: List<ArenaVedtak>): List<ArenaVedtak> {
         // Hvis saker uten tilDato finnes, sorter disse basert på db-order
         val utenSluttdato = vedtak.filter { it.tilDato == null }.reversed() // i reversed db-order (=nyeste først)
@@ -68,4 +77,14 @@ class HistorikkService(
         return NyereSakerResponse(harNyereHistorikk, arenaSakIdListe)
     }
 
+    fun MeterRegistry.rapporterMetrikkerForSignifikanteVedtak(vedtak: ArenaVedtak): Counter {
+        return this.counter(
+            "arenaoppslag_signifikante_vedtak",
+            listOf(
+                Tag.of("type", vedtak.vedtaktypeKode),
+                Tag.of("rettighet", vedtak.rettighetkode),
+                Tag.of("status", vedtak.statusKode),
+            )
+        )
+    }
 }
