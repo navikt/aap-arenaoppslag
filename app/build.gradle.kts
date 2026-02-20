@@ -48,6 +48,8 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.32")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
 
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+
     implementation("com.oracle.database.jdbc:ojdbc11:23.26.1.0.0")
     implementation("com.zaxxer:HikariCP:7.0.2")
 
