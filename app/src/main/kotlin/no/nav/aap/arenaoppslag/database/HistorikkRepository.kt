@@ -49,7 +49,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         val selectIkkeAvbrutteSisteFemÅr = """            
-        SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
+        SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode, utfallkode
         FROM
             vedtak v
         
@@ -65,7 +65,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             'O'  AS vedtaktypekode,
             su.dato_fra AS fra_dato,
             su.dato_til AS til_dato,
-            'SPESIAL' AS rettighetkode
+            'SPESIAL' AS rettighetkode,
+            v.utfallkode
         FROM
             spesialutbetaling su
                 JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
@@ -81,7 +82,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.vedtakstatuskode,
             ssu.dato_periode_fra AS fra_dato,
             ssu.dato_periode_til AS til_dato,
-            'SIM_SPESIAL' AS rettighetkode
+            'SIM_SPESIAL' AS rettighetkode, 
+            v.utfallkode
         FROM
             sim_utbetalingsgrunnlag ssu
                 JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
@@ -99,7 +101,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // vedtak i samme periode.
         @Language("OracleSql")
         val selectKunRelevanteVedtak = """
-        SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode
+        SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode, utfallkode
           FROM 
               vedtak v 
         
@@ -129,7 +131,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
-            v.rettighetkode
+            v.rettighetkode,
+            v.utfallkode
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -155,7 +158,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
             CAST(NULL AS DATE)                    AS til_dato,
-            v.rettighetkode
+            v.rettighetkode,
+            v.utfallkode
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -176,7 +180,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
-            v.rettighetkode
+            v.rettighetkode, 
+            v.utfallkode
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -199,7 +204,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             'O'  AS vedtaktypekode, 
             su.dato_fra AS fra_dato,
             su.dato_til AS til_dato,
-            'SPESIAL' AS rettighetkode
+            'SPESIAL' AS rettighetkode, 
+            v.utfallkode
         FROM
             spesialutbetaling su
             JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
@@ -218,10 +224,11 @@ class HistorikkRepository(private val dataSource: DataSource) {
         SELECT
             v.sak_id, 
             v.vedtakstatuskode, 
-            v.vedtakstatuskode, 
+            'O'  AS vedtaktypekode, 
             ssu.dato_periode_fra AS fra_dato,
             ssu.dato_periode_til AS til_dato,
-            'SIM_SPESIAL' AS rettighetkode
+            'SIM_SPESIAL' AS rettighetkode, 
+            v.utfallkode
         FROM
             sim_utbetalingsgrunnlag ssu
             JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
@@ -279,6 +286,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             fraDato(row.getDate("fra_dato")),
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
+            utfallkode = row.getString("utfallkode")
         )
 
     }

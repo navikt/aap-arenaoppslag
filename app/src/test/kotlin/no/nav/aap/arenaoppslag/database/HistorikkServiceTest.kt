@@ -1,7 +1,10 @@
 package no.nav.aap.arenaoppslag.database
 
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockk
+import io.mockk.verify
 import no.nav.aap.arenaoppslag.HistorikkService
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import org.assertj.core.api.Assertions.assertThat
@@ -65,6 +68,46 @@ class HistorikkServiceTest {
         LocalDate.now().minusYears(5),
         tilDato = tilDato,
         "AAP",
+        "Ja"
     )
+
+
+    @Test
+    fun `personEksistererIAapArena finner person når den skal`() {
+        val finnes = setOf("12345678901")
+        val finnesIkke = setOf("007")
+        val personRepository = mockk<PersonRepository>()
+        val historikkRepository = mockk<HistorikkRepository>() // brukes ikke
+
+        every { personRepository.hentPersonIdHvisEksisterer(finnes) } returns 1
+        every { personRepository.hentPersonIdHvisEksisterer(finnesIkke) } returns null
+
+        val service = HistorikkService(personRepository, historikkRepository)
+
+        val funnet = service.personEksistererIAapArena(finnes).eksisterer
+        val ikkeFunnet = service.personEksistererIAapArena(finnesIkke).eksisterer
+
+        assertThat(funnet).isEqualTo(true)
+        assertThat(ikkeFunnet).isEqualTo(false)
+    }
+
+
+    @Test
+    fun `personEksistererIAapArena bruker cachet verdi andre gang`() {
+        val personIdentifikatorer = setOf("12345678901")
+        val personRepository = mockk<PersonRepository>()
+        val historikkRepository = mockk<HistorikkRepository>()
+
+        every { personRepository.hentPersonIdHvisEksisterer(any()) } returns 1
+
+        val service = HistorikkService(personRepository, historikkRepository)
+
+        val firstCall = service.personEksistererIAapArena(personIdentifikatorer).eksisterer
+        val secondCall = service.personEksistererIAapArena(personIdentifikatorer).eksisterer
+
+        assertThat(firstCall).isTrue()
+        assertThat(secondCall).isTrue()
+        verify(exactly = 1) { personRepository.hentPersonIdHvisEksisterer(any()) }
+    }
 
 }

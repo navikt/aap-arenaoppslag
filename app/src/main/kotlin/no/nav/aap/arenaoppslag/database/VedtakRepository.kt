@@ -43,6 +43,7 @@ class VedtakRepository(private val dataSource: DataSource) {
             fraDato(row.getDate("fra_dato")),
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
+            utfallkode = row.getString("utfallkode"),
         )
 
         @Language("OracleSql")
