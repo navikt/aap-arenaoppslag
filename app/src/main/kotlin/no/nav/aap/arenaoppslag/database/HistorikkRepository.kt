@@ -211,9 +211,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
         """.trimIndent()
 
-        // S6: Hent uferdige spesialutbetalinger for personen, hvor kun simulering av utbetaling er gjort
+        // S6: Hent simulerte betalinger.
+        // Saksbehandler gjør noen ganger simuleringer før en reell betaling og vedtak opprettes.
         @Language("OracleSql")
-        val selectKunRelevanteUferdigeSpesialutbetalinger = """
+        val selectKunRelevanteSimulerteBetalinger = """
         SELECT
             v.sak_id, 
             v.vedtakstatuskode, 
@@ -244,7 +245,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevanteAnker,
                     selectKunRelevanteTilbakebetalinger,
                     selectKunRelevanteSpesialutbetalinger,
-                    selectKunRelevanteUferdigeSpesialutbetalinger
+                    selectKunRelevanteSimulerteBetalinger
                 ).joinToString("\nUNION ALL\n")
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
