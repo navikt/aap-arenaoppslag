@@ -47,7 +47,7 @@ class HistorikkService(
 
     private fun rapporterMetrikkerForSignifikanteVedtak(vedtakene: List<ArenaVedtak>) {
         vedtakene.forEach {
-            Metrics.prometheus.rapporterMetrikkerForSignifikanteVedtak(it)
+            Metrics.prometheus.registrerSignifikantVedtak(it)
         }
     }
 
@@ -88,9 +88,9 @@ class HistorikkService(
         return NyereSakerResponse(harNyereHistorikk, arenaSakIdListe)
     }
 
-    fun MeterRegistry.rapporterMetrikkerForSignifikanteVedtak(vedtak: ArenaVedtak): Counter {
+    fun MeterRegistry.registrerSignifikantVedtak(vedtak: ArenaVedtak): Counter {
         return this.counter(
-            "arenaoppslag_signifikante_vedtak",
+            "arenaoppslag_signifikant_vedtak",
             listOf(
                 Tag.of("type", vedtak.vedtaktypeKode),
                 Tag.of("rettighet", vedtak.rettighetkode),

@@ -19,4 +19,5 @@ public data class ArenaVedtak(
     val fraOgMed: LocalDate?,
     val tilDato: LocalDate?,
     val rettighetkode: String,
+    val utfallkode: String,
 )
