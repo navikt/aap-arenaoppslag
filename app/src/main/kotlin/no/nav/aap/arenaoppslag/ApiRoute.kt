@@ -26,7 +26,7 @@ fun Route.historikk(historikkService: HistorikkService) {
         logger.info("Sjekker om person eksisterer i AAP-Arena")
         val request: SakerRequest = call.receive()
         val response: PersonEksistererIAAPArena =
-            historikkService.personEksistererIAapArena(request.personidentifikatorer)
+            historikkService.personEksistererIAapArena(request.personidentifikatorer.toSet())
 
         call.respond(response)
     }
