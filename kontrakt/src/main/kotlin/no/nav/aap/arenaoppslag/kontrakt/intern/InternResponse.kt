@@ -17,7 +17,7 @@ public data class NyereSakerResponse(
     val saker: List<String> // moderne Arena-saker, sortert på dato, nyeste først
 )
 
-public data class Person(val personIdentifikator: String, val fornavn:String, val etternavn: String)
+public data class Person(val personIdentifikator: String, val fornavn: String, val etternavn: String)
 
 public data class VedtakResponse(
     val perioder: List<Periode>
@@ -73,5 +73,13 @@ public enum class Status {
     AVSLUTTET,
 
     // Begge:
-    UKJENT,
+    UKJENT;
+
+    public companion object {
+        public fun fraStrengverdi(verdi: String?): Status {
+            return (Status.entries.find { it.name == verdi }
+                ?: UKJENT)
+        }
+    }
+
 }

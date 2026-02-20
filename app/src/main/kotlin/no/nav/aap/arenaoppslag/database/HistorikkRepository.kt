@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
-import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.Date
@@ -12,7 +12,7 @@ import javax.sql.DataSource
 
 class HistorikkRepository(private val dataSource: DataSource) {
 
-    fun hentIkkeAvbrutteSakerSisteFemÅrForPerson(personId: Int): List<ArenaSak> {
+    fun `hentIkkeAvbrutteVedtakSisteFemÅrForPerson`(personId: Int): List<ArenaVedtak> {
         dataSource.connection.use { connection ->
             connection.createParameterizedQuery(selectIkkeAvbrutteSisteFemÅr)
                 .use { preparedStatement ->
@@ -25,7 +25,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     preparedStatement.setInt(p++, personId)
 
                     val resultSet = preparedStatement.executeQuery()
-                    return resultSet.map { row -> mapperForArenasak(row) }
+                    return resultSet.map { row -> mapperForArenaVedtak(row) }
                 }
 
         }
@@ -33,9 +33,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
     fun hentAlleSignifikanteVedtakForPerson(
         personId: Int, `søknadMottattPå`: LocalDate
-    ): List<ArenaSak> {
+    ): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            hentAlleSignifikanteSakerForPerson(personId, søknadMottattPå, con)
+            hentAlleSignifikanteVedtakForPerson(personId, søknadMottattPå, con)
         }
     }
 
@@ -233,9 +233,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         const val tidsBufferUkerGenerell = 78L
         const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
-        fun hentAlleSignifikanteSakerForPerson(
+        fun hentAlleSignifikanteVedtakForPerson(
             personId: Int, `søknadMottattPå`: LocalDate, connection: Connection
-        ): List<ArenaSak> {
+        ): List<ArenaVedtak> {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
             val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
             val query =
@@ -268,17 +268,17 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(p++, personId)
 
                 val resultSet = preparedStatement.executeQuery()
-                return resultSet.map { row -> mapperForArenasak(row) }
+                return resultSet.map { row -> mapperForArenaVedtak(row) }
             }
         }
 
-        fun mapperForArenasak(row: ResultSet): ArenaSak = ArenaSak(
+        fun mapperForArenaVedtak(row: ResultSet) = ArenaVedtak(
             row.getString("sak_id"),
             row.getString("vedtakstatuskode"),
             row.getString("vedtaktypekode"),
             fraDato(row.getDate("fra_dato")),
             tilDato = fraDato(row.getDate("til_dato")),
-            rettighetkode = row.getString("rettighetkode")
+            rettighetkode = row.getString("rettighetkode"),
         )
 
     }

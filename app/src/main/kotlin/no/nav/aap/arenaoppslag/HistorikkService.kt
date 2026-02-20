@@ -2,11 +2,11 @@ package no.nav.aap.arenaoppslag
 
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
-import no.nav.aap.arenaoppslag.kontrakt.intern.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import org.jetbrains.annotations.TestOnly
 import java.time.LocalDate
 
@@ -29,22 +29,22 @@ class HistorikkService(
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
         }
 
-        val relevanteArenaVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
             personId,
             virkningstidspunkt
         )
 
-        val harSignifikantHistorikk = relevanteArenaVedtak.isNotEmpty()
-        val arenaSakIdListe = sorterSaker(relevanteArenaVedtak).map { it.sakId }.distinct()
+        val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
+        val arenaSakIdListe = sorterVedtak(signifikanteVedtak).map { it.sakId }.distinct()
 
         return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
 
-    internal fun sorterSaker(arenaSaker: List<ArenaSak>): List<ArenaSak> {
+    internal fun sorterVedtak(vedtak: List<ArenaVedtak>): List<ArenaVedtak> {
         // Hvis saker uten tilDato finnes, sorter disse basert på db-order
-        val utenSluttdato = arenaSaker.filter { it.tilDato == null }.reversed() // i reversed db-order (=nyeste først)
+        val utenSluttdato = vedtak.filter { it.tilDato == null }.reversed() // i reversed db-order (=nyeste først)
         // Hvis saker med tilDato finnes, sorter disse synkende på dato (=nyeste først)
-        val medSluttdato = arenaSaker.filter { it.tilDato != null }.sortedByDescending { it.tilDato }
+        val medSluttdato = vedtak.filter { it.tilDato != null }.sortedByDescending { it.tilDato }
         return utenSluttdato + medSluttdato
     }
 
@@ -60,10 +60,10 @@ class HistorikkService(
             // early out
             return NyereSakerResponse(false, emptyList())
         }
-        val nyereSaker = historikkRepository.hentIkkeAvbrutteSakerSisteFemÅrForPerson(personId)
+        val nyereVedtak = historikkRepository.`hentIkkeAvbrutteVedtakSisteFemÅrForPerson`(personId)
 
-        val harNyereHistorikk = nyereSaker.isNotEmpty()
-        val arenaSakIdListe = sorterSaker(nyereSaker).map { it.sakId }.distinct()
+        val harNyereHistorikk = nyereVedtak.isNotEmpty()
+        val arenaSakIdListe = sorterVedtak(nyereVedtak).map { it.sakId }.distinct()
 
         return NyereSakerResponse(harNyereHistorikk, arenaSakIdListe)
     }

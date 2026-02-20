@@ -22,7 +22,7 @@ import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
-import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
 import no.nav.aap.arenaoppslag.plugins.bruker
@@ -119,12 +119,9 @@ fun Application.server(
 private fun skapInternService(datasource: DataSource): InternService {
     val periodeRepository = PeriodeRepository(datasource)
     val maksimumRepository = MaksimumRepository(datasource)
-    val sakRepository = SakRepository(datasource)
+    val vedtakRepository = VedtakRepository(datasource)
 
-    return InternService(
-        maksimumRepository, periodeRepository,
-        sakRepository
-    )
+    return InternService(maksimumRepository, periodeRepository, vedtakRepository)
 }
 
 private fun skapHistorikkService(datasource: DataSource): HistorikkService {
