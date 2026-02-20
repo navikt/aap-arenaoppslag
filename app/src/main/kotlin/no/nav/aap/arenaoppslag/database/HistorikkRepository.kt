@@ -101,10 +101,16 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // vedtak i samme periode.
         @Language("OracleSql")
         val selectKunRelevanteVedtak = """
-        SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode, utfallkode
-          FROM 
+        SELECT 
+            sak_id, 
+            vedtakstatuskode, 
+            vedtaktypekode, 
+            fra_dato, 
+            til_dato, 
+            rettighetkode, 
+            utfallkode
+        FROM 
               vedtak v 
-        
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP')
