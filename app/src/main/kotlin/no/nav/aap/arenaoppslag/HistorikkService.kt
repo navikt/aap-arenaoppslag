@@ -1,7 +1,6 @@
 package no.nav.aap.arenaoppslag
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tag
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
@@ -88,15 +87,15 @@ class HistorikkService(
         return NyereSakerResponse(harNyereHistorikk, arenaSakIdListe)
     }
 
-    fun MeterRegistry.registrerSignifikantVedtak(vedtak: ArenaVedtak): Counter {
-        return this.counter(
+    fun MeterRegistry.registrerSignifikantVedtak(vedtak: ArenaVedtak) {
+        this.counter(
             "arenaoppslag_signifikant_vedtak",
             listOf(
                 Tag.of("type", vedtak.vedtaktypeKode),
                 Tag.of("rettighet", vedtak.rettighetkode),
                 Tag.of("status", vedtak.statusKode),
-                // TODO ta med utfallkode også?
+                Tag.of("utfall", vedtak.utfallkode)
             )
-        )
+        ).also { counter -> counter.increment() }
     }
 }
