@@ -15,9 +15,9 @@ public data class VedtakStatus(
 public data class ArenaVedtak(
     val sakId: String,
     val statusKode: String,
-    val vedtaktypeKode: String,
+    val vedtaktypeKode: String?,
     val fraOgMed: LocalDate?,
     val tilDato: LocalDate?,
     val rettighetkode: String,
-    val utfallkode: String,
+    val utfallkode: String?,
 )
