@@ -91,10 +91,10 @@ class HistorikkService(
         this.counter(
             "arenaoppslag_signifikant_vedtak",
             listOf(
-                Tag.of("type", vedtak.vedtaktypeKode),
+                Tag.of("type", vedtak.vedtaktypeKode ?: "null"),
                 Tag.of("rettighet", vedtak.rettighetkode),
                 Tag.of("status", vedtak.statusKode),
-                Tag.of("utfall", vedtak.utfallkode)
+                Tag.of("utfall", vedtak.utfallkode ?: "null")
             )
         ).also { counter -> counter.increment() }
     }

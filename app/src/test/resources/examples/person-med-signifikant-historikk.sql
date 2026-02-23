@@ -98,7 +98,7 @@ UNION ALL
 SELECT
     v.sak_id,
     su.vedtakstatuskode,
-    'O'  AS vedtaktypekode,
+    v.vedtaktypekode,
     su.dato_fra AS fra_dato,
     su.dato_til AS til_dato,
     'SPESIAL' AS rettighetkode,
@@ -118,10 +118,10 @@ UNION ALL
 SELECT
     v.sak_id,
     v.vedtakstatuskode,
-    'O'  AS vedtaktypekode,
+    CAST(NULL AS VARCHAR2(10)) AS vedtaktypekode,
     ssu.dato_periode_fra AS fra_dato,
     ssu.dato_periode_til AS til_dato,
-    'SIM_SPESIAL' AS rettighetkode,
+    'SIM_UTBET' AS rettighetkode,
     v.utfallkode
 FROM
     sim_utbetalingsgrunnlag ssu
