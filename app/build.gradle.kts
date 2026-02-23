@@ -53,7 +53,7 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("com.nimbusds:nimbus-jose-jwt:10.7")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:10.8")
     testImplementation("org.flywaydb:flyway-core:11.20.2")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
