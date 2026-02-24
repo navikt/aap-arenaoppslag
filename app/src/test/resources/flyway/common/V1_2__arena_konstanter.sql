@@ -527,3 +527,5 @@ Insert into "VEDTAKTYPE" (VEDTAKTYPEKODE,VEDTAKTYPENAVN,BESKRIVELSE,DATO_FRA,DAT
 Insert into "VEDTAKTYPE" (VEDTAKTYPEKODE,VEDTAKTYPENAVN,BESKRIVELSE,DATO_FRA,DATO_TIL,REG_USER,REG_DATO,MOD_USER,MOD_DATO,AVSNITTLISTEKODE_VALGFRI) values ('O','Ny rettighet','Ny rettighet',to_date('01-JAN-01','DD-MON-RR'),to_date('31-DEC-99','DD-MON-RR'),null,null,null,null,null);
 Insert into "VEDTAKTYPE" (VEDTAKTYPEKODE,VEDTAKTYPENAVN,BESKRIVELSE,DATO_FRA,DATO_TIL,REG_USER,REG_DATO,MOD_USER,MOD_DATO,AVSNITTLISTEKODE_VALGFRI) values ('S','Stans','Stans',to_date('01-JAN-01','DD-MON-RR'),to_date('31-DEC-99','DD-MON-RR'),null,null,null,null,null);
 Insert into "VEDTAKTYPE" (VEDTAKTYPEKODE,VEDTAKTYPENAVN,BESKRIVELSE,DATO_FRA,DATO_TIL,REG_USER,REG_DATO,MOD_USER,MOD_DATO,AVSNITTLISTEKODE_VALGFRI) values ('T','Tidsbegrenset bortfall','Tidsbegrenset bortfall',to_date('01-JAN-01','DD-MON-RR'),to_date('31-DEC-99','DD-MON-RR'),null,null,null,null,null);
+
+-- TODO legg til data fra kvotetype og beregningsleddtype
