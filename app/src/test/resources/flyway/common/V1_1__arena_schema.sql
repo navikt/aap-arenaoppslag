@@ -818,3 +818,161 @@ CREATE TABLE "VEDTAKFAKTA"
     CONSTRAINT "VEDFAKT_VEDFTYP_FK" FOREIGN KEY ("VEDTAKFAKTAKODE") REFERENCES "VEDTAKFAKTATYPE" ("VEDTAKFAKTAKODE"),
     CONSTRAINT "VEDFAKT_VEDTAK_FK" FOREIGN KEY ("VEDTAK_ID") REFERENCES "VEDTAK" ("VEDTAK_ID")
 );
+
+--------------------------------------------------------------------------------
+-- BEREGNINGSLEDD
+--------------------------------------------------------------------------------
+CREATE TABLE BEREGNINGSLEDD
+(
+    BEREGNINGSLEDD_ID     NUMBER       NOT NULL,
+    BEREGNINGSLEDDKODE    VARCHAR2(5)  NOT NULL,
+    DATO_FRA              DATE         NOT NULL,
+    PERSON_ID             NUMBER       NOT NULL,
+    DATO_TIL              DATE,
+    TABELLNAVNALIAS_KILDE VARCHAR2(10) NOT NULL,
+    OBJEKT_ID_KILDE       NUMBER,
+    REG_USER              VARCHAR2(8),
+    REG_DATO              DATE,
+    MOD_USER              VARCHAR2(8),
+    MOD_DATO              DATE,
+    VERDI                 NUMBER       NOT NULL,
+    TILLEGGSKODE          VARCHAR2(5),
+    PARTISJON             NUMBER(8, 0),
+    CONSTRAINT BERLD_PK PRIMARY KEY (BEREGNINGSLEDD_ID)
+);
+
+COMMENT ON COLUMN BEREGNINGSLEDD.BEREGNINGSLEDD_ID IS 'Unik ID';
+COMMENT ON COLUMN BEREGNINGSLEDD.BEREGNINGSLEDDKODE IS 'Referanse til BEREGNINGSLEDDTYPE';
+COMMENT ON COLUMN BEREGNINGSLEDD.DATO_FRA IS 'Fra-dato for gyldighetsperioden til beregningsleddet';
+COMMENT ON COLUMN BEREGNINGSLEDD.PERSON_ID IS 'Referanse til PERSON';
+COMMENT ON COLUMN BEREGNINGSLEDD.DATO_TIL IS 'Til-dato for gyldighetsperioden til beregningsleddet';
+COMMENT ON COLUMN BEREGNINGSLEDD.TABELLNAVNALIAS_KILDE IS 'Angir hvilken tabell somer kilden til beregningsleddet. Objektet som har sist oppdaterte beregningsleddet (tabellen)';
+COMMENT ON COLUMN BEREGNINGSLEDD.OBJEKT_ID_KILDE IS 'Angir id''en til kilden til beregningsleddet';
+COMMENT ON COLUMN BEREGNINGSLEDD.VERDI IS 'Angir verdien til beregningsleddet. Knyttet til beregningsleddkoden som angir hva verdien representerer.';
+COMMENT ON COLUMN BEREGNINGSLEDD.TILLEGGSKODE IS 'Tilleggskode (detaljeringskode). Angir mer spesifikt hva beregningsleddet gjelder.';
+COMMENT ON COLUMN BEREGNINGSLEDD.PARTISJON IS 'Partisjonsnøkkel';
+COMMENT ON TABLE BEREGNINGSLEDD IS 'Beregningsledd er konsekvens av et vedtak som skal benyttes ved beregninger.';
+
+--------------------------------------------------------------------------------
+-- BEREGNINGSLEDDTYPE
+--------------------------------------------------------------------------------
+CREATE TABLE BEREGNINGSLEDDTYPE
+(
+    BEREGNINGSLEDDKODE       VARCHAR2(5)             NOT NULL,
+    BEREGNINGSLEDDNAVN       VARCHAR2(60)            NOT NULL,
+    STATUS_KRAV_NY_BEREGNING VARCHAR2(1)             NOT NULL CHECK (STATUS_KRAV_NY_BEREGNING IN ('J', 'N')),
+    STATUS_KVOTEBRUK         VARCHAR2(1)             NOT NULL CHECK (STATUS_KVOTEBRUK IN ('J', 'N')),
+    STATUS_SETT_TILDATO      VARCHAR2(1)             NOT NULL CHECK (STATUS_SETT_TILDATO IN ('J', 'N')),
+    DATO_GYLDIG_FRA          DATE                    NOT NULL,
+    DATO_GYLDIG_TIL          DATE,
+    BESKRIVELSE              VARCHAR2(255),
+    REG_USER                 VARCHAR2(8),
+    REG_DATO                 DATE,
+    MOD_USER                 VARCHAR2(8),
+    MOD_DATO                 DATE,
+    VALIDER_HELE_DAGER       VARCHAR2(1) DEFAULT 'N' NOT NULL CHECK (VALIDER_HELE_DAGER IN ('J', 'N')),
+    CONSTRAINT BERLDTYP_PK PRIMARY KEY (BEREGNINGSLEDDKODE)
+);
+
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.BEREGNINGSLEDDKODE IS 'Entydig kode';
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.BEREGNINGSLEDDNAVN IS 'Navnet på beregningsleddtypen';
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.STATUS_KRAV_NY_BEREGNING IS '(Ikke i bruk)';
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.STATUS_KVOTEBRUK IS 'Angir om beregningsleddtypen representerer en teller (skal da kun kunne oppdateres av kvotebruk)';
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.STATUS_SETT_TILDATO IS '(Ikke i bruk)';
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.DATO_GYLDIG_FRA IS 'Fra-dato for beregningsleddtypens gyldighetsperiode';
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.DATO_GYLDIG_TIL IS 'Til-dato for beregningsleddtypens gyldighetsperiode';
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.BESKRIVELSE IS 'Beskrivelse av beregningsleddtypen';
+COMMENT ON COLUMN BEREGNINGSLEDDTYPE.VALIDER_HELE_DAGER IS 'Hvilke tellere som skal valideres for at gitt verdi kun skal kunne gis for hele dager, dvs. at verdien er delelig med 20';
+COMMENT ON TABLE BEREGNINGSLEDDTYPE IS 'Bestemmer egenskaper for beregningsledd.';
+
+--------------------------------------------------------------------------------
+-- KVOTEBRUK
+--------------------------------------------------------------------------------
+CREATE TABLE KVOTEBRUK
+(
+    KVOTEBRUK_ID             NUMBER                                NOT NULL,
+    KVOTETYPEKODE            VARCHAR2(5)                           NOT NULL,
+    TABELLNAVNALIAS_GRUNNLAG VARCHAR2(10)                          NOT NULL,
+    OBJEKT_ID_GRUNNLAG       NUMBER                                NOT NULL,
+    ANTALL_BEVEGELSE         NUMBER(5, 0)                          NOT NULL,
+    POSTERINGTYPEKODE        VARCHAR2(5) DEFAULT 'ORD'             NOT NULL,
+    REG_USER                 VARCHAR2(20)                          NOT NULL,
+    REG_DATO                 DATE                                  NOT NULL,
+    MOD_DATO                 DATE,
+    MOD_USER                 VARCHAR2(8),
+    DATO_HENDELSE            DATE        DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PERSON_ID                NUMBER                                NOT NULL,
+    BEGRUNNELSE              VARCHAR2(255),
+    PARTISJON                NUMBER(8, 0),
+    CONSTRAINT KVOTBR_PK PRIMARY KEY (KVOTEBRUK_ID)
+);
+
+COMMENT ON COLUMN KVOTEBRUK.KVOTEBRUK_ID IS 'Generert Oracle-sekvens som entydig identifiserer posten';
+COMMENT ON COLUMN KVOTEBRUK.KVOTETYPEKODE IS 'Referanse til KVOTETYPE';
+COMMENT ON COLUMN KVOTEBRUK.TABELLNAVNALIAS_GRUNNLAG IS 'Referanse til OBJEKTTYPE';
+COMMENT ON COLUMN KVOTEBRUK.OBJEKT_ID_GRUNNLAG IS 'Objekt id grunnlag';
+COMMENT ON COLUMN KVOTEBRUK.ANTALL_BEVEGELSE IS 'Antall bevegelse';
+COMMENT ON COLUMN KVOTEBRUK.POSTERINGTYPEKODE IS 'Referanse til POSTERINGTYPE';
+COMMENT ON COLUMN KVOTEBRUK.REG_USER IS 'Oracle brukerident som opprettet posten';
+COMMENT ON COLUMN KVOTEBRUK.REG_DATO IS 'Dato opprettet';
+COMMENT ON COLUMN KVOTEBRUK.MOD_DATO IS 'Dato sist modifisert';
+COMMENT ON COLUMN KVOTEBRUK.MOD_USER IS 'Oracle brukerident som sist modifiserte posten';
+COMMENT ON COLUMN KVOTEBRUK.DATO_HENDELSE IS 'Dato hendelse';
+COMMENT ON COLUMN KVOTEBRUK.PERSON_ID IS 'Referanse til PERSON';
+COMMENT ON COLUMN KVOTEBRUK.BEGRUNNELSE IS 'Saksbehandlers begrunnelse';
+COMMENT ON COLUMN KVOTEBRUK.PARTISJON IS 'Partisjonsnøkkel';
+COMMENT ON TABLE KVOTEBRUK IS 'Gir oversikt over alle bevegelser for kvotene for en rettighetsperson. Opprettes fra Vedtak, Meldekort og Spesialutbetaling. Genererer Beregningsledd, som bl.a. inneholder oppdatert saldo';
+
+--------------------------------------------------------------------------------
+-- KVOTEBRUK_DETALJER
+--------------------------------------------------------------------------------
+CREATE TABLE KVOTEBRUK_DETALJER
+(
+    KVOTEBRUK_DETALJER_ID    NUMBER GENERATED BY DEFAULT AS IDENTITY NOT NULL,
+    KVOTETYPEKODE            VARCHAR2(5)                             NOT NULL,
+    POSTERINGTYPEKODE        VARCHAR2(5)                             NOT NULL,
+    TABELLNAVNALIAS_GRUNNLAG VARCHAR2(10)                            NOT NULL,
+    OBJEKT_ID_GRUNNLAG       NUMBER                                  NOT NULL,
+    ANTALL_BEVEGELSE         NUMBER,
+    DATO_HENDELSE            DATE DEFAULT CURRENT_TIMESTAMP          NOT NULL,
+    KVOTEBRUK_ID             NUMBER,
+    MELDEKORT_ID             NUMBER,
+    REG_DATO                 DATE                                    NOT NULL,
+    REG_USER                 VARCHAR2(8)                             NOT NULL,
+    MOD_DATO                 DATE                                    NOT NULL,
+    MOD_USER                 VARCHAR2(8)                             NOT NULL,
+    CONSTRAINT KVOTEBRUK_DETALJER_PK PRIMARY KEY (KVOTEBRUK_DETALJER_ID)
+);
+
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.KVOTEBRUK_DETALJER_ID IS 'Generert Oracle-sekvens som entydig identifiserer posten';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.KVOTETYPEKODE IS 'Referanse til KVOTETYPE. Kvotetypen som har gitt bevegelse';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.POSTERINGTYPEKODE IS 'Referanse til type POSTERINGTYPE';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.TABELLNAVNALIAS_GRUNNLAG IS 'Referanse til OBJEKTTYPE';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.OBJEKT_ID_GRUNNLAG IS 'Referanse til objekttypens id';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.ANTALL_BEVEGELSE IS 'Antall bevegelse i prosent';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.DATO_HENDELSE IS 'Dato kvote er forbrukt';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.KVOTEBRUK_ID IS 'Referanse til kvotebruk';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.MELDEKORT_ID IS 'Referanse til meldekort';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.REG_DATO IS 'Angir tidspunktet for når raden ble opprettet';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.REG_USER IS 'Angir hvilken bruker som opprettet raden';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.MOD_DATO IS 'Angir tidspunktet for når raden sist ble endret';
+COMMENT ON COLUMN KVOTEBRUK_DETALJER.MOD_USER IS 'Angir hvilken bruker som sist endret raden';
+COMMENT ON TABLE KVOTEBRUK_DETALJER IS 'Gir oversikt over alle bevegelser for kvotene for en rettighetsperson. Opprettes fra Vedtak, Meldekort og Spesialutbetaling. Genererer Beregningsledd, som bl.a. inneholder oppdatert saldo';
+
+--------------------------------------------------------------------------------
+-- KVOTETYPE
+--------------------------------------------------------------------------------
+CREATE TABLE KVOTETYPE
+(
+    KVOTETYPEKODE      VARCHAR2(5)  NOT NULL,
+    KVOTETYPENAVN      VARCHAR2(60) NOT NULL,
+    MAALEENHET         VARCHAR2(5)  NOT NULL,
+    BEREGNINGSLEDDKODE VARCHAR2(5),
+    CONSTRAINT KVOTTYP_PK PRIMARY KEY (KVOTETYPEKODE)
+);
+
+COMMENT ON COLUMN KVOTETYPE.KVOTETYPEKODE IS 'Kode som entydig identifiserer en typeverdi';
+COMMENT ON COLUMN KVOTETYPE.KVOTETYPENAVN IS 'Kvotetypenavn';
+COMMENT ON COLUMN KVOTETYPE.MAALEENHET IS 'Referanse til MAALEENHETVERDITYPE';
+COMMENT ON COLUMN KVOTETYPE.BEREGNINGSLEDDKODE IS 'Referanse til BEREGNINGSLEDDTYPE';
+COMMENT ON TABLE KVOTETYPE IS 'Type teller brukt i KVOTEBRUK';
