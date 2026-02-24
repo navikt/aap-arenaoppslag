@@ -48,14 +48,14 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.32")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
 
-    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.26.1.0.0")
     implementation("com.zaxxer:HikariCP:7.0.2")
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("com.nimbusds:nimbus-jose-jwt:10.7")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:10.8")
     testImplementation("org.flywaydb:flyway-core:11.20.2")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
