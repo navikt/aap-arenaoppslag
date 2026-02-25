@@ -1,8 +1,9 @@
 package no.nav.aap.arenaoppslag
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.core.instrument.Tag
+import no.nav.aap.arenaoppslag.Metrics.registrerAntallSignifikanteVedtak
+import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantEnkeltVedtak
+import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
@@ -36,7 +37,7 @@ class HistorikkService(
             personId,
             virkningstidspunkt
         )
-        rapporterMetrikkerForSignifikanteVedtak(signifikanteVedtak)
+        rapporterMetrikker(signifikanteVedtak)
 
         val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
         val arenaSakIdListe = sorterVedtak(signifikanteVedtak).map { it.sakId }.distinct()
@@ -44,10 +45,18 @@ class HistorikkService(
         return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
 
-    private fun rapporterMetrikkerForSignifikanteVedtak(vedtakene: List<ArenaVedtak>) {
+    private fun rapporterMetrikker(vedtakene: List<ArenaVedtak>) {
         vedtakene.forEach {
             Metrics.prometheus.registrerSignifikantVedtak(it)
         }
+
+        if (vedtakene.size == 1) {
+            // Bare ett vedtak hindret oss fra å ta inn personen inn i Kelvin
+            Metrics.prometheus.registrerSignifikantEnkeltVedtak(vedtakene.first())
+        }
+
+        // Mål antall vedtak som hindret oss fra å ta personen inn i Kelvin
+        Metrics.prometheus.registrerAntallSignifikanteVedtak(vedtakene.size)
     }
 
     internal fun sorterVedtak(vedtak: List<ArenaVedtak>): List<ArenaVedtak> {
@@ -87,15 +96,5 @@ class HistorikkService(
         return NyereSakerResponse(harNyereHistorikk, arenaSakIdListe)
     }
 
-    fun MeterRegistry.registrerSignifikantVedtak(vedtak: ArenaVedtak) {
-        this.counter(
-            "arenaoppslag_signifikant_vedtak",
-            listOf(
-                Tag.of("type", vedtak.vedtaktypeKode ?: "null"),
-                Tag.of("rettighet", vedtak.rettighetkode),
-                Tag.of("status", vedtak.statusKode),
-                Tag.of("utfall", vedtak.utfallkode ?: "null")
-            )
-        ).also { counter -> counter.increment() }
-    }
 }
+
