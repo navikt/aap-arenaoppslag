@@ -28,7 +28,7 @@ class HistorikkService(
     ): SignifikanteSakerResponse {
         val personId: Int? = personRepository.hentPersonIdHvisEksisterer(personIdentifikatorer.toSet())
         if (personId == null) {
-            // early out
+            // Personen finnes ikke i AAP-Arena i det hele tatt
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
         }
 
@@ -40,6 +40,8 @@ class HistorikkService(
 
         val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
         val arenaSakIdListe = sorterVedtak(signifikanteVedtak).map { it.sakId }.distinct()
+        // TODO Vurder å slippe inn søknader med 11-5-vedtak som er åpne uten at det er et AAP-pengevedtak
+        //  i samme periode, forutsatt at disse 11-5 vedtakene ikke er så nye at AAP-vedtaket ikke er laget enda.
 
         return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
