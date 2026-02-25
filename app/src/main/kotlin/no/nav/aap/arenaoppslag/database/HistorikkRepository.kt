@@ -5,6 +5,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.Date
+import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.time.LocalDate
 import javax.sql.DataSource
