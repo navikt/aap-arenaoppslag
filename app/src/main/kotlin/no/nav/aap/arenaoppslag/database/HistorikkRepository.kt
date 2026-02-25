@@ -122,7 +122,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+           -- TODO kan kutte ned til 12+3 mnd siden fra_dato, da det er maks 12mnd klagefrist + behandlingstid.
+            -- SPM: må vi vente en periode på at et vedtak skal bli opprettet ved klage, eller registreres det automatisk når systemet mottar klagen?
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -152,6 +154,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
             -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
+            -- TODO 3 mnd heller
             AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) AND v.utfallkode IN ('JA', 'DELVIS' ) )
         """.trimIndent()
 
