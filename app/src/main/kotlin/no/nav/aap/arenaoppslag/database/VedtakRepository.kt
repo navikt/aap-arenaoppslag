@@ -13,9 +13,9 @@ import javax.sql.DataSource
 
 class VedtakRepository(private val dataSource: DataSource) {
 
-    fun hentVedtakStatuser(fnr: String): List<VedtakStatus> {
+    fun hentVedtakStatuser(fodselsnr: String): List<VedtakStatus> {
         return dataSource.connection.use { con ->
-            selectVedtakStatuser(fnr, con)
+            selectVedtakStatuser(fodselsnr, con)
         }
     }
 
