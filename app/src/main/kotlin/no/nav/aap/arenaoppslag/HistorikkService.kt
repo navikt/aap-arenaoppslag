@@ -1,8 +1,6 @@
 package no.nav.aap.arenaoppslag
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import no.nav.aap.arenaoppslag.Metrics.registrerAntallSignifikanteVedtak
-import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantEnkeltVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -24,9 +22,9 @@ class HistorikkService(
     }
 
     fun signifikanteSakerForPerson(
-        fnr: Set<String>, virkningstidspunkt: LocalDate
+        fodselsnummerene: Set<String>, virkningstidspunkt: LocalDate
     ): SignifikanteSakerResponse {
-        val personId: Int? = personRepository.hentPersonIdHvisEksisterer(fnr.toSet())
+        val personId: Int? = personRepository.hentPersonIdHvisEksisterer(fodselsnummerene.toSet())
         if (personId == null) {
             // early out
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
@@ -69,17 +67,16 @@ class HistorikkService(
     // Lagrer mappingen fødselsnr -> arena-personId. Bare treff i databasen lagres.
     private val personIdCache = Caffeine.newBuilder().maximumSize(30_000).build<String, Int>()
 
-    fun personEksistererIAapArena(fnr: Set<String>): PersonEksistererIAAPArena {
+    fun personEksistererIAapArena(fodselsnummerene: Set<String>): PersonEksistererIAAPArena {
         // prøv først cache, deretter gå til repository, deretter lagre det som evt. blir funnet i repository til cache
         val personId: Int? =
-            fnr.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
-                ?: personRepository.hentPersonIdHvisEksisterer(fnr)
+            fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
+                ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
                     ?.also { funnetPersonId ->
                         // lagre til cache
-                        fnr.forEach { personIdCache.put(it, funnetPersonId) }
+                        fodselsnummerene.forEach { personIdCache.put(it, funnetPersonId) }
                     }
         return PersonEksistererIAAPArena(personId != null)
     }
 
 }
-
