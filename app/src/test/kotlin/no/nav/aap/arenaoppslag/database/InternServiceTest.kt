@@ -42,7 +42,7 @@ class InternServiceTest {
 
     @Test
     fun `kan kalle på saker`() {
-        underTest.hentSaker(listOf("ff"))
+        underTest.hentSaker(setOf("ff"))
     }
 
 }

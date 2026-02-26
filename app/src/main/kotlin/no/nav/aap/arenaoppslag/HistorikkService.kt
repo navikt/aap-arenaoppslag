@@ -6,7 +6,6 @@ import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantEnkeltVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
-import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
@@ -25,9 +24,9 @@ class HistorikkService(
     }
 
     fun signifikanteSakerForPerson(
-        personIdentifikatorer: List<String>, virkningstidspunkt: LocalDate
+        fnr: Set<String>, virkningstidspunkt: LocalDate
     ): SignifikanteSakerResponse {
-        val personId: Int? = personRepository.hentPersonIdHvisEksisterer(personIdentifikatorer.toSet())
+        val personId: Int? = personRepository.hentPersonIdHvisEksisterer(fnr.toSet())
         if (personId == null) {
             // early out
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
@@ -70,30 +69,16 @@ class HistorikkService(
     // Lagrer mappingen fødselsnr -> arena-personId. Bare treff i databasen lagres.
     private val personIdCache = Caffeine.newBuilder().maximumSize(30_000).build<String, Int>()
 
-    fun personEksistererIAapArena(personidentifikatorer: Set<String>): PersonEksistererIAAPArena {
+    fun personEksistererIAapArena(fnr: Set<String>): PersonEksistererIAAPArena {
         // prøv først cache, deretter gå til repository, deretter lagre det som evt. blir funnet i repository til cache
         val personId: Int? =
-            personidentifikatorer.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
-                ?: personRepository.hentPersonIdHvisEksisterer(personidentifikatorer)
+            fnr.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
+                ?: personRepository.hentPersonIdHvisEksisterer(fnr)
                     ?.also { funnetPersonId ->
                         // lagre til cache
-                        personidentifikatorer.forEach { personIdCache.put(it, funnetPersonId) }
+                        fnr.forEach { personIdCache.put(it, funnetPersonId) }
                     }
         return PersonEksistererIAAPArena(personId != null)
-    }
-
-    fun personHarNyereHistorikk(personidentifikatorer: List<String>): NyereSakerResponse {
-        val personId: Int? = personRepository.hentPersonIdHvisEksisterer(personidentifikatorer.toSet())
-        if (personId == null) {
-            // early out
-            return NyereSakerResponse(false, emptyList())
-        }
-        val nyereVedtak = historikkRepository.`hentIkkeAvbrutteVedtakSisteFemÅrForPerson`(personId)
-
-        val harNyereHistorikk = nyereVedtak.isNotEmpty()
-        val arenaSakIdListe = sorterVedtak(nyereVedtak).map { it.sakId }.distinct()
-
-        return NyereSakerResponse(harNyereHistorikk, arenaSakIdListe)
     }
 
 }

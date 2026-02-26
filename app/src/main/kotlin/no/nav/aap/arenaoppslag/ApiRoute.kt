@@ -3,8 +3,6 @@ package no.nav.aap.arenaoppslag
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
@@ -16,7 +14,7 @@ fun Route.historikk(historikkService: HistorikkService) {
         logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
         val request: SignifikanteSakerRequest = call.receive()
         val response: SignifikanteSakerResponse = historikkService.signifikanteSakerForPerson(
-            request.personidentifikatorer, request.virkningstidspunkt
+            request.personidentifikatorer.toSet(), request.virkningstidspunkt
         )
 
         call.respond(response)
@@ -31,13 +29,4 @@ fun Route.historikk(historikkService: HistorikkService) {
         call.respond(response)
     }
 
-    post("/person/nyere-historikk") {
-        logger.info("Henter personens AAP-Arena-historikk fra de siste fem år")
-        val request: NyereSakerRequest = call.receive()
-        val response: NyereSakerResponse = historikkService.personHarNyereHistorikk(
-            request.personidentifikatorer,
-        )
-
-        call.respond(response)
-    }
 }
