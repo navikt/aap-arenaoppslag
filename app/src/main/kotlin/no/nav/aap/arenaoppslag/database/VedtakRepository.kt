@@ -69,9 +69,9 @@ class VedtakRepository(private val dataSource: DataSource) {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
-        fun selectVedtakStatuser(personidentifikator: String, connection: Connection): List<VedtakStatus> {
+        fun selectVedtakStatuser(fodselsnr: String, connection: Connection): List<VedtakStatus> {
             connection.prepareStatement(selectVedtakForFnr).use { preparedStatement ->
-                preparedStatement.setString(1, personidentifikator)
+                preparedStatement.setString(1, fodselsnr)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForVedtakStatus(row) }.toList()
             }
