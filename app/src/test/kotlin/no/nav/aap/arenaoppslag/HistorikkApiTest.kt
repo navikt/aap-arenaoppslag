@@ -6,40 +6,45 @@ import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
 import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.Fakes
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 
 class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     companion object {
         const val ukjentPerson = "007"
-        const val kjentPerson = "1"
+        const val kjentPerson = "kun_nye"
     }
 
     @Test
-    fun `Person har nyere historikk i AAP-Arena`() {
+    fun `Person har signifikant historikk i AAP-Arena`() {
         withTestServer { gateway ->
-            val kjentPerson: NyereSakerResponse = gateway.personHarNyereAapArenaHistorikk(
-                NyereSakerRequest(
+            val kjentPerson: SignifikanteSakerResponse = gateway.personHarSignifikantAAPArenaHistorikk(
+                SignifikanteSakerRequest(
                     personidentifikatorer = listOf(kjentPerson),
+                    virkningstidspunkt = LocalDateTime.now().minusDays(1).toLocalDate()
                 )
             )
 
-            assertThat(kjentPerson.eksisterer).isTrue
+            assertThat(kjentPerson.harSignifikantHistorikk).isTrue
         }
     }
 
     @Test
-    fun `Person har IKKE nyere historikk i AAP-Arena`() {
+    fun `Person har IKKE signifikant historikk i AAP-Arena`() {
         withTestServer { gateway ->
-            val kjentPerson: NyereSakerResponse = gateway.personHarNyereAapArenaHistorikk(
-                NyereSakerRequest(
+            val ukjentPerson: SignifikanteSakerResponse = gateway.personHarSignifikantAAPArenaHistorikk(
+                SignifikanteSakerRequest(
                     personidentifikatorer = listOf(ukjentPerson),
+                    virkningstidspunkt = LocalDateTime.now().minusDays(1).toLocalDate()
                 )
             )
 
-            assertThat(kjentPerson.eksisterer).isFalse
+            assertThat(ukjentPerson.harSignifikantHistorikk).isFalse
         }
     }
 

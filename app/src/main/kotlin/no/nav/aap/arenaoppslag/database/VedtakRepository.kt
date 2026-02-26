@@ -13,24 +13,24 @@ import javax.sql.DataSource
 
 class VedtakRepository(private val dataSource: DataSource) {
 
-    fun hentVedtakStatuser(personidentifikator: String): List<VedtakStatus> {
+    fun hentVedtakStatuser(fodselsnr: String): List<VedtakStatus> {
         return dataSource.connection.use { con ->
-            selectVedtakStatuser(personidentifikator, con)
+            selectVedtakStatuser(fodselsnr, con)
         }
     }
 
-    fun hentVedtak(personidentifikator: String): List<ArenaVedtak> {
+    fun hentVedtak(fnr: String): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            selectVedtak(personidentifikator, con)
+            selectVedtak(fnr, con)
         }
     }
 
     companion object {
 
         @TestOnly
-        fun selectVedtak(personidentifikator: String, connection: Connection): List<ArenaVedtak> {
+        fun selectVedtak(fodselsnummer: String, connection: Connection): List<ArenaVedtak> {
             connection.prepareStatement(selectAlleVedtakForFnr).use { preparedStatement ->
-                preparedStatement.setString(1, personidentifikator)
+                preparedStatement.setString(1, fodselsnummer)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }.toList()
             }
@@ -69,9 +69,9 @@ class VedtakRepository(private val dataSource: DataSource) {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
-        fun selectVedtakStatuser(personidentifikator: String, connection: Connection): List<VedtakStatus> {
+        fun selectVedtakStatuser(fodselsnr: String, connection: Connection): List<VedtakStatus> {
             connection.prepareStatement(selectVedtakForFnr).use { preparedStatement ->
-                preparedStatement.setString(1, personidentifikator)
+                preparedStatement.setString(1, fodselsnr)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForVedtakStatus(row) }.toList()
             }

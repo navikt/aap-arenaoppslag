@@ -12,30 +12,11 @@ import javax.sql.DataSource
 
 class HistorikkRepository(private val dataSource: DataSource) {
 
-    fun `hentIkkeAvbrutteVedtakSisteFemÅrForPerson`(personId: Int): List<ArenaVedtak> {
-        dataSource.connection.use { connection ->
-            connection.createParameterizedQuery(selectIkkeAvbrutteSisteFemÅr)
-                .use { preparedStatement ->
-                    var p = 1 // parameter-indeks
-                    // vedtak
-                    preparedStatement.setInt(p++, personId)
-                    // spesialutbetalinger
-                    preparedStatement.setInt(p++, personId)
-                    // sim_utbetalingsgrunnlag
-                    preparedStatement.setInt(p++, personId)
-
-                    val resultSet = preparedStatement.executeQuery()
-                    return resultSet.map { row -> mapperForArenaVedtak(row) }
-                }
-
-        }
-    }
-
     fun hentAlleSignifikanteVedtakForPerson(
-        personId: Int, `søknadMottattPå`: LocalDate
+        arenaPersonId: Int, `søknadMottattPå`: LocalDate
     ): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            hentAlleSignifikanteVedtakForPerson(personId, søknadMottattPå, con)
+            hentAlleSignifikanteVedtakForPerson(arenaPersonId, søknadMottattPå, con)
         }
     }
 
@@ -247,7 +228,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val tidsBufferUkerGenerell = 78L
         const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
         fun hentAlleSignifikanteVedtakForPerson(
-            personId: Int, `søknadMottattPå`: LocalDate, connection: Connection
+            arenaPersonId: Int, `søknadMottattPå`: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
             val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
@@ -264,21 +245,21 @@ class HistorikkRepository(private val dataSource: DataSource) {
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
                 // vedtak
-                preparedStatement.setInt(p++, personId)
+                preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 preparedStatement.setDate(p++, Date.valueOf(nyesteTillateStans))
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 // klager
-                preparedStatement.setInt(p++, personId)
+                preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 // anker
-                preparedStatement.setInt(p++, personId)
+                preparedStatement.setInt(p++, arenaPersonId)
                 // tilbakebetalinger
-                preparedStatement.setInt(p++, personId)
+                preparedStatement.setInt(p++, arenaPersonId)
                 // spesialutbetalinger
-                preparedStatement.setInt(p++, personId)
+                preparedStatement.setInt(p++, arenaPersonId)
                 // sim_utbetalingsgrunnlag
-                preparedStatement.setInt(p++, personId)
+                preparedStatement.setInt(p++, arenaPersonId)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }

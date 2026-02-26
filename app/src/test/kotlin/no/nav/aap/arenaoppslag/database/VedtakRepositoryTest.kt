@@ -22,7 +22,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
         )
         val vedtakRepository = VedtakRepository(h2)
         val alleVedtak = vedtakRepository.hentVedtakStatuser(
-            personidentifikator = "nulltildato",
+            fodselsnr = "nulltildato",
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtak)

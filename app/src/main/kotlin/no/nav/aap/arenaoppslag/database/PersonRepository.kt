@@ -8,9 +8,9 @@ import javax.sql.DataSource
 
 class PersonRepository(private val dataSource: DataSource) {
 
-    fun hentPersonIdHvisEksisterer(fodselsnr: Set<String>): Int? {
+    fun hentPersonIdHvisEksisterer(fodselnummerene: Set<String>): Int? {
         dataSource.connection.use { con ->
-            return selectPersonIdFraFnr(fodselsnr, con)
+            return selectPersonIdFraFnr(fodselnummerene, con)
         }
     }
 
