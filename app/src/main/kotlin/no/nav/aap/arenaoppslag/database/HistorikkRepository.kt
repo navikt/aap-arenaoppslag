@@ -12,17 +12,17 @@ import javax.sql.DataSource
 
 class HistorikkRepository(private val dataSource: DataSource) {
 
-    fun `hentIkkeAvbrutteVedtakSisteFemÅrForPerson`(personId: Int): List<ArenaVedtak> {
+    fun `hentIkkeAvbrutteVedtakSisteFemÅrForPerson`(arenaPersonId: Int): List<ArenaVedtak> {
         dataSource.connection.use { connection ->
             connection.createParameterizedQuery(selectIkkeAvbrutteSisteFemÅr)
                 .use { preparedStatement ->
                     var p = 1 // parameter-indeks
                     // vedtak
-                    preparedStatement.setInt(p++, personId)
+                    preparedStatement.setInt(p++, arenaPersonId)
                     // spesialutbetalinger
-                    preparedStatement.setInt(p++, personId)
+                    preparedStatement.setInt(p++, arenaPersonId)
                     // sim_utbetalingsgrunnlag
-                    preparedStatement.setInt(p++, personId)
+                    preparedStatement.setInt(p++, arenaPersonId)
 
                     val resultSet = preparedStatement.executeQuery()
                     return resultSet.map { row -> mapperForArenaVedtak(row) }
@@ -32,10 +32,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
     }
 
     fun hentAlleSignifikanteVedtakForPerson(
-        personId: Int, `søknadMottattPå`: LocalDate
+        arenaPersonId: Int, `søknadMottattPå`: LocalDate
     ): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            hentAlleSignifikanteVedtakForPerson(personId, søknadMottattPå, con)
+            hentAlleSignifikanteVedtakForPerson(arenaPersonId, søknadMottattPå, con)
         }
     }
 
