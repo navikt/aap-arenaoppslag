@@ -48,11 +48,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
-                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
+                (vedtaktypekode IN ('O','E','G') AND (til_dato >= ? OR til_dato IS NULL)) -- vanlig tidsbuffer på 18 måneder
                   OR
-                (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+           -- TODO kan kutte ned til 12+3 mnd siden fra_dato, da det er maks 12mnd klagefrist + behandlingstid.
+            -- SPM: må vi vente en periode på at et vedtak skal bli opprettet ved klage, eller registreres det automatisk når systemet mottar klagen?
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
