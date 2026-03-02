@@ -7,10 +7,10 @@ import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
+import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
-import org.jetbrains.annotations.TestOnly
 import java.time.LocalDate
 
 class HistorikkService(
@@ -18,17 +18,12 @@ class HistorikkService(
     private val historikkRepository: HistorikkRepository
 ) {
 
-    @TestOnly
-    fun hentAllePersoner(): List<Person> {
-        return personRepository.hentAlle()
-    }
-
     fun signifikanteSakerForPerson(
         fodselsnummerene: Set<String>, virkningstidspunkt: LocalDate
     ): SignifikanteSakerResponse {
         val personId: Int? = personRepository.hentPersonIdHvisEksisterer(fodselsnummerene.toSet())
         if (personId == null) {
-            // early out
+            // Personen finnes ikke i AAP-Arena i det hele tatt
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
         }
 
