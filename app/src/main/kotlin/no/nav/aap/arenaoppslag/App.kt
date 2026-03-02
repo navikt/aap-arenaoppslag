@@ -13,12 +13,7 @@ import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
-import io.micrometer.core.instrument.DistributionSummary
-import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
-import io.micrometer.prometheusmetrics.PrometheusConfig
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
@@ -26,16 +21,14 @@ import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
 import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import org.slf4j.LoggerFactory
+import java.time.LocalDate
 import java.util.*
-import java.util.stream.IntStream.range
 import javax.sql.DataSource
-import kotlin.streams.toList
 
 val logger = LoggerFactory.getLogger("App")
 
@@ -90,6 +83,7 @@ fun Application.server(
     val internService = skapInternService(datasource)
     val historikkService = skapHistorikkService(datasource)
     routes(internService, historikkService)
+    databaseCacheWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
         environment.log.info("ktor har startet opp.")
@@ -114,6 +108,11 @@ fun Application.server(
             // Ignorert
         }
     }
+}
+
+private fun databaseCacheWarmup(historikkService: HistorikkService) {
+    // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
+    historikkService.signifikanteSakerForPerson(listOf("007"), LocalDate.now())
 }
 
 // Bruker ikke RepositoryRegistry fra Kelvin-komponenter fordi vi er på Oracle DB her,
