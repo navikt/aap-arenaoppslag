@@ -46,7 +46,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         assertThat(alleVedtak).hasSize(3)
 
         val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
-        assertThat(relevanteSaker).hasSize(3)
+        assertThat(relevanteSaker).hasSize(4)
     }
 
     @Test
