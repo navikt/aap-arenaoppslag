@@ -47,7 +47,7 @@ class HistorikkService(
             Metrics.prometheus.registrerSignifikantEnkeltVedtak(vedtakene.first())
         }
 
-        // Mål antall vedtak som hindret oss fra å ta personen inn i Kelvin
+        // Mål antall vedtak som hindret oss fra å ta personen inn i Kelvin, om noen
         Metrics.prometheus.registrerAntallSignifikanteVedtak(vedtakene.size)
     }
 
