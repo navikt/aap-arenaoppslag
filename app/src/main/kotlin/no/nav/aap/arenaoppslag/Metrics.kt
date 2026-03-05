@@ -1,6 +1,6 @@
 package no.nav.aap.arenaoppslag
 
-import io.micrometer.core.instrument.DistributionSummary.builder
+import io.micrometer.core.instrument.DistributionSummary
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tag
 import io.micrometer.prometheusmetrics.PrometheusConfig
@@ -32,7 +32,9 @@ object Metrics {
     )
 
     fun MeterRegistry.registrerAntallSignifikanteVedtak(size: Int) {
-        builder("arenaoppslag_antall_signifikante_vedtak")
+        val slo = listOf(1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 15.0, 20.0, 25.0).toDoubleArray()
+        DistributionSummary.builder("arenaoppslag_antall_signifikante_vedtak")
+            .serviceLevelObjectives(*slo)
             .register(this)
             .record(size.toDouble())
     }
