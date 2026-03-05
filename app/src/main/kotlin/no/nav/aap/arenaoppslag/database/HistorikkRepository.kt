@@ -28,51 +28,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
             return query
         }
 
-        @Language("OracleSql")
-        val selectIkkeAvbrutteSisteFemÅr = """            
-        SELECT sak_id, vedtakstatuskode, vedtaktypekode, fra_dato, til_dato, rettighetkode, utfallkode
-        FROM
-            vedtak v
-        
-        WHERE v.person_id = ?
-          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
-          AND v.rettighetkode IN ('AA115', 'AAP', 'KLAG1', 'KLAG2', 'ANKE', 'TILBBET')
-          AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60)
-        UNION ALL
-        
-        SELECT
-            v.sak_id,
-            su.vedtakstatuskode,
-            v.vedtaktypekode,
-            su.dato_fra AS fra_dato,
-            su.dato_til AS til_dato,
-            'SPESIAL' AS rettighetkode,
-            v.utfallkode
-        FROM
-            spesialutbetaling su
-                JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
-        WHERE
-            su.person_id = ?
-            AND su.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60)
-        
-        UNION ALL
-        
-        SELECT
-            v.sak_id,
-            v.vedtakstatuskode,
-            CAST(NULL AS VARCHAR2(10)) AS vedtaktypekode,
-            ssu.dato_periode_fra AS fra_dato,
-            ssu.dato_periode_til AS til_dato,
-            'SIM_UTBETAL' AS rettighetkode, 
-            v.utfallkode
-        FROM
-            sim_utbetalingsgrunnlag ssu
-                JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
-        WHERE
-           ssu.person_id = ?
-           AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
-        """.trimIndent()
-
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
         // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.

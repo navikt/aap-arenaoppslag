@@ -4,8 +4,6 @@ import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
 import no.nav.aap.arenaoppslag.database.H2TestBase
-import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.NyereSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
