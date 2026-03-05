@@ -1,18 +1,17 @@
 package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.DbConfig
-import no.nav.aap.arenaoppslag.Metrics
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import no.nav.aap.arenaoppslag.DbConfig
+import no.nav.aap.arenaoppslag.Metrics
 import java.sql.ResultSet
-import javax.sql.DataSource
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 internal object ArenaDatasource {
 
     @Suppress("MagicNumber")
-    fun create(dbConfig: DbConfig): DataSource =
+    fun create(dbConfig: DbConfig): HikariDataSource =
         HikariDataSource(HikariConfig().apply {
             jdbcUrl = dbConfig.url
             username = dbConfig.username
