@@ -17,14 +17,14 @@ internal object TestConfig {
     internal val oracleH2 = DbConfig(
         username = "SA",
         password = "",
-        url = "jdbc:h2:file:$dbPath;MODE=Oracle;TRACE_LEVEL_SYSTEM_OUT=2;AUTO_SERVER=TRUE;IFEXISTS=FALSE",
+        url = "jdbc:h2:file:$dbPath;MODE=Oracle;AUTO_SERVER=TRUE;IFEXISTS=FALSE",
         driver = "org.h2.Driver"
     )
 
     internal val oracleH2InMem = DbConfig(
         username = "SA",
         password = "",
-        url = "jdbc:h2:mem:request_no;MODE=Oracle;TRACE_LEVEL_SYSTEM_OUT=2",
+        url = "jdbc:h2:mem:request_no;MODE=Oracle;TRACE_LEVEL_SYSTEM_OUT=1", // 1=ERROR, 2=INFO
         driver = "org.h2.Driver"
     )
 
