@@ -21,7 +21,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksiste
     @Test
     fun `ingen signifikante saker for person som ikke finnes`() {
         val alleVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
-            personId = 54601 /* finnes ikke */,
+            arenaPersonId = 54601 /* finnes ikke */,
             testDato,
         )
         assertThat(alleVedtak).isEmpty()

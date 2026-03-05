@@ -53,7 +53,8 @@ fun Route.saker(internService: InternService) {
     post("/saker") {
         logger.info("Henter saker")
         val request: SakerRequest = call.receive()
-        val response: List<SakStatus> = internService.hentSaker(request.personidentifikatorer)
+        val fodselsnummerene = request.personidentifikatorer.toSet()
+        val response: List<SakStatus> = internService.hentSaker(fodselsnummerene)
 
         call.respond(response)
     }

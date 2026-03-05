@@ -21,10 +21,10 @@ class PeriodeRepository(private val dataSource: DataSource) {
     }
 
     fun hentPeriodeInkludert11_17(
-        personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
+        fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
     ): List<PeriodeMed11_17> = dataSource.connection.use { con ->
         selectVedtakMedTidsbegrensningOg11_17(
-            personId, fraOgMedDato, tilOgMedDato, con
+            fodselsnr, fraOgMedDato, tilOgMedDato, con
         )
     }
 
@@ -87,10 +87,10 @@ class PeriodeRepository(private val dataSource: DataSource) {
         }
 
         fun selectVedtakMedTidsbegrensningOg11_17(
-            personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate, connection: Connection
+            fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate, connection: Connection
         ): List<PeriodeMed11_17> {
             return connection.prepareStatement(selectVedtakMedTidsbegrensningMed11_17Sql).use { preparedStatement ->
-                    preparedStatement.setString(1, personId)
+                    preparedStatement.setString(1, fodselsnr)
                     preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
                     preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 

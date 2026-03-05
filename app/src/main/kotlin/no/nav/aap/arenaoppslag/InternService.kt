@@ -15,33 +15,33 @@ class InternService(
     private val vedtakRepository: VedtakRepository
 ) {
 
-    fun hentPerioder(personidentifikator: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
+    fun hentPerioder(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
         val hentPerioder = periodeRepository.hentPerioder(
-            personidentifikator, fraOgMedDato, tilOgMedDato
+            fodselsnr, fraOgMedDato, tilOgMedDato
         )
         return VedtakResponse(perioder = hentPerioder.map { it.tilKontrakt() })
     }
 
     fun hent11_17Perioder(
-        personidentifikator: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
+        fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
     ): PerioderMed11_17Response {
         val perioder = periodeRepository.hentPeriodeInkludert11_17(
-            personidentifikator, fraOgMedDato, tilOgMedDato
+            fodselsnr, fraOgMedDato, tilOgMedDato
         )
         return PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
     }
 
-    fun hentSaker(personidentifikatorer: List<String>): List<SakStatus> {
-        val vedtak = personidentifikatorer.flatMap { personidentifikator ->
-            vedtakRepository.hentVedtakStatuser(personidentifikator)
+    fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> {
+        val vedtak = fodselsnummerene.flatMap { fnr ->
+            vedtakRepository.hentVedtakStatuser(fnr)
         }
         // Merk: kontraktobjektet heter fra gammelt av feilaktig SakStatus, selv om det omhandler VedtakStatus
         return vedtak.map { SakStatus(it.sakId, it.statusKode, it.periode, it.kilde) }
     }
 
-    fun hentMaksimum(personidentifikator: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum {
+    fun hentMaksimum(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum {
         return maksimumRepository.hentMaksimumsløsning(
-            personidentifikator, fraOgMedDato, tilOgMedDato
+            fodselsnr, fraOgMedDato, tilOgMedDato
         ).tilKontrakt()
     }
 

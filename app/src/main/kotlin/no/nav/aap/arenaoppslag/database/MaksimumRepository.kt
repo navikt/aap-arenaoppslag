@@ -19,12 +19,12 @@ import javax.sql.DataSource
 class MaksimumRepository(private val dataSource: DataSource) {
 
     fun hentMaksimumsløsning(
-        personId: String,
+        fodselsnr: String,
         fraOgMedDato: LocalDate,
         tilOgMedDato: LocalDate
     ): Maksimum =
         dataSource.connection.use { con ->
-            selectVedtakMaksimum(personId, fraOgMedDato, tilOgMedDato, con)
+            selectVedtakMaksimum(fodselsnr, fraOgMedDato, tilOgMedDato, con)
         }
 
     companion object {
@@ -157,13 +157,13 @@ class MaksimumRepository(private val dataSource: DataSource) {
             connection: Connection,
             barnetiTillegg: Int,
             dagsats: Int,
-            personId: String,
+            fodselsnr: String,
             fraDato: LocalDate,
             tilDato: LocalDate
         ): List<UtbetalingMedMer> {
             return connection.prepareStatement(selectTimerArbeidetIMeldekortPeriode).use { preparedStatement ->
                 preparedStatement.setInt(1, vedtakId)
-                preparedStatement.setString(2, personId)
+                preparedStatement.setString(2, fodselsnr)
                 preparedStatement.setDate(3, Date.valueOf(fraDato))
                 preparedStatement.setDate(4, Date.valueOf(tilDato))
 
@@ -222,11 +222,11 @@ class MaksimumRepository(private val dataSource: DataSource) {
         }
 
         fun selectVedtakMaksimum(
-            personId: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate, connection: Connection
+            fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate, connection: Connection
         ): Maksimum {
             log.info("Henter maksimumvedtak for periode $fraOgMedDato - $tilOgMedDato.")
             val maksimum = connection.prepareStatement(selectMaksimumMedTidsbegrensning).use { preparedStatement ->
-                preparedStatement.setString(1, personId)
+                preparedStatement.setString(1, fodselsnr)
                 preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
                 preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
@@ -242,7 +242,7 @@ class MaksimumRepository(private val dataSource: DataSource) {
                             connection = connection,
                             barnetiTillegg = vedtakFakta.barntill,
                             dagsats = vedtakFakta.dagsmbt,
-                            personId = personId,
+                            fodselsnr = fodselsnr,
                             vedtakId = row.getInt("vedtak_id"),
                             fraDato = fraOgMedDato,
                             tilDato = tilOgMedDato
