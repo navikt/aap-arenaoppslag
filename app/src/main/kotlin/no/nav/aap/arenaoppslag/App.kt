@@ -112,7 +112,7 @@ fun Application.server(
 
 private fun databaseCacheWarmup(historikkService: HistorikkService) {
     // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
-    historikkService.signifikanteSakerForPerson(listOf("007"), LocalDate.now())
+    historikkService.signifikanteSakerForPerson(setOf("007"), LocalDate.now())
 }
 
 // Bruker ikke RepositoryRegistry fra Kelvin-komponenter fordi vi er på Oracle DB her,
