@@ -83,7 +83,7 @@ fun Application.server(
     val internService = skapInternService(datasource)
     val historikkService = skapHistorikkService(datasource)
     routes(internService, historikkService)
-    databaseCacheWarmup(historikkService)
+    databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
         environment.log.info("ktor har startet opp.")
@@ -110,7 +110,7 @@ fun Application.server(
     }
 }
 
-private fun databaseCacheWarmup(historikkService: HistorikkService) {
+private fun databaseConnectionWarmup(historikkService: HistorikkService) {
     // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
     historikkService.signifikanteSakerForPerson(setOf("007"), LocalDate.now())
 }
