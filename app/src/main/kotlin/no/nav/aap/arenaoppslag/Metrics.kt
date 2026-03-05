@@ -1,13 +1,11 @@
 package no.nav.aap.arenaoppslag
 
-import io.micrometer.core.instrument.DistributionSummary
+import io.micrometer.core.instrument.DistributionSummary.builder
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tag
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
-import java.util.stream.IntStream.range
-import kotlin.streams.toList
 
 object Metrics {
     val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
@@ -33,14 +31,9 @@ object Metrics {
         Tag.of("utfall", ettVedtak.utfallkode ?: "null")
     )
 
-    private val verdierForHistogram = range(1, 25).toList().map { it.toDouble() }.toDoubleArray()
-    private val antallVedtakHistogram = DistributionSummary.builder("arenaoppslag_signifikante_vedtak_antall")
-        .maximumExpectedValue(25.0)
-        .baseUnit("antall")
-        .scale(1.0)
-        .serviceLevelObjectives(*verdierForHistogram)
-
     fun MeterRegistry.registrerAntallSignifikanteVedtak(size: Int) {
-        antallVedtakHistogram.register(this).record(size.toDouble())
+        builder("arenaoppslag_antall_signifikante_vedtak")
+            .register(this)
+            .record(size.toDouble())
     }
 }
