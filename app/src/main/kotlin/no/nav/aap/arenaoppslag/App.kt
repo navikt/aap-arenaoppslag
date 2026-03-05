@@ -20,6 +20,7 @@ import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
@@ -82,7 +83,8 @@ fun Application.server(
 
     val internService = skapInternService(datasource)
     val historikkService = skapHistorikkService(datasource)
-    routes(internService, historikkService)
+    val sakService = skapSakervice(datasource)
+    routes(internService, historikkService, sakService)
     databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
@@ -132,21 +134,35 @@ private fun skapHistorikkService(datasource: DataSource): HistorikkService {
     return HistorikkService(personRepository, historikkRepository)
 }
 
+private fun skapSakervice(datasource: DataSource): SakService {
+    val vedtakRepository = VedtakRepository(datasource)
+    val sakRepository = SakRepository(datasource)
+    return SakService(sakRepository, vedtakRepository)
+}
+
 private fun Application.routes(
     internService: InternService,
-    historikkService: HistorikkService
+    historikkService: HistorikkService,
+    sakService: SakService
 ) {
     routing {
         actuator(prometheus)
 
         authenticate {
             route("/intern") {
+                // Eksterne APIer i hovedsak brukt av aap-api-intern
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
             }
             route("/api/v1") {
+                // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
                 historikk(historikkService)
+            }
+            route("/api/intern") {
+                // Nye interne APIer, disse skal kune konsumeres av team-aap-migrering sine applikasjoner
+                // Om andre konsumerer disse garanterer vi ikke at kontraktene her ikke kan endre seg
+                sak(sakService)
             }
         }
     }

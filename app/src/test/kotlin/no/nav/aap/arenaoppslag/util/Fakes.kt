@@ -1,16 +1,10 @@
 package no.nav.aap.arenaoppslag.util
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.application.log
 import io.ktor.server.engine.ConnectorType
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -26,16 +20,6 @@ class Fakes : AutoCloseable {
 }
 
 fun Application.azure() {
-    val log = log
-    install(ContentNegotiation) {
-        jackson()
-    }
-    install(StatusPages) {
-        exception<Throwable> { call, cause ->
-            log.info("azure :: Ukjent feil ved kall til '${call.request.local.uri}'", cause)
-            call.respond(HttpStatusCode.InternalServerError)
-        }
-    }
     routing {
         post("/token") {
             val token = AzureTokenGen("azure", "no/nav/aap/arenaoppslag").generate()

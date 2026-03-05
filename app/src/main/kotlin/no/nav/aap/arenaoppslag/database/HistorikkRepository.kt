@@ -222,13 +222,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
         }
 
         fun mapperForArenaVedtak(row: ResultSet) = ArenaVedtak(
-            row.getString("sak_id"),
-            row.getString("vedtakstatuskode"),
-            row.getString("vedtaktypekode"),
-            fraDato(row.getDate("fra_dato")),
+            sakId = row.getString("sak_id"),
+            statusKode = row.getString("vedtakstatuskode"),
+            vedtaktypeKode = row.getString("vedtaktypekode"),
+            fraOgMed = fraDato(row.getDate("fra_dato")),
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
-            utfallkode = row.getString("utfallkode")
+            utfallkode = row.getString("utfallkode"),
         )
 
     }
