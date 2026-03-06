@@ -16,7 +16,9 @@ updates:
     - package-ecosystem: gradle
       directory: /
       schedule:
-          interval: daily
+        interval: daily
+      ignore:
+        - dependency-name: "com.h2database:h2"
       cooldown:
         default-days: 3
         exclude:
