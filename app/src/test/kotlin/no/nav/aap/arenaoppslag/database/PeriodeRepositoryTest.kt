@@ -189,7 +189,7 @@ class PeriodeRepositoryTest : H2TestBase("flyway/minimumtest") {
         val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2022, 10, 1),
             tilOgMedDato = LocalDate.of(2023, 12, 31),
-            fodselsnr = "1",
+            fodselsnr = "12312312312",
         )
 
         assertEquals(1, alleVedtak.size)
