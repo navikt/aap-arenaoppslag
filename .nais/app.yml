@@ -48,6 +48,11 @@ spec:
         - application: arenavisningsklient
           cluster: {{cluster}}-gcp
           namespace: aap
+        {{#if isdev}}
+        - application: azure-token-generator
+          cluster: dev-gcp
+          namespace: nais
+        {{/if}}
     outbound:
       rules:
         - application: logging
