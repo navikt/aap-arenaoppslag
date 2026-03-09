@@ -1,3 +1,4 @@
+isdev: true
 cluster: dev
 ingress: https://arenaoppslag.dev-fss-pub.nais.io
 vault_db_config_path: oracle/data/dev/config/arena_q2

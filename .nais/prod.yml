@@ -1,3 +1,4 @@
+isdev: 0
 cluster: prod
 ingress: https://arenaoppslag.prod-fss-pub.nais.io
 vault_db_config_path: oracle/data/prod/config/arena
