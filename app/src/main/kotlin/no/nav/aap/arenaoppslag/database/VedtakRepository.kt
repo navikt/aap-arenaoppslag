@@ -36,7 +36,7 @@ class VedtakRepository(private val dataSource: DataSource) {
                 .groupBy { it.vedtakId }
                 .values
                 .map { vedtakMedFakta ->
-                    val vedtakFakta = vedtakMedFakta.map { it.tilArenaVedtakFakta() }
+                    val vedtakFakta = vedtakMedFakta.mapNotNull { it.tilArenaVedtakFakta() }
                     vedtakMedFakta
                         .first()
                         .tilArenaVedtakMedFakta(vedtakFakta)
@@ -135,9 +135,9 @@ class VedtakRepository(private val dataSource: DataSource) {
         val rettighetkode: String,
         val utfallkode: String?,
         val vedtakId: Int,
-        val vedtakfaktakode: String,
+        val vedtakfaktakode: String?,
         val vedtakfaktakodeverdi: String?,
-        val vedtakfaktakoderegistrertDato: LocalDate,
+        val vedtakfaktakoderegistrertDato: LocalDate?,
     ) {
         companion object {
             fun fromResultRow(row: ResultSet) = ArenaVedtakMedFaktaRow(
@@ -150,7 +150,7 @@ class VedtakRepository(private val dataSource: DataSource) {
                 vedtakId = row.getInt("vedtak_id"),
                 vedtakfaktakode = row.getString("vedtakfaktakode"),
                 vedtakfaktakodeverdi = row.getString("vedtakverdi"),
-                vedtakfaktakoderegistrertDato = row.getDate("reg_dato").toLocalDate()
+                vedtakfaktakoderegistrertDato = row.getDate("reg_dato")?.toLocalDate()
             )
         }
 
@@ -165,12 +165,17 @@ class VedtakRepository(private val dataSource: DataSource) {
                 fakta = fakta
             )
 
-        fun tilArenaVedtakFakta() =
-            ArenaVedtakfakta(
+        fun tilArenaVedtakFakta(): ArenaVedtakfakta? {
+            if (vedtakfaktakode == null || vedtakfaktakoderegistrertDato == null) {
+                return null
+            }
+            return ArenaVedtakfakta(
                 vedtakId = vedtakId,
                 kode = vedtakfaktakode,
                 verdi = vedtakfaktakodeverdi,
                 registrertDato = vedtakfaktakoderegistrertDato
             )
+        }
+
     }
 }

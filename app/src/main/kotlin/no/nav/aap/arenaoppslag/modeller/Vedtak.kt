@@ -22,7 +22,7 @@ data class ArenaVedtak(
     val utfallkode: String?
 )
 
-class ArenaVedtakMedFakta(
+data class ArenaVedtakMedFakta(
     val statusKode: String,
     val vedtaktypeKode: String?,
     val fraOgMed: LocalDate?,
