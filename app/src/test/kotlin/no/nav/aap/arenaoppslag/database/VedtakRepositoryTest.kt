@@ -1,7 +1,9 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedFakta
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -26,5 +28,30 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtak)
+    }
+
+    @Test
+    fun `hentVedtakMedFaktaForSak klarer å hente alle vedtak fra databasen`() {
+        val vedtakRepository = VedtakRepository(h2)
+        val forventetVedtak = ArenaVedtakMedFakta(
+            statusKode = "IVERK",
+            vedtaktypeKode = "O",
+            fraOgMed = LocalDate.of(2022, 8, 30),
+            tilDato = LocalDate.of(2023, 8, 30),
+            rettighetkode = "AAP",
+            utfallkode = "JA",
+            fakta = emptyList()
+        )
+
+        val alleVedtak = vedtakRepository.hentVedtakMedFaktaForSak(1)
+
+        assertThat(alleVedtak).containsExactly(forventetVedtak)
+    }
+
+    @Test
+    fun `hentVedtakMedFaktaForSak returnerer tom liste om det ikke er noen vedtak knyttet til denne saken`() {
+        val vedtakRepository = VedtakRepository(h2)
+        val alleVedtak = vedtakRepository.hentVedtakMedFaktaForSak(1919191919)
+        assertThat(alleVedtak).isEmpty()
     }
 }

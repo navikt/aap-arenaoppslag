@@ -40,8 +40,10 @@ fun Route.sak(sakService: SakService) {
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val response = sakService.hentSakMedVedtak(sakid) ?: HttpStatusCode.NotFound
-        return@get call.respond(response)
+        when(val sak = sakService.hentSakMedVedtak(sakid)) {
+            null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak")
+            else -> call.respond(status = HttpStatusCode.OK, message = sak)
+        }
 
     }
 }
