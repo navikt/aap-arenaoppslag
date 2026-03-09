@@ -45,6 +45,9 @@ spec:
         - application: api-intern
           cluster: {{cluster}}-gcp
           namespace: aap
+        - application: arenavisningsklient
+          cluster: {{cluster}}-gcp
+          namespace: aap
     outbound:
       rules:
         - application: logging

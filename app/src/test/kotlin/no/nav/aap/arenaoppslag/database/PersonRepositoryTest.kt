@@ -16,7 +16,7 @@ class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer
 
     @Test
     fun `person eksisterer`() {
-        val personEksisterer = personRepository.hentPersonIdHvisEksisterer(setOf("1"))
+        val personEksisterer = personRepository.hentPersonIdHvisEksisterer(setOf("12312312312"))
         assertNotNull(personEksisterer)
         val personEksistererIkke = personRepository.hentPersonIdHvisEksisterer(setOf("2012012031"))
         assertNull(personEksistererIkke)

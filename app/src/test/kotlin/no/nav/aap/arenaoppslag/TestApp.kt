@@ -6,28 +6,29 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.util.Fakes
+import no.nav.aap.arenaoppslag.util.azure
 import no.nav.aap.arenaoppslag.util.port
 import org.flywaydb.core.Flyway
+import org.slf4j.LoggerFactory
 
 fun main() {
     val fakes = Fakes()
-
+    val logger = LoggerFactory.getLogger("no.nav.aap.arenaoppslag.TestApp")
     val dataSource: HikariDataSource = ArenaDatasource.create(TestConfig.oracleH2)
     // Initialize database with schema and test data using the same initializer as tests
     Flyway.configure().dataSource(dataSource)
         .locations("flyway/common", "flyway/minimumtest", "flyway/common", "flyway/dsop").load()
         .apply {
             migrate()
-            println("Testdatabase klar, url=${dataSource.jdbcUrl}")
+            logger.info("Testdatabase klar, url=${dataSource.jdbcUrl}")
         }
 
     val config = TestConfig.default(fakes)
-    println("Azure port: ${fakes.azure.port()}")
+    logger.info("Azure port: ${fakes.azure.port()}")
 
-    embeddedServer(Netty, port = 8080) {
-        server(
-            config = config,
-        )
+    embeddedServer(Netty, port = 8087) {
+        server(config = config)
+        azure()
         module(dataSource)
     }.start(wait = true)
 }
