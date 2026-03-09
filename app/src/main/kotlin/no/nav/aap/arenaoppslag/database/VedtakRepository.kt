@@ -13,6 +13,7 @@ import java.sql.Connection
 import java.sql.ResultSet
 import java.time.LocalDate
 import javax.sql.DataSource
+import kotlin.collections.map
 import kotlin.use
 
 class VedtakRepository(private val dataSource: DataSource) {
@@ -35,21 +36,10 @@ class VedtakRepository(private val dataSource: DataSource) {
                 .groupBy { it.vedtakId }
                 .values
                 .map { vedtakMedFakta ->
-                    val vedtak = vedtakMedFakta.first()
-                    ArenaVedtakMedFakta(
-                        statusKode = vedtak.statusKode,
-                        vedtaktypeKode = vedtak.vedtaktypeKode,
-                        fraOgMed = vedtak.fraOgMed,
-                        tilDato = vedtak.tilDato,
-                        rettighetkode = vedtak.rettighetkode,
-                        utfallkode = vedtak.utfallkode,
-                        fakta = vedtakMedFakta.map { fakta -> ArenaVedtakfakta(
-                            vedtakId = fakta.vedtakId,
-                            kode = fakta.vedtakfaktakode,
-                            verdi = fakta.vedtakfaktakodeverdi,
-                            registrertDato = fakta.vedtakfaktakoderegistrertDato
-                        ) }
-                    )
+                    val vedtakFakta = vedtakMedFakta.map { it.tilArenaVedtakFakta() }
+                    vedtakMedFakta
+                        .first()
+                        .tilArenaVedtakMedFakta(vedtakFakta)
                 }
         }
     }
@@ -163,5 +153,24 @@ class VedtakRepository(private val dataSource: DataSource) {
                 vedtakfaktakoderegistrertDato = row.getDate("reg_dato").toLocalDate()
             )
         }
+
+        fun tilArenaVedtakMedFakta(fakta: List<ArenaVedtakfakta>) =
+            ArenaVedtakMedFakta(
+                statusKode = statusKode,
+                vedtaktypeKode = vedtaktypeKode,
+                fraOgMed = fraOgMed,
+                tilDato = tilDato,
+                rettighetkode = rettighetkode,
+                utfallkode = utfallkode,
+                fakta = fakta
+            )
+
+        fun tilArenaVedtakFakta() =
+            ArenaVedtakfakta(
+                vedtakId = vedtakId,
+                kode = vedtakfaktakode,
+                verdi = vedtakfaktakodeverdi,
+                registrertDato = vedtakfaktakoderegistrertDato
+            )
     }
 }

@@ -160,8 +160,8 @@ private fun Application.routes(
                 historikk(historikkService)
             }
             route("/api/intern") {
-                // Nye interne APIer, disse skal kune konsumeres av team-aap-migrering sine applikasjoner
-                // Om andre konsumerer disse garanterer vi ikke at kontraktene her ikke kan endre seg
+                // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
+                // Kontrakten på disse endepunktene kan endre seg helt uten forvarsel
                 sak(sakService)
             }
         }

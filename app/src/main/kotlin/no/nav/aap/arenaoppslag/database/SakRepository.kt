@@ -32,7 +32,7 @@ class SakRepository(private val dataSource: DataSource) {
 
         fun mapperForArenaSak(row: ResultSet) = ArenaSak(
             sakId = row.getString("sak_id"),
-            aar = row.getInt("aar"),
+            opprettetAar = row.getInt("aar"),
             lopenr = row.getInt("lopenrsak"),
             fodselsnummer = row.getString("fodselsnr"),
             statuskode = row.getString("sakstatuskode"),

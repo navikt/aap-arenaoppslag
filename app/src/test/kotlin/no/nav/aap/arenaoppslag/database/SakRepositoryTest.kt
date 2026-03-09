@@ -11,7 +11,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest") {
     fun `klarer å hente en sak fra databasen`() {
         val forvantetSak = ArenaSak(
             sakId = "1",
-            aar = 2021,
+            opprettetAar = 2021,
             lopenr = 1,
             statuskode = "INAKT",
             registrertDato = LocalDate.of(2022, 2, 2).atStartOfDay(),

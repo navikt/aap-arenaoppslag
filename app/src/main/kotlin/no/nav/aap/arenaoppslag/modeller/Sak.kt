@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 data class ArenaSak(
     val sakId: String,
-    val aar: Int,
+    val opprettetAar: Int,
     val lopenr: Int,
     val fodselsnummer: String,
     val statuskode: String,
@@ -14,7 +14,7 @@ data class ArenaSak(
 
 data class ArenaSakMedVedtak (
     val sakId: String,
-    val aar: Int,
+    val opprettetAar: Int,
     val lopenr: Int,
     val fodselsnummer: String,
     val statuskode: String,
@@ -26,7 +26,7 @@ data class ArenaSakMedVedtak (
 fun ArenaSak.toArenaSakMedVedtak(vedtak: List<ArenaVedtakMedFakta>) =
     ArenaSakMedVedtak(
         sakId = sakId,
-        aar = aar,
+        opprettetAar = opprettetAar,
         lopenr = lopenr,
         fodselsnummer = fodselsnummer,
         registrertDato = registrertDato,
