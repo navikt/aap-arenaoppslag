@@ -35,15 +35,13 @@ fun Route.sak(sakService: SakService) {
     get("/sak/{sakid}") {
         val sakid = call.parameters["sakid"]?.toIntOrNull()
 
-        if(sakid == null) {
-            logger.info("SaksId kan ikke være null, eller et ugyldig tall.")
-            call.respond(HttpStatusCode.BadRequest)
-        } else {
-            logger.info("Henter sak med id $sakid")
-            val response = sakService.hentSakMedVedtak(sakid)
-                ?: HttpStatusCode.NotFound
-            call.respond(response)
+        if (sakid == null) {
+            logger.info("Sakid kan ikke være NULL eller et ugyldig tall")
+            return@get call.respond(HttpStatusCode.BadRequest)
         }
+
+        val response = sakService.hentSakMedVedtak(sakid) ?: HttpStatusCode.NotFound
+        return@get call.respond(response)
 
     }
 }
