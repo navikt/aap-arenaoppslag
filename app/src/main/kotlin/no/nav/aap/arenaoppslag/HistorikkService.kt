@@ -33,6 +33,8 @@ class HistorikkService(
 
         val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
         val arenaSakIdListe = sorterVedtak(signifikanteVedtak).map { it.sakId }.distinct()
+        // TODO Vurder å slippe inn søknader med 11-5-vedtak som er åpne uten at det er et AAP-pengevedtak
+        //  i samme periode, forutsatt at disse 11-5 vedtakene ikke er så nye at AAP-vedtaket ikke er laget enda.
 
         return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
