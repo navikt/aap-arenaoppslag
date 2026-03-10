@@ -156,6 +156,7 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         fun tilArenaVedtakMedFakta(fakta: List<ArenaVedtakfakta>) =
             ArenaVedtakMedFakta(
+                vedtakId = vedtakId,
                 statusKode = statusKode,
                 vedtaktypeKode = vedtaktypeKode,
                 fraOgMed = fraOgMed,
@@ -170,7 +171,6 @@ class VedtakRepository(private val dataSource: DataSource) {
                 return null
             }
             return ArenaVedtakfakta(
-                vedtakId = vedtakId,
                 kode = vedtakfaktakode,
                 verdi = vedtakfaktakodeverdi,
                 registrertDato = vedtakfaktakoderegistrertDato

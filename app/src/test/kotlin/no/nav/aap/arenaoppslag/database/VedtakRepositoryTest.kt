@@ -34,6 +34,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
     fun `hentVedtakMedFaktaForSak klarer å hente alle vedtak fra databasen`() {
         val vedtakRepository = VedtakRepository(h2)
         val forventetVedtak = ArenaVedtakMedFakta(
+            vedtakId = 0,
             statusKode = "IVERK",
             vedtaktypeKode = "O",
             fraOgMed = LocalDate.of(2022, 8, 30),
