@@ -28,6 +28,7 @@ class PeriodeRepository(private val dataSource: DataSource) {
         )
     }
 
+
     companion object {
 
         @Language("OracleSql")
