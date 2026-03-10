@@ -31,7 +31,7 @@ fun Route.historikk(historikkService: HistorikkService) {
 
 }
 
-fun Route.sak(sakService: SakService) {
+fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     get("/sak/{sakid}") {
         val sakid = call.parameters["sakid"]?.toIntOrNull()
 
@@ -40,7 +40,7 @@ fun Route.sak(sakService: SakService) {
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        when(val sak = sakService.hentSakMedVedtak(sakid)) {
+        when(val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak")
             else -> call.respond(status = HttpStatusCode.OK, message = sak)
         }

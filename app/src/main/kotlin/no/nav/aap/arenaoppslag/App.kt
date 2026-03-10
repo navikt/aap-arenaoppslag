@@ -134,16 +134,16 @@ private fun skapHistorikkService(datasource: DataSource): HistorikkService {
     return HistorikkService(personRepository, historikkRepository)
 }
 
-private fun skapSakervice(datasource: DataSource): SakService {
+private fun skapSakervice(datasource: DataSource): SakOgVedtakService {
     val vedtakRepository = VedtakRepository(datasource)
     val sakRepository = SakRepository(datasource)
-    return SakService(sakRepository, vedtakRepository)
+    return SakOgVedtakService(sakRepository, vedtakRepository)
 }
 
 private fun Application.routes(
     internService: InternService,
     historikkService: HistorikkService,
-    sakService: SakService
+    sakOgVedtakService: SakOgVedtakService
 ) {
     routing {
         actuator(prometheus)
@@ -162,7 +162,7 @@ private fun Application.routes(
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
                 // Kontrakten på disse endepunktene kan endre seg helt uten forvarsel
-                sak(sakService)
+                sak(sakOgVedtakService)
             }
         }
     }
