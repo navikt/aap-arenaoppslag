@@ -23,6 +23,7 @@ data class ArenaVedtak(
 )
 
 data class ArenaVedtakMedFakta(
+    val vedtakId : Int,
     val statusKode: String,
     val vedtaktypeKode: String?,
     val fraOgMed: LocalDate?,
@@ -33,8 +34,8 @@ data class ArenaVedtakMedFakta(
 )
 
 data class ArenaVedtakfakta(
-    val vedtakId: Int,
     val kode: String,
+    val navn: String,
     val verdi: String?,
     val registrertDato: LocalDate,
 )

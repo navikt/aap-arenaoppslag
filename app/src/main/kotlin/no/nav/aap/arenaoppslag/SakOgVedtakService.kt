@@ -2,12 +2,10 @@ package no.nav.aap.arenaoppslag
 
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
-import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
 
-class SakService(
+class SakOgVedtakService(
     private val sakRepository: SakRepository,
     private val vedtakRepository: VedtakRepository
 ) {
