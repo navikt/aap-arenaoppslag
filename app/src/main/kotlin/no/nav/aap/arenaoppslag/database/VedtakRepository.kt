@@ -108,9 +108,10 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         private val selectVedtakMedFaktaForSak = """
-        SELECT v.vedtakstatuskode, v.vedtaktypekode, v.fra_dato, v.til_dato, v.rettighetkode, v.utfallkode, vf.vedtak_id, vf.vedtakfaktakode, vf.vedtakverdi, vf.reg_dato
+        SELECT v.vedtakstatuskode, v.vedtaktypekode, v.fra_dato, v.til_dato, v.rettighetkode, v.utfallkode, vf.vedtak_id, vf.vedtakfaktakode, vf.vedtakverdi, vf.reg_dato, vft.vedtakfaktanavn
           FROM vedtak v
           LEFT JOIN vedtakfakta vf ON  vf.vedtak_id = v.vedtak_id
+          LEFT JOIN vedtakfaktatype vft ON vf.vedtakfaktakode = vft.vedtakfaktakode
          WHERE sak_id = ?
            AND v.rettighetkode = 'AAP'
            AND v.vedtaktypekode IN ('O', 'E', 'G', 'S')
@@ -137,6 +138,7 @@ class VedtakRepository(private val dataSource: DataSource) {
         val vedtakId: Int,
         val vedtakfaktakode: String?,
         val vedtakfaktakodeverdi: String?,
+        val vedtakfaktanavn: String?,
         val vedtakfaktakoderegistrertDato: LocalDate?,
     ) {
         companion object {
@@ -150,7 +152,8 @@ class VedtakRepository(private val dataSource: DataSource) {
                 vedtakId = row.getInt("vedtak_id"),
                 vedtakfaktakode = row.getString("vedtakfaktakode"),
                 vedtakfaktakodeverdi = row.getString("vedtakverdi"),
-                vedtakfaktakoderegistrertDato = row.getDate("reg_dato")?.toLocalDate()
+                vedtakfaktakoderegistrertDato = row.getDate("reg_dato")?.toLocalDate(),
+                vedtakfaktanavn = row.getString("vedtakfaktanavn"),
             )
         }
 
@@ -167,11 +170,12 @@ class VedtakRepository(private val dataSource: DataSource) {
             )
 
         fun tilArenaVedtakFakta(): ArenaVedtakfakta? {
-            if (vedtakfaktakode == null || vedtakfaktakoderegistrertDato == null) {
+            if (vedtakfaktakode == null || vedtakfaktakoderegistrertDato == null || vedtakfaktanavn == null) {
                 return null
             }
             return ArenaVedtakfakta(
                 kode = vedtakfaktakode,
+                navn = vedtakfaktanavn,
                 verdi = vedtakfaktakodeverdi,
                 registrertDato = vedtakfaktakoderegistrertDato
             )

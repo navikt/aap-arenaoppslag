@@ -35,6 +35,7 @@ data class ArenaVedtakMedFakta(
 
 data class ArenaVedtakfakta(
     val kode: String,
+    val navn: String,
     val verdi: String?,
     val registrertDato: LocalDate,
 )
