@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import kotlin.test.assertNull
 
-class PersonRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
+class PersonRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     private lateinit var personRepository: PersonRepository
 

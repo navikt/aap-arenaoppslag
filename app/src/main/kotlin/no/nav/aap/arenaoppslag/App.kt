@@ -110,7 +110,12 @@ fun Application.server(
                     "Eventuelle requester og annet arbeid som ikke ble fullført innen timeout ble avbrutt."
         )
         try {
-            (datasource as? HikariDataSource)?.close() // en annen type i Test enn i Prod
+            val hikariDS = datasource as HikariDataSource
+            // Don't close H2 databases - they need to stay alive for test reuse
+            val isTestApp = hikariDS.jdbcUrl.contains("jdbc:h2:", ignoreCase = true)
+            if (!isTestApp) {
+                hikariDS.close()
+            }
         } catch (_: Exception) {
             // Ignorert
         }
