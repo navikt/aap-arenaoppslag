@@ -4,13 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class VedtakfaktaRepositoryTest :
-    H2TestBase(
-        "flyway/dsop",
-        "flyway/minimumtest",
-        "flyway/eksisterer",
-        "flyway/vedtakfakta"
-    ) {
+class VedtakfaktaRepositoryTest : H2TestBase("flyway/vedtakfakta") {
 
     @Test
     fun `null når vedtaket ikke finnes på saken`() {
