@@ -5,10 +5,9 @@ import org.junit.jupiter.api.Test
 
 class TelleverkRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumtest") {
 
-    private val repository = TelleverkRepository(h2)
-
     @Test
     fun `hentTelleverkPåPerson returnerer korrekte verdier for person 1`() {
+        val repository = TelleverkRepository(h2)
         val kvote = repository.hentTelleverkPåPerson(1)
 
         assertEquals(2, kvote.size)
@@ -17,12 +16,16 @@ class TelleverkRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumte
 
     @Test
     fun `hentTelleverkPåPerson returnerer tomt sett for ukjent person`() {
+        val repository = TelleverkRepository(h2)
+
         val kvote = repository.hentTelleverkPåPerson(999)
         assertTrue(kvote.isEmpty())
     }
 
     @Test
     fun `hentTelleverkPåPerson returnerer kun data for etterspurt person`() {
+        val repository = TelleverkRepository(h2)
+
         val kvotePerson1 = repository.hentTelleverkPåPerson(1)
         val kvotePerson2 = repository.hentTelleverkPåPerson(2)
 

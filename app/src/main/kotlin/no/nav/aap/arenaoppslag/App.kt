@@ -152,15 +152,17 @@ private fun Application.routes(
 
         authenticate {
             route("/intern") {
+                // DEPRICATED
                 // Eksterne APIer i hovedsak brukt av aap-api-intern
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
-                telleverk(internService)
             }
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
                 historikk(historikkService)
+                telleverk(internService)
+
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
