@@ -47,3 +47,15 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
 
     }
 }
+
+fun Route.telleverk(internService: InternService) {
+    post("/telleverk") {
+        logger.info("Henter telleverk")
+        val request: SakerRequest = call.receive()
+        val fodselsnummer = request.personidentifikatorer.firstOrNull()
+            ?: error("Må oppgi et gyldig fodselsnummer for å hente telleverk")
+        val response = internService.hentTelleverkPåPerson(fodselsnummer)
+
+        call.respond(response)
+    }
+}

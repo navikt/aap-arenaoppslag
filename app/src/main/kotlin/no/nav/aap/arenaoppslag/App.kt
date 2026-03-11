@@ -125,8 +125,9 @@ private fun skapInternService(datasource: DataSource): InternService {
     val maksimumRepository = MaksimumRepository(datasource)
     val vedtakRepository = VedtakRepository(datasource)
     val telleverkRepository = TelleverkRepository(datasource)
+    val personRepository = PersonRepository(datasource)
 
-    return InternService(maksimumRepository, periodeRepository, vedtakRepository,telleverkRepository)
+    return InternService(maksimumRepository, periodeRepository, vedtakRepository,telleverkRepository,personRepository)
 }
 
 private fun skapHistorikkService(datasource: DataSource): HistorikkService {

@@ -3,19 +3,22 @@ package no.nav.aap.arenaoppslag
 import no.nav.aap.arenaoppslag.database.KvoteVerdi
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
+import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.TellerverkPåPerson
 import java.time.LocalDate
 
 class InternService(
     private val maksimumRepository: MaksimumRepository,
     private val periodeRepository: PeriodeRepository,
     private val vedtakRepository: VedtakRepository,
-    private val telleverkRepository: TelleverkRepository
+    private val telleverkRepository: TelleverkRepository,
+    private val personRepository: PersonRepository
 ) {
 
     fun hentPerioder(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
@@ -34,8 +37,14 @@ class InternService(
         return PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
     }
 
-    fun hentTelleverkPåPerson(arenaPersonId: Int): Set<KvoteVerdi> {
-        return telleverkRepository.hentTelleverkPåPerson(arenaPersonId)
+    fun hentTelleverkPåPerson(fodselsnr: String): `TellerverkPåPerson` {
+        val tellekvoter = telleverkRepository.hentTelleverkPåPerson(fodselsnr)
+        val ordinaerAAPKvote = tellekvoter.find { it.kode == "AAP" }?.verdi ?: 0
+        val utvidetAAPKvotoe = tellekvoter.find { it.kode == "MAAPU" }?.verdi ?: 0
+        return TellerverkPåPerson(
+            ordineerAAPKvote = ordinaerAAPKvote,
+            utvidetAAPKvotoe = utvidetAAPKvotoe
+        )
     }
 
     fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> {

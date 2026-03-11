@@ -23,7 +23,8 @@ class InternServiceTest {
         val periodeRepository = PeriodeRepository(datasource)
         val vedtakRepository = VedtakRepository(datasource)
         val telleverkRepository = TelleverkRepository(datasource)
-        underTest = InternService(maksimumRepository, periodeRepository, vedtakRepository,telleverkRepository)
+        val personRepository = PersonRepository(datasource)
+        underTest = InternService(maksimumRepository, periodeRepository, vedtakRepository,telleverkRepository,personRepository)
     }
 
     @Test
