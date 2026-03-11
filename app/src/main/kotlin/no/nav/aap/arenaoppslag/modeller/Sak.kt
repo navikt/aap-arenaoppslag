@@ -19,6 +19,7 @@ data class ArenaSakMedVedtak (
     val lopenr: Int,
     val person: ArenaSakPerson,
     val statuskode: String,
+    val statusnavn: String,
     val registrertDato: LocalDateTime,
     val avsluttetDato: LocalDateTime?,
     val vedtak: List<ArenaVedtakMedFakta>
@@ -40,5 +41,6 @@ fun ArenaSak.toArenaSakMedVedtak(vedtak: List<ArenaVedtakMedFakta>) =
         registrertDato = registrertDato,
         avsluttetDato = avsluttetDato,
         statuskode = statuskode,
+        statusnavn = statusnavn,
         vedtak = vedtak
     )
