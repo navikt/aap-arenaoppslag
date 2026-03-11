@@ -37,10 +37,10 @@ class InternService(
         return PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
     }
 
-    fun hentTelleverkPåPerson(fodselsnr: String): `TellerverkPåPerson` {
+    fun hentTelleverkPåPerson(fodselsnr: String): TellerverkPåPerson? {
         val tellekvoter = telleverkRepository.hentTelleverkPåPerson(fodselsnr)
-        val ordinaerAAPKvote = tellekvoter.find { it.kode == "AAP" }?.verdi ?: 0
-        val utvidetAAPKvotoe = tellekvoter.find { it.kode == "MAAPU" }?.verdi ?: 0
+        val ordinaerAAPKvote = tellekvoter.find { it.kode == "AAP" }?.verdi ?: return null
+        val utvidetAAPKvotoe = tellekvoter.find { it.kode == "MAAPU" }?.verdi ?: return null
         return TellerverkPåPerson(
             ordineerAAPKvote = ordinaerAAPKvote,
             utvidetAAPKvotoe = utvidetAAPKvotoe
