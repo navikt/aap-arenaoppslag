@@ -13,7 +13,7 @@ class TelleverkRepository(private val datasource: DataSource) {
         @Language("OracleSql")
         internal val selectTelleverkPåPerson = """
         SELECT verdi, beregningsleddkode
-FROM beregningsledd
+FROM BEREGNINGSLEDD
 WHERE tabellnavnalias_kilde = 'KVOTBR'
   AND person_id = ?
   AND beregningsleddkode IN ('AAP', 'MAAPU');
