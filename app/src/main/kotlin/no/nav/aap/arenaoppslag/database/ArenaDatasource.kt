@@ -33,7 +33,7 @@ internal object ArenaDatasource {
             // in case of a network failure.
             addDataSourceProperty(
                 "oracle.jdbc.ReadTimeout",
-                12.minutes.inWholeMilliseconds.toString()
+                5.minutes.inWholeMilliseconds.toString()
             )
         })
 }
