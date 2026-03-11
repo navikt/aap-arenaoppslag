@@ -154,6 +154,7 @@ private fun Application.routes(
         authenticate {
             route("/intern") {
                 // Eksterne APIer i hovedsak brukt av aap-api-intern
+                // Gammelt endepunkt, ikke legg til nye  routes her!
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
