@@ -9,6 +9,10 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
+import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
+import no.nav.aap.arenaoppslag.service.HistorikkService
+import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.TelleverkService
 
 fun Route.historikk(historikkService: HistorikkService) {
     post("/person/signifikant-historikk") {
@@ -32,8 +36,9 @@ fun Route.historikk(historikkService: HistorikkService) {
 
 }
 
-fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
-    get("/sak/{sakid}") {
+
+fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService ) {
+    get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]?.toIntOrNull()
 
         if (sakid == null) {
@@ -43,13 +48,19 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
 
         when(val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak")
-            else -> call.respond(status = HttpStatusCode.OK, message = sak)
+            else -> {
+                val fodselsnr = sak.fodselsnummer
+                val telleverk  = telleverkService.hentTelleverkPåPerson(fodselsnr)
+                val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
+
+                call.respond(status = HttpStatusCode.OK, message = response)
+            }
         }
 
     }
 }
 
-fun Route.telleverk(internService: InternService) {
+fun Route.telleverk(telleverkService: TelleverkService) {
     post("/telleverk") {
         logger.info("Henter telleverk")
         val request: TellerRequest = call.receive()
@@ -57,7 +68,7 @@ fun Route.telleverk(internService: InternService) {
 
         //TODO BRUK PDL for å finne andre personidentifikatorer knyttet til samme person
 
-        when(val telleverk  = internService.hentTelleverkPåPerson(fodselsnummer)) {
+        when(val telleverk  = telleverkService.hentTelleverkPåPerson(fodselsnummer)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")
             else -> call.respond(status = HttpStatusCode.OK, message = telleverk)
         }
