@@ -1,8 +1,12 @@
-package no.nav.aap.arenaoppslag.database
+package no.nav.aap.arenaoppslag.service
 
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import no.nav.aap.arenaoppslag.InternService
+import no.nav.aap.arenaoppslag.database.MaksimumRepository
+import no.nav.aap.arenaoppslag.database.PeriodeRepository
+import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.database.TelleverkRepository
+import no.nav.aap.arenaoppslag.database.VedtakRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -24,7 +28,7 @@ class InternServiceTest {
         val vedtakRepository = VedtakRepository(datasource)
         val telleverkRepository = TelleverkRepository(datasource)
         val personRepository = PersonRepository(datasource)
-        underTest = InternService(maksimumRepository, periodeRepository, vedtakRepository,telleverkRepository,personRepository)
+        underTest = InternService(maksimumRepository, periodeRepository, vedtakRepository)
     }
 
     @Test

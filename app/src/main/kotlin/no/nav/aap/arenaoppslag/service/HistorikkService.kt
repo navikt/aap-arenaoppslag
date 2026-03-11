@@ -1,6 +1,7 @@
-package no.nav.aap.arenaoppslag
+package no.nav.aap.arenaoppslag.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import no.nav.aap.arenaoppslag.Metrics
 import no.nav.aap.arenaoppslag.Metrics.registrerAntallSignifikanteVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantEnkeltVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak

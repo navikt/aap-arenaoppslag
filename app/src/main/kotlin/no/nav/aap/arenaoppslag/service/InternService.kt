@@ -1,6 +1,5 @@
-package no.nav.aap.arenaoppslag
+package no.nav.aap.arenaoppslag.service
 
-import no.nav.aap.arenaoppslag.database.KvoteVerdi
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -16,9 +15,7 @@ import java.time.LocalDate
 class InternService(
     private val maksimumRepository: MaksimumRepository,
     private val periodeRepository: PeriodeRepository,
-    private val vedtakRepository: VedtakRepository,
-    private val telleverkRepository: TelleverkRepository,
-    private val personRepository: PersonRepository
+    private val vedtakRepository: VedtakRepository
 ) {
 
     fun hentPerioder(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
@@ -37,15 +34,6 @@ class InternService(
         return PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
     }
 
-    fun hentTelleverkPåPerson(fodselsnr: String): TellerverkPåPerson? {
-        val tellekvoter = telleverkRepository.hentTelleverkPåPerson(fodselsnr)
-        val ordinaerAAPKvote = tellekvoter.find { it.kode == "AAP" }?.verdi ?: return null
-        val utvidetAAPKvote = tellekvoter.find { it.kode == "MAAPU" }?.verdi ?: return null
-        return TellerverkPåPerson(
-            ordineerAAPKvote = ordinaerAAPKvote,
-            utvidetAAPKvote = utvidetAAPKvote
-        )
-    }
 
     fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> {
         val vedtak = fodselsnummerene.flatMap { fnr ->
