@@ -37,7 +37,6 @@ public data class SakStatus(
 
 public enum class Kilde {
     ARENA,
-    KELVIN
 }
 
 public enum class Status {
@@ -51,12 +50,6 @@ public enum class Status {
     MOTAT,
     OPPRE,
     REGIS,
-
-    // Kelvin:
-    OPPRETTET,
-    UTREDES,
-    LØPENDE,
-    AVSLUTTET,
 
     // Begge:
     UKJENT;
