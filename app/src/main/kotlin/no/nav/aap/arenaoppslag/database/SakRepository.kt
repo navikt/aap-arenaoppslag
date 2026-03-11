@@ -36,6 +36,7 @@ class SakRepository(private val dataSource: DataSource) {
             opprettetAar = row.getInt("aar"),
             lopenr = row.getInt("lopenrsak"),
             statuskode = row.getString("sakstatuskode"),
+            statusnavn = row.getString("sakstatusnavn"),
             registrertDato = row.getTimestamp("reg_dato").toLocalDateTime(),
             avsluttetDato = row.getTimestamp("dato_avsluttet")?.toLocalDateTime(),
             person = ArenaSakPerson(
@@ -48,9 +49,11 @@ class SakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         internal val selectSakMedSaksId = """
-            SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sak.lopenrsak, person.person_id, person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
+            SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id, 
+                person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
             FROM SAK
             LEFT JOIN person ON person.person_id = sak.objekt_id
+            LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
             WHERE SAK_ID = ? AND TABELLNAVNALIAS='PERS'
         """.trimIndent()
     }

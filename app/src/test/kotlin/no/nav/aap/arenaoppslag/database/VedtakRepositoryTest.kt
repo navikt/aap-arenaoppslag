@@ -36,7 +36,9 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
         val forventetVedtak = ArenaVedtakMedFakta(
             vedtakId = 0,
             statusKode = "IVERK",
+            statusNavn = "Iverksatt",
             vedtaktypeKode = "O",
+            vedtaktypeNavn = "Ny rettighet",
             fraOgMed = LocalDate.of(2022, 8, 30),
             tilDato = LocalDate.of(2023, 8, 30),
             rettighetkode = "AAP",

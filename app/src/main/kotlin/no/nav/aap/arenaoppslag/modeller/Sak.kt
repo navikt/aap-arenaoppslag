@@ -8,6 +8,7 @@ data class ArenaSak(
     val lopenr: Int,
     val person: ArenaSakPerson,
     val statuskode: String,
+    val statusnavn: String,
     val registrertDato: LocalDateTime,
     val avsluttetDato: LocalDateTime?,
 )

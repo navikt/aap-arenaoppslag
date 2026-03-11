@@ -15,6 +15,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest") {
             opprettetAar = 2021,
             lopenr = 1,
             statuskode = "INAKT",
+            statusnavn = "Inaktiv",
             registrertDato = LocalDate.of(2022, 2, 2).atStartOfDay(),
             avsluttetDato = null,
             person = ArenaSakPerson(
