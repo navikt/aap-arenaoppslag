@@ -4,5 +4,5 @@ import java.time.LocalDateTime
 
 data class TellerverkPåPerson(
     val ordineerAAPKvote : Int,
-    val utvidetAAPKvotoe : Int,
+    val utvidetAAPKvote : Int,
 )

@@ -8,6 +8,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 
 fun Route.historikk(historikkService: HistorikkService) {
     post("/person/signifikant-historikk") {
@@ -51,9 +52,10 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
 fun Route.telleverk(internService: InternService) {
     post("/telleverk") {
         logger.info("Henter telleverk")
-        val request: SakerRequest = call.receive()
-        val fodselsnummer = request.personidentifikatorer.firstOrNull()
-            ?: error("Må oppgi et gyldig fodselsnummer for å hente telleverk")
+        val request: TellerRequest = call.receive()
+        val fodselsnummer = request.personidentifikator
+
+        //TODO BRUK PDL for å finne andre personidentifikatorer knyttet til samme person
 
         when(val telleverk  = internService.hentTelleverkPåPerson(fodselsnummer)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")

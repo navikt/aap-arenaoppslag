@@ -12,6 +12,10 @@ public data class SakerRequest(
     val personidentifikatorer: List<String>
 )
 
+public data class TellerRequest(
+    val personidentifikator: String
+)
+
 public data class SignifikanteSakerRequest(
     val personidentifikatorer: List<String>,
     val virkningstidspunkt: LocalDate, // datoen søknaden ble mottatt, feks. per post

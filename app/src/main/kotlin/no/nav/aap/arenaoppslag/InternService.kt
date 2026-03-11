@@ -40,10 +40,10 @@ class InternService(
     fun hentTelleverkPåPerson(fodselsnr: String): TellerverkPåPerson? {
         val tellekvoter = telleverkRepository.hentTelleverkPåPerson(fodselsnr)
         val ordinaerAAPKvote = tellekvoter.find { it.kode == "AAP" }?.verdi ?: return null
-        val utvidetAAPKvotoe = tellekvoter.find { it.kode == "MAAPU" }?.verdi ?: return null
+        val utvidetAAPKvote = tellekvoter.find { it.kode == "MAAPU" }?.verdi ?: return null
         return TellerverkPåPerson(
             ordineerAAPKvote = ordinaerAAPKvote,
-            utvidetAAPKvotoe = utvidetAAPKvotoe
+            utvidetAAPKvote = utvidetAAPKvote
         )
     }
 
