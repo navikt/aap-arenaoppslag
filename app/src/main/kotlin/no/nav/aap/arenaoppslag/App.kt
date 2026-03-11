@@ -21,6 +21,7 @@ import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
@@ -123,8 +124,9 @@ private fun skapInternService(datasource: DataSource): InternService {
     val periodeRepository = PeriodeRepository(datasource)
     val maksimumRepository = MaksimumRepository(datasource)
     val vedtakRepository = VedtakRepository(datasource)
+    val telleverkRepository = TelleverkRepository(datasource)
 
-    return InternService(maksimumRepository, periodeRepository, vedtakRepository)
+    return InternService(maksimumRepository, periodeRepository, vedtakRepository,telleverkRepository)
 }
 
 private fun skapHistorikkService(datasource: DataSource): HistorikkService {
@@ -154,6 +156,7 @@ private fun Application.routes(
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
+                telleverk(internService)
             }
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
