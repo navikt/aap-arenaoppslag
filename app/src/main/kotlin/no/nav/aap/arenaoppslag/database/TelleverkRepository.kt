@@ -12,20 +12,19 @@ class TelleverkRepository(private val datasource: DataSource) {
     companion object {
         @Language("OracleSql")
         internal val selectTelleverkPåPerson = """
-        SELECT verdi, beregningsleddkode
-FROM BEREGNINGSLEDD
-WHERE tabellnavnalias_kilde = 'KVOTBR'
-  AND person_id = ?
-  AND beregningsleddkode IN ('AAP', 'MAAPU');
-    """.trimIndent()
-
+            SELECT b.verdi, b.beregningsleddkode
+            FROM BEREGNINGSLEDD b
+            JOIN PERSON p ON p.person_id = b.person_id
+            WHERE b.tabellnavnalias_kilde = 'KVOTBR'
+              AND p.fodselsnr = ?
+              AND b.beregningsleddkode IN ('AAP', 'MAAPU')
+        """.trimIndent()
     }
 
-
-    fun hentTelleverkPåPerson(arenaPersonId: Int): Set<KvoteVerdi> {
+    fun hentTelleverkPåPerson(fodselsnr: String): Set<KvoteVerdi> {
         return datasource.connection.use { con ->
             con.prepareStatement(selectTelleverkPåPerson).use { preparedStatement ->
-                preparedStatement.setInt(1, arenaPersonId)
+                preparedStatement.setString(1, fodselsnr)
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.map { row ->
                     KvoteVerdi(
