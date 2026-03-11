@@ -59,3 +59,15 @@ fun Route.saker(internService: InternService) {
         call.respond(response)
     }
 }
+
+fun Route.telleverk(internService: InternService) {
+    post("/telleverk") {
+        logger.info("Henter telleverk")
+        val request: SakerRequest = call.receive()
+        val arenaPersonId = request.personidentifikatorer.firstOrNull()?.toIntOrNull()
+            ?: error("Må oppgi et gyldig arenaPersonId for å hente telleverk")
+        val response = internService.hentTelleverkPåPerson(arenaPersonId)
+
+        call.respond(response)
+    }
+}
