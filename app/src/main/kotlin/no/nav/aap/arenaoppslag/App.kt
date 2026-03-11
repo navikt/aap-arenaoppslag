@@ -153,7 +153,6 @@ private fun Application.routes(
 
         authenticate {
             route("/intern") {
-                // DEPRICATED
                 // Eksterne APIer i hovedsak brukt av aap-api-intern
                 perioder(internService)
                 maksimum(internService)

@@ -54,8 +54,11 @@ fun Route.telleverk(internService: InternService) {
         val request: SakerRequest = call.receive()
         val fodselsnummer = request.personidentifikatorer.firstOrNull()
             ?: error("Må oppgi et gyldig fodselsnummer for å hente telleverk")
-        val response = internService.hentTelleverkPåPerson(fodselsnummer)
 
-        call.respond(response)
+        when(val telleverk  = internService.hentTelleverkPåPerson(fodselsnummer)) {
+            null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")
+            else -> call.respond(status = HttpStatusCode.OK, message = telleverk)
+        }
+
     }
 }
