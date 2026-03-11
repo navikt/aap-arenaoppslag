@@ -4,6 +4,8 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import no.nav.aap.arenaoppslag.DbConfig
 import no.nav.aap.arenaoppslag.Metrics
+import java.sql.Connection
+import java.sql.PreparedStatement
 import java.sql.ResultSet
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -42,3 +44,9 @@ fun <T : Any> ResultSet.map(block: (ResultSet) -> T): List<T> =
     sequence {
         while (next()) yield(block(this@map))
     }.toList()
+
+fun Connection.createParameterizedQuery(queryString: String): PreparedStatement {
+    val query = prepareStatement(queryString)
+    query.queryTimeout = 300 // set a timeout in seconds, to avoid long running queries
+    return query
+}

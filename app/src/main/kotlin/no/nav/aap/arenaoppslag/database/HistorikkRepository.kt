@@ -22,12 +22,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
     companion object {
 
-        private fun Connection.createParameterizedQuery(queryString: String): PreparedStatement {
-            val query = prepareStatement(queryString)
-            query.queryTimeout = 300 // set a timeout in seconds, to avoid long running queries
-            return query
-        }
-
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
         // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
