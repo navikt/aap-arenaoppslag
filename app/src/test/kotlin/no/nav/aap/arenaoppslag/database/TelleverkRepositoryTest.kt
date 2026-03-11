@@ -3,7 +3,7 @@ package no.nav.aap.arenaoppslag.database
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
-class TelleverkRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumtest") {
+class TelleverkRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumtest", "flyway/eksisterer") {
 
     private val repository = TelleverkRepository(h2)
 
