@@ -109,7 +109,7 @@ class VedtakRepository(private val dataSource: DataSource) {
         @Language("OracleSql")
         private val selectVedtakMedFaktaForSak = """
         SELECT v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn, v.fra_dato, v.til_dato, v.rettighetkode, v.utfallkode, vf.vedtak_id, 
-            vf.vedtakfaktakode, vf.vedtakverdi, vf.reg_dato, vft.vedtakfaktanavn
+            vf.vedtakfaktakode, vf.vedtakverdi, vf.reg_dato, vft.skjermbildetekst 
           FROM vedtak v
           LEFT JOIN vedtaktype vt ON vt.vedtaktypekode = v.vedtaktypekode
           LEFT JOIN vedtakstatus vs ON v.vedtakstatuskode = vs.vedtakstatuskode
@@ -117,8 +117,7 @@ class VedtakRepository(private val dataSource: DataSource) {
           LEFT JOIN vedtakfaktatype vft ON vf.vedtakfaktakode = vft.vedtakfaktakode
          WHERE sak_id = ?
            AND v.rettighetkode = 'AAP'
-           AND v.vedtaktypekode IS NOT NULL
-           AND (v.fra_dato <= v.til_dato OR v.til_dato IS NULL)
+           AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
         private fun selectVedtakMedFaktaForSak(sakId: Int, connection: Connection): List<ArenaVedtakMedFaktaRow> {
@@ -160,7 +159,7 @@ class VedtakRepository(private val dataSource: DataSource) {
                 vedtakfaktakode = row.getString("vedtakfaktakode"),
                 vedtakfaktakodeverdi = row.getString("vedtakverdi"),
                 vedtakfaktakoderegistrertDato = row.getDate("reg_dato")?.toLocalDate(),
-                vedtakfaktanavn = row.getString("vedtakfaktanavn"),
+                vedtakfaktanavn = row.getString("skjermbildetekst"),
             )
         }
 
