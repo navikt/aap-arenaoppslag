@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class HistorikkRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
+class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     private lateinit var historikkRepository: HistorikkRepository
     private lateinit var vedtakRepository: VedtakRepository

@@ -17,7 +17,7 @@ fun main() {
     val dataSource: HikariDataSource = ArenaDatasource.create(TestConfig.oracleH2)
     // Initialize database with schema and test data using the same initializer as tests
     Flyway.configure().dataSource(dataSource)
-        .locations("flyway/common", "flyway/minimumtest", "flyway/common", "flyway/dsop").load()
+        .locations("flyway/common", "flyway/dsop", "flyway/minimumtest", "flyway/eksisterer").load()
         .apply {
             migrate()
             logger.info("Testdatabase klar, url=${dataSource.jdbcUrl}")
