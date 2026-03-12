@@ -22,9 +22,9 @@ Insert into SPESIALUTBETALING (SPESUTBETALING_ID, PERSON_ID, VEDTAK_ID, LOPENR, 
                                REG_DATO, REG_USER, MOD_DATO, MOD_USER, EKSTERNENHET_ID_ALTMOTTAKER, FERIEGRUNNLAG,
                                FERIEGRUNNLAGKODE, ORDINAER_YTELSE, REFERANSE_BILAG, STATUS_BILAG, STATUS_ANVIS_BILAG,
                                PARTISJON, VALGT_UTBET_TYPE, KATEGORI)
-values (5257602, 992, 9912345, 1, 'MSF4402', null, to_date('23-SEP-19', 'DD-MON-RR'), 'test', 1000, 'AAP', 'AAP',
-        'UA', 'INNST', 'INIT', null, to_date('01-JUN-19', 'DD-MON-RR'), to_date('16-JUN-19', 'DD-MON-RR'),
-        to_date('23-SEP-19', 'DD-MON-RR'), 'MSF4402', to_date('23-SEP-19', 'DD-MON-RR'), 'MSF4402', null, null, null,
+values (5257602, 992, 9912345, 1, 'MSF4402', null, DATE '2019-09-23', 'test', 1000, 'AAP', 'AAP',
+        'UA', 'INNST', 'INIT', null, DATE '2019-06-01', DATE '2019-06-16',
+        DATE '2019-09-23', 'MSF4402', DATE '2019-09-23', 'MSF4402', null, null, null,
         'J', null, 'N', 'N', null, null, null);
 
 -- person med vedtak med forskjellige vedtak rettighetkoder
@@ -46,9 +46,9 @@ Insert into SPESIALUTBETALING (SPESUTBETALING_ID, PERSON_ID, VEDTAK_ID, LOPENR, 
                                REG_DATO, REG_USER, MOD_DATO, MOD_USER, EKSTERNENHET_ID_ALTMOTTAKER, FERIEGRUNNLAG,
                                FERIEGRUNNLAGKODE, ORDINAER_YTELSE, REFERANSE_BILAG, STATUS_BILAG, STATUS_ANVIS_BILAG,
                                PARTISJON, VALGT_UTBET_TYPE, KATEGORI)
-values (5257604, 996, 995557, 2, 'MSF4402', null, to_date('23-SEP-25', 'DD-MON-RR'), 'test', 1000, 'AAP', 'AAP',
-        'UA', 'INNST', 'INIT', null, to_date('01-MAY-25', 'DD-MON-RR'), to_date('15-MAY-25', 'DD-MON-RR'),
-        to_date('23-SEP-25', 'DD-MON-RR'), 'MSF4402', to_date('23-SEP-25', 'DD-MON-RR'), 'MSF4402', null, null, null,
+values (5257604, 996, 995557, 2, 'MSF4402', null, DATE '2025-09-23', 'test', 1000, 'AAP', 'AAP',
+        'UA', 'INNST', 'INIT', null, DATE '2025-05-01', DATE '2025-05-15',
+        DATE '2025-09-23', 'MSF4402', DATE '2025-09-23', 'MSF4402', null, null, null,
         'J', null, 'N', 'N', null, null, null);
 
 
@@ -59,9 +59,9 @@ Insert into SIM_UTBETALINGSGRUNNLAG (SIM_POSTERING_ID, BELOP, BELOPKODE, EKSTERN
                                      SIM_MELDEKORT_ID, TRANSAKSJONSTEKST, UNDERPOST, KONTOSTEDKODE, STATUS_MANUELL,
                                      KOMMENTAR, VEDTAK_ID_FEILUTBET, TABELLNAVNALIAS_KILDE, OBJEKT_ID_KILDE, PARTISJON,
                                      BELOP_SATT_MANUELT, POSTERING_ID)
-values (9054061, 4224, 'AAP', null, 2021, to_date('25-JAN-21', 'DD-MON-RR'), 996, 'INIT', 'AA00', 4, 1056, null,
-        '34001', to_date('07-FEB-21', 'DD-MON-RR'), to_date('11-MAR-21', 'DD-MON-RR'), '2651',
-        to_date('11-MAR-37', 'DD-MON-RR'), 'AHF4405S', 'AHF4405S', 995555, to_date('11-MAR-21', 'DD-MON-RR'), '70',
+values (9054061, 4224, 'AAP', null, 2021, DATE '2021-01-25', 996, 'INIT', 'AA00', 4, 1056, null,
+        '34001', DATE '2021-02-07', DATE '2021-03-11', '2651',
+        DATE '2037-03-11', 'AHF4405S', 'AHF4405S', 995555, DATE '2021-03-11', '70',
         null, 3940809, null, '01', '99990', null, null, 995556, 'MKORT', 3940809, null, null, null);
 
 
@@ -98,9 +98,9 @@ Insert into SIM_UTBETALINGSGRUNNLAG (SIM_POSTERING_ID, BELOP, BELOPKODE, EKSTERN
                                      SIM_MELDEKORT_ID, TRANSAKSJONSTEKST, UNDERPOST, KONTOSTEDKODE, STATUS_MANUELL,
                                      KOMMENTAR, VEDTAK_ID_FEILUTBET, TABELLNAVNALIAS_KILDE, OBJEKT_ID_KILDE, PARTISJON,
                                      BELOP_SATT_MANUELT, POSTERING_ID)
-values (9054062, 7392, 'AAP', null, 2021, to_date('08-FEB-21', 'DD-MON-RR'), 997, 'INIT', 'AA00', 7, 1056, null,
-        '34001', to_date('21-FEB-21', 'DD-MON-RR'), to_date('11-MAR-21', 'DD-MON-RR'), '2651',
-        to_date('11-MAR-25', 'DD-MON-RR'), 'AHF4405S', 'AHF4405S', 994444, to_date('11-MAR-21', 'DD-MON-RR'), '70',
+values (9054062, 7392, 'AAP', null, 2021, DATE '2021-02-08', 997, 'INIT', 'AA00', 7, 1056, null,
+        '34001', DATE '2021-02-21', DATE '2021-03-11', '2651',
+        DATE '2025-03-11', 'AHF4405S', 'AHF4405S', 994444, DATE '2021-03-11', '70',
         null, 3940810, null, '01', '99990', null, null, 994447, 'MKORT', 3940810, null, null, null);
 
 
@@ -110,9 +110,9 @@ Insert into SPESIALUTBETALING (SPESUTBETALING_ID, PERSON_ID, VEDTAK_ID, LOPENR, 
                                REG_DATO, REG_USER, MOD_DATO, MOD_USER, EKSTERNENHET_ID_ALTMOTTAKER, FERIEGRUNNLAG,
                                FERIEGRUNNLAGKODE, ORDINAER_YTELSE, REFERANSE_BILAG, STATUS_BILAG, STATUS_ANVIS_BILAG,
                                PARTISJON, VALGT_UTBET_TYPE, KATEGORI)
-values (5257652, 997, 994447, 3, 'KHO4407S', null, to_date('14-JAN-16', 'DD-MON-RR'), 'nbsnbsns', 1500, 'AAP',
-        'AAP', 'UA', 'INNST', 'INIT', null, to_date('15-OCT-25', 'DD-MON-RR'), to_date('01-NOV-25', 'DD-MON-RR'),
-        to_date('14-JAN-26', 'DD-MON-RR'), 'KHO4407S', to_date('14-JAN-26', 'DD-MON-RR'), 'KHO4407S', null, null, null,
+values (5257652, 997, 994447, 3, 'KHO4407S', null, DATE '2016-01-14', 'nbsnbsns', 1500, 'AAP',
+        'AAP', 'UA', 'INNST', 'INIT', null, DATE '2025-10-15', DATE '2025-11-01',
+        DATE '2026-01-14', 'KHO4407S', DATE '2026-01-14', 'KHO4407S', null, null, null,
         'J', null, 'N', 'N', null, null, null);
 Insert into SPESIALUTBETALING (SPESUTBETALING_ID, PERSON_ID, VEDTAK_ID, LOPENR, BRUKER_ID_SAKSBEHANDLER,
                                BRUKER_ID_BESLUTTER, DATO_UTBETALING, BEGRUNNELSE, BELOP, BELOPKODE, RETTIGHETKODE,
@@ -120,7 +120,7 @@ Insert into SPESIALUTBETALING (SPESUTBETALING_ID, PERSON_ID, VEDTAK_ID, LOPENR, 
                                REG_DATO, REG_USER, MOD_DATO, MOD_USER, EKSTERNENHET_ID_ALTMOTTAKER, FERIEGRUNNLAG,
                                FERIEGRUNNLAGKODE, ORDINAER_YTELSE, REFERANSE_BILAG, STATUS_BILAG, STATUS_ANVIS_BILAG,
                                PARTISJON, VALGT_UTBET_TYPE, KATEGORI)
-values (5257651, 997, 994449, 4, 'KHO4407S', null, to_date('14-JAN-26', 'DD-MON-RR'), 'se meldekort utregning',
-        100, 'AAP', 'AAP', 'UA', 'INNST', 'INIT', null, to_date('15-OCT-25', 'DD-MON-RR'),
-        to_date('25-OCT-25', 'DD-MON-RR'), to_date('14-JAN-26', 'DD-MON-RR'), 'KHO4407S',
-        to_date('14-JAN-26', 'DD-MON-RR'), 'KHO4407S', null, null, null, 'J', null, 'N', 'N', null, null, null);
+values (5257651, 997, 994449, 4, 'KHO4407S', null, DATE '2026-01-14', 'se meldekort utregning',
+        100, 'AAP', 'AAP', 'UA', 'INNST', 'INIT', null, DATE '2025-10-15',
+        DATE '2025-10-25', DATE '2026-01-14', 'KHO4407S',
+        DATE '2026-01-14', 'KHO4407S', null, null, null, 'J', null, 'N', 'N', null, null, null);

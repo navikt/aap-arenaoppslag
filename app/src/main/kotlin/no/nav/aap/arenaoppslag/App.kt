@@ -21,11 +21,15 @@ import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
 import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
+import no.nav.aap.arenaoppslag.service.HistorikkService
+import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.TelleverkService
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.util.*
@@ -84,7 +88,8 @@ fun Application.server(
     val internService = skapInternService(datasource)
     val historikkService = skapHistorikkService(datasource)
     val sakService = skapSakervice(datasource)
-    routes(internService, historikkService, sakService)
+    val telleverkService = skapTelleverkService(datasource)
+    routes(internService, historikkService, sakService,telleverkService)
     databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
@@ -123,6 +128,8 @@ private fun skapInternService(datasource: DataSource): InternService {
     val periodeRepository = PeriodeRepository(datasource)
     val maksimumRepository = MaksimumRepository(datasource)
     val vedtakRepository = VedtakRepository(datasource)
+    val telleverkRepository = TelleverkRepository(datasource)
+    val personRepository = PersonRepository(datasource)
 
     return InternService(maksimumRepository, periodeRepository, vedtakRepository)
 }
@@ -140,10 +147,17 @@ private fun skapSakervice(datasource: DataSource): SakOgVedtakService {
     return SakOgVedtakService(sakRepository, vedtakRepository)
 }
 
+private fun skapTelleverkService(datasource: DataSource): TelleverkService {
+    val telleverkRepository = TelleverkRepository(datasource)
+    return TelleverkService(telleverkRepository)
+}
+
 private fun Application.routes(
     internService: InternService,
     historikkService: HistorikkService,
-    sakOgVedtakService: SakOgVedtakService
+    sakOgVedtakService: SakOgVedtakService,
+    telleverkService: TelleverkService
+
 ) {
     routing {
         actuator(prometheus)
@@ -151,6 +165,7 @@ private fun Application.routes(
         authenticate {
             route("/intern") {
                 // Eksterne APIer i hovedsak brukt av aap-api-intern
+                // Gammelt endepunkt, ikke legg til nye  routes her!
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
@@ -158,11 +173,13 @@ private fun Application.routes(
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
                 historikk(historikkService)
+                telleverk(telleverkService)
+
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
                 // Kontrakten på disse endepunktene kan endre seg helt uten forvarsel
-                sak(sakOgVedtakService)
+                sak(sakOgVedtakService, telleverkService)
             }
         }
     }

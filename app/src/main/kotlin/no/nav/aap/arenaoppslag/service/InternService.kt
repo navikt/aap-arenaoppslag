@@ -1,12 +1,15 @@
-package no.nav.aap.arenaoppslag
+package no.nav.aap.arenaoppslag.service
 
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
+import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.TellerverkPåPerson
 import java.time.LocalDate
 
 class InternService(
@@ -30,6 +33,7 @@ class InternService(
         )
         return PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
     }
+
 
     fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> {
         val vedtak = fodselsnummerene.flatMap { fnr ->

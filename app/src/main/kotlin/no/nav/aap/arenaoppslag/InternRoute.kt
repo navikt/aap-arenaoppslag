@@ -9,6 +9,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.service.InternService
 
 fun Route.perioder(internService: InternService) {
     route("/perioder") {
@@ -59,3 +60,5 @@ fun Route.saker(internService: InternService) {
         call.respond(response)
     }
 }
+
+

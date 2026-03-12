@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.database
 
+import no.nav.aap.arenaoppslag.DbConfig
 import no.nav.aap.arenaoppslag.TestConfig
 import org.flywaydb.core.Flyway
 import javax.sql.DataSource
@@ -13,3 +14,5 @@ abstract class H2TestBase(vararg migrationLocations: String) {
     }
 
 }
+
+

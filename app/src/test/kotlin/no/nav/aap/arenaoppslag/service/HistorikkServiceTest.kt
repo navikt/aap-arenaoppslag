@@ -1,13 +1,14 @@
-package no.nav.aap.arenaoppslag.database
+package no.nav.aap.arenaoppslag.service
 
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import io.mockk.verify
-import no.nav.aap.arenaoppslag.HistorikkService
+import no.nav.aap.arenaoppslag.database.HistorikkRepository
+import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -32,7 +33,7 @@ class HistorikkServiceTest {
     @Test
     fun `Sortering av signifikante vedtak tar tom liste`() {
         val nyeste = underTest.sorterVedtak(emptyList())
-        assertThat(nyeste).isEmpty()
+        Assertions.assertThat(nyeste).isEmpty()
     }
 
     @Test
@@ -45,7 +46,7 @@ class HistorikkServiceTest {
                 testVedtak(teller, LocalDate.now().plusYears(2)),
             )
         )
-        assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "3", "1"))
+        Assertions.assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "3", "1"))
     }
 
     @Test
@@ -58,7 +59,7 @@ class HistorikkServiceTest {
                 testVedtak(teller, LocalDate.now().plusYears(2)),
             )
         )
-        assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "3", "1"))
+        Assertions.assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "3", "1"))
     }
 
     private fun testVedtak(sakId: Int, tilDato: LocalDate?) = ArenaVedtak(
@@ -87,8 +88,8 @@ class HistorikkServiceTest {
         val funnet = service.personEksistererIAapArena(finnes).eksisterer
         val ikkeFunnet = service.personEksistererIAapArena(finnesIkke).eksisterer
 
-        assertThat(funnet).isEqualTo(true)
-        assertThat(ikkeFunnet).isEqualTo(false)
+        Assertions.assertThat(funnet).isEqualTo(true)
+        Assertions.assertThat(ikkeFunnet).isEqualTo(false)
     }
 
 
@@ -105,8 +106,8 @@ class HistorikkServiceTest {
         val firstCall = service.personEksistererIAapArena(personIdentifikatorer).eksisterer
         val secondCall = service.personEksistererIAapArena(personIdentifikatorer).eksisterer
 
-        assertThat(firstCall).isTrue()
-        assertThat(secondCall).isTrue()
+        Assertions.assertThat(firstCall).isTrue()
+        Assertions.assertThat(secondCall).isTrue()
         verify(exactly = 1) { personRepository.hentPersonIdHvisEksisterer(any()) }
     }
 
