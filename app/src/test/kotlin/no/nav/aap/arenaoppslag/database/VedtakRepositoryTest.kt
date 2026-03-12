@@ -39,6 +39,8 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
             statusNavn = "Iverksatt",
             vedtaktypeKode = "O",
             vedtaktypeNavn = "Ny rettighet",
+            aktivitetsfaseKode = "IKKE",
+            aktivitetsfaseNavn = "Ikke spesif. aktivitetsfase",
             fraOgMed = LocalDate.of(2022, 8, 30),
             tilDato = LocalDate.of(2023, 8, 30),
             rettighetkode = "AAP",
