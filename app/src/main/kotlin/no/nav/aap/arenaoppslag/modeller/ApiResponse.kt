@@ -21,7 +21,7 @@ data class ArenaSakDetaljertRespons(
             sakId = arenaSakMedVedtak.sakId,
             opprettetAar = arenaSakMedVedtak.opprettetAar,
             lopenr = arenaSakMedVedtak.lopenr,
-            fodselsnummer = arenaSakMedVedtak.fodselsnummer,
+            fodselsnummer = arenaSakMedVedtak.person.fodselsnummer,
             statuskode = arenaSakMedVedtak.statuskode,
             registrertDato = arenaSakMedVedtak.registrertDato,
             avsluttetDato = arenaSakMedVedtak.avsluttetDato,

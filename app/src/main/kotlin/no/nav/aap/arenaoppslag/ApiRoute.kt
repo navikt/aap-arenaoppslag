@@ -49,7 +49,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         when(val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak")
             else -> {
-                val fodselsnr = sak.fodselsnummer
+                val fodselsnr = sak.person.fodselsnummer
                 val telleverk  = telleverkService.hentTelleverkPåPerson(fodselsnr)
                 val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
 
