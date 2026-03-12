@@ -109,12 +109,13 @@ class VedtakRepository(private val dataSource: DataSource) {
         @Language("OracleSql")
         private val selectVedtakMedFaktaForSak = """
         SELECT v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn, v.fra_dato, v.til_dato, v.rettighetkode, v.utfallkode, vf.vedtak_id, 
-            vf.vedtakfaktakode, vf.vedtakverdi, vf.reg_dato, vft.skjermbildetekst 
+            vf.vedtakfaktakode, vf.vedtakverdi, vf.reg_dato, vft.skjermbildetekst, a.aktfasekode, a.aktfasenavn
           FROM vedtak v
           LEFT JOIN vedtaktype vt ON vt.vedtaktypekode = v.vedtaktypekode
           LEFT JOIN vedtakstatus vs ON v.vedtakstatuskode = vs.vedtakstatuskode
           LEFT JOIN vedtakfakta vf ON  vf.vedtak_id = v.vedtak_id
           LEFT JOIN vedtakfaktatype vft ON vf.vedtakfaktakode = vft.vedtakfaktakode
+          LEFT JOIN aktivitetfase a ON a.aktfasekode = v.aktfasekode
          WHERE sak_id = ?
            AND v.rettighetkode = 'AAP'
            AND (fra_dato <= til_dato OR til_dato IS NULL)
@@ -142,6 +143,8 @@ class VedtakRepository(private val dataSource: DataSource) {
         val vedtakId: Int,
         val vedtakfaktakode: String?,
         val vedtakfaktakodeverdi: String?,
+        val aktivitetsfaseKode: String,
+        val aktivitetsfaseNavn: String,
         val vedtakfaktanavn: String?,
         val vedtakfaktakoderegistrertDato: LocalDate?,
     ) {
@@ -151,6 +154,8 @@ class VedtakRepository(private val dataSource: DataSource) {
                 statusNavn =  row.getString("vedtakstatusnavn"),
                 vedtaktypeKode = row.getString("vedtaktypekode"),
                 vedtaktypeNavn = row.getString("vedtaktypenavn"),
+                aktivitetsfaseKode = row.getString("aktfasekode"),
+                aktivitetsfaseNavn = row.getString("aktfasenavn"),
                 fraOgMed = fraDato(row.getDate("fra_dato")),
                 tilDato = fraDato(row.getDate("til_dato")),
                 rettighetkode = row.getString("rettighetkode"),
@@ -170,6 +175,8 @@ class VedtakRepository(private val dataSource: DataSource) {
                 statusNavn = statusNavn,
                 vedtaktypeKode = vedtaktypeKode,
                 vedtaktypeNavn = vedtaktypeNavn,
+                aktivitetsfaseKode = aktivitetsfaseKode,
+                aktivitetsfaseNavn = aktivitetsfaseNavn,
                 fraOgMed = fraOgMed,
                 tilDato = tilDato,
                 rettighetkode = rettighetkode,

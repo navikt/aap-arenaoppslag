@@ -28,6 +28,8 @@ data class ArenaVedtakMedFakta(
     val statusNavn: String,
     val vedtaktypeKode: String,
     val vedtaktypeNavn: String,
+    val aktivitetsfaseKode: String,
+    val aktivitetsfaseNavn: String,
     val fraOgMed: LocalDate?,
     val tilDato: LocalDate?,
     val rettighetkode: String,
