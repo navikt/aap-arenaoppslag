@@ -43,7 +43,8 @@ class PersonRepository(private val dataSource: DataSource) {
                 resultSet.map { row -> row.getInt("person_id") }
             }
 
-            require(liste.size <= 1) { "Forventet maks en person_id for fnr-liste" }
+            require(liste.size <= 1) { "Fant flere enn en person i Arena, person_id=" +
+                    "${liste}}" }
 
             return liste.firstOrNull()
         }
