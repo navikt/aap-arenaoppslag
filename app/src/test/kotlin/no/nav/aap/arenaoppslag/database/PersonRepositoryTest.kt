@@ -22,4 +22,10 @@ class PersonRepositoryTest : H2TestBase("flyway/eksisterer") {
         assertNull(personEksistererIkke)
     }
 
+    @Test
+    fun `person eksisterer men er merket som duplikat`() {
+        val personEksisterer = personRepository.hentPersonIdHvisEksisterer(setOf("korrekt", "duplikat", "en ekstra"))
+        assertNotNull(personEksisterer) // skal returneres uten feil
+    }
+
 }

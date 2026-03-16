@@ -1,6 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,9 +36,11 @@ class PersonRepository(private val dataSource: DataSource) {
         }
 
         fun selectPersonIdFraFnr(fodselsnr: Set<String>, connection: Connection): Int? {
+            @Language("OracleSQL")
             val baseQuery = """
-                select person_id from person
-                where fodselsnr in ($FNR_LISTE_TOKEN)
+                SELECT person_id from PERSON
+                WHERE fodselsnr in ($FNR_LISTE_TOKEN) 
+                    AND person_id_status != 'DUPLIKAT_TIL_BEH'
                 """
             val query = queryMedFodselsnummerListe(baseQuery, fodselsnr)
 
@@ -47,11 +50,11 @@ class PersonRepository(private val dataSource: DataSource) {
             }
             if (liste.size > 1) {
                 teamLogs.error("Fikk flere Arena person_id for liste over fødselsnummer, person_id=$liste")
+                error(
+                    "Fant flere enn èn person i Arena for listen over fødselsnummer, se detalj i team-logs."
+                )
             }
 
-            require(liste.size <= 1) {
-                "Fant flere enn èn person i Arena for listen over fødselsnummer, se detalj i team-logs."
-            }
             return liste.firstOrNull()
         }
 

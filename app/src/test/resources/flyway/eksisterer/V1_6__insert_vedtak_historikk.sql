@@ -124,3 +124,8 @@ values (5257651, 997, 994449, 4, 'KHO4407S', null, DATE '2026-01-14', 'se meldek
         100, 'AAP', 'AAP', 'UA', 'INNST', 'INIT', null, DATE '2025-10-15',
         DATE '2025-10-25', DATE '2026-01-14', 'KHO4407S',
         DATE '2026-01-14', 'KHO4407S', null, null, null, 'J', null, 'N', 'N', null, null, null);
+
+-- person med to oppføringer, en aktiv og en duplikat
+insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN, PERSON_ID_STATUS)
+values (987, 'korrekt', 'Gammel', 'Rettighet', 'AKTIV'),
+       (876, 'duplikat', 'Se f.nr korrekt', 'Må ikke brukes', 'DUPLIKAT_TIL_BEH');
