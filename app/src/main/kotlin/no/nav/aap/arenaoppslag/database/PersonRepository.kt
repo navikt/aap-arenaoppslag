@@ -2,6 +2,8 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
 import org.jetbrains.annotations.TestOnly
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.sql.Connection
 import javax.sql.DataSource
 
@@ -22,6 +24,7 @@ class PersonRepository(private val dataSource: DataSource) {
     }
 
     companion object {
+        private val teamLogs: Logger = LoggerFactory.getLogger("team-logs")
 
         private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
         private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnummerene: Set<String>): String {
@@ -42,9 +45,13 @@ class PersonRepository(private val dataSource: DataSource) {
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.map { row -> row.getInt("person_id") }
             }
+            if (liste.size > 1) {
+                teamLogs.error("Fikk flere Arena person_id for liste over fødselsnummer, person_id=$liste")
+            }
 
-            require(liste.size <= 1) { "Forventet maks en person_id for fnr-liste" }
-
+            require(liste.size <= 1) {
+                "Fant flere enn èn person i Arena for listen over fødselsnummer, se detalj i team-logs."
+            }
             return liste.firstOrNull()
         }
 
