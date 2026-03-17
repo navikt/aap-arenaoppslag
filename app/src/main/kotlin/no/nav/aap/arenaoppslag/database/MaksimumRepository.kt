@@ -97,7 +97,7 @@ class MaksimumRepository(private val dataSource: DataSource) {
             mkp.DATO_FRA,
             mkp.DATO_TIL,
             m.meldekort_id,
-            p.belop    
+            p.belop
         FROM 
             meldekort m
         JOIN 
@@ -114,7 +114,10 @@ class MaksimumRepository(private val dataSource: DataSource) {
         AND 
             mkp.DATO_TIL >= ? AND mkp.DATO_FRA <= ?
         GROUP BY
-            LEFT JOIN (...) p ON m.meldekort_id = p.meldekort_idp.belop
+            mkp.DATO_FRA,
+            mkp.DATO_TIL,
+            m.meldekort_id,
+            p.belop
     """.trimIndent()
 
         fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
