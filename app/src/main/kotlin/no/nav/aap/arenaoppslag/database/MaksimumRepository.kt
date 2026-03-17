@@ -94,6 +94,8 @@ class MaksimumRepository(private val dataSource: DataSource) {
         private val selectTimerArbeidetIMeldekortPeriode = """
         SELECT 
             SUM(mkd.timer_arbeidet) AS timer_arbeidet,
+            mkp.DATO_FRA,
+            mkp.DATO_TIL,
             p.meldekort_id,
             p.belop,
             p.dato_periode_fra,
@@ -107,6 +109,8 @@ class MaksimumRepository(private val dataSource: DataSource) {
              FROM postering
              WHERE vedtak_id = ?) p
             ON m.meldekort_id = p.meldekort_id
+        JOIN
+            MELDEKORTPERIODE mkp ON mkp.periodekode = m.periodekode
         WHERE 
             m.person_id = (SELECT person_id FROM person WHERE fodselsnr = ?)
         AND 
@@ -180,8 +184,8 @@ class MaksimumRepository(private val dataSource: DataSource) {
                                 selectFraværMeldekort(meldekortId, connection).toFloat()
                             )
                         ), periode = Periode(
-                            fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
-                            tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
+                            fraOgMedDato = row.getDate("DATO_FRA").toLocalDate(),
+                            tilOgMedDato = row.getDate("DATO_TIL").toLocalDate(),
                         ), belop = row.getInt("belop"), dagsats = dagsats, barnetillegg = barnetiTillegg
                     )
                 }.toList()
