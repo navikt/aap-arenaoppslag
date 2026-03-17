@@ -96,15 +96,13 @@ class MaksimumRepository(private val dataSource: DataSource) {
             SUM(mkd.timer_arbeidet) AS timer_arbeidet,
             mkp.DATO_FRA,
             mkp.DATO_TIL,
-            p.meldekort_id,
-            p.belop,
-            p.dato_periode_fra,
-            p.dato_periode_til
+            m.meldekort_id,
+            p.belop    
         FROM 
             meldekort m
         JOIN 
             meldekortdag mkd ON mkd.meldekort_id = m.meldekort_id
-        JOIN 
+        LEFT JOIN 
             (SELECT dato_periode_fra, dato_periode_til, belop, meldekort_id
              FROM postering
              WHERE vedtak_id = ?) p
@@ -114,9 +112,9 @@ class MaksimumRepository(private val dataSource: DataSource) {
         WHERE 
             m.person_id = (SELECT person_id FROM person WHERE fodselsnr = ?)
         AND 
-            p.dato_periode_til >= ? AND p.dato_periode_fra <= ?
+            mkp.DATO_TIL >= ? AND mkp.DATO_FRA <= ?
         GROUP BY
-            p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
+            LEFT JOIN (...) p ON m.meldekort_id = p.meldekort_idp.belop
     """.trimIndent()
 
         fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
@@ -183,10 +181,14 @@ class MaksimumRepository(private val dataSource: DataSource) {
                                 selectForSentMeldekort(meldekortId, connection),
                                 selectFraværMeldekort(meldekortId, connection).toFloat()
                             )
-                        ), periode = Periode(
+                        ),
+                        periode = Periode(
                             fraOgMedDato = row.getDate("DATO_FRA").toLocalDate(),
                             tilOgMedDato = row.getDate("DATO_TIL").toLocalDate(),
-                        ), belop = row.getInt("belop"), dagsats = dagsats, barnetillegg = barnetiTillegg
+                        ),
+                        belop = row.getObject("belop", Int::class.javaObjectType) ?: 0,
+                        dagsats = dagsats,
+                        barnetillegg = barnetiTillegg
                     )
                 }.toList()
             }
