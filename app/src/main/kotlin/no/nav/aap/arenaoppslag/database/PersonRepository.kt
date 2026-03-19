@@ -40,7 +40,7 @@ class PersonRepository(private val dataSource: DataSource) {
             val baseQuery = """
                 SELECT person_id from PERSON
                 WHERE fodselsnr in ($FNR_LISTE_TOKEN) 
-                    AND person_id_status != 'DUPLIKAT_TIL_BEH'
+                    AND person_id_status = 'AKTIV' -- DUPLIKAT_TIL_BEH og andre feilstatuser filtreres ut
                 """
             val query = queryMedFodselsnummerListe(baseQuery, fodselsnr)
 
