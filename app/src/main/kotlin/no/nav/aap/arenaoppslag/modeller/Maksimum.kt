@@ -94,9 +94,9 @@ data class Reduksjon(
 }
 
 data class AnnenReduksjon(
-    var sykedager: Float,
-    var sentMeldekort: Boolean,
-    var fraver: Float
+    val sykedager: Float,
+    val sentMeldekort: Boolean,
+    val fraver: Float
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.AnnenReduksjon {
         return no.nav.aap.arenaoppslag.kontrakt.modeller.AnnenReduksjon(

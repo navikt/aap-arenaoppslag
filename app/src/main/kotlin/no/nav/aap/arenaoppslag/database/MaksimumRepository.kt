@@ -2,7 +2,6 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.modeller.AnnenReduksjon
-import no.nav.aap.arenaoppslag.modeller.Annmerkning
 import no.nav.aap.arenaoppslag.modeller.Maksimum
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.Reduksjon
@@ -64,13 +63,14 @@ class MaksimumRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         private val selectAnmerkningerMeldekort = """
-        SELECT sum(verdi) as sum, anmerkningkode
+        SELECT sum(CASE WHEN anmerkningkode = 'FSNN' THEN verdi ELSE 0 END) AS sykedager,
+               sum(CASE WHEN anmerkningkode = 'SENN' THEN verdi ELSE 0 END) AS for_sent,
+               sum(CASE WHEN anmerkningkode = 'FXNN' THEN verdi ELSE 0 END) AS fravar
           FROM anmerkning
-        WHERE tabellnavnalias = 'MKORT'
-          AND objekt_id       = ?
-          AND anmerkningkode  IN ('FSNN', 'SENN', 'FXNN')
+         WHERE tabellnavnalias = 'MKORT'
+           AND objekt_id       = ?
+           AND anmerkningkode IN ('FSNN', 'SENN', 'FXNN')
     """.trimIndent()
-
         //Syk=FSNN', fravære = 'FXNN' og for sent = 'SENN'
 
         @Language("OracleSql")
@@ -102,18 +102,15 @@ class MaksimumRepository(private val dataSource: DataSource) {
         fun selectMeldekortAnmerkninger(meldekortId: String, connection: Connection): AnnenReduksjon {
             return connection.prepareStatement(selectAnmerkningerMeldekort).use { preparedStatement ->
                 preparedStatement.setString(1, meldekortId)
-                val annenReduksjon = AnnenReduksjon(0.0f,false,0.0f)
                 val resultSet = preparedStatement.executeQuery()
 
                 resultSet.map { row ->
-                    val kode = row.getString("anmerkningkode")
-                    when(kode){
-                        "FSNN" -> annenReduksjon.sykedager = row.getFloat("sum")
-                        "SENN" -> annenReduksjon.sentMeldekort = row.getInt("sum")>0
-                        "FXNN" -> annenReduksjon.fraver = row.getFloat("sum")
-                    }
-                }.toList()
-                annenReduksjon
+                    AnnenReduksjon(
+                        row.getFloat("sykedager"),
+                        row.getFloat("for_sent")>0,
+                        row.getFloat("fravar")
+                    )
+                }.toList().firstOrNull() ?: AnnenReduksjon(0.0f, false, 0.0f)
             }
         }
 
