@@ -94,30 +94,25 @@ class MaksimumRepository(private val dataSource: DataSource) {
         private val selectTimerArbeidetIMeldekortPeriode = """
         SELECT 
             SUM(mkd.timer_arbeidet) AS timer_arbeidet,
-            mkp.DATO_FRA,
-            mkp.DATO_TIL,
-            m.meldekort_id,
-            p.belop
+            p.meldekort_id,
+            p.belop,
+            p.dato_periode_fra,
+            p.dato_periode_til
         FROM 
             meldekort m
         JOIN 
             meldekortdag mkd ON mkd.meldekort_id = m.meldekort_id
-        LEFT JOIN 
+        JOIN 
             (SELECT dato_periode_fra, dato_periode_til, belop, meldekort_id
              FROM postering
              WHERE vedtak_id = ?) p
             ON m.meldekort_id = p.meldekort_id
-        JOIN
-            MELDEKORTPERIODE mkp ON mkp.periodekode = m.periodekode
         WHERE 
             m.person_id = (SELECT person_id FROM person WHERE fodselsnr = ?)
         AND 
-            mkp.DATO_TIL >= ? AND mkp.DATO_FRA <= ?
+            p.dato_periode_til >= ? AND p.dato_periode_fra <= ?
         GROUP BY
-            mkp.DATO_FRA,
-            mkp.DATO_TIL,
-            m.meldekort_id,
-            p.belop
+            p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
     """.trimIndent()
 
         fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
@@ -184,14 +179,10 @@ class MaksimumRepository(private val dataSource: DataSource) {
                                 selectForSentMeldekort(meldekortId, connection),
                                 selectFraværMeldekort(meldekortId, connection).toFloat()
                             )
-                        ),
-                        periode = Periode(
-                            fraOgMedDato = row.getDate("DATO_FRA").toLocalDate(),
-                            tilOgMedDato = row.getDate("DATO_TIL").toLocalDate(),
-                        ),
-                        belop = row.getObject("belop", Int::class.javaObjectType) ?: 0,
-                        dagsats = dagsats,
-                        barnetillegg = barnetiTillegg
+                        ), periode = Periode(
+                            fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
+                            tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
+                        ), belop = row.getInt("belop"), dagsats = dagsats, barnetillegg = barnetiTillegg
                     )
                 }.toList()
             }
