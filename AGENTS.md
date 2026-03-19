@@ -67,6 +67,30 @@ All routes except `/actuator/*` require Azure AD JWT authentication.
 | `/api/v1/*` | External API — consumers depend on a stable contract | No breaking changes without versioning |
 | `/api/intern/*` | Internal API for frontends — "backend for frontend" | Breaking changes are allowed |
 
+### Personal identifiers in routes
+
+A personal identifier (`fødselsnummer`, `personident`, or any other value that identifies
+a natural person) must **never** appear in a URL — not as a path segment, not as a query parameter.
+
+- Always use `POST` for endpoints that receive a personal identifier, even when the operation
+  is logically a lookup that REST would model as `GET`.
+- Put the identifier in the JSON request body.
+
+```kotlin
+// Correct — identifier in POST body
+post("/person/perioder") {
+    val request: InternVedtakRequest = call.receive()  // contains personidentifikator
+    ...
+}
+
+// Wrong — identifier exposed in URL
+get("/person/{fodselsnummer}/perioder") { ... }
+```
+
+Non-personal identifiers (e.g. `sakId`, which identifies a case rather than a person)
+may appear in the URL as normal path parameters. See `GET /api/intern/sak/{sakid}/detaljert`
+as the existing example of this pattern.
+
 ### Stability requirements per prefix
 
 **`/api/v1/*`** is an external API. Consumers depend on a stable format.
@@ -238,6 +262,7 @@ Use `ArenaOppslagGateway` as the HTTP client wrapper in integration tests.
 
 ## What NOT to do
 
+- Do not expose personal identifiers (`fødselsnummer`, `personident`, etc.) in URLs — put them in the POST request body.
 - Do not write to the database. This service is read-only.
 - Do not use an ORM or any abstraction over JDBC.
 - Do not skip Micrometer instrumentation when adding a new Caffeine cache.
