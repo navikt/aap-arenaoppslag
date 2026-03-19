@@ -24,6 +24,12 @@ data class VedtakFakta(
     var dagsfsam: Int
 )
 
+data class Annmerkning(
+    var forSent: Int,
+    var sykedager: Int,
+    var fravær: Int
+)
+
 data class PeriodeMed11_17(
     val periode: Periode,
     val aktivitetsfaseKode: String,

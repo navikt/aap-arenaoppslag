@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.modeller.AnnenReduksjon
+import no.nav.aap.arenaoppslag.modeller.Annmerkning
 import no.nav.aap.arenaoppslag.modeller.Maksimum
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.Reduksjon
@@ -62,31 +63,14 @@ class MaksimumRepository(private val dataSource: DataSource) {
     """.trimIndent()
 
         @Language("OracleSql")
-        private val selectSykedagerMeldekort = """
-        SELECT sum(verdi)
+        private val selectAnmerkningerMeldekort = """
+        SELECT sum(verdi) as sum, anmerkningkode
           FROM anmerkning
         WHERE tabellnavnalias = 'MKORT'
           AND objekt_id       = ?
-          AND anmerkningkode  = 'FSNN'
+          AND anmerkningkode  IN ('FSNN', 'SENN', 'FXNN')
     """.trimIndent()
 
-        @Language("OracleSql")
-        private val selectForSentMeldekort = """
-        SELECT sum(verdi)
-          FROM anmerkning
-        WHERE tabellnavnalias = 'MKORT'
-          AND objekt_id       = ?
-          AND anmerkningkode  = 'SENN'
-    """.trimIndent()
-
-        @Language("OracleSql")
-        private val selectFraværMeldekort = """
-        SELECT sum(verdi)
-          FROM anmerkning
-        WHERE tabellnavnalias = 'MKORT'
-          AND objekt_id       = ?
-          AND anmerkningkode  = 'FXNN'
-    """.trimIndent()
         //Syk=FSNN', fravære = 'FXNN' og for sent = 'SENN'
 
         @Language("OracleSql")
@@ -115,42 +99,26 @@ class MaksimumRepository(private val dataSource: DataSource) {
             p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
     """.trimIndent()
 
-        fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
-            return connection.prepareStatement(selectSykedagerMeldekort).use { preparedStatement ->
+        fun selectMeldekortAnmerkninger(meldekortId: String, connection: Connection): AnnenReduksjon {
+            return connection.prepareStatement(selectAnmerkningerMeldekort).use { preparedStatement ->
                 preparedStatement.setString(1, meldekortId)
-
+                val annenReduksjon = AnnenReduksjon(0.0f,false,0.0f)
                 val resultSet = preparedStatement.executeQuery()
 
                 resultSet.map { row ->
-                    row.getInt(1)
-                }.firstOrNull() ?: 0
+                    val kode = row.getString("anmerkningkode")
+                    when(kode){
+                        "FSNN" -> annenReduksjon.sykedager = row.getFloat("sum")
+                        "SENN" -> annenReduksjon.sentMeldekort = row.getInt("sum")>0
+                        "FXNN" -> annenReduksjon.fraver = row.getFloat("sum")
+                    }
+                }.toList()
+                annenReduksjon
             }
         }
 
-        fun selectFraværMeldekort(meldekortId: String, connection: Connection): Int {
-            return connection.prepareStatement(selectFraværMeldekort).use { preparedStatement ->
-                preparedStatement.setString(1, meldekortId)
 
-                val resultSet = preparedStatement.executeQuery()
 
-                resultSet.map { row ->
-                    row.getInt(1)
-                }.firstOrNull() ?: 0
-            }
-        }
-
-        fun selectForSentMeldekort(meldekortId: String, connection: Connection): Boolean {
-            return connection.prepareStatement(selectForSentMeldekort).use { preparedStatement ->
-                preparedStatement.setString(1, meldekortId)
-
-                val resultSet = preparedStatement.executeQuery()
-
-                val forSent = resultSet.map { row ->
-                    row.getInt(1)
-                }.firstOrNull() ?: 0
-                forSent > 0
-            }
-        }
 
         fun selectUtbetalingVedVedtakId(
             vedtakId: Int,
@@ -174,10 +142,9 @@ class MaksimumRepository(private val dataSource: DataSource) {
                     val meldekortId = row.getString("meldekort_id")
                     UtbetalingMedMer(
                         reduksjon = Reduksjon(
-                            timerArbeidet = row.getFloat("timer_arbeidet").toDouble(), annenReduksjon = AnnenReduksjon(
-                                selectSykedagerMeldekort(meldekortId, connection).toFloat(),
-                                selectForSentMeldekort(meldekortId, connection),
-                                selectFraværMeldekort(meldekortId, connection).toFloat()
+                            timerArbeidet = row.getFloat("timer_arbeidet").toDouble(), annenReduksjon = selectMeldekortAnmerkninger(
+                                meldekortId,
+                                connection
                             )
                         ), periode = Periode(
                             fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
