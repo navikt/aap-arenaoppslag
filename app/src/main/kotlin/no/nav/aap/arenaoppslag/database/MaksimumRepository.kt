@@ -106,9 +106,9 @@ class MaksimumRepository(private val dataSource: DataSource) {
 
                 resultSet.map { row ->
                     AnnenReduksjon(
-                        row.getFloat("sykedager"),
-                        row.getFloat("for_sent")>0,
-                        row.getFloat("fravar")
+                        sykedager = row.getFloat("sykedager"),
+                        sentMeldekort = row.getFloat("for_sent")>0,
+                        fraver = row.getFloat("fravar")
                     )
                 }.toList().firstOrNull() ?: AnnenReduksjon(0.0f, false, 0.0f)
             }
