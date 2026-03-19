@@ -24,6 +24,7 @@ data class VedtakFakta(
     var dagsfsam: Int
 )
 
+
 data class PeriodeMed11_17(
     val periode: Periode,
     val aktivitetsfaseKode: String,

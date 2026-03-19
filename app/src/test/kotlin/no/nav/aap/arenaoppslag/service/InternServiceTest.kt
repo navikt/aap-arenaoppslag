@@ -7,6 +7,7 @@ import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith

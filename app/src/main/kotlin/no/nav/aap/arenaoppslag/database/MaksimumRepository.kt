@@ -62,30 +62,14 @@ class MaksimumRepository(private val dataSource: DataSource) {
     """.trimIndent()
 
         @Language("OracleSql")
-        private val selectSykedagerMeldekort = """
-        SELECT sum(verdi)
+        private val selectAnmerkningerMeldekort = """
+        SELECT sum(CASE WHEN anmerkningkode = 'FSNN' THEN verdi ELSE 0 END) AS sykedager,
+               sum(CASE WHEN anmerkningkode = 'SENN' THEN verdi ELSE 0 END) AS for_sent,
+               sum(CASE WHEN anmerkningkode = 'FXNN' THEN verdi ELSE 0 END) AS fravar
           FROM anmerkning
-        WHERE tabellnavnalias = 'MKORT'
-          AND objekt_id       = ?
-          AND anmerkningkode  = 'FSNN'
-    """.trimIndent()
-
-        @Language("OracleSql")
-        private val selectForSentMeldekort = """
-        SELECT sum(verdi)
-          FROM anmerkning
-        WHERE tabellnavnalias = 'MKORT'
-          AND objekt_id       = ?
-          AND anmerkningkode  = 'SENN'
-    """.trimIndent()
-
-        @Language("OracleSql")
-        private val selectFraværMeldekort = """
-        SELECT sum(verdi)
-          FROM anmerkning
-        WHERE tabellnavnalias = 'MKORT'
-          AND objekt_id       = ?
-          AND anmerkningkode  = 'FXNN'
+         WHERE tabellnavnalias = 'MKORT'
+           AND objekt_id       = ?
+           AND anmerkningkode IN ('FSNN', 'SENN', 'FXNN')
     """.trimIndent()
         //Syk=FSNN', fravære = 'FXNN' og for sent = 'SENN'
 
@@ -115,42 +99,23 @@ class MaksimumRepository(private val dataSource: DataSource) {
             p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
     """.trimIndent()
 
-        fun selectSykedagerMeldekort(meldekortId: String, connection: Connection): Int {
-            return connection.prepareStatement(selectSykedagerMeldekort).use { preparedStatement ->
+        fun selectMeldekortAnmerkninger(meldekortId: String, connection: Connection): AnnenReduksjon {
+            return connection.prepareStatement(selectAnmerkningerMeldekort).use { preparedStatement ->
                 preparedStatement.setString(1, meldekortId)
-
                 val resultSet = preparedStatement.executeQuery()
 
                 resultSet.map { row ->
-                    row.getInt(1)
-                }.firstOrNull() ?: 0
+                    AnnenReduksjon(
+                        sykedager = row.getFloat("sykedager"),
+                        sentMeldekort = row.getFloat("for_sent")>0,
+                        fraver = row.getFloat("fravar")
+                    )
+                }.toList().firstOrNull() ?: AnnenReduksjon(0.0f, false, 0.0f)
             }
         }
 
-        fun selectFraværMeldekort(meldekortId: String, connection: Connection): Int {
-            return connection.prepareStatement(selectFraværMeldekort).use { preparedStatement ->
-                preparedStatement.setString(1, meldekortId)
 
-                val resultSet = preparedStatement.executeQuery()
 
-                resultSet.map { row ->
-                    row.getInt(1)
-                }.firstOrNull() ?: 0
-            }
-        }
-
-        fun selectForSentMeldekort(meldekortId: String, connection: Connection): Boolean {
-            return connection.prepareStatement(selectForSentMeldekort).use { preparedStatement ->
-                preparedStatement.setString(1, meldekortId)
-
-                val resultSet = preparedStatement.executeQuery()
-
-                val forSent = resultSet.map { row ->
-                    row.getInt(1)
-                }.firstOrNull() ?: 0
-                forSent > 0
-            }
-        }
 
         fun selectUtbetalingVedVedtakId(
             vedtakId: Int,
@@ -174,10 +139,9 @@ class MaksimumRepository(private val dataSource: DataSource) {
                     val meldekortId = row.getString("meldekort_id")
                     UtbetalingMedMer(
                         reduksjon = Reduksjon(
-                            timerArbeidet = row.getFloat("timer_arbeidet").toDouble(), annenReduksjon = AnnenReduksjon(
-                                selectSykedagerMeldekort(meldekortId, connection).toFloat(),
-                                selectForSentMeldekort(meldekortId, connection),
-                                selectFraværMeldekort(meldekortId, connection).toFloat()
+                            timerArbeidet = row.getFloat("timer_arbeidet").toDouble(), annenReduksjon = selectMeldekortAnmerkninger(
+                                meldekortId,
+                                connection
                             )
                         ), periode = Periode(
                             fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
