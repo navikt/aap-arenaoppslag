@@ -44,7 +44,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP')
-          AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+          AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -64) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
@@ -52,7 +52,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ADD_MONTHS(TRUNC(SYSDATE), -15)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle nok til at Klage ikke er sannsynlig
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -76,7 +76,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -64) -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
@@ -103,7 +103,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -64) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
@@ -125,7 +125,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'TILBBET'
             AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -36) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke 
             AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
@@ -149,7 +149,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             su.person_id = ?
             -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
             -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
-            AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
+            AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -6) )
             -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
         """.trimIndent()
 
@@ -197,7 +197,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 preparedStatement.setDate(p++, Date.valueOf(nyesteTillateStans))
-                preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 // klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
