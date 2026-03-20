@@ -246,6 +246,9 @@ Use `ArenaOppslagGateway` as the HTTP client wrapper in integration tests.
 - `"007"` — used as "unknown person" (does not exist in any test dataset).
 
 ---
+## Patterns to follow and to avoid
+Follow the repository pattern. 
+Avoid creating the "god class" anti-pattern , for example when creating services. Instead, create a service that uses other services as building blocks to achieve a service that can create rich composite objects. 
 
 ## Checklist for adding a new endpoint
 
