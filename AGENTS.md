@@ -60,12 +60,12 @@ kontrakt/   Shared API contract types, published as a Maven package to GitHub Pa
 
 All routes except `/actuator/*` require Azure AD JWT authentication.
 
-| Prefix | Purpose | Rule |
-|---|---|---|
-| `/actuator/*` | Health and metrics (unauthenticated) | No business logic here |
-| `/intern/*` | Legacy internal API, used by `aap-api-intern` | **Do not add new routes here** |
-| `/api/v1/*` | External API — consumers depend on a stable contract | No breaking changes without versioning |
-| `/api/intern/*` | Internal API for frontends — "backend for frontend" | Breaking changes are allowed |
+| Prefix | Purpose                                                                                              | Rule                                                                                                                      |
+|---|------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `/actuator/*` | Health and metrics (unauthenticated)                                                                 | No business logic here                                                                                                    |
+| `/intern/*` | Old API used by Kelvin and aap-api-intern. Avoid adding new endpoints here unless explicitly stated. | Breaking changes only allowed through expand-contract pattern. |
+| `/api/v1/*` | External API — consumers depend on a stable contract. Default for new endpoints.                     | No breaking changes without versioning                                                                                    |
+| `/api/intern/*` | Internal API for frontends — "backend for frontend"                                                  | Breaking changes are allowed                                                                                              |
 
 ### Personal identifiers in routes
 
