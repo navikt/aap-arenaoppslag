@@ -19,6 +19,24 @@ Disse har samme kolonner som tabellene.
 
 Se også [tabelldefinisjoner med kommentarer som beskriver hvert felt](https://github.com/navikt/aap-arenaoppslag/blob/main/app/src/test/resources/flyway/common/V1_1__arena_schema.sql). 
 
+
+## Kode generert av GitHub Copilot
+
+Dette repoet bruker GitHub Copilot til å generere kode.
+
+Dette repoet er satt opp for AI-agenter med tydelige instruksjoner:
+
+- `AGENTS.md` er hovedkilden for regler og prioritering av instruksjoner.
+- `.github/copilot-instructions.md` skal holdes minimal og bare peke til `AGENTS.md`.
+- `docs/ai/agent-guidelines-template.md` brukes som template om man ønsker tillegg i enkelte undermapper (ikke duplisering av globale regler).
+
+Tips for nye oppgaver til AI:
+
+- Beskriv hva som skal endres (konkret scope).
+- Nevn om atferd skal bevares eller endres.
+- Be om testoppdateringer ved logikkendringer.
+
+
 # Henvendelser
 Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på GitHub. 
 
