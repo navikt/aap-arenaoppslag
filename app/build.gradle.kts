@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("aap.conventions")
-    id("com.gradleup.shadow") version "9.3.2"
+    id("com.gradleup.shadow") version "9.4.0"
     id("io.ktor.plugin") version "3.4.1"
     //id("dev.detekt") temporary disabled - missing support for our kotlin-version
     application
@@ -56,7 +56,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:10.8")
-    testImplementation("org.flywaydb:flyway-core:12.1.0")
+    testImplementation("org.flywaydb:flyway-core:12.1.1")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.3.232") // nyeste versjon offisielt støttet av flyway 12.0.3
