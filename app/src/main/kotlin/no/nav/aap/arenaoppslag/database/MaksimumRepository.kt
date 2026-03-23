@@ -208,8 +208,8 @@ class MaksimumRepository(private val dataSource: DataSource) {
                             dagsats = vedtakFakta.dagsmbt,
                             fodselsnr = fodselsnr,
                             vedtakId = row.getInt("vedtak_id"),
-                            fraDato = fraOgMedDato,
-                            tilDato = tilOgMedDato
+                            fraDato = row.getDate("fra_dato").toLocalDate(),
+                            tilDato = fraDato(row.getDate("til_dato"))?:tilOgMedDato
                         )
                     )
                     val vedtaktypekode = row.getString("vedtaktypekode")
