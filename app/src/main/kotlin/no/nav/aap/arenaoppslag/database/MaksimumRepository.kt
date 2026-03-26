@@ -78,25 +78,30 @@ class MaksimumRepository(private val dataSource: DataSource) {
         private val selectTimerArbeidetIMeldekortPeriode = """
         SELECT 
             SUM(mkd.timer_arbeidet) AS timer_arbeidet,
-            p.meldekort_id,
-            p.belop,
-            p.dato_periode_fra,
-            p.dato_periode_til
+            mkp.DATO_FRA,
+            mkp.DATO_TIL,
+            m.meldekort_id,
+            p.belop
         FROM 
             meldekort m
         JOIN 
             meldekortdag mkd ON mkd.meldekort_id = m.meldekort_id
-        JOIN 
+        LEFT JOIN 
             (SELECT dato_periode_fra, dato_periode_til, belop, meldekort_id
              FROM postering
              WHERE vedtak_id = ?) p
             ON m.meldekort_id = p.meldekort_id
+        JOIN
+            MELDEKORTPERIODE mkp ON mkp.periodekode = m.periodekode
         WHERE 
             m.person_id = (SELECT person_id FROM person WHERE fodselsnr = ?)
         AND 
-            p.dato_periode_til >= ? AND p.dato_periode_fra <= ?
+            mkp.DATO_TIL >= ? AND mkp.DATO_FRA <= ?
         GROUP BY
-            p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop
+            mkp.DATO_FRA,
+            mkp.DATO_TIL,
+            m.meldekort_id,
+            p.belop
     """.trimIndent()
 
         fun selectMeldekortAnmerkninger(meldekortId: String, connection: Connection): AnnenReduksjon {
