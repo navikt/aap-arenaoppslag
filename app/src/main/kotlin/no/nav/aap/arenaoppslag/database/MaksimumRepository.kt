@@ -149,8 +149,8 @@ class MaksimumRepository(private val dataSource: DataSource) {
                                 connection
                             )
                         ), periode = Periode(
-                            fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
-                            tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
+                            fraOgMedDato = row.getDate("DATO_FRA").toLocalDate(),
+                            tilOgMedDato = row.getDate("DATO_TIL").toLocalDate(),
                         ), belop = row.getInt("belop"), dagsats = dagsats, barnetillegg = barnetiTillegg
                     )
                 }.toList()
