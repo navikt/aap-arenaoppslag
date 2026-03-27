@@ -25,11 +25,10 @@ System_Boundary(kelvin, "Kelvin <GCP>") {
     
 
     Rel(api_ekstern, api_intern, "videresender")
-    Rel(saksbehandling_kelvin, behandlingsflyt, "api-kall")
     Rel(postmottak, api_intern, "api-kall")
     Rel(behandlingsflyt, api_intern, "api-kall")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
-    Rel(postmottak, behandlingsflyt, "opprett sak")
+    Rel(saksbehandling_kelvin, behandlingsflyt, "saksbehandling")
 }
 
 System_Boundary(kelvin_fss, "Kelvin <FSS>") {
@@ -38,7 +37,8 @@ System_Boundary(kelvin_fss, "Kelvin <FSS>") {
     Rel(arena_oppslag, aap_tilgangsview, "spørringer")
 
     Rel(api_intern, arena_oppslag, "api-kall")
-    Rel(postmottak, aap_fss_proxy, "api-kall")
+    Rel(postmottak, aap_fss_proxy, "opprett sak")
+    Rel(postmottak, behandlingsflyt, "opprett sak")
     Rel(aap_fss_proxy, arena_ws_api, "api-kall")
 }
 

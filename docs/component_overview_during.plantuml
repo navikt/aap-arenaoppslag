@@ -31,15 +31,14 @@ System_Boundary(kelvin, "Kelvin <GCP>") {
     ContainerDb(kelvin_db, "Database", "Postgres")
 
     Rel(api_ekstern, api_intern, "videresender")
-    Rel(saksbehandling_kelvin, behandlingsflyt, "api-kall")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
-    Rel(postmottak, behandlingsflyt, "opprett sak")
+    Rel(saksbehandling_kelvin, behandlingsflyt, "saksbehandling")
 }
 
 System_Boundary(kelvin_fss, "Kelvin <FSS>") {
-    Container(aap_fss_proxy, "fss-proxy <FSS>", "REST-proxy mot Arena-WS")
+    Container(aap_fss_proxy, "fss-proxy", "REST-proxy mot Arena-WS")
             note left of aap_fss_proxy : Adopter
-    Container(arena_oppslag, "Arena-oppslag <FSS>", "Component")
+    Container(arena_oppslag, "Arena-oppslag", "Database-klient")
         note left of arena_oppslag : Adopter
 
     Container(migrering, "Migrerings-motor", "Konverterer åpne Arena-saker")
@@ -48,8 +47,10 @@ System_Boundary(kelvin_fss, "Kelvin <FSS>") {
     Rel(arena_oppslag, aap_tilgangsview, "spørringer")
 
     Rel(api_intern, arena_oppslag, "api-kall")
-    Rel(postmottak, aap_fss_proxy, "api-kall")
-    Rel(postmottak, arena_oppslag, "api-kall")
+    Rel(postmottak, aap_fss_proxy, "opprett sak")
+    Rel(postmottak, behandlingsflyt, "opprett sak")
+
+
     Rel(aap_fss_proxy, arena_ws_api, "api-kall")
     Rel(migrering, arena_oppslag, "api-kall")
     Rel(behandlingsflyt, arena_oppslag, "api-kall")
