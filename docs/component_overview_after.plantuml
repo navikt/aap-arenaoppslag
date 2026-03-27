@@ -1,0 +1,53 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title Systemene etter migreringen
+
+System_Boundary(arena, "Arena <FSS>") {
+    ContainerDb(arena_db, "Database", "Oracle 19")
+    Container(aap_tilgangsview, "AAP tilgangsview", "View")
+    Rel(aap_tilgangsview, arena_db, "videresender")
+
+}
+
+System_Boundary(kelvin, "Kelvin <GCP>") {
+
+    Container(postmottak, "postmottak", "Fordeler innkommende søknader")
+    Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling")
+    Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
+    Container(api_intern, "api-intern", "API")
+    Container(api_ekstern, "api-ekstern", "API for eksterne")
+    ContainerDb(kelvin_db, "Database", "Postgres")
+
+    Rel(api_ekstern, api_intern, "videresender")
+    Rel(saksbehandling_kelvin, behandlingsflyt, "api-kall")
+    Rel(behandlingsflyt, kelvin_db, "spørringer")
+    Rel(postmottak, behandlingsflyt, "opprett sak")
+}
+
+
+System_Boundary(kelvin_fss, "Kelvin <FSS>") {
+    Container(arena_oppslag, "Arena-oppslag", "Component")
+
+    Rel(arena_oppslag, aap_tilgangsview, "spørringer")
+
+    Rel(api_intern, arena_oppslag, "api-kall")
+
+}
+
+System(joark, "Joark")
+System(altinn, "Altinn")
+System(pensjonkasser, "Pensjonskasser", "pensjonsamhandling")
+Rel(pensjonkasser, api_ekstern, "oppslag")
+Rel(joark, postmottak, "AAP-søknader")
+Rel(altinn, api_ekstern, "oppslag")
+
+System(visningsklient, "Visningsklient", "AAP-saker i Arena")
+
+Rel(visningsklient, arena_oppslag, "saksinformasjon")
+
+Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
+
+Rel(saksbehandler, saksbehandling_kelvin, "Bruker")
+Rel(saksbehandler, visningsklient, "Bruker")
+
+@enduml
