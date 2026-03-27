@@ -18,10 +18,10 @@ System_Boundary(arena, "Arena <FSS>") {
 System_Boundary(kelvin, "Kelvin <GCP>") {
 
     Container(postmottak, "postmottak", "Fordeler innkommende søknader")
-        note right of postmottak : Adopter
+        note left of postmottak : Adopter
 
     Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling")
-        note right of saksbehandling_kelvin : Endre
+        note left of saksbehandling_kelvin : Endre
     Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
         note right of behandlingsflyt : Endre
 
@@ -33,6 +33,7 @@ System_Boundary(kelvin, "Kelvin <GCP>") {
     Rel(api_ekstern, api_intern, "videresender")
     Rel(saksbehandling_kelvin, behandlingsflyt, "api-kall")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
+    Rel(postmottak, behandlingsflyt, "opprett sak")
 }
 
 System_Boundary(kelvin_fss, "Kelvin <FSS>") {
@@ -48,6 +49,7 @@ System_Boundary(kelvin_fss, "Kelvin <FSS>") {
 
     Rel(api_intern, arena_oppslag, "api-kall")
     Rel(postmottak, aap_fss_proxy, "api-kall")
+    Rel(postmottak, arena_oppslag, "api-kall")
     Rel(aap_fss_proxy, arena_ws_api, "api-kall")
     Rel(migrering, arena_oppslag, "api-kall")
     Rel(behandlingsflyt, arena_oppslag, "api-kall")

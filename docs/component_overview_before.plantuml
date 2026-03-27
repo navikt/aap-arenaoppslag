@@ -29,6 +29,7 @@ System_Boundary(kelvin, "Kelvin <GCP>") {
     Rel(postmottak, api_intern, "api-kall")
     Rel(behandlingsflyt, api_intern, "api-kall")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
+    Rel(postmottak, behandlingsflyt, "opprett sak")
 }
 
 System_Boundary(kelvin_fss, "Kelvin <FSS>") {
