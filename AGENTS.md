@@ -97,9 +97,11 @@ as the existing example of this pattern.
 - Add new fields as `optional` (nullable or with a default value) — do not remove or rename existing fields.
 - For breaking changes: create `/api/v2/...` and keep the old route until consumers have migrated.
 - Always align with the team before deciding whether a change is breaking.
+- **All request and response DTO types must be defined in the `kontrakt` module** under `no.nav.aap.arenaoppslag.kontrakt.apiv1`.
 
 **`/intern/*`** is frozen — do not add new routes here. Use `/api/intern/` for new internal needs.
 These routes are currently used by `aap-api-intern`. The long-term plan is to migrate to `/api/v1/*`.
+- **All request and response DTO types must be defined in the `kontrakt` module** under `no.nav.aap.arenaoppslag.kontrakt.intern`.
 
 **`/api/intern/*`** is "backend for frontend" and may change freely.
 - Response objects can be shaped to fit the frontend's exact needs and do not need to follow REST conventions.

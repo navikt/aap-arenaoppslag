@@ -4,6 +4,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
@@ -12,6 +14,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 
 fun Route.historikk(historikkService: HistorikkService) {
@@ -33,7 +36,16 @@ fun Route.historikk(historikkService: HistorikkService) {
 
         call.respond(response)
     }
+}
 
+fun Route.sakerForPerson(sakService: SakService) {
+    post("/person/saker") {
+        logger.info("Henter saker for person")
+        val request: SakerRequestV1 = call.receive()
+        val respons: SakerResponse = sakService.hentSakerForPerson(request.personidentifikator)
+
+        call.respond(HttpStatusCode.OK, respons)
+    }
 }
 
 

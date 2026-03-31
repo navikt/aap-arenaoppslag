@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.database
 
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSak as ArenaSakKontrakt
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import org.intellij.lang.annotations.Language
@@ -16,6 +17,12 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentSakerForPerson(fodselsnr: String): List<ArenaSakKontrakt> {
+        return dataSource.connection.use { con ->
+            selectSakerForPerson(fodselsnr, con)
+        }
+    }
+
     companion object {
         fun selectSakMedId(saksid: Int, connection: Connection): ArenaSak? {
             connection.prepareStatement(selectSakMedSaksId).use { preparedStatement ->
@@ -28,6 +35,14 @@ class SakRepository(private val dataSource: DataSource) {
                 }
 
                 return saker.first()
+            }
+        }
+
+        fun selectSakerForPerson(fodselsnr: String, connection: Connection): List<ArenaSakKontrakt> {
+            connection.createParameterizedQuery(selectSakerMedAntallVedtakForFnr).use { preparedStatement ->
+                preparedStatement.setString(1, fodselsnr)
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForArenaSakKontrakt(row) }
             }
         }
 
@@ -47,6 +62,16 @@ class SakRepository(private val dataSource: DataSource) {
             )
         )
 
+        private fun mapperForArenaSakKontrakt(row: ResultSet) = ArenaSakKontrakt(
+            sakId = row.getString("sak_id"),
+            lopenummer = row.getInt("lopenrsak"),
+            aar = row.getInt("aar"),
+            antallVedtak = row.getInt("antall_vedtak"),
+            sakstype = row.getString("sakskode"),
+            regDato = row.getDate("reg_dato").toLocalDate(),
+            avsluttetDato = row.getDate("dato_avsluttet")?.toLocalDate(),
+        )
+
         @Language("OracleSql")
         internal val selectSakMedSaksId = """
             SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id, 
@@ -55,6 +80,17 @@ class SakRepository(private val dataSource: DataSource) {
             LEFT JOIN person ON person.person_id = sak.objekt_id
             LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
             WHERE SAK_ID = ? AND TABELLNAVNALIAS='PERS'
+        """.trimIndent()
+
+        @Language("OracleSql")
+        internal val selectSakerMedAntallVedtakForFnr = """
+            SELECT sak.sak_id, sak.aar, sak.lopenrsak, sak.sakskode, sak.reg_dato, sak.dato_avsluttet,
+                COUNT(vedtak.vedtak_id) AS antall_vedtak
+            FROM SAK
+            JOIN person ON person.person_id = sak.objekt_id
+            LEFT JOIN vedtak ON vedtak.sak_id = sak.sak_id
+            WHERE person.fodselsnr = ? AND sak.tabellnavnalias = 'PERS'
+            GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sak.sakskode, sak.reg_dato, sak.dato_avsluttet
         """.trimIndent()
     }
 
