@@ -3,7 +3,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.4.1"
-    id("io.ktor.plugin") version "3.4.1"
+    id("io.ktor.plugin") version "3.4.2"
     //id("dev.detekt") temporary disabled - missing support for our kotlin-version
     application
 }
