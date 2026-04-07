@@ -1,4 +1,11 @@
-rootProject.name = "aap-fss-proxy"
+plugins {
+    // Apply the foojay-resolver plugin to allow automatic download of JDKs
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+rootProject.name = "arenaoppslag"
+include("app", "kontrakt")
+
 
 val githubPassword: String? by settings
 
