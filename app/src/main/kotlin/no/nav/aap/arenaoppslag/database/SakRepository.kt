@@ -67,7 +67,7 @@ class SakRepository(private val dataSource: DataSource) {
             lopenummer = row.getInt("lopenrsak"),
             aar = row.getInt("aar"),
             antallVedtak = row.getInt("antall_vedtak"),
-            sakstype = row.getString("sakskode"),
+            sakstype = row.getString("sakstypenavn"),
             regDato = row.getDate("reg_dato").toLocalDate(),
             avsluttetDato = row.getDate("dato_avsluttet")?.toLocalDate(),
         )
@@ -84,13 +84,14 @@ class SakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         internal val selectSakerMedAntallVedtakForFnr = """
-            SELECT sak.sak_id, sak.aar, sak.lopenrsak, sak.sakskode, sak.reg_dato, sak.dato_avsluttet,
+            SELECT sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
                 COUNT(vedtak.vedtak_id) AS antall_vedtak
             FROM SAK
             JOIN person ON person.person_id = sak.objekt_id
+            JOIN sakstype ON sakstype.sakskode = sak.sakskode
             LEFT JOIN vedtak ON vedtak.sak_id = sak.sak_id
             WHERE person.fodselsnr = ? AND sak.tabellnavnalias = 'PERS'
-            GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sak.sakskode, sak.reg_dato, sak.dato_avsluttet
+            GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet
         """.trimIndent()
     }
 
