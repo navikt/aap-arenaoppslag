@@ -38,7 +38,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             fra_dato, 
             til_dato, 
             rettighetkode, 
-            utfallkode
+            utfallkode, 
+            reg_dato
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -52,9 +53,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
-           -- TODO kan kutte ned til 12+3 mnd siden fra_dato, da det er maks 12mnd klagefrist + behandlingstid.
-            -- SPM: må vi vente en periode på at et vedtak skal bli opprettet ved klage, eller registreres det automatisk når systemet mottar klagen?
+          AND NOT (utfallkode = 'NEI' AND v.rettighetkode = 'AAP' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND v.rettighetkode = 'AA115' AND til_dato IS NULL) -- bruker fikk avslag 
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -70,7 +70,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode,
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -97,7 +98,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS fra_dato,
             CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode,
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -119,7 +121,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode, 
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -143,7 +146,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             su.dato_fra AS fra_dato,
             su.dato_til AS til_dato,
             'SPESIAL' AS rettighetkode, 
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             spesialutbetaling su
             JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
@@ -166,7 +170,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             ssu.dato_periode_fra AS fra_dato,
             ssu.dato_periode_til AS til_dato,
             'SIM_UTBET' AS rettighetkode, 
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             sim_utbetalingsgrunnlag ssu
             JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
@@ -242,6 +247,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
+            registrertDato = fraDato(row.getDate("reg_dato"))
         )
 
     }
