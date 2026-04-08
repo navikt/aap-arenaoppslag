@@ -53,8 +53,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato >= ? OR fra_dato IS NULL)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND v.rettighetkode = 'AAP' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
-          AND NOT (utfallkode = 'NEI' AND v.rettighetkode = 'AA115' AND til_dato IS NULL) -- bruker fikk avslag 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND rettighetkode='AAP' AND fra_dato <= ADD_MONTHS(TRUNC(SYSDATE), -6)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND rettighetkode='AA115') -- bruker fikk avslag
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -215,8 +215,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 preparedStatement.setDate(p++, Date.valueOf(nyesteTillateStans))
-                preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
-                // S2: klager
+                // klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
