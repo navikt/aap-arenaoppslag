@@ -61,17 +61,21 @@ class MaksimumRepository(private val dataSource: DataSource) {
              WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS', 'BARNMSTON', 'DAGSFSAM')
     """.trimIndent()
 
-        @Language("OracleSql")
-        private val selectAnmerkningerMeldekort = """
-        SELECT sum(CASE WHEN anmerkningkode = 'FSNN' THEN verdi ELSE 0 END) AS sykedager,
-               sum(CASE WHEN anmerkningkode = 'SENN' THEN verdi ELSE 0 END) AS for_sent,
-               sum(CASE WHEN anmerkningkode = 'FXNN' THEN verdi ELSE 0 END) AS fravar
-          FROM anmerkning
-         WHERE tabellnavnalias = 'MKORT'
-           AND objekt_id       = ?
-           AND anmerkningkode IN ('FSNN', 'SENN', 'FXNN')
-    """.trimIndent()
-        //Syk=FSNN', fravære = 'FXNN' og for sent = 'SENN'
+        private fun selectAnmerkningerForMeldekortliste(meldekortIder: List<Long>): String {
+            // Oracle støtter ikke listeparametere i PreparedStatement, så meldekort-IDer interpoleres direkte.
+            val idListe = meldekortIder.joinToString(",")
+            return """
+            SELECT objekt_id,
+                   sum(CASE WHEN anmerkningkode = 'FSNN' THEN verdi ELSE 0 END) AS sykedager,
+                   sum(CASE WHEN anmerkningkode = 'SENN' THEN verdi ELSE 0 END) AS for_sent,
+                   sum(CASE WHEN anmerkningkode = 'FXNN' THEN verdi ELSE 0 END) AS fravar
+              FROM anmerkning
+             WHERE tabellnavnalias = 'MKORT'
+               AND objekt_id IN ($idListe)
+               AND anmerkningkode IN ('FSNN', 'SENN', 'FXNN')
+             GROUP BY objekt_id
+            """.trimIndent()
+        }
 
         @Language("OracleSql")
         //henter timer arbeidet for bruker x mellom y og z dato gruppert på meldekortperiode
@@ -104,18 +108,21 @@ class MaksimumRepository(private val dataSource: DataSource) {
             p.belop
     """.trimIndent()
 
-        fun selectMeldekortAnmerkninger(meldekortId: String, connection: Connection): AnnenReduksjon {
-            return connection.prepareStatement(selectAnmerkningerMeldekort).use { preparedStatement ->
-                preparedStatement.setString(1, meldekortId)
-                val resultSet = preparedStatement.executeQuery()
-
+        fun selectAlleMeldekortAnmerkninger(
+            meldekortIder: List<Long>,
+            connection: Connection
+        ): Map<Long, AnnenReduksjon> {
+            if (meldekortIder.isEmpty()) return emptyMap()
+            val sql = selectAnmerkningerForMeldekortliste(meldekortIder)
+            return connection.createStatement().use { statement ->
+                val resultSet = statement.executeQuery(sql)
                 resultSet.map { row ->
-                    AnnenReduksjon(
+                    row.getLong("objekt_id") to AnnenReduksjon(
                         sykedager = row.getFloat("sykedager"),
-                        sentMeldekort = row.getFloat("for_sent")>0,
-                        fraver = row.getFloat("fravar")
+                        sentMeldekort = row.getFloat("for_sent") > 0,
+                        fraver = row.getFloat("fravar"),
                     )
-                }.toList().firstOrNull() ?: AnnenReduksjon(0.0f, false, 0.0f)
+                }.toMap()
             }
         }
 
@@ -137,23 +144,45 @@ class MaksimumRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(3, Date.valueOf(fraDato))
                 preparedStatement.setDate(4, Date.valueOf(tilDato))
 
-                val resultSet = preparedStatement.executeQuery()
+                data class MeldekortRad(
+                    val meldekortId: Long,
+                    val timerArbeidet: Double,
+                    val datoFra: LocalDate,
+                    val datoTil: LocalDate,
+                    val belop: Int,
+                )
 
-                resultSet.map { row ->
-                    //hent andmerking for sent meldekort
-                    val meldekortId = row.getString("meldekort_id")
-                    UtbetalingMedMer(
-                        reduksjon = Reduksjon(
-                            timerArbeidet = row.getFloat("timer_arbeidet").toDouble(), annenReduksjon = selectMeldekortAnmerkninger(
-                                meldekortId,
-                                connection
-                            )
-                        ), periode = Periode(
-                            fraOgMedDato = row.getDate("DATO_FRA").toLocalDate(),
-                            tilOgMedDato = row.getDate("DATO_TIL").toLocalDate(),
-                        ), belop = row.getInt("belop"), dagsats = dagsats, barnetillegg = barnetiTillegg
+                val rader = preparedStatement.executeQuery().map { row ->
+                    MeldekortRad(
+                        meldekortId = row.getLong("meldekort_id"),
+                        timerArbeidet = row.getFloat("timer_arbeidet").toDouble(),
+                        datoFra = row.getDate("DATO_FRA").toLocalDate(),
+                        datoTil = row.getDate("DATO_TIL").toLocalDate(),
+                        belop = row.getInt("belop"),
                     )
                 }.toList()
+
+                val anmerkningerPerMeldekort = selectAlleMeldekortAnmerkninger(
+                    rader.map { it.meldekortId },
+                    connection,
+                )
+                val ingenAnmerkninger = AnnenReduksjon(0.0f, false, 0.0f)
+
+                rader.map { rad ->
+                    UtbetalingMedMer(
+                        reduksjon = Reduksjon(
+                            timerArbeidet = rad.timerArbeidet,
+                            annenReduksjon = anmerkningerPerMeldekort[rad.meldekortId] ?: ingenAnmerkninger,
+                        ),
+                        periode = Periode(
+                            fraOgMedDato = rad.datoFra,
+                            tilOgMedDato = rad.datoTil,
+                        ),
+                        belop = rad.belop,
+                        dagsats = dagsats,
+                        barnetillegg = barnetiTillegg,
+                    )
+                }
             }
         }
 
