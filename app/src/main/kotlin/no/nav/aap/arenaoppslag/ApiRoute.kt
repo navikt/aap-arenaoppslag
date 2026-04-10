@@ -38,11 +38,17 @@ fun Route.historikk(historikkService: HistorikkService) {
     }
 }
 
-fun Route.sakerForPerson(sakService: SakService) {
+fun Route.sakerForPerson(sakService: SakService,pdlGateway: IPdlGateway) {
     post("/person/saker") {
         logger.info("Henter saker for person")
         val request: SakerRequestV1 = call.receive()
-        val respons: SakerResponse = sakService.hentSakerForPerson(request.personidentifikator)
+
+        val alleIdenter = pdlGateway.hentAlleIdenterForPerson(request.personidentifikator)
+            .map { it.ident }
+            .toSet()
+            .ifEmpty { setOf(request.personidentifikator) }
+
+        val respons: SakerResponse = sakService.hentSakerForPerson(alleIdenter)
 
         call.respond(HttpStatusCode.OK, respons)
     }
@@ -72,13 +78,14 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
     }
 }
 
-fun Route.telleverk(telleverkService: TelleverkService) {
+fun Route.telleverk(telleverkService: TelleverkService, pdlGateway: IPdlGateway) {
     post("/telleverk") {
         logger.info("Henter telleverk")
         val request: TellerRequest = call.receive()
         val fodselsnummer = request.personidentifikator
 
         //TODO BRUK PDL for å finne andre personidentifikatorer knyttet til samme person
+        val alleIdenterForPerson = pdlGateway.hentAlleIdenterForPerson(fodselsnummer)
 
         when(val telleverk  = telleverkService.hentTelleverkPåPerson(fodselsnummer)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")
