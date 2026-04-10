@@ -129,6 +129,33 @@ class MaksimumRepository(private val dataSource: DataSource) {
 
 
 
+        private data class MeldekortRad(
+            val meldekortId: Long,
+            val timerArbeidet: Double,
+            val datoFra: LocalDate,
+            val datoTil: LocalDate,
+            val belop: Int,
+        )
+
+        private fun mapTilUtbetaling(
+            rad: MeldekortRad,
+            anmerkninger: AnnenReduksjon?,
+            dagsats: Int,
+            barnetillegg: Int,
+        ): UtbetalingMedMer = UtbetalingMedMer(
+            reduksjon = Reduksjon(
+                timerArbeidet = rad.timerArbeidet,
+                annenReduksjon = anmerkninger ?: AnnenReduksjon(0.0f, false, 0.0f),
+            ),
+            periode = Periode(
+                fraOgMedDato = rad.datoFra,
+                tilOgMedDato = rad.datoTil,
+            ),
+            belop = rad.belop,
+            dagsats = dagsats,
+            barnetillegg = barnetillegg,
+        )
+
         fun selectUtbetalingVedVedtakId(
             vedtakId: Int,
             connection: Connection,
@@ -144,14 +171,6 @@ class MaksimumRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(3, Date.valueOf(fraDato))
                 preparedStatement.setDate(4, Date.valueOf(tilDato))
 
-                data class MeldekortRad(
-                    val meldekortId: Long,
-                    val timerArbeidet: Double,
-                    val datoFra: LocalDate,
-                    val datoTil: LocalDate,
-                    val belop: Int,
-                )
-
                 val rader = preparedStatement.executeQuery().map { row ->
                     MeldekortRad(
                         meldekortId = row.getLong("meldekort_id"),
@@ -162,27 +181,9 @@ class MaksimumRepository(private val dataSource: DataSource) {
                     )
                 }.toList()
 
-                val anmerkningerPerMeldekort = selectAlleMeldekortAnmerkninger(
-                    rader.map { it.meldekortId },
-                    connection,
-                )
-                val ingenAnmerkninger = AnnenReduksjon(0.0f, false, 0.0f)
+                val anmerkningerPerMeldekort = selectAlleMeldekortAnmerkninger(rader.map { it.meldekortId }, connection)
 
-                rader.map { rad ->
-                    UtbetalingMedMer(
-                        reduksjon = Reduksjon(
-                            timerArbeidet = rad.timerArbeidet,
-                            annenReduksjon = anmerkningerPerMeldekort[rad.meldekortId] ?: ingenAnmerkninger,
-                        ),
-                        periode = Periode(
-                            fraOgMedDato = rad.datoFra,
-                            tilOgMedDato = rad.datoTil,
-                        ),
-                        belop = rad.belop,
-                        dagsats = dagsats,
-                        barnetillegg = barnetiTillegg,
-                    )
-                }
+                rader.map { rad -> mapTilUtbetaling(rad, anmerkningerPerMeldekort[rad.meldekortId], dagsats, barnetiTillegg) }
             }
         }
 
