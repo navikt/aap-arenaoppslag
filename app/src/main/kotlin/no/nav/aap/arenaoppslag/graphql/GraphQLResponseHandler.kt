@@ -1,4 +1,4 @@
-package no.nav.aap.api.util.graphql
+package no.nav.aap.arenaoppslag.graphql
 
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.error.RestResponseHandler
@@ -8,7 +8,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import kotlin.collections.isNotEmpty
 import kotlin.collections.joinToString
-import kotlin.text.format
 
 class GraphQLResponseHandler : RestResponseHandler<InputStream> {
     private val defaultResponseHandler = DefaultResponseHandler()
@@ -22,12 +21,9 @@ class GraphQLResponseHandler : RestResponseHandler<InputStream> {
 
         if (håndtertResponse != null && håndtertResponse is GraphQLResponse<*>) {
             if (håndtertResponse.errors?.isNotEmpty() == true) {
+                val feilmeldinger = håndtertResponse.errors.joinToString(transform = GraphQLError::message)
                 throw GraphQLQueryException(
-                    String.format(
-                        "Feil %s ved GraphQL oppslag mot %s",
-                        håndtertResponse.errors.joinToString(transform = GraphQLError::message),
-                        request.uri(),
-                    ),
+                    "Feil $feilmeldinger ved GraphQL oppslag mot ${request.uri()}",
                     håndtertResponse.errors.first().extensions.code ?: "Ukjent"
                 )
             }

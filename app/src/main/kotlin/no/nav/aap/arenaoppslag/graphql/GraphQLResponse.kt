@@ -1,4 +1,4 @@
-package no.nav.aap.api.util.graphql
+package no.nav.aap.arenaoppslag.graphql
 
 data class GraphQLResponse<Data>(
     val data: Data?,
