@@ -23,7 +23,30 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentSakerForPersoner(fodselsnumre: Set<String>): List<ArenaSakKontrakt> {
+        return dataSource.connection.use { con ->
+            selectSakerForPersoner(fodselsnumre, con)
+        }
+    }
+
     companion object {
+        private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
+
+        private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnumre: Set<String>): String {
+            // Oracle støtter ikke listeparametere i PreparedStatement, så vi interpolerer direkte
+            val allePersonensFodselsnummer = fodselsnumre.joinToString(separator = ",") { "'$it'" }
+            return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
+        }
+
+        fun selectSakerForPersoner(fodselsnumre: Set<String>, connection: Connection): List<ArenaSakKontrakt> {
+            val query = queryMedFodselsnummerListe(selectSakerMedAntallVedtakForFnrListe, fodselsnumre)
+            // Er i teorien unsafe, men data kommer fra PDL så SQL injection risken er lav
+            connection.prepareStatement(query).use { preparedStatement ->
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForArenaSakKontrakt(row) }
+            }
+        }
+
         fun selectSakMedId(saksid: Int, connection: Connection): ArenaSak? {
             connection.prepareStatement(selectSakMedSaksId).use { preparedStatement ->
                 preparedStatement.setInt(1, saksid)
@@ -91,6 +114,18 @@ class SakRepository(private val dataSource: DataSource) {
             JOIN sakstype ON sakstype.sakskode = sak.sakskode
             LEFT JOIN vedtak ON vedtak.sak_id = sak.sak_id
             WHERE person.fodselsnr = ? AND sak.tabellnavnalias = 'PERS'
+            GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet
+        """.trimIndent()
+
+        @Language("OracleSql")
+        internal val selectSakerMedAntallVedtakForFnrListe = """
+            SELECT sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
+                COUNT(vedtak.vedtak_id) AS antall_vedtak
+            FROM SAK
+            JOIN person ON person.person_id = sak.objekt_id
+            JOIN sakstype ON sakstype.sakskode = sak.sakskode
+            LEFT JOIN vedtak ON vedtak.sak_id = sak.sak_id
+            WHERE person.fodselsnr IN ($FNR_LISTE_TOKEN) AND sak.tabellnavnalias = 'PERS'
             GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet
         """.trimIndent()
     }

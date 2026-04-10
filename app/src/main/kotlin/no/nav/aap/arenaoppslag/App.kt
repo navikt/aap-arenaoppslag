@@ -91,7 +91,8 @@ fun Application.server(
     val sakService = skapSakervice(datasource)
     val telleverkService = skapTelleverkService(datasource)
     val sakListeService = skapSakListeService(datasource)
-    routes(internService, historikkService, sakService, telleverkService, sakListeService)
+    val pdlGateway: IPdlGateway = PdlGateway()
+    routes(internService, historikkService, sakService, telleverkService, sakListeService,pdlGateway)
     databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
@@ -169,7 +170,8 @@ private fun Application.routes(
     historikkService: HistorikkService,
     sakOgVedtakService: SakOgVedtakService,
     telleverkService: TelleverkService,
-    sakService: SakService
+    sakService: SakService,
+    pdlGateway: IPdlGateway
 
 ) {
     routing {
@@ -186,8 +188,8 @@ private fun Application.routes(
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
                 historikk(historikkService)
-                telleverk(telleverkService)
-                sakerForPerson(sakService)
+                telleverk(telleverkService,pdlGateway)
+                sakerForPerson(sakService, pdlGateway)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
