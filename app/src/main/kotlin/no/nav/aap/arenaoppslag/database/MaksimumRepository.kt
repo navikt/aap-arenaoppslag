@@ -16,7 +16,11 @@ import java.sql.Date
 import java.time.LocalDate
 import javax.sql.DataSource
 
-class MaksimumRepository(private val dataSource: DataSource) {
+class MaksimumRepository(
+    private val dataSource: DataSource,
+    // Oracle har en hard grense på 1000 elementer i IN-lister. Vi chunker for å holde oss under denne grensen.
+    private val chunkStørrelse: Int = 999,
+) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
     fun hentMaksimumsløsning(
@@ -115,16 +119,18 @@ class MaksimumRepository(private val dataSource: DataSource) {
         connection: Connection,
     ): Map<Long, AnnenReduksjon> {
         if (meldekortIder.isEmpty()) return emptyMap()
-        val sql = selectAnmerkningerForMeldekortliste(meldekortIder)
-        return connection.createStatement().use { statement ->
-            statement.executeQuery(sql).map { row ->
-                row.getLong("objekt_id") to AnnenReduksjon(
-                    sykedager = row.getFloat("sykedager"),
-                    sentMeldekort = row.getFloat("for_sent") > 0,
-                    fraver = row.getFloat("fravar"),
-                )
-            }.toMap()
-        }
+        return meldekortIder.chunked(chunkStørrelse).flatMap { chunk ->
+            val sql = selectAnmerkningerForMeldekortliste(chunk)
+            connection.createStatement().use { statement ->
+                statement.executeQuery(sql).map { row ->
+                    row.getLong("objekt_id") to AnnenReduksjon(
+                        sykedager = row.getFloat("sykedager"),
+                        sentMeldekort = row.getFloat("for_sent") > 0,
+                        fraver = row.getFloat("fravar"),
+                    )
+                }
+            }
+        }.toMap()
     }
 
     private fun selectBeregningsgrunnlag(vedtakId: Int, connection: Connection): Int {
