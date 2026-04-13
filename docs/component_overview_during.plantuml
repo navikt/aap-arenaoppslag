@@ -29,6 +29,7 @@ System_Boundary(kelvin, "Kelvin <GCP>") {
     Container(api_ekstern, "api-ekstern", "API for eksterne")
 
     ContainerDb(kelvin_db, "Database", "Postgres")
+    ContainerDb(arena_hendelse_topic, "Arena-hendelser", "Kafka-topic")
 
     Rel(api_ekstern, api_intern, "videresender")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
@@ -36,11 +37,11 @@ System_Boundary(kelvin, "Kelvin <GCP>") {
 }
 
 System_Boundary(kelvin_fss, "Kelvin <FSS>") {
-    Container(aap_fss_proxy, "fss-proxy", "REST-proxy mot Arena-WS")
-            note left of aap_fss_proxy : Adopter
     Container(arena_oppslag, "Arena-oppslag", "Database-klient")
         note left of arena_oppslag : Adopter
-
+    Container(aap_fss_proxy, "fss-proxy", "REST-proxy mot Arena-WS")
+            note left of aap_fss_proxy : Adopter
+    Container(arena_hendelse_proxy, "arena-hendelse-proxy", "Tar imot hendelser fra Arena")
     Container(migrering, "Migrerings-motor", "Konverterer åpne Arena-saker")
         note left of migrering : Ny
 
@@ -52,6 +53,8 @@ System_Boundary(kelvin_fss, "Kelvin <FSS>") {
 
 
     Rel(aap_fss_proxy, arena_ws_api, "api-kall")
+    Rel(arena_db, arena_hendelse_proxy, "api-kall")
+    Rel(arena_hendelse_proxy, arena_hendelse_topic, "hendelser")
     Rel(migrering, arena_oppslag, "api-kall")
     Rel(behandlingsflyt, arena_oppslag, "api-kall")
     Rel(migrering, api_intern, "api-kall")
@@ -61,6 +64,7 @@ System(joark, "Joark")
 System(altinn, "Altinn")
 System(pensjonkasser, "Pensjonskasser", "pensjonsamhandling")
 Rel(pensjonkasser, api_ekstern, "oppslag")
+Rel(pensjonkasser, arena_hendelse_topic, "konsumerer")
 Rel(joark, postmottak, "AAP-søknader")
 Rel(altinn, api_ekstern, "oppslag")
 
