@@ -5,7 +5,7 @@ title Systemer under migreringen
 System_Boundary(arena, "Arena <FSS>") {
     ContainerDb(arena_db, "Database", "Oracle 19")
     Container(aap_tilgangsview, "AAP tilgangsview", "View")
-    Container(saksbehandling_arena, "Saksbehandling", "Component")
+    Container(saksbehandling_arena, "Saksbehandling", "Frontend")
             note left of saksbehandling_arena : Endre
     Container(arena_ws_api, "Arena WS-API")
 
@@ -69,7 +69,7 @@ Rel(joark, postmottak, "AAP-søknader")
 Rel(altinn, api_ekstern, "oppslag")
 
 System(visningsklient, "Visningsklient", "AAP-saker i Arena")
-note right of visningsklient : Ny
+note right of visningsklient : Etabler ny
 Rel(visningsklient, arena_oppslag, "saksinformasjon")
 
 Person(saksbehandler, "Saksbehandler", "NAV-ansatt")

@@ -6,7 +6,7 @@ System_Boundary(arena, "Arena <FSS>") {
     ContainerDb(arena_db, "Database", "Oracle 19")
     Container(aap_tilgangsview, "AAP tilgangsview", "View")
 
-    Container(saksbehandling_arena, "Saksbehandling", "Component")
+    Container(saksbehandling_arena, "Saksbehandling", "Frontend")
     Container(arena_ws_api, "Arena WS-API")
 
     Rel(aap_tilgangsview, arena_db, "videresender")
