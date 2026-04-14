@@ -58,7 +58,9 @@ fun main() {
 }
 
 fun Application.server(
-    config: AppConfig = AppConfig(), datasource: DataSource = ArenaDatasource.create(config.database)
+    config: AppConfig = AppConfig(),
+    datasource: DataSource = ArenaDatasource.create(config.database),
+    pdlGateway: IPdlGateway = PdlGateway(),
 ) {
     statusPages()
 
@@ -91,8 +93,7 @@ fun Application.server(
     val sakService = skapSakervice(datasource)
     val telleverkService = skapTelleverkService(datasource)
     val sakListeService = skapSakListeService(datasource)
-    val pdlGateway: IPdlGateway = PdlGateway()
-    routes(internService, historikkService, sakService, telleverkService, sakListeService,pdlGateway)
+    routes(internService, historikkService, sakService, telleverkService, sakListeService, pdlGateway)
     databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
