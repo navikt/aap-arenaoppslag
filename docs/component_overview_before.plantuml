@@ -1,6 +1,28 @@
 @startuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
-title Dagens system
+title Dagens AAP-systemer
+
+System(joark, "Joark")
+System(altinn, "Altinn")
+System(pensjonkasser, "Pensjonskasser", "pensjonsamhandling, feks. DSOP")
+Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
+
+System_Boundary(kelvin, "Kelvin <GCP>") {
+    Container(postmottak, "postmottak", "Fordeler innkommende søknader")
+    Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling, produksjonsstyring, oppgaver")
+    Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
+    Container(api_intern, "api-intern", "API")
+    Container(api_ekstern, "api-ekstern", "API for eksterne")
+    ContainerDb(kelvin_db, "Database", "Postgres")
+    ContainerDb(arena_hendelse_topic, "Arena-hendelser", "Kafka-topic")
+
+    Rel(api_ekstern, api_intern, "videresender oppslag")
+    Rel(postmottak, api_intern, "api-kall")
+    Rel(behandlingsflyt, api_intern, "api-kall")
+    Rel(behandlingsflyt, kelvin_db, "spørringer")
+    Rel(saksbehandling_kelvin, behandlingsflyt, "saksbehandling")
+    Rel(postmottak, behandlingsflyt, "opprett sak")
+}
 
 System_Boundary(arena, "Arena <FSS>") {
     ContainerDb(arena_db, "Database", "Oracle 19")
@@ -14,45 +36,26 @@ System_Boundary(arena, "Arena <FSS>") {
     Rel(saksbehandling_arena, arena_db, "spørringer")
 }
 
-System_Boundary(kelvin, "Kelvin <GCP>") {
-
-    Container(postmottak, "postmottak", "Fordeler innkommende søknader")
-    Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling")
-    Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
-    Container(api_intern, "api-intern", "API")
-    Container(api_ekstern, "api-ekstern", "API for eksterne")
-    ContainerDb(kelvin_db, "Database", "Postgres")
-    ContainerDb(arena_hendelse_topic, "Arena-hendelser", "Kafka-topic")
-
-    Rel(api_ekstern, api_intern, "videresender")
-    Rel(postmottak, api_intern, "api-kall")
-    Rel(behandlingsflyt, api_intern, "api-kall")
-    Rel(behandlingsflyt, kelvin_db, "spørringer")
-    Rel(saksbehandling_kelvin, behandlingsflyt, "saksbehandling")
-}
-
 System_Boundary(kelvin_fss, "Kelvin <FSS>") {
     Container(arena_oppslag, "Arena-oppslag", "Database-klient")
     Container(aap_fss_proxy, "fss-proxy", "REST-proxy mot Arena-WS")
     Container(arena_hendelse_proxy, "arena-hendelse-proxy", "Tar imot hendelser fra Arena")
-    Rel(arena_oppslag, aap_tilgangsview, "spørringer")
 
+    Rel(arena_oppslag, aap_tilgangsview, "spørringer")
     Rel(api_intern, arena_oppslag, "api-kall")
+
     Rel(postmottak, aap_fss_proxy, "opprett sak")
-    Rel(postmottak, behandlingsflyt, "opprett sak")
     Rel(aap_fss_proxy, arena_ws_api, "api-kall")
-    Rel(arena_db, arena_hendelse_proxy, "api-kall")
     Rel(arena_hendelse_proxy, arena_hendelse_topic, "hendelser")
+
+    Rel(arena_db, arena_hendelse_proxy, "api-kall")
+    Rel(arena_db, api_intern, "overlappskontroll")
 }
 
-System(joark, "Joark")
-System(altinn, "Altinn")
-System(pensjonkasser, "Pensjonskasser", "pensjonsamhandling")
 Rel(pensjonkasser, api_ekstern, "oppslag")
+Rel(pensjonkasser, arena_hendelse_topic, "konsumerer")
 Rel(joark, postmottak, "AAP-søknader")
 Rel(altinn, api_ekstern, "oppslag")
-
-Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
 
 Rel(saksbehandler, saksbehandling_kelvin, "Bruker")
 Rel(saksbehandler, saksbehandling_arena, "Bruker")
