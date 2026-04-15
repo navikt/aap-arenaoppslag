@@ -11,7 +11,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
-import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
@@ -35,9 +35,9 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
                 fraOgMedDato = LocalDate.of(2022, 10, 1),
                 tilOgMedDato = LocalDate.of(2023, 12, 31)
             )
-            val alleVedtak: VedtakResponse = gateway.hentPerioder(request)
+            val allePerioder: PerioderResponse = gateway.hentPerioder(request)
 
-            assertEquals(1, alleVedtak.perioder.size)
+            assertEquals(1, allePerioder.perioder.size)
         }
     }
 
