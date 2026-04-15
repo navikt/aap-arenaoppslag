@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedFakta
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -31,10 +31,11 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
     }
 
     @Test
-    fun `hentVedtakMedFaktaForSak klarer å hente alle vedtak fra databasen`() {
+    fun `hentVedtakForSak klarer å hente alle vedtak fra databasen`() {
         val vedtakRepository = VedtakRepository(h2)
-        val forventetVedtak = ArenaVedtakMedFakta(
-            vedtakId = 0,
+        val forventetVedtak = ArenaVedtakRad(
+            vedtakId = 1234,
+            lopenrvedtak = 1,
             statusKode = "IVERK",
             statusNavn = "Iverksatt",
             vedtaktypeKode = "O",
@@ -45,18 +46,18 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
             tilDato = LocalDate.of(2023, 8, 30),
             rettighetkode = "AAP",
             utfallkode = "JA",
-            fakta = emptyList()
         )
 
-        val alleVedtak = vedtakRepository.hentVedtakMedFaktaForSak(1)
+        val alleVedtak = vedtakRepository.hentVedtakForSak(1)
 
         assertThat(alleVedtak).containsExactly(forventetVedtak)
     }
 
     @Test
-    fun `hentVedtakMedFaktaForSak returnerer tom liste om det ikke er noen vedtak knyttet til denne saken`() {
+    fun `hentVedtakForSak returnerer tom liste om det ikke er noen vedtak knyttet til denne saken`() {
         val vedtakRepository = VedtakRepository(h2)
-        val alleVedtak = vedtakRepository.hentVedtakMedFaktaForSak(1919191919)
+        val alleVedtak = vedtakRepository.hentVedtakForSak(1919191919)
         assertThat(alleVedtak).isEmpty()
     }
 }
+
