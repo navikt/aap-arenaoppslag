@@ -255,6 +255,24 @@ back the input identifier as the only FOLKEREGISTERIDENT.
 - `"007"` — used as "unknown person" (does not exist in any test dataset).
 
 ---
+
+## Git workflow
+
+Before committing, always:
+
+1. Show the user a summary of the changes to be committed.
+2. Propose a commit message and wait for explicit approval before proceeding.
+3. Do not commit until the user has confirmed both the changes and the message.
+
+Before pushing, confirm with the user that the commit(s) are ready to be pushed.
+
+Before creating a pull request, always:
+
+1. Propose a PR title and description and present them to the user.
+2. Wait for explicit approval — including any requested edits — before creating it.
+
+---
+
 ## Patterns to follow and to avoid
 Follow the repository pattern. 
 Avoid creating the "god class" anti-pattern , for example when creating services. Instead, create a service that uses other services as building blocks to achieve a service that can create rich composite objects. 

@@ -4,8 +4,7 @@ import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedFakta
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtakfakta
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
@@ -30,17 +29,9 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentVedtakMedFaktaForSak(saksId: Int): List<ArenaVedtakMedFakta> {
+    fun hentVedtakForSak(saksId: Int): List<ArenaVedtakRad> {
         return dataSource.connection.use { con ->
-            selectVedtakMedFaktaForSak(saksId, con)
-                .groupBy { it.vedtakId }
-                .values
-                .map { vedtakMedFakta ->
-                    val vedtakFakta = vedtakMedFakta.mapNotNull { it.tilArenaVedtakFakta() }
-                    vedtakMedFakta
-                        .first()
-                        .tilArenaVedtakMedFakta(vedtakFakta)
-                }
+            selectVedtakForSak(saksId, con)
         }
     }
 
@@ -107,94 +98,40 @@ class VedtakRepository(private val dataSource: DataSource) {
 
 
         @Language("OracleSql")
-        private val selectVedtakMedFaktaForSak = """
-        SELECT v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn, v.fra_dato, v.til_dato, v.rettighetkode, v.utfallkode, vf.vedtak_id, 
-            vf.vedtakfaktakode, vf.vedtakverdi, vf.reg_dato, vft.skjermbildetekst, a.aktfasekode, a.aktfasenavn
+        private val selectVedtakForSak = """
+        SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
+               v.fra_dato, v.til_dato, v.rettighetkode, v.utfallkode,
+               a.aktfasekode, a.aktfasenavn
           FROM vedtak v
           LEFT JOIN vedtaktype vt ON vt.vedtaktypekode = v.vedtaktypekode
           LEFT JOIN vedtakstatus vs ON v.vedtakstatuskode = vs.vedtakstatuskode
-          LEFT JOIN vedtakfakta vf ON  vf.vedtak_id = v.vedtak_id
-          LEFT JOIN vedtakfaktatype vft ON vf.vedtakfaktakode = vft.vedtakfaktakode
           LEFT JOIN aktivitetfase a ON a.aktfasekode = v.aktfasekode
          WHERE sak_id = ?
            AND v.rettighetkode = 'AAP'
            AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
-        private fun selectVedtakMedFaktaForSak(sakId: Int, connection: Connection): List<ArenaVedtakMedFaktaRow> {
-            connection.prepareStatement(selectVedtakMedFaktaForSak).use { preparedStatement ->
+        private fun selectVedtakForSak(sakId: Int, connection: Connection): List<ArenaVedtakRad> {
+            connection.createParameterizedQuery(selectVedtakForSak).use { preparedStatement ->
                 preparedStatement.setInt(1, sakId)
                 val resultSet = preparedStatement.executeQuery()
-                return resultSet.map { ArenaVedtakMedFaktaRow.fromResultRow(it) }.toList()
+                return resultSet.map { mapperForArenaVedtakRad(it) }.toList()
             }
         }
-    }
 
-
-    private data class ArenaVedtakMedFaktaRow(
-        val statusKode: String,
-        val statusNavn: String,
-        val vedtaktypeKode: String,
-        val vedtaktypeNavn: String,
-        val fraOgMed: LocalDate?,
-        val tilDato: LocalDate?,
-        val rettighetkode: String,
-        val utfallkode: String?,
-        val vedtakId: Int,
-        val vedtakfaktakode: String?,
-        val vedtakfaktakodeverdi: String?,
-        val aktivitetsfaseKode: String,
-        val aktivitetsfaseNavn: String,
-        val vedtakfaktanavn: String?,
-        val vedtakfaktakoderegistrertDato: LocalDate?,
-    ) {
-        companion object {
-            fun fromResultRow(row: ResultSet) = ArenaVedtakMedFaktaRow(
-                statusKode = row.getString("vedtakstatuskode"),
-                statusNavn =  row.getString("vedtakstatusnavn"),
-                vedtaktypeKode = row.getString("vedtaktypekode"),
-                vedtaktypeNavn = row.getString("vedtaktypenavn"),
-                aktivitetsfaseKode = row.getString("aktfasekode"),
-                aktivitetsfaseNavn = row.getString("aktfasenavn"),
-                fraOgMed = fraDato(row.getDate("fra_dato")),
-                tilDato = fraDato(row.getDate("til_dato")),
-                rettighetkode = row.getString("rettighetkode"),
-                utfallkode = row.getString("utfallkode"),
-                vedtakId = row.getInt("vedtak_id"),
-                vedtakfaktakode = row.getString("vedtakfaktakode"),
-                vedtakfaktakodeverdi = row.getString("vedtakverdi"),
-                vedtakfaktakoderegistrertDato = row.getDate("reg_dato")?.toLocalDate(),
-                vedtakfaktanavn = row.getString("skjermbildetekst"),
-            )
-        }
-
-        fun tilArenaVedtakMedFakta(fakta: List<ArenaVedtakfakta>) =
-            ArenaVedtakMedFakta(
-                vedtakId = vedtakId,
-                statusKode = statusKode,
-                statusNavn = statusNavn,
-                vedtaktypeKode = vedtaktypeKode,
-                vedtaktypeNavn = vedtaktypeNavn,
-                aktivitetsfaseKode = aktivitetsfaseKode,
-                aktivitetsfaseNavn = aktivitetsfaseNavn,
-                fraOgMed = fraOgMed,
-                tilDato = tilDato,
-                rettighetkode = rettighetkode,
-                utfallkode = utfallkode,
-                fakta = fakta
-            )
-
-        fun tilArenaVedtakFakta(): ArenaVedtakfakta? {
-            if (vedtakfaktakode == null || vedtakfaktakoderegistrertDato == null || vedtakfaktanavn == null) {
-                return null
-            }
-            return ArenaVedtakfakta(
-                kode = vedtakfaktakode,
-                navn = vedtakfaktanavn,
-                verdi = vedtakfaktakodeverdi,
-                registrertDato = vedtakfaktakoderegistrertDato
-            )
-        }
-
+        private fun mapperForArenaVedtakRad(row: ResultSet) = ArenaVedtakRad(
+            vedtakId = row.getInt("vedtak_id"),
+            lopenrvedtak = row.getInt("lopenrvedtak"),
+            statusKode = row.getString("vedtakstatuskode"),
+            statusNavn = row.getString("vedtakstatusnavn"),
+            vedtaktypeKode = row.getString("vedtaktypekode"),
+            vedtaktypeNavn = row.getString("vedtaktypenavn"),
+            aktivitetsfaseKode = row.getString("aktfasekode"),
+            aktivitetsfaseNavn = row.getString("aktfasenavn"),
+            fraOgMed = fraDato(row.getDate("fra_dato")),
+            tilDato = fraDato(row.getDate("til_dato")),
+            rettighetkode = row.getString("rettighetkode"),
+            utfallkode = row.getString("utfallkode"),
+        )
     }
 }

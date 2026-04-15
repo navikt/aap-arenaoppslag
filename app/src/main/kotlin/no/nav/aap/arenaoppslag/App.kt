@@ -22,7 +22,9 @@ import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
+import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
+import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
 import no.nav.aap.arenaoppslag.plugins.bruker
@@ -153,7 +155,9 @@ private fun skapHistorikkService(datasource: DataSource): HistorikkService {
 private fun skapSakervice(datasource: DataSource): SakOgVedtakService {
     val vedtakRepository = VedtakRepository(datasource)
     val sakRepository = SakRepository(datasource)
-    return SakOgVedtakService(sakRepository, vedtakRepository)
+    val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
+    val vilkårsvurderingRepository = VilkårsvurderingRepository(datasource)
+    return SakOgVedtakService(sakRepository, vedtakRepository, vedtakfaktaRepository, vilkårsvurderingRepository)
 }
 
 private fun skapSakListeService(datasource: DataSource): SakService {

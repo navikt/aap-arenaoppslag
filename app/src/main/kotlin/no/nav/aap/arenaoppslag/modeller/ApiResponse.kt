@@ -11,7 +11,7 @@ data class ArenaSakDetaljertRespons(
     val statusnavn: String,
     val registrertDato: LocalDateTime,
     val avsluttetDato: LocalDateTime?,
-    val vedtak: List<ArenaVedtakMedFakta>,
+    val vedtak: List<ArenaVedtakMedDetaljer>,
     val tellerverk: TellerverkPåPerson?
 ) {
     companion object {
