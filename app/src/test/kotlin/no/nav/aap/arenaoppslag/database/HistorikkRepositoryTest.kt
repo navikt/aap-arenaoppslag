@@ -53,7 +53,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     }
 
     @Test
-    fun `finner signifikante saker for person med både gamle og nye vedtak`() {
+    fun `finner signifikante vedtak for person med både gamle og nye vedtak`() {
         val testPersonFnr = "blanding"
         val testPersonId = 997
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
@@ -61,6 +61,17 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
         val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
         assertThat(relevanteSaker).hasSize(2)
+    }
+
+    @Test
+    fun `FAGSYSTEM-426282 ingen signifikante vedtak`() {
+        val testPersonFnr = "426282"
+        val testPersonId = 426282
+        val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
+        assertThat(alleVedtak).hasSize(1)
+
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        assertThat(signifikanteVedtak).hasSize(0)
     }
 
 }
