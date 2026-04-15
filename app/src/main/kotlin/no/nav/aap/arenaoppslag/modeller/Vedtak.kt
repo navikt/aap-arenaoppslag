@@ -24,6 +24,7 @@ data class ArenaVedtak(
 
 data class ArenaVedtakRad(
     val vedtakId: Int,
+    val lopenrvedtak: Int,
     val statusKode: String,
     val statusNavn: String,
     val vedtaktypeKode: String,
@@ -40,6 +41,7 @@ data class ArenaVedtakRad(
         vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
     ) = ArenaVedtakMedDetaljer(
         vedtakId = vedtakId,
+        lopenrvedtak = lopenrvedtak,
         statusKode = statusKode,
         statusNavn = statusNavn,
         vedtaktypeKode = vedtaktypeKode,
@@ -57,6 +59,7 @@ data class ArenaVedtakRad(
 
 data class ArenaVedtakMedDetaljer(
     val vedtakId: Int,
+    val lopenrvedtak: Int,
     val statusKode: String,
     val statusNavn: String,
     val vedtaktypeKode: String,

@@ -35,6 +35,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
         val vedtakRepository = VedtakRepository(h2)
         val forventetVedtak = ArenaVedtakRad(
             vedtakId = 1234,
+            lopenrvedtak = 1,
             statusKode = "IVERK",
             statusNavn = "Iverksatt",
             vedtaktypeKode = "O",

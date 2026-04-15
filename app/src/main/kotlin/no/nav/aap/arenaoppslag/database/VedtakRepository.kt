@@ -99,7 +99,7 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         private val selectVedtakForSak = """
-        SELECT v.vedtak_id, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
+        SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
                v.fra_dato, v.til_dato, v.rettighetkode, v.utfallkode,
                a.aktfasekode, a.aktfasenavn
           FROM vedtak v
@@ -121,6 +121,7 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         private fun mapperForArenaVedtakRad(row: ResultSet) = ArenaVedtakRad(
             vedtakId = row.getInt("vedtak_id"),
+            lopenrvedtak = row.getInt("lopenrvedtak"),
             statusKode = row.getString("vedtakstatuskode"),
             statusNavn = row.getString("vedtakstatusnavn"),
             vedtaktypeKode = row.getString("vedtaktypekode"),
