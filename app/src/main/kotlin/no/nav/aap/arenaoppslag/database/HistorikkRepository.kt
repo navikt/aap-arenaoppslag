@@ -5,7 +5,6 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.Date
-import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.time.LocalDate
 import javax.sql.DataSource
@@ -13,10 +12,10 @@ import javax.sql.DataSource
 class HistorikkRepository(private val dataSource: DataSource) {
 
     fun hentAlleSignifikanteVedtakForPerson(
-        arenaPersonId: Int, `søknadMottattPå`: LocalDate
+        arenaPersonId: Int, søknadMottattPå: LocalDate, nåDato: LocalDate = LocalDate.now()
     ): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            hentAlleSignifikanteVedtakForPerson(arenaPersonId, søknadMottattPå, con)
+            hentAlleSignifikanteVedtakForPerson(arenaPersonId, søknadMottattPå, nåDato, con)
         }
     }
 
@@ -44,7 +43,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP')
-          AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
@@ -76,13 +75,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå å løpe gjennom veldig gamle vedtak, begrens string-til-dato konvertering
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
             -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
-            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ADD_MONTHS(TRUNC(SYSDATE), -6) AND v.utfallkode IN ('JA', 'DELVIS' ) )
+            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ? AND v.utfallkode IN ('JA', 'DELVIS' ) )
         """.trimIndent()
 
         // S3: Hent alle AAP-anker med relevant historikk for personen
@@ -103,7 +102,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -72) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
         """.trimIndent()
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
@@ -125,7 +124,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'TILBBET'
             AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
-            AND v.MOD_DATO >= ADD_MONTHS(TRUNC(SYSDATE), -60) -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (60 mnd)
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke 
             AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
@@ -149,7 +148,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             su.person_id = ?
             -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
             -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
-            AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ADD_MONTHS(TRUNC(SYSDATE), -3) )
+            AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ? )
             -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
         """.trimIndent()
 
@@ -171,16 +170,26 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE 
             ssu.person_id = ?
             -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
-            AND ssu.mod_dato >= ADD_MONTHS(TRUNC(SYSDATE), -3) -- ignorer gamle simuleringer som ikke ble noe av
+            AND ssu.mod_dato >= ? -- ignorer gamle simuleringer som ikke ble noe av (3 mnd)
         """.trimIndent()
 
         const val tidsBufferUkerGenerell = 78L
         const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
+        const val modnedGrenseVedtak = 72L
+        const val modnedGrenseTilbakebetaling = 60L
+        const val modnedGrenseKlageInnvilget = 6L
+        const val modnedGrenseSpesialOgSim = 3L
+
         fun hentAlleSignifikanteVedtakForPerson(
-            arenaPersonId: Int, `søknadMottattPå`: LocalDate, connection: Connection
+            arenaPersonId: Int, søknadMottattPå: LocalDate, nåDato: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
             val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
+            val vedtakModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseVedtak))
+            val tilbakebetalingModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseTilbakebetaling))
+            val klageInnvilgetGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseKlageInnvilget))
+            val spesialOgSimGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseSpesialOgSim))
+
             val query =
                 listOf(
                     selectKunRelevanteVedtak,
@@ -193,22 +202,29 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
-                // vedtak
+                // S1: vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
+                preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
                 preparedStatement.setDate(p++, Date.valueOf(nyesteTillateStans))
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
-                // klager
+                // S2: klager
                 preparedStatement.setInt(p++, arenaPersonId)
+                preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
-                // anker
+                preparedStatement.setDate(p++, klageInnvilgetGrense)
+                // S3: anker
                 preparedStatement.setInt(p++, arenaPersonId)
-                // tilbakebetalinger
+                preparedStatement.setDate(p++, vedtakModnedGrense)
+                // S4: tilbakebetalinger
                 preparedStatement.setInt(p++, arenaPersonId)
-                // spesialutbetalinger
+                preparedStatement.setDate(p++, tilbakebetalingModnedGrense)
+                // S5: spesialutbetalinger
                 preparedStatement.setInt(p++, arenaPersonId)
-                // sim_utbetalingsgrunnlag
+                preparedStatement.setDate(p++, spesialOgSimGrense)
+                // S6: sim_utbetalingsgrunnlag
                 preparedStatement.setInt(p++, arenaPersonId)
+                preparedStatement.setDate(p++, spesialOgSimGrense)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }

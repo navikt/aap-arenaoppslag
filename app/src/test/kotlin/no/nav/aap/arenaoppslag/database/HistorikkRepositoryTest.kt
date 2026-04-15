@@ -11,6 +11,8 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     private lateinit var historikkRepository: HistorikkRepository
     private lateinit var vedtakRepository: VedtakRepository
     private val testDato = LocalDate.parse("2025-12-15")
+    // Pinnet "nå"-dato for deterministiske tester — uavhengig av faktisk systemklokke
+    private val nåDato = LocalDate.parse("2026-03-01")
 
     @BeforeEach
     fun setUp() {
@@ -23,6 +25,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         val alleVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
             arenaPersonId = 54601 /* finnes ikke */,
             testDato,
+            nåDato,
         )
         assertThat(alleVedtak).isEmpty()
     }
@@ -34,7 +37,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         val alleVedtak: List<ArenaVedtak> = vedtakRepository.hentVedtak(testPerson)
         assertThat(alleVedtak).hasSize(2)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
         assertThat(relevanteSaker).isEmpty()
     }
 
@@ -45,7 +48,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(3)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
         assertThat(relevanteSaker).hasSize(3)
     }
 
@@ -56,7 +59,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(6)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
         assertThat(relevanteSaker).hasSize(2)
     }
 
