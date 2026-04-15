@@ -19,6 +19,14 @@ Disse har samme kolonner som tabellene.
 
 Se også [tabelldefinisjoner med kommentarer som beskriver hvert felt](https://github.com/navikt/aap-arenaoppslag/blob/main/app/src/test/resources/flyway/common/V1_1__arena_schema.sql). 
 
+## Databaseskjema for tester
+Databasen for tester er basert på Arena sitt databaseskjema. 
+Metoden for å ta inn tabeller og data fra Arena er slik: 
+1. Vi får DDL av de tabellene det gjelder, og legger den til i 
+[arena_aap_oracle_ddl_export.sql](app/src/test/resources/arena_aap_oracle_ddl_export.sql)
+2. Vi ber Copilot om å oversette fra Oracle-19 DDL til H2 med Oracle-dialekt 
+3. De nye tabellene legges inn i [V1_1__arena_schema.sql](app/src/test/resources/flyway/common/V1_1__arena_schema.sql)
+4. Dersom de nye tabellene har type-data (enum/definisjoner/statiske data) legges det inn i [V1_3__arena_data.sql](app/src/test/resources/flyway/common/V1_3__arena_data.sql)
 
 ## Kode generert av GitHub Copilot
 

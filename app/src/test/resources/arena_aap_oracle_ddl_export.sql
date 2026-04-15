@@ -2891,3 +2891,160 @@ CREATE INDEX "SIAMO"."KVOTTYP_MALVERDTYP_FKI" ON "SIAMO"."KVOTETYPE" ("MAALEENHE
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
   BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "INDX1L" ;
+
+--------------------------------------------------------
+--  DDL for Table VILKAARVURDERING
+--------------------------------------------------------
+
+CREATE TABLE "SIAMO"."VILKAARVURDERING"
+(	"VILKAARVURDERING_ID" NUMBER,
+     "VEDTAKTYPEKODE" VARCHAR2(10 BYTE),
+     "VILKAARKODE" VARCHAR2(10 BYTE),
+     "VEDTAK_ID" NUMBER,
+     "REG_DATO" DATE,
+     "REG_USER" VARCHAR2(8 BYTE),
+     "MOD_DATO" DATE,
+     "MOD_USER" VARCHAR2(8 BYTE),
+     "RETTIGHETKODE" VARCHAR2(10 BYTE),
+     "AKTFASEKODE" VARCHAR2(10 BYTE),
+     "VILKAARSTATUSKODE" VARCHAR2(1 BYTE) DEFAULT 'V',
+     "VURDERT_AV" VARCHAR2(8 BYTE),
+     "PARTISJON" NUMBER(8,0),
+     "BEGRUNNELSE" CLOB,
+     "RETUR_JN" VARCHAR2(1 BYTE) DEFAULT 'N',
+     "KOMMENTAR_SB2" VARCHAR2(1000 BYTE),
+     "BEGRUNNELSE_SB2" CLOB,
+     "SF_HENDELSE_ID" NUMBER
+) PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255  LOGGING;
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."VILKAARVURDERING_ID" IS 'Generert Oracle-sekvens som entydig identifiserer posten';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."VEDTAKTYPEKODE" IS 'Referanse til LOV_VILKAARTYPE_KRAVTYP';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."VILKAARKODE" IS 'Referanse til LOV_VILKAARTYPE_KRAVTYP';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."VEDTAK_ID" IS 'Referanse til VEDTAK';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."RETTIGHETKODE" IS 'Referanse til LOV_VILKAARTYPE_KRAVTYP';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."AKTFASEKODE" IS 'Referanse til LOV_VILKAARTYPE_KRAVTYP';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."VILKAARSTATUSKODE" IS 'Referanse til VILKAARSTATUS';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."VURDERT_AV" IS 'Hvem har vurdert vilkåret, saksbehandler eller Arena(automatisk/beregnet)';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."PARTISJON" IS 'Partisjonsnøkkel';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."BEGRUNNELSE" IS 'Saksbehandlers begrunnelse';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."RETUR_JN" IS 'Retur J/N brukes ved delt vilkårsvurdering';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."KOMMENTAR_SB2" IS 'Kommentar fra saksbehandler to ved delt vurdering';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."BEGRUNNELSE_SB2" IS 'Begrunnelse fra saksbehandler 2 ved delt vurdering';
+COMMENT ON COLUMN "SIAMO"."VILKAARVURDERING"."SF_HENDELSE_ID" IS 'Referanse til SF_HENDELSE';
+COMMENT ON TABLE "SIAMO"."VILKAARVURDERING"  IS 'Resultat av at et vilkår er vurdert.';
+--------------------------------------------------------
+--  DDL for Index VILKVURD_L_VILTKRAV_FKI
+--------------------------------------------------------
+CREATE INDEX "SIAMO"."VILKVURD_L_VILTKRAV_FKI" ON "SIAMO"."VILKAARVURDERING" ("RETTIGHETKODE", "VEDTAKTYPEKODE", "AKTFASEKODE", "VILKAARKODE");
+--------------------------------------------------------
+--  DDL for Index VILKVURD_VEDTAK_FKI
+--------------------------------------------------------
+CREATE INDEX "SIAMO"."VILKVURD_VEDTAK_FKI" ON "SIAMO"."VILKAARVURDERING" ("VEDTAK_ID");
+--------------------------------------------------------
+--  DDL for Index VILKVURD_VILKTYPVDT_I
+--------------------------------------------------------
+CREATE INDEX "SIAMO"."VILKVURD_VILKTYPVDT_I" ON "SIAMO"."VILKAARVURDERING" ("VEDTAKTYPEKODE", "VILKAARKODE", "AKTFASEKODE", "RETTIGHETKODE", "VILKAARVURDERING_ID", "VEDTAK_ID", "VILKAARSTATUSKODE");
+--------------------------------------------------------
+--  DDL for Index VILKVURD_PK
+--------------------------------------------------------
+CREATE UNIQUE INDEX "SIAMO"."VILKVURD_PK" ON "SIAMO"."VILKAARVURDERING" ("VILKAARVURDERING_ID");
+
+--------------------------------------------------------
+--  DDL for Index VILKVURD_SF_HEN_FKI
+--------------------------------------------------------
+CREATE INDEX "SIAMO"."VILKVURD_SF_HEN_FKI" ON "SIAMO"."VILKAARVURDERING" ("SF_HENDELSE_ID");
+--------------------------------------------------------
+--  DDL for Index VILKVURD_VILKST_FKI
+--------------------------------------------------------
+CREATE INDEX "SIAMO"."VILKVURD_VILKST_FKI" ON "SIAMO"."VILKAARVURDERING" ("VILKAARSTATUSKODE");
+--------------------------------------------------------
+
+--------------------------------------------------------
+--  DDL for Table VILKAARTYPE
+--------------------------------------------------------
+
+CREATE TABLE "SIAMO"."VILKAARTYPE"
+(	"VILKAARKODE" VARCHAR2(10 BYTE),
+     "SKJERMBILDETEKST" VARCHAR2(100 BYTE),
+     "STATUS_OBLIG" VARCHAR2(1 BYTE),
+     "VILKAARNAVN" VARCHAR2(30 BYTE),
+     "BESKRIVELSE" VARCHAR2(255 BYTE),
+     "URL_HJELPEREFERANSE" VARCHAR2(2000 BYTE),
+     "REG_DATO" DATE,
+     "REG_USER" VARCHAR2(8 BYTE),
+     "MOD_DATO" DATE,
+     "MOD_USER" VARCHAR2(8 BYTE),
+     "URL_FORSKRIFTTEKST" VARCHAR2(2000 BYTE),
+     "URL_LOVTEKST" VARCHAR2(2000 BYTE),
+     "URL_RUNDSKRIVTEKST" VARCHAR2(2000 BYTE),
+     "DATO_FRA" DATE DEFAULT TO_DATE('01-01-2001','DD-MM-YYYY'),
+     "DATO_TIL" DATE DEFAULT TO_DATE('23-03-2099','DD-MM-YYYY'),
+     "VILKAARREGEL" VARCHAR2(100 BYTE),
+     "GRUPPE" VARCHAR2(30 BYTE)
+);
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."VILKAARKODE" IS 'Kode som entydig identifiserer en typeverdi';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."SKJERMBILDETEKST" IS 'Tekststreng for visning i skjermbilde';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."STATUS_OBLIG" IS 'Status oblig';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."VILKAARNAVN" IS 'Vilkårnavn';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."BESKRIVELSE" IS 'Generell beskrivelse';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."URL_HJELPEREFERANSE" IS 'Url til hjelpereferanse';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."URL_FORSKRIFTTEKST" IS 'Url til forskrifttekst';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."URL_LOVTEKST" IS 'Url til lovtekst';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."URL_RUNDSKRIVTEKST" IS 'Url rundskrivtekst';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."DATO_FRA" IS 'Fra-dato i gyldighetsperiode';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."DATO_TIL" IS 'Til-dato i gyldighetsperiode';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."VILKAARREGEL" IS 'Vilkårregel angir  regelnavn for regel i Regelmotor';
+COMMENT ON COLUMN "SIAMO"."VILKAARTYPE"."GRUPPE" IS 'gruppere flere vilkår sammen i en gruppe for bruk i automatisk vilkårsvurderingsregler og i regler for setting av utfall.';
+COMMENT ON TABLE "SIAMO"."VILKAARTYPE"  IS 'Lovlige vilkårtyper';
+--------------------------------------------------------
+--  DDL for Index VILKTYP_OBL_I
+--------------------------------------------------------
+CREATE INDEX "SIAMO"."VILKTYP_OBL_I" ON "SIAMO"."VILKAARTYPE" ("STATUS_OBLIG");
+--------------------------------------------------------
+--  DDL for Index VILKTYP_PK
+--------------------------------------------------------
+CREATE UNIQUE INDEX "SIAMO"."VILKTYP_PK" ON "SIAMO"."VILKAARTYPE" ("VILKAARKODE");
+--------------------------------------------------------
+--------------------------------------------------------
+--  Constraints for Table VILKAARTYPE
+--------------------------------------------------------
+
+ALTER TABLE "SIAMO"."VILKAARTYPE" ADD CONSTRAINT "VILKTYP_PK" PRIMARY KEY ("VILKAARKODE")
+    USING INDEX "SIAMO"."VILKTYP_PK"  ENABLE;
+ALTER TABLE "SIAMO"."VILKAARTYPE" ADD CONSTRAINT "VILKTYP_STATJN_CK" CHECK (status_oblig in ('J','N')) ENABLE;
+ALTER TABLE "SIAMO"."VILKAARTYPE" MODIFY ("VILKAARKODE" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."VILKAARTYPE" MODIFY ("SKJERMBILDETEKST" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."VILKAARTYPE" MODIFY ("STATUS_OBLIG" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."VILKAARTYPE" MODIFY ("VILKAARNAVN" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."VILKAARTYPE" MODIFY ("DATO_FRA" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."VILKAARTYPE" MODIFY ("DATO_TIL" NOT NULL ENABLE);
+
+--------------------------------------------------------
+--  DDL for Table VILKAARSTATUS
+--------------------------------------------------------
+
+CREATE TABLE "SIAMO"."VILKAARSTATUS"
+(	"VILKAARSTATUSKODE" VARCHAR2(1 BYTE),
+     "VILKAARSTATUSNAVN" VARCHAR2(30 BYTE),
+     CONSTRAINT "VILKST_PK" PRIMARY KEY ("VILKAARSTATUSKODE") ENABLE
+);
+
+COMMENT ON COLUMN "SIAMO"."VILKAARSTATUS"."VILKAARSTATUSKODE" IS 'Kode som entydig identifiserer en typeverdi';
+COMMENT ON COLUMN "SIAMO"."VILKAARSTATUS"."VILKAARSTATUSNAVN" IS 'Vilkårstatusnavn';
+COMMENT ON TABLE "SIAMO"."VILKAARSTATUS"  IS 'Kode for å angi status for et vilkår';
+--------------------------------------------------------
+--  DDL for Index VILKST_PK
+--------------------------------------------------------
+
+CREATE UNIQUE INDEX "SIAMO"."VILKST_PK" ON "SIAMO"."VILKAARSTATUS" ("VILKAARSTATUSKODE");
+--------------------------------------------------------
+--  Constraints for Table VILKAARSTATUS
+--------------------------------------------------------
+
+ALTER TABLE "SIAMO"."VILKAARSTATUS" ADD CONSTRAINT "VILKST_PK" PRIMARY KEY ("VILKAARSTATUSKODE")
+    USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "DATA1L"  ENABLE;
+ALTER TABLE "SIAMO"."VILKAARSTATUS" MODIFY ("VILKAARSTATUSKODE" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."VILKAARSTATUS" MODIFY ("VILKAARSTATUSNAVN" NOT NULL ENABLE);

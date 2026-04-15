@@ -1,77 +1,87 @@
 @startuml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
-title Systemer under migreringen
+title AAP-systemene under migreringen
 
-System_Boundary(arena, "Arena <FSS>") {
-    ContainerDb(arena_db, "Database", "Oracle 19")
-    Container(aap_tilgangsview, "AAP tilgangsview", "View")
-    Container(saksbehandling_arena, "Saksbehandling", "Component")
-            note left of saksbehandling_arena : Endre
-    Container(arena_ws_api, "Arena WS-API")
-
-    Rel(aap_tilgangsview, arena_db, "videresender")
-    Rel(arena_ws_api, arena_db, "spørringer")
-    Rel(saksbehandling_arena, arena_db, "spørringer")
-
-}
+System(joark, "Joark")
+System(altinn, "Altinn")
+System(pensjonkasser, "Pensjonskasser", "pensjonsamhandling, feks. DSOP")
+Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
 
 System_Boundary(kelvin, "Kelvin <GCP>") {
-
     Container(postmottak, "postmottak", "Fordeler innkommende søknader")
         note left of postmottak : Adopter
 
-    Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling")
+    Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling, produksjonsstyring, oppgaver")
         note left of saksbehandling_kelvin : Endre
     Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
-        note right of behandlingsflyt : Endre
+        note left of behandlingsflyt : Endre
 
     Container(api_intern, "api-intern", "API")
     Container(api_ekstern, "api-ekstern", "API for eksterne")
 
     ContainerDb(kelvin_db, "Database", "Postgres")
+    ContainerDb(arena_hendelse_topic, "Arena-hendelser", "Kafka-topic")
 
-    Rel(api_ekstern, api_intern, "videresender")
+    Container(migrering, "Migrerings-motor", "Konverterer løpende Arena-saker")
+        note left of migrering : Etabler ny
+    Container(visningsklient, "Visningsklient", "AAP-saker i Arena")
+        note left of visningsklient : Etabler ny
+
+    Rel(api_ekstern, api_intern, "videresender oppslag")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
     Rel(saksbehandling_kelvin, behandlingsflyt, "saksbehandling")
+    Rel(postmottak, behandlingsflyt, "opprett sak")
+}
+
+System_Boundary(arena, "Arena <FSS>") {
+    ContainerDb(arena_db, "Database", "Oracle 19")
+    Container(aap_tilgangsview, "AAP tilgangsview", "View")
+    Container(saksbehandling_arena, "Saksbehandling", "Frontend")
+        note left of saksbehandling_arena : Endre
+    Container(arena_ws_api, "Arena WS-API")
+
+    Rel(aap_tilgangsview, arena_db, "videresender")
+    Rel(arena_ws_api, arena_db, "spørringer")
+    Rel(saksbehandling_arena, arena_db, "spørringer")
 }
 
 System_Boundary(kelvin_fss, "Kelvin <FSS>") {
-    Container(aap_fss_proxy, "fss-proxy", "REST-proxy mot Arena-WS")
-            note left of aap_fss_proxy : Adopter
     Container(arena_oppslag, "Arena-oppslag", "Database-klient")
         note left of arena_oppslag : Adopter
+    Container(aap_fss_proxy, "fss-proxy", "REST-proxy mot Arena-WS")
+        note left of aap_fss_proxy : Adopter
+    Container(arena_hendelse_proxy, "arena-hendelse-proxy", "Tar imot hendelser fra Arena")
 
-    Container(migrering, "Migrerings-motor", "Konverterer åpne Arena-saker")
-        note left of migrering : Ny
+    Rel(visningsklient, arena_oppslag, "saksinformasjon")
 
     Rel(arena_oppslag, aap_tilgangsview, "spørringer")
-
     Rel(api_intern, arena_oppslag, "api-kall")
+
     Rel(postmottak, aap_fss_proxy, "opprett sak")
-    Rel(postmottak, behandlingsflyt, "opprett sak")
-
-
     Rel(aap_fss_proxy, arena_ws_api, "api-kall")
+    Rel(arena_hendelse_proxy, arena_hendelse_topic, "hendelser")
+
+    Rel(arena_db, arena_hendelse_proxy, "api-kall")
+    Rel(arena_db, api_intern, "overlappskontroll")
+
     Rel(migrering, arena_oppslag, "api-kall")
-    Rel(behandlingsflyt, arena_oppslag, "api-kall")
-    Rel(migrering, api_intern, "api-kall")
+    Rel(behandlingsflyt, arena_oppslag, "oppslag i historikk, overlappskontroll")
+    Rel(postmottak, api_intern, "api-kall")
 }
 
-System(joark, "Joark")
-System(altinn, "Altinn")
-System(pensjonkasser, "Pensjonskasser", "pensjonsamhandling")
 Rel(pensjonkasser, api_ekstern, "oppslag")
+Rel(pensjonkasser, arena_hendelse_topic, "konsumerer")
 Rel(joark, postmottak, "AAP-søknader")
 Rel(altinn, api_ekstern, "oppslag")
-
-System(visningsklient, "Visningsklient", "AAP-saker i Arena")
-note right of visningsklient : Ny
-Rel(visningsklient, arena_oppslag, "saksinformasjon")
-
-Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
 
 Rel(saksbehandler, saksbehandling_kelvin, "Bruker")
 Rel(saksbehandler, saksbehandling_arena, "Bruker")
 Rel(saksbehandler, visningsklient, "Bruker")
+
+Lay_R(arena_oppslag, aap_fss_proxy)
+Lay_U(arena_oppslag, aap_fss_proxy)
+Lay_U(aap_fss_proxy, arena_hendelse_proxy)
+Lay_U(arena_hendelse_proxy, arena_oppslag)
+Lay_U(arena_hendelse_topic, arena_hendelse_proxy)
 
 @enduml
