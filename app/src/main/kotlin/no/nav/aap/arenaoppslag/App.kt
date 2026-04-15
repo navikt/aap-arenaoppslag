@@ -24,6 +24,7 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
+import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
 import no.nav.aap.arenaoppslag.plugins.bruker
@@ -151,7 +152,8 @@ private fun skapSakervice(datasource: DataSource): SakOgVedtakService {
     val vedtakRepository = VedtakRepository(datasource)
     val sakRepository = SakRepository(datasource)
     val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
-    return SakOgVedtakService(sakRepository, vedtakRepository, vedtakfaktaRepository)
+    val vilkårsvurderingRepository = VilkårsvurderingRepository(datasource)
+    return SakOgVedtakService(sakRepository, vedtakRepository, vedtakfaktaRepository, vilkårsvurderingRepository)
 }
 
 private fun skapTelleverkService(datasource: DataSource): TelleverkService {

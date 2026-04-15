@@ -4,7 +4,7 @@ import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtakUtenFakta
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
@@ -29,7 +29,7 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentVedtakForSak(saksId: Int): List<ArenaVedtakUtenFakta> {
+    fun hentVedtakForSak(saksId: Int): List<ArenaVedtakRad> {
         return dataSource.connection.use { con ->
             selectVedtakForSak(saksId, con)
         }
@@ -111,15 +111,15 @@ class VedtakRepository(private val dataSource: DataSource) {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
-        private fun selectVedtakForSak(sakId: Int, connection: Connection): List<ArenaVedtakUtenFakta> {
+        private fun selectVedtakForSak(sakId: Int, connection: Connection): List<ArenaVedtakRad> {
             connection.createParameterizedQuery(selectVedtakForSak).use { preparedStatement ->
                 preparedStatement.setInt(1, sakId)
                 val resultSet = preparedStatement.executeQuery()
-                return resultSet.map { mapperForArenaVedtakUtenFakta(it) }.toList()
+                return resultSet.map { mapperForArenaVedtakRad(it) }.toList()
             }
         }
 
-        private fun mapperForArenaVedtakUtenFakta(row: ResultSet) = ArenaVedtakUtenFakta(
+        private fun mapperForArenaVedtakRad(row: ResultSet) = ArenaVedtakRad(
             vedtakId = row.getInt("vedtak_id"),
             statusKode = row.getString("vedtakstatuskode"),
             statusNavn = row.getString("vedtakstatusnavn"),

@@ -22,7 +22,7 @@ data class ArenaVedtak(
     val utfallkode: String?
 )
 
-data class ArenaVedtakUtenFakta(
+data class ArenaVedtakRad(
     val vedtakId: Int,
     val statusKode: String,
     val statusNavn: String,
@@ -35,7 +35,10 @@ data class ArenaVedtakUtenFakta(
     val rettighetkode: String,
     val utfallkode: String?,
 ) {
-    fun medFakta(fakta: List<ArenaVedtakfakta>) = ArenaVedtakMedFakta(
+    fun medFakta(
+        fakta: List<ArenaVedtakfakta>,
+        vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
+    ) = ArenaVedtakMedDetaljer(
         vedtakId = vedtakId,
         statusKode = statusKode,
         statusNavn = statusNavn,
@@ -48,10 +51,11 @@ data class ArenaVedtakUtenFakta(
         rettighetkode = rettighetkode,
         utfallkode = utfallkode,
         fakta = fakta,
+        vilkårsvurderinger = vilkårsvurderinger,
     )
 }
 
-data class ArenaVedtakMedFakta(
+data class ArenaVedtakMedDetaljer(
     val vedtakId: Int,
     val statusKode: String,
     val statusNavn: String,
@@ -63,7 +67,8 @@ data class ArenaVedtakMedFakta(
     val tilDato: LocalDate?,
     val rettighetkode: String,
     val utfallkode: String?,
-    val fakta: List<ArenaVedtakfakta>
+    val fakta: List<ArenaVedtakfakta>,
+    val vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
 )
 
 data class ArenaVedtakfakta(
@@ -71,4 +76,18 @@ data class ArenaVedtakfakta(
     val navn: String,
     val verdi: String?,
     val registrertDato: LocalDate,
+)
+
+data class ArenaVilkårsvurdering(
+    val vilkårsvurderingId: Long,
+    val vilkårkode: String,
+    val begrunnelse: String?,
+    val vurdertAv: String?,
+    val vilkårnavn: String,
+    val erObligatorisk: Boolean,
+    val hjelpetekstUrl: String?,
+    val lovtekstUrl: String?,
+    val rundskrivUrl: String?,
+    val statuskode: String,
+    val statusnavn: String,
 )

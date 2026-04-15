@@ -22,7 +22,7 @@ data class ArenaSakMedVedtak (
     val statusnavn: String,
     val registrertDato: LocalDateTime,
     val avsluttetDato: LocalDateTime?,
-    val vedtak: List<ArenaVedtakMedFakta>
+    val vedtak: List<ArenaVedtakMedDetaljer>
 )
 
 data class ArenaSakPerson (
@@ -32,7 +32,7 @@ data class ArenaSakPerson (
     val etternavn: String,
 )
 
-fun ArenaSak.toArenaSakMedVedtak(vedtak: List<ArenaVedtakMedFakta>) =
+fun ArenaSak.toArenaSakMedVedtak(vedtak: List<ArenaVedtakMedDetaljer>) =
     ArenaSakMedVedtak(
         sakId = sakId,
         opprettetAar = opprettetAar,

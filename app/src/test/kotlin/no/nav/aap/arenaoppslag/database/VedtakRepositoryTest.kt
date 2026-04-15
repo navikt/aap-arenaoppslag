@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtakUtenFakta
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -33,7 +33,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `hentVedtakForSak klarer å hente alle vedtak fra databasen`() {
         val vedtakRepository = VedtakRepository(h2)
-        val forventetVedtak = ArenaVedtakUtenFakta(
+        val forventetVedtak = ArenaVedtakRad(
             vedtakId = 1234,
             statusKode = "IVERK",
             statusNavn = "Iverksatt",
