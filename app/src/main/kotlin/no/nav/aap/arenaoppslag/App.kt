@@ -22,6 +22,7 @@ import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
+import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
@@ -149,7 +150,8 @@ private fun skapHistorikkService(datasource: DataSource): HistorikkService {
 private fun skapSakervice(datasource: DataSource): SakOgVedtakService {
     val vedtakRepository = VedtakRepository(datasource)
     val sakRepository = SakRepository(datasource)
-    return SakOgVedtakService(sakRepository, vedtakRepository)
+    val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
+    return SakOgVedtakService(sakRepository, vedtakRepository, vedtakfaktaRepository)
 }
 
 private fun skapTelleverkService(datasource: DataSource): TelleverkService {

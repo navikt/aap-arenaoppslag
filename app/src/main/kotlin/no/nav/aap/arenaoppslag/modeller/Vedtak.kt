@@ -22,8 +22,37 @@ data class ArenaVedtak(
     val utfallkode: String?
 )
 
+data class ArenaVedtakUtenFakta(
+    val vedtakId: Int,
+    val statusKode: String,
+    val statusNavn: String,
+    val vedtaktypeKode: String,
+    val vedtaktypeNavn: String,
+    val aktivitetsfaseKode: String,
+    val aktivitetsfaseNavn: String,
+    val fraOgMed: LocalDate?,
+    val tilDato: LocalDate?,
+    val rettighetkode: String,
+    val utfallkode: String?,
+) {
+    fun medFakta(fakta: List<ArenaVedtakfakta>) = ArenaVedtakMedFakta(
+        vedtakId = vedtakId,
+        statusKode = statusKode,
+        statusNavn = statusNavn,
+        vedtaktypeKode = vedtaktypeKode,
+        vedtaktypeNavn = vedtaktypeNavn,
+        aktivitetsfaseKode = aktivitetsfaseKode,
+        aktivitetsfaseNavn = aktivitetsfaseNavn,
+        fraOgMed = fraOgMed,
+        tilDato = tilDato,
+        rettighetkode = rettighetkode,
+        utfallkode = utfallkode,
+        fakta = fakta,
+    )
+}
+
 data class ArenaVedtakMedFakta(
-    val vedtakId : Int,
+    val vedtakId: Int,
     val statusKode: String,
     val statusNavn: String,
     val vedtaktypeKode: String,
