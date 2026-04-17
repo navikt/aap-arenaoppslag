@@ -82,6 +82,6 @@ spec:
     - name: DB_JDBC_URL_PATH
       value: "/secrets/dbconfig/jdbc_url"
     - name: INTEGRASJON_PDL_SCOPE
-      value: api://dev-fss.pdl.pdl-api/.default
+      value: {{pdl_scope}}
     - name: INTEGRASJON_PDL_URL
-      value: https://pdl-api.dev-fss-pub.nais.io/graphql
+      value: {{pdl_url}}
