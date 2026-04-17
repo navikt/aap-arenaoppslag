@@ -1,7 +1,6 @@
 package no.nav.aap.arenaoppslag.kontrakt.intern
 
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
-import java.time.LocalDate
 
 public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
@@ -14,7 +13,7 @@ public data class SignifikanteSakerResponse(
 
 public data class Person(val personIdentifikator: String, val fornavn: String, val etternavn: String)
 
-public data class VedtakResponse(
+public data class PerioderResponse(
     val perioder: List<Periode>
 )
 

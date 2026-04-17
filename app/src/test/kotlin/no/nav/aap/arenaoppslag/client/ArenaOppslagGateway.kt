@@ -15,7 +15,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
-import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import org.slf4j.LoggerFactory
@@ -30,7 +30,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     suspend fun hentPerioder(
         vedtakRequest: InternVedtakRequest
 
-    ): VedtakResponse = gjørArenaOppslag<VedtakResponse, InternVedtakRequest
+    ): PerioderResponse = gjørArenaOppslag<PerioderResponse, InternVedtakRequest
             >(
         "/intern/perioder", vedtakRequest
     ).getOrThrow()

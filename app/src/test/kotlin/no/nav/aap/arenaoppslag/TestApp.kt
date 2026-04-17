@@ -6,6 +6,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.util.Fakes
+import no.nav.aap.arenaoppslag.util.FakePdlGateway
 import no.nav.aap.arenaoppslag.util.azure
 import no.nav.aap.arenaoppslag.util.port
 import org.flywaydb.core.Flyway
@@ -27,7 +28,7 @@ fun main() {
     logger.info("Azure port: ${fakes.azure.port()}")
 
     embeddedServer(Netty, port = 8087) {
-        server(config = config)
+        server(config = config, pdlGateway = FakePdlGateway())
         azure()
         module(dataSource)
     }.start(wait = true)

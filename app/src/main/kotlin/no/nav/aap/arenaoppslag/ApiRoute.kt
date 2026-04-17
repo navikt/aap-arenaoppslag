@@ -4,6 +4,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
@@ -12,6 +14,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 
 fun Route.historikk(historikkService: HistorikkService) {
@@ -33,7 +36,22 @@ fun Route.historikk(historikkService: HistorikkService) {
 
         call.respond(response)
     }
+}
 
+fun Route.sakerForPerson(sakService: SakService,pdlGateway: IPdlGateway) {
+    post("/person/saker") {
+        logger.info("Henter saker for person")
+        val request: SakerRequestV1 = call.receive()
+
+        val alleIdenter = pdlGateway.hentAlleIdenterForPerson(request.personidentifikator)
+            .map { it.ident }
+            .toSet()
+            .ifEmpty { setOf(request.personidentifikator) }
+
+        val respons: SakerResponse = sakService.hentSakerForPerson(alleIdenter)
+
+        call.respond(HttpStatusCode.OK, respons)
+    }
 }
 
 
@@ -60,13 +78,14 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
     }
 }
 
-fun Route.telleverk(telleverkService: TelleverkService) {
+fun Route.telleverk(telleverkService: TelleverkService, pdlGateway: IPdlGateway) {
     post("/telleverk") {
         logger.info("Henter telleverk")
         val request: TellerRequest = call.receive()
         val fodselsnummer = request.personidentifikator
 
         //TODO BRUK PDL for å finne andre personidentifikatorer knyttet til samme person
+        val alleIdenterForPerson = pdlGateway.hentAlleIdenterForPerson(fodselsnummer)
 
         when(val telleverk  = telleverkService.hentTelleverkPåPerson(fodselsnummer)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")

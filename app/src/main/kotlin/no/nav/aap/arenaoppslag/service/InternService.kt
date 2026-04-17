@@ -10,7 +10,7 @@ import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
-import no.nav.aap.arenaoppslag.kontrakt.intern.VedtakResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 
 class InternService(
@@ -23,33 +23,51 @@ class InternService(
         .expireAfterWrite(Duration.ofMinutes(15))
         .build<String, Maksimum>()
 
+    private val sakerCache = Caffeine.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterWrite(Duration.ofMinutes(15))
+        .build<String, List<SakStatus>>()
+
+    private val perioderCache = Caffeine.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterWrite(Duration.ofMinutes(15))
+        .build<String, PerioderResponse>()
+
+    private val perioder11_17Cache = Caffeine.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterWrite(Duration.ofMinutes(15))
+        .build<String, PerioderMed11_17Response>()
+
     init {
         CaffeineCacheMetrics.monitor(prometheus, maksimumCache, "arenaoppslag_maksimum")
+        CaffeineCacheMetrics.monitor(prometheus, sakerCache, "arenaoppslag_saker")
+        CaffeineCacheMetrics.monitor(prometheus, perioderCache, "arenaoppslag_perioder")
+        CaffeineCacheMetrics.monitor(prometheus, perioder11_17Cache, "arenaoppslag_perioder_11_17")
     }
 
-    fun hentPerioder(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): VedtakResponse {
-        val hentPerioder = periodeRepository.hentPerioder(
-            fodselsnr, fraOgMedDato, tilOgMedDato
-        )
-        return VedtakResponse(perioder = hentPerioder.map { it.tilKontrakt() })
-    }
+    fun hentPerioder(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): PerioderResponse =
+        perioderCache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
+            val hentPerioder = periodeRepository.hentPerioder(fodselsnr, fraOgMedDato, tilOgMedDato)
+            PerioderResponse(perioder = hentPerioder.map { it.tilKontrakt() })
+        }
 
     fun hent11_17Perioder(
         fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
-    ): PerioderMed11_17Response {
-        val perioder = periodeRepository.hentPeriodeInkludert11_17(
-            fodselsnr, fraOgMedDato, tilOgMedDato
-        )
-        return PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
-    }
+    ): PerioderMed11_17Response =
+        perioder11_17Cache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
+            val perioder = periodeRepository.hentPeriodeInkludert11_17(fodselsnr, fraOgMedDato, tilOgMedDato)
+            PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
+        }
 
 
     fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> {
-        val vedtak = fodselsnummerene.flatMap { fnr ->
-            vedtakRepository.hentVedtakStatuser(fnr)
-        }
         // Merk: kontraktobjektet heter fra gammelt av feilaktig SakStatus, selv om det omhandler VedtakStatus
-        return vedtak.map { SakStatus(it.sakId, it.statusKode, it.periode, it.kilde) }
+        return fodselsnummerene.flatMap { fnr ->
+            sakerCache.get(fnr) {
+                vedtakRepository.hentVedtakStatuser(fnr)
+                    .map { SakStatus(it.sakId, it.statusKode, it.periode, it.kilde) }
+            }
+        }
     }
 
     fun hentMaksimum(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum =

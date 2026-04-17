@@ -3,3 +3,5 @@ cluster: prod
 ingress: https://arenaoppslag.prod-fss-pub.nais.io
 vault_db_config_path: oracle/data/prod/config/arena
 vault_db_creds_path: oracle/data/prod/creds/arena-arena_tilgang_aap
+pdl_scope: api://prod-fss.pdl.pdl-api/.default
+pdl_url: https://pdl-api.prod-fss-pub.nais.io/graphql

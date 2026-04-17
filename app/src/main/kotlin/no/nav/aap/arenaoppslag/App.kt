@@ -31,6 +31,7 @@ import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
@@ -59,7 +60,9 @@ fun main() {
 }
 
 fun Application.server(
-    config: AppConfig = AppConfig(), datasource: DataSource = ArenaDatasource.create(config.database)
+    config: AppConfig = AppConfig(),
+    datasource: DataSource = ArenaDatasource.create(config.database),
+    pdlGateway: IPdlGateway = PdlGateway(),
 ) {
     statusPages()
 
@@ -91,7 +94,8 @@ fun Application.server(
     val historikkService = skapHistorikkService(datasource)
     val sakService = skapSakervice(datasource)
     val telleverkService = skapTelleverkService(datasource)
-    routes(internService, historikkService, sakService,telleverkService)
+    val sakListeService = skapSakListeService(datasource)
+    routes(internService, historikkService, sakService, telleverkService, sakListeService, pdlGateway)
     databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
@@ -156,6 +160,11 @@ private fun skapSakervice(datasource: DataSource): SakOgVedtakService {
     return SakOgVedtakService(sakRepository, vedtakRepository, vedtakfaktaRepository, vilkårsvurderingRepository)
 }
 
+private fun skapSakListeService(datasource: DataSource): SakService {
+    val sakRepository = SakRepository(datasource)
+    return SakService(sakRepository)
+}
+
 private fun skapTelleverkService(datasource: DataSource): TelleverkService {
     val telleverkRepository = TelleverkRepository(datasource)
     return TelleverkService(telleverkRepository)
@@ -165,7 +174,9 @@ private fun Application.routes(
     internService: InternService,
     historikkService: HistorikkService,
     sakOgVedtakService: SakOgVedtakService,
-    telleverkService: TelleverkService
+    telleverkService: TelleverkService,
+    sakService: SakService,
+    pdlGateway: IPdlGateway
 
 ) {
     routing {
@@ -182,8 +193,8 @@ private fun Application.routes(
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
                 historikk(historikkService)
-                telleverk(telleverkService)
-
+                telleverk(telleverkService,pdlGateway)
+                sakerForPerson(sakService, pdlGateway)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
