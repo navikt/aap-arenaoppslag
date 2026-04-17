@@ -5,10 +5,10 @@ import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import java.net.URI
 import java.time.Duration
 
-import no.nav.aap.arenaoppslag.graphql.GraphQLQueryException
-import no.nav.aap.arenaoppslag.graphql.GraphQLRequest
-import no.nav.aap.arenaoppslag.graphql.GraphQLResponse
-import no.nav.aap.arenaoppslag.graphql.GraphQLResponseHandler
+import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLQueryException
+import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLRequest
+import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponse
+import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponseHandler
 import no.nav.aap.komponenter.config.requiredConfigForKey
 import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
 import no.nav.aap.komponenter.httpklient.httpclient.Header

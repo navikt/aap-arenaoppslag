@@ -1,4 +1,4 @@
-package no.nav.aap.arenaoppslag.graphql
+package no.nav.aap.arenaoppslag.pdl.graphql
 
 data class GraphQLRequest<Variables>(
     val query: String,

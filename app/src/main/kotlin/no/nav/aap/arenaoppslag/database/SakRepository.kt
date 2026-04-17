@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSak as ArenaSakKontrakt
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
+import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
@@ -17,13 +17,9 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentSakerForPerson(fodselsnr: String): List<ArenaSakKontrakt> {
-        return dataSource.connection.use { con ->
-            selectSakerForPerson(fodselsnr, con)
-        }
-    }
 
-    fun hentSakerForPersoner(fodselsnumre: Set<String>): List<ArenaSakKontrakt> {
+    fun hentSakerForPersnNummere(fodselsnumre: Set<String>): List<ArenaSakOppsummering> {
+        if (fodselsnumre.isEmpty()) return emptyList()
         return dataSource.connection.use { con ->
             selectSakerForPersoner(fodselsnumre, con)
         }
@@ -38,7 +34,7 @@ class SakRepository(private val dataSource: DataSource) {
             return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
         }
 
-        fun selectSakerForPersoner(fodselsnumre: Set<String>, connection: Connection): List<ArenaSakKontrakt> {
+        fun selectSakerForPersoner(fodselsnumre: Set<String>, connection: Connection): List<ArenaSakOppsummering> {
             val query = queryMedFodselsnummerListe(selectSakerMedAntallVedtakForFnrListe, fodselsnumre)
             // Er i teorien unsafe, men data kommer fra PDL så SQL injection risken er lav
             connection.prepareStatement(query).use { preparedStatement ->
@@ -61,13 +57,6 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectSakerForPerson(fodselsnr: String, connection: Connection): List<ArenaSakKontrakt> {
-            connection.createParameterizedQuery(selectSakerMedAntallVedtakForFnr).use { preparedStatement ->
-                preparedStatement.setString(1, fodselsnr)
-                val resultSet = preparedStatement.executeQuery()
-                return resultSet.map { row -> mapperForArenaSakKontrakt(row) }
-            }
-        }
 
         fun mapperForArenaSak(row: ResultSet) = ArenaSak(
             sakId = row.getString("sak_id"),
@@ -85,7 +74,7 @@ class SakRepository(private val dataSource: DataSource) {
             )
         )
 
-        private fun mapperForArenaSakKontrakt(row: ResultSet) = ArenaSakKontrakt(
+        private fun mapperForArenaSakKontrakt(row: ResultSet) = ArenaSakOppsummering(
             sakId = row.getString("sak_id"),
             lopenummer = row.getInt("lopenrsak"),
             aar = row.getInt("aar"),
@@ -103,18 +92,6 @@ class SakRepository(private val dataSource: DataSource) {
             LEFT JOIN person ON person.person_id = sak.objekt_id
             LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
             WHERE SAK_ID = ? AND TABELLNAVNALIAS='PERS'
-        """.trimIndent()
-
-        @Language("OracleSql")
-        internal val selectSakerMedAntallVedtakForFnr = """
-            SELECT sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
-                COUNT(vedtak.vedtak_id) AS antall_vedtak
-            FROM SAK
-            JOIN person ON person.person_id = sak.objekt_id
-            JOIN sakstype ON sakstype.sakskode = sak.sakskode
-            LEFT JOIN vedtak ON vedtak.sak_id = sak.sak_id
-            WHERE person.fodselsnr = ? AND sak.tabellnavnalias = 'PERS'
-            GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet
         """.trimIndent()
 
         @Language("OracleSql")

@@ -1,4 +1,4 @@
-package no.nav.aap.arenaoppslag.graphql
+package no.nav.aap.arenaoppslag.pdl.graphql
 
 import no.nav.aap.komponenter.httpklient.httpclient.error.DefaultResponseHandler
 import no.nav.aap.komponenter.httpklient.httpclient.error.RestResponseHandler
@@ -8,6 +8,10 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import kotlin.collections.isNotEmpty
 import kotlin.collections.joinToString
+
+/**
+ * Kopiet fra Api-inter repo https://github.com/navikt/aap-api-intern/tree/main/app/src/main/kotlin/no/nav/aap/api/util/graphql
+ */
 
 class GraphQLResponseHandler : RestResponseHandler<InputStream> {
     private val defaultResponseHandler = DefaultResponseHandler()

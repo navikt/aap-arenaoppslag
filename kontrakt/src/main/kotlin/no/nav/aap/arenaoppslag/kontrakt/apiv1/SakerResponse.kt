@@ -7,10 +7,10 @@ public data class SakerRequest(
 )
 
 public data class SakerResponse(
-    val saker: List<ArenaSak>
+    val saker: List<ArenaSakOppsummeringKontrakt>
 )
 
-public data class ArenaSak(
+public data class ArenaSakOppsummeringKontrakt(
     val sakId: String,
     val lopenummer: Int,
     val aar: Int,

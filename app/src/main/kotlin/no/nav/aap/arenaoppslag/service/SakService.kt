@@ -4,8 +4,8 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.SakRepository
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
+import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 
 class SakService(private val sakRepository: SakRepository) {
 
@@ -20,8 +20,8 @@ class SakService(private val sakRepository: SakRepository) {
     fun hentSakerForPerson(fodselsnumre: Set<String>): SakerResponse {
         val cacheNokkel = fodselsnumre.sorted().joinToString(",")
         return sakerCache.get(cacheNokkel) {
-            val saker: List<ArenaSak> = sakRepository.hentSakerForPersoner(fodselsnumre)
-            SakerResponse(saker = saker)
+            val saker: List<ArenaSakOppsummering> = sakRepository.hentSakerForPersnNummere(fodselsnumre)
+            SakerResponse(saker = saker.map { it.tilKontrakt() })
         }
     }
 }
