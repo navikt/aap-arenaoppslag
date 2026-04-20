@@ -31,7 +31,7 @@ class HistorikkService(
     fun signifikanteSakerForPerson(
         fodselsnummerene: Set<String>, virkningstidspunkt: LocalDate
     ): SignifikanteSakerResponse {
-        val personId: Int? = hentPersonIdFraCache(fodselsnummerene)
+        val personId: Int? = hentPersonId(fodselsnummerene)
         if (personId == null) {
             // Personen finnes ikke i AAP-Arena i det hele tatt
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
@@ -72,11 +72,11 @@ class HistorikkService(
     }
 
     fun personEksistererIAapArena(fodselsnummerene: Set<String>): PersonEksistererIAAPArena {
-        val personId: Int? = hentPersonIdFraCache(fodselsnummerene)
+        val personId: Int? = hentPersonId(fodselsnummerene)
         return PersonEksistererIAAPArena(personId != null)
     }
 
-    private fun hentPersonIdFraCache(fodselsnummerene: Set<String>): Int? {
+    private fun hentPersonId(fodselsnummerene: Set<String>): Int? {
         return fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
             ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
                 ?.also { funnetPersonId ->

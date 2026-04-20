@@ -46,7 +46,8 @@ fun Route.sakerForPerson(sakService: SakService,pdlGateway: IPdlGateway) {
         val alleIdenter = pdlGateway.hentAlleIdenterForPerson(request.personidentifikator)
             .map { it.ident }
             .toSet()
-            .ifEmpty { setOf(request.personidentifikator) }
+            .also { require(it.isNotEmpty()) { "PDL returnerte ingen identer for person" } }
+
 
         val respons: SakerResponse = sakService.hentSakerForPerson(alleIdenter)
 

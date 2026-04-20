@@ -23,12 +23,22 @@ interface IPdlGateway {
     fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent>
 }
 
+private const val SAKSBEHANDLING_NUMMER = "B287"
+
+/**
+ * Saks behandlings nummer kommer fra
+ * https://behandlingskatalog.ansatt.nav.no/process/purpose/AAP/0ae77024-b2c8-4316-ad36-a04cde0e49d3
+ */
+
+
+
 class PdlGateway : IPdlGateway {
+
     private val graphqlUrl = URI.create(requiredConfigForKey("integrasjon.pdl.url"))
     private val config =
         ClientConfig(
             scope = requiredConfigForKey("integrasjon.pdl.scope"),
-            additionalHeaders = listOf(Header("Behandlingsnummer", "B287")),
+            additionalHeaders = listOf(Header("Behandlingsnummer", SAKSBEHANDLING_NUMMER)),
         )
 
     private val log = LoggerFactory.getLogger(javaClass)

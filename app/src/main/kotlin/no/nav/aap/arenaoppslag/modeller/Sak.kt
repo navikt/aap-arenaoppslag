@@ -10,7 +10,7 @@ data class ArenaSakOppsummering(
     val lopenummer: Int,
     val aar: Int,
     val antallVedtak: Int,
-    val sakstype: String,
+    val sakstype: String?,
     val regDato: LocalDate,
     val avsluttetDato: LocalDate?,
 ) {

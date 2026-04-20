@@ -193,7 +193,7 @@ private fun Application.routes(
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
                 historikk(historikkService)
-                telleverk(telleverkService,pdlGateway)
+                telleverk(telleverkService, pdlGateway)
                 sakerForPerson(sakService, pdlGateway)
             }
             route("/api/intern") {
