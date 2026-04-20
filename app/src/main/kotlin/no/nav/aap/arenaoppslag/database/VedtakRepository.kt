@@ -100,7 +100,7 @@ class VedtakRepository(private val dataSource: DataSource) {
         @Language("OracleSql")
         private val selectVedtakForSak = """
         SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
-               v.fra_dato, v.til_dato, v.rettighetkode, rt.rettighetnavn, v.utfallkode,
+               v.fra_dato, v.til_dato, v.rettighetkode, rt.rettighetnavn, v.utfallkode, v.begrunnelse,
                v.brukerid_ansvarlig, v.brukerid_beslutter,
                a.aktfasekode, a.aktfasenavn
           FROM vedtak v
@@ -134,6 +134,7 @@ class VedtakRepository(private val dataSource: DataSource) {
             rettighetkode = row.getString("rettighetkode"),
             rettighetnavn = row.getString("rettighetnavn"),
             utfallkode = row.getString("utfallkode"),
+            begrunnelse = row.getString("begrunnelse"),
             saksbehandler = row.getString("brukerid_ansvarlig"),
             beslutter = row.getString("brukerid_beslutter"),
         )

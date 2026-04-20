@@ -36,6 +36,7 @@ data class ArenaVedtakRad(
     val rettighetkode: String,
     val rettighetnavn: String,
     val utfallkode: String?,
+    val begrunnelse: String?,
     val saksbehandler: String?,
     val beslutter: String?,
 ) {
@@ -56,6 +57,7 @@ data class ArenaVedtakRad(
         rettighetkode = rettighetkode,
         rettighetnavn = rettighetnavn,
         utfallkode = utfallkode,
+        begrunnelse = begrunnelse,
         saksbehandler = saksbehandler,
         beslutter = beslutter,
         fakta = fakta,
@@ -77,6 +79,7 @@ data class ArenaVedtakMedDetaljer(
     val rettighetkode: String,
     val rettighetnavn: String,
     val utfallkode: String?,
+    val begrunnelse: String?,
     val saksbehandler: String?,
     val beslutter: String?,
     val fakta: List<ArenaVedtakfakta>,

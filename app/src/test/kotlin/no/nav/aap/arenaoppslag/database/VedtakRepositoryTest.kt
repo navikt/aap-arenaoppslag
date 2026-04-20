@@ -47,6 +47,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
             rettighetkode = "AAP",
             rettighetnavn = "Arbeidsavklaringspenger",
             utfallkode = "JA",
+            begrunnelse = null,
             saksbehandler = null,
             beslutter = null,
         )
