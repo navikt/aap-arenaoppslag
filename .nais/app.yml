@@ -63,7 +63,7 @@ spec:
           namespace: nais-system
         - application: pdl-api
           namespace: pdl
-          cluster: prod-fss
+          cluster: {{cluster}}-fss
   webproxy: true
   ingresses:
     - {{ingress}}
