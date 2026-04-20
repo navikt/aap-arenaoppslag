@@ -34,7 +34,11 @@ data class ArenaVedtakRad(
     val fraOgMed: LocalDate?,
     val tilDato: LocalDate?,
     val rettighetkode: String,
+    val rettighetnavn: String,
     val utfallkode: String?,
+    val begrunnelse: String?,
+    val saksbehandler: String?,
+    val beslutter: String?,
 ) {
     fun medFakta(
         fakta: List<ArenaVedtakfakta>,
@@ -51,7 +55,11 @@ data class ArenaVedtakRad(
         fraOgMed = fraOgMed,
         tilDato = tilDato,
         rettighetkode = rettighetkode,
+        rettighetnavn = rettighetnavn,
         utfallkode = utfallkode,
+        begrunnelse = begrunnelse,
+        saksbehandler = saksbehandler,
+        beslutter = beslutter,
         fakta = fakta,
         vilkårsvurderinger = vilkårsvurderinger,
     )
@@ -69,7 +77,11 @@ data class ArenaVedtakMedDetaljer(
     val fraOgMed: LocalDate?,
     val tilDato: LocalDate?,
     val rettighetkode: String,
+    val rettighetnavn: String,
     val utfallkode: String?,
+    val begrunnelse: String?,
+    val saksbehandler: String?,
+    val beslutter: String?,
     val fakta: List<ArenaVedtakfakta>,
     val vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
 )

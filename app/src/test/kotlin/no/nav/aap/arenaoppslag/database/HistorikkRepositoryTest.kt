@@ -21,7 +21,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     }
 
     @Test
-    fun `ingen signifikante saker for person som ikke finnes`() {
+    fun `ingen signifikante vedtak for person som ikke finnes`() {
         val alleVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
             arenaPersonId = 54601 /* finnes ikke */,
             testDato,
@@ -31,36 +31,47 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     }
 
     @Test
-    fun `ingen signifikante saker for person med kun veldig gamle vedtak`() {
+    fun `ingen signifikante vedtak for person med kun veldig gamle vedtak`() {
         val testPerson = "kun_gamle"
         val testPersonId = 992
         val alleVedtak: List<ArenaVedtak> = vedtakRepository.hentVedtak(testPerson)
         assertThat(alleVedtak).hasSize(2)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
-        assertThat(relevanteSaker).isEmpty()
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
+        assertThat(signifikanteVedtak).isEmpty()
     }
 
     @Test
-    fun `finner signifikante saker for person med kun nye vedtak`() {
+    fun `finner signifikante vedtak for person med kun nye vedtak`() {
         val testPersonFnr = "kun_nye"
         val testPersonId = 996
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(3)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
-        assertThat(relevanteSaker).hasSize(3)
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
+        assertThat(signifikanteVedtak).hasSize(3)
     }
 
     @Test
-    fun `finner signifikante saker for person med både gamle og nye vedtak`() {
+    fun `finner signifikante vedtak for person med både gamle og nye vedtak`() {
         val testPersonFnr = "blanding"
         val testPersonId = 997
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(6)
 
-        val relevanteSaker = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
-        assertThat(relevanteSaker).hasSize(2)
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato, nåDato)
+        assertThat(signifikanteVedtak).hasSize(2)
+    }
+
+    @Test
+    fun `Ingen signifikante vedtak for person uten påbegynte vedtak`() {
+        val testPersonFnr = "426282"
+        val testPersonId = 426282
+        val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
+        assertThat(alleVedtak).hasSize(1)
+
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        assertThat(signifikanteVedtak).hasSize(0)
     }
 
 }

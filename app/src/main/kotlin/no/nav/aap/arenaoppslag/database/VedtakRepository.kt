@@ -100,14 +100,15 @@ class VedtakRepository(private val dataSource: DataSource) {
         @Language("OracleSql")
         private val selectVedtakForSak = """
         SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
-               v.fra_dato, v.til_dato, v.rettighetkode, v.utfallkode,
+               v.fra_dato, v.til_dato, v.rettighetkode, rt.rettighetnavn, v.utfallkode, v.begrunnelse,
+               v.brukerid_ansvarlig, v.brukerid_beslutter,
                a.aktfasekode, a.aktfasenavn
           FROM vedtak v
           LEFT JOIN vedtaktype vt ON vt.vedtaktypekode = v.vedtaktypekode
           LEFT JOIN vedtakstatus vs ON v.vedtakstatuskode = vs.vedtakstatuskode
           LEFT JOIN aktivitetfase a ON a.aktfasekode = v.aktfasekode
+          LEFT JOIN rettighettype rt ON rt.rettighetkode = v.rettighetkode
          WHERE sak_id = ?
-           AND v.rettighetkode = 'AAP'
            AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
@@ -131,7 +132,11 @@ class VedtakRepository(private val dataSource: DataSource) {
             fraOgMed = fraDato(row.getDate("fra_dato")),
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
+            rettighetnavn = row.getString("rettighetnavn"),
             utfallkode = row.getString("utfallkode"),
+            begrunnelse = row.getString("begrunnelse"),
+            saksbehandler = row.getString("brukerid_ansvarlig"),
+            beslutter = row.getString("brukerid_beslutter"),
         )
     }
 }

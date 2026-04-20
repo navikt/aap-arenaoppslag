@@ -52,7 +52,7 @@ class MaksimumRepository(
                 val vedtakFakta = selectVedtakFakta(vedtakId, connection)
                 val utbetalinger = selectUtbetalingVedVedtakId(
                     connection = connection,
-                    barnetiTillegg = vedtakFakta.barntill,
+                    barneTillegg = vedtakFakta.barntill,
                     dagsats = vedtakFakta.dagsmbt,
                     fodselsnr = fodselsnr,
                     vedtakId = vedtakId,
@@ -87,7 +87,7 @@ class MaksimumRepository(
     private fun selectUtbetalingVedVedtakId(
         vedtakId: Int,
         connection: Connection,
-        barnetiTillegg: Int,
+        barneTillegg: Int,
         dagsats: Int,
         fodselsnr: String,
         fraDato: LocalDate,
@@ -110,7 +110,7 @@ class MaksimumRepository(
             }.toList()
 
             val anmerkningerPerMeldekort = selectAlleMeldekortAnmerkninger(rader.map { it.meldekortId }, connection)
-            rader.map { rad -> mapTilUtbetaling(rad, anmerkningerPerMeldekort[rad.meldekortId], dagsats, barnetiTillegg) }
+            rader.map { rad -> mapTilUtbetaling(rad, anmerkningerPerMeldekort[rad.meldekortId], dagsats, barneTillegg) }
         }
     }
 
