@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 
@@ -24,4 +25,10 @@ class SakService(private val sakRepository: SakRepository) {
             SakerResponse(saker = saker.map { it.tilKontrakt() })
         }
     }
+
+    fun hentMaksdatoForSaker(sakidliste: List<Int>): MaksdatoResponse {
+        val saker = sakRepository.finnMaksdatoer(sakidliste)
+        return MaksdatoResponse(saker.map { it.tilKontrakt() })
+    }
+
 }

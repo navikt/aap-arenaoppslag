@@ -8,6 +8,8 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
@@ -55,6 +57,14 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         gjørArenaOppslag<SignifikanteSakerResponse, SignifikanteSakerRequest>(
             "/api/v1/person/signifikant-historikk", req
         ).getOrThrow()
+
+    suspend fun hentMaksdatoBySakIdListe(
+        req: MaksdatoRequest
+    ): MaksdatoResponse =
+        gjørArenaOppslag<MaksdatoResponse, MaksdatoRequest>(
+            "/api/v1/maksdato", req
+        ).getOrThrow()
+
 
     suspend fun hentSakerByFnr(
         req: SakerRequest

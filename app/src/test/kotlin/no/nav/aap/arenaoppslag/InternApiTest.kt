@@ -4,14 +4,16 @@ import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
 import no.nav.aap.arenaoppslag.database.H2TestBase
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
+import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
-import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
@@ -90,6 +92,35 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
                 )
             )
             assertThat(sakerForUkjentPerson).isEmpty()
+        }
+    }
+
+    @Test
+    fun `Henter ut maksdato by sakIdListe, ukjente saker`() {
+        withTestServer { gateway ->
+            val maksdatoForUkjenteSaker: MaksdatoResponse = gateway.hentMaksdatoBySakIdListe(
+                MaksdatoRequest(
+                    saker = listOf(
+                        /* ukjente verdier */ 1001, 1002,
+                        /* kjente verdier */ 1234
+                    )
+                )
+            )
+            assertThat(maksdatoForUkjenteSaker.sakliste).isEmpty()
+        }
+    }
+
+    @Test
+    fun `Henter ut maksdato by sakIdListe, kjente saker`() {
+        withTestServer { gateway ->
+            val maksdatoForKjenteSaker: MaksdatoResponse = gateway.hentMaksdatoBySakIdListe(
+                MaksdatoRequest(
+                    saker = listOf(1, 2, 3)
+                )
+            )
+
+            // TODO: ha flere tester på stans, ikke-stans, ikke-avsluttet, avsluttet sak osv
+            assertThat(maksdatoForKjenteSaker.sakliste.map { it.vedtakId }).isEqualTo(listOf(1335, 30))
         }
     }
 

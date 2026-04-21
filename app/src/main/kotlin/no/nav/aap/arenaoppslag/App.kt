@@ -195,6 +195,7 @@ private fun Application.routes(
                 historikk(historikkService)
                 telleverk(telleverkService, pdlGateway)
                 sakerForPerson(sakService, pdlGateway)
+                maksdato(sakService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner

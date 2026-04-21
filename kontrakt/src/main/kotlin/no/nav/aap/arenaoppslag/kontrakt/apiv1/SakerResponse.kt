@@ -6,6 +6,10 @@ public data class SakerRequest(
     val personidentifikator: String
 )
 
+public data class MaksdatoRequest(
+    val saker: List<Int>
+)
+
 public data class SakerResponse(
     val saker: List<ArenaSakOppsummeringKontrakt>
 )
@@ -19,6 +23,15 @@ public data class ArenaSakOppsummeringKontrakt(
     val regDato: LocalDate,
     val avsluttetDato: LocalDate?,
 )
+
+public data class Maksdatolinje(
+    val sakId: Int,
+    val vedtakId: Int,
+    val aktfaseKode: String,
+    val maxUnntakDato: LocalDate?
+)
+
+public data class MaksdatoResponse(val sakliste: List<Maksdatolinje>)
 
 // SakstypeKontrakt er foreløpig ikke i bruk, men beholdes for fremtidig bruk med enum-basert sakstype
 public enum class SakstypeKontrakt {
