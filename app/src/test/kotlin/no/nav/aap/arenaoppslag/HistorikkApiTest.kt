@@ -7,6 +7,7 @@ import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
+import no.nav.aap.arenaoppslag.util.FakePdlGateway
 import no.nav.aap.arenaoppslag.util.Fakes
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -51,7 +52,7 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
         val config = TestConfig.default(Fakes())
         val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
         testApplication {
-            application { server(config, h2) }
+            application { server(config, h2, FakePdlGateway()) }
             val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
 
             testBody(gateway)

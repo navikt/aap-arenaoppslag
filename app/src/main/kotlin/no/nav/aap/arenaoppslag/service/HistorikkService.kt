@@ -1,7 +1,8 @@
 package no.nav.aap.arenaoppslag.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import no.nav.aap.arenaoppslag.Metrics
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
+import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.Metrics.registrerAntallSignifikanteVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantEnkeltVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
@@ -17,10 +18,20 @@ class HistorikkService(
     private val historikkRepository: HistorikkRepository
 ) {
 
+    // Lagrer mappingen fødselsnr -> arena-personId. Bare treff i databasen lagres.
+    private val personIdCache = Caffeine.newBuilder()
+        .maximumSize(30_000)
+        .recordStats()
+        .build<String, Int>()
+
+    init {
+        CaffeineCacheMetrics.monitor(prometheus, personIdCache, "arenaoppslag_person_id")
+    }
+
     fun signifikanteSakerForPerson(
         fodselsnummerene: Set<String>, virkningstidspunkt: LocalDate
     ): SignifikanteSakerResponse {
-        val personId: Int? = personRepository.hentPersonIdHvisEksisterer(fodselsnummerene.toSet())
+        val personId: Int? = hentPersonId(fodselsnummerene)
         if (personId == null) {
             // Personen finnes ikke i AAP-Arena i det hele tatt
             return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
@@ -40,16 +51,16 @@ class HistorikkService(
 
     private fun rapporterMetrikker(vedtakene: List<ArenaVedtak>) {
         vedtakene.forEach {
-            Metrics.prometheus.registrerSignifikantVedtak(it)
+            prometheus.registrerSignifikantVedtak(it)
         }
 
         if (vedtakene.size == 1) {
             // Bare ett vedtak hindret oss fra å ta inn personen inn i Kelvin
-            Metrics.prometheus.registrerSignifikantEnkeltVedtak(vedtakene.first())
+            prometheus.registrerSignifikantEnkeltVedtak(vedtakene.first())
         }
 
         // Mål antall vedtak som hindret oss fra å ta personen inn i Kelvin, om noen
-        Metrics.prometheus.registrerAntallSignifikanteVedtak(vedtakene.size)
+        prometheus.registrerAntallSignifikanteVedtak(vedtakene.size)
     }
 
     internal fun sorterVedtak(vedtak: List<ArenaVedtak>): List<ArenaVedtak> {
@@ -60,19 +71,17 @@ class HistorikkService(
         return utenSluttdato + medSluttdato
     }
 
-    // Lagrer mappingen fødselsnr -> arena-personId. Bare treff i databasen lagres.
-    private val personIdCache = Caffeine.newBuilder().maximumSize(30_000).build<String, Int>()
-
     fun personEksistererIAapArena(fodselsnummerene: Set<String>): PersonEksistererIAAPArena {
-        // prøv først cache, deretter gå til repository, deretter lagre det som evt. blir funnet i repository til cache
-        val personId: Int? =
-            fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
-                ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
-                    ?.also { funnetPersonId ->
-                        // lagre til cache
-                        fodselsnummerene.forEach { personIdCache.put(it, funnetPersonId) }
-                    }
+        val personId: Int? = hentPersonId(fodselsnummerene)
         return PersonEksistererIAAPArena(personId != null)
+    }
+
+    private fun hentPersonId(fodselsnummerene: Set<String>): Int? {
+        return fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
+            ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
+                ?.also { funnetPersonId ->
+                    fodselsnummerene.forEach { personIdCache.put(it, funnetPersonId) }
+                }
     }
 
 }

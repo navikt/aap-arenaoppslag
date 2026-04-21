@@ -1,0 +1,104 @@
+package no.nav.aap.arenaoppslag
+
+import com.github.benmanes.caffeine.cache.Caffeine
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
+import java.net.URI
+import java.time.Duration
+
+import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLQueryException
+import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLRequest
+import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponse
+import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponseHandler
+import no.nav.aap.komponenter.config.requiredConfigForKey
+import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
+import no.nav.aap.komponenter.httpklient.httpclient.Header
+import no.nav.aap.komponenter.httpklient.httpclient.RestClient
+import no.nav.aap.komponenter.httpklient.httpclient.post
+
+import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
+import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.ClientCredentialsTokenProvider
+import org.slf4j.LoggerFactory
+
+interface IPdlGateway {
+    fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent>
+}
+
+private const val SAKSBEHANDLING_NUMMER = "B287"
+
+/**
+ * Saks behandlings nummer kommer fra
+ * https://behandlingskatalog.ansatt.nav.no/process/purpose/AAP/0ae77024-b2c8-4316-ad36-a04cde0e49d3
+ */
+
+
+
+class PdlGateway : IPdlGateway {
+
+    private val graphqlUrl = URI.create(requiredConfigForKey("integrasjon.pdl.url"))
+    private val config =
+        ClientConfig(
+            scope = requiredConfigForKey("integrasjon.pdl.scope"),
+            additionalHeaders = listOf(Header("Behandlingsnummer", SAKSBEHANDLING_NUMMER)),
+        )
+
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    private val client =
+        RestClient(
+            config = config,
+            tokenProvider = ClientCredentialsTokenProvider,
+            responseHandler = GraphQLResponseHandler(),
+        )
+
+    override fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent> = cache.get(personIdent){
+        val request = GraphQLRequest(IDENT_QUERY, variables = PdlRequestVariables(personIdent))
+        val response = query(request)
+        val pdlIdenter =
+            checkNotNull(response.data?.hentIdenter?.identer) {
+                "Fant ingen identer i PDL for person"
+            }
+
+        pdlIdenter.filter { ident -> ident.gruppe == "FOLKEREGISTERIDENT" }
+    }
+
+    private fun query(request: GraphQLRequest<PdlRequestVariables>): GraphQLResponse<PdlIdenterData> {
+        val httpRequest = PostRequest(body = request)
+        return try {
+            requireNotNull(client.post(uri = graphqlUrl, request = httpRequest))
+        } catch (e: GraphQLQueryException) {
+            log.info("Feil ved oppslag mot PDL. Melding: ${e.message}. Kode: ${e.code}")
+            if (e.code == "not_found") {
+                GraphQLResponse(data = PdlIdenterData(PdlIdenter(emptyList())), errors = null)
+            } else {
+                throw e
+            }
+        }
+
+    }
+
+    companion object {
+        private val cache = Caffeine.newBuilder()
+            .maximumSize(10_000)
+            .expireAfterWrite(Duration.ofMinutes(15))
+            .recordStats()
+            .build<String, List<PdlIdent>>()
+
+        init {
+            CaffeineCacheMetrics.monitor(Metrics.prometheus, cache, "pdl_identer_cache")
+        }
+    }
+}
+
+private const val ident = "\$ident"
+val IDENT_QUERY =
+    """
+    query($ident: ID!) {
+        hentIdenter(ident: $ident, historikk: true) {
+            identer {
+                ident,
+                historisk,
+                gruppe
+            }
+        }
+    }
+    """.trimIndent()

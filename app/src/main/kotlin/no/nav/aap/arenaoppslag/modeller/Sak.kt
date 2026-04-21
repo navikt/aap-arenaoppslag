@@ -1,6 +1,29 @@
 package no.nav.aap.arenaoppslag.modeller
 
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakOppsummeringKontrakt
+import java.time.LocalDate
 import java.time.LocalDateTime
+
+
+data class ArenaSakOppsummering(
+    val sakId: String,
+    val lopenummer: Int,
+    val aar: Int,
+    val antallVedtak: Int,
+    val sakstype: String?,
+    val regDato: LocalDate,
+    val avsluttetDato: LocalDate?,
+) {
+    fun tilKontrakt() = ArenaSakOppsummeringKontrakt(
+        sakId = sakId,
+        lopenummer = lopenummer,
+        aar = aar,
+        antallVedtak = antallVedtak,
+        sakstype = sakstype,
+        regDato = regDato,
+        avsluttetDato = avsluttetDato,
+    )
+}
 
 data class ArenaSak(
     val sakId: String,

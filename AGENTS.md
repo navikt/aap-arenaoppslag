@@ -97,9 +97,11 @@ as the existing example of this pattern.
 - Add new fields as `optional` (nullable or with a default value) — do not remove or rename existing fields.
 - For breaking changes: create `/api/v2/...` and keep the old route until consumers have migrated.
 - Always align with the team before deciding whether a change is breaking.
+- **All request and response DTO types must be defined in the `kontrakt` module** under `no.nav.aap.arenaoppslag.kontrakt.apiv1`.
 
 **`/intern/*`** is frozen — do not add new routes here. Use `/api/intern/` for new internal needs.
 These routes are currently used by `aap-api-intern`. The long-term plan is to migrate to `/api/v1/*`.
+- **All request and response DTO types must be defined in the `kontrakt` module** under `no.nav.aap.arenaoppslag.kontrakt.intern`.
 
 **`/api/intern/*`** is "backend for frontend" and may change freely.
 - Response objects can be shaped to fit the frontend's exact needs and do not need to follow REST conventions.
@@ -187,7 +189,10 @@ call.respond(HttpStatusCode.OK, respons)
 ### Caching
 
 - `HistorikkService`: Caffeine cache for `personId` lookups (max 30 000 entries, no TTL — size-based eviction).
-- `InternService`: Caffeine cache for `maksimum` results (max 10 000 entries, 15-minute TTL, monitored via Micrometer).
+- `InternService`: Caffeine caches for `maksimum`, `saker`, `perioder`, and `perioder_11_17` results
+  (max 10 000 entries each, 15-minute TTL, all monitored via Micrometer).
+- `SakService`: Caffeine cache for `sakerPerPerson` (max 10 000 entries, no TTL — size-based eviction, monitored via Micrometer).
+- `PdlGateway`: Caffeine cache for PDL identity lookups (max 10 000 entries, 15-minute TTL, monitored via Micrometer).
 - Never add a cache without also wiring Micrometer monitoring (`CaffeineCacheMetrics.monitor(...)`).
 
 ---
@@ -220,6 +225,8 @@ Available Flyway migration sets (all automatically include `flyway/common`):
 | `flyway/eksisterer` | Historikk-focused test data |
 | `flyway/telleverk` | Telleverk (`BEREGNINGSLEDD`) test data |
 | `flyway/dsop` | DSOP-specific schema |
+| `flyway/saklistetest` | Sak-list test data (multiple saker for person lookups) |
+| `flyway/maksimum` | Maksimum/utbetaling test data |
 
 ### Integration tests
 
@@ -227,11 +234,11 @@ Use `Fakes` for a lightweight embedded Azure JWKS/token server. Use `TestConfig.
 Wire `AzureTokenGen` to produce tokens with the correct issuer and client ID.
 
 ```kotlin
-private fun medTestServer(testBlokk: suspend (ArenaOppslagGateway) -> Unit) {
+private fun withTestServer(testBlokk: suspend (ArenaOppslagGateway) -> Unit) {
     val config = TestConfig.default(Fakes())
     val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
     testApplication {
-        application { server(config, h2) }
+        application { server(config, h2, FakePdlGateway()) }
         val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
         testBlokk(gateway)
     }
@@ -239,6 +246,8 @@ private fun medTestServer(testBlokk: suspend (ArenaOppslagGateway) -> Unit) {
 ```
 
 Use `ArenaOppslagGateway` as the HTTP client wrapper in integration tests.
+Use `FakePdlGateway` (implements `IPdlGateway`) to stub PDL lookups — it echoes
+back the input identifier as the only FOLKEREGISTERIDENT.
 
 ### Known test persons
 
