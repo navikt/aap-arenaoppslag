@@ -3,19 +3,29 @@ package no.nav.aap.arenaoppslag.database
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
+import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest") {
+
+    private lateinit var sakRepository: SakRepository
+
+    @BeforeEach
+    fun setup() {
+        sakRepository = SakRepository(h2)
+    }
+
     @Test
     fun `klarer å hente en sak fra databasen`() {
-        val forvantetSak = ArenaSak(
+        val forventetSak = ArenaSak(
             sakId = "1",
             opprettetAar = 2021,
             lopenr = 1,
-            statuskode = "INAKT",
-            statusnavn = "Inaktiv",
+            statuskode = "AKTIV",
+            statusnavn = "Aktiv",
             registrertDato = LocalDate.of(2022, 2, 2).atStartOfDay(),
             avsluttetDato = null,
             person = ArenaSakPerson(
@@ -25,14 +35,12 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 etternavn = "Bestesen",
             )
         )
-        val sakRepository = SakRepository(h2)
         val sak = sakRepository.hentSak(1)
-        assertThat(sak).isEqualTo(forvantetSak)
+        assertThat(sak).isEqualTo(forventetSak)
     }
 
     @Test
     fun `returnerer NULL om saken ikke finnes i databasen`() {
-        val sakRepository = SakRepository(h2)
         val sak = sakRepository.hentSak(1919191919)
         assertThat(sak).isNull()
     }
@@ -45,19 +53,17 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
             aar = 2021,
             antallVedtak = 1,
             sakstype = "Arbeidsavklaringspenger",
-            statuskode = "INAKT",
-            statusnavn = "Inaktiv",
+            statuskode = "AKTIV",
+            statusnavn = "Aktiv",
             regDato = LocalDate.of(2022, 2, 2),
             avsluttetDato = null,
         )
-        val sakRepository = SakRepository(h2)
         val saker = sakRepository.hentSakerForPerson(setOf("123"))
         assertThat(saker).containsExactly(forventetSak)
     }
 
     @Test
     fun `hentSakerForPersnNummere returnerer tom liste for ukjent person`() {
-        val sakRepository = SakRepository(h2)
         val saker = sakRepository.hentSakerForPerson(setOf("007"))
         assertThat(saker).isEmpty()
     }
@@ -65,7 +71,6 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
     @Test
     fun `hentSakerForPersnNummere returnerer tom liste for person uten saker`() {
         // Person "ingenvedtak" (person_id=3) er registrert uten noen saker
-        val sakRepository = SakRepository(h2)
         val saker = sakRepository.hentSakerForPerson(setOf("ingenvedtak"))
         assertThat(saker).isEmpty()
     }
@@ -96,14 +101,12 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 avsluttetDato = LocalDate.of(2023, 12, 31),
             ),
         )
-        val sakRepository = SakRepository(h2)
         val saker = sakRepository.hentSakerForPerson(setOf("tosaker"))
         assertThat(saker).containsExactlyInAnyOrderElementsOf(forventedeSaker)
     }
 
     @Test
     fun `hentSakerForPersnNummere returnerer saker for flere personer i ett kall`() {
-        val sakRepository = SakRepository(h2)
         val saker = sakRepository.hentSakerForPerson(setOf("123", "tosaker"))
         // "123" har 1 sak, "tosaker" har 2 saker - totalt 3 saker
         assertThat(saker).hasSize(3)
@@ -112,8 +115,36 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
 
     @Test
     fun `hentSakerForPersnNummere returnerer tom liste naar settet er tomt`() {
-        val sakRepository = SakRepository(h2)
         val saker = sakRepository.hentSakerForPerson(emptySet())
+        assertThat(saker).isEmpty()
+    }
+
+    @Test
+    fun `hent maksdato paa saker finner forventede data`() {
+        val forventet = listOf(
+            Maksdatolinje(
+                2, 1335, "IKKE", "O",
+                LocalDate.of(2010, 8, 29), LocalDate.of(2026, 6, 30)
+            ),
+            Maksdatolinje(
+                3, 30, "IKKE", "O",
+                LocalDate.of(2022, 8, 30), LocalDate.of(2025, 12, 31)
+            )
+        )
+        val saker = sakRepository.finnMaksdatoer(setOf(1, 2, 3))
+        assertThat(saker).hasSize(2)
+        assertThat(saker).containsAll(forventet) // mappingen testes
+    }
+
+    @Test
+    fun `hent maksdato paa saker gir tom liste for tom liste`() {
+        val saker = sakRepository.finnMaksdatoer(emptySet())
+        assertThat(saker).isEmpty()
+    }
+
+    @Test
+    fun `hent maksdato paa saker finner ikke data som mangler`() {
+        val saker = sakRepository.finnMaksdatoer(setOf(4020))
         assertThat(saker).isEmpty()
     }
 }

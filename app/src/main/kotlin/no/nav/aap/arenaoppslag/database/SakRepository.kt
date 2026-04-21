@@ -3,11 +3,11 @@ package no.nav.aap.arenaoppslag.database
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
+import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
-import kotlin.use
 
 class SakRepository(private val dataSource: DataSource) {
 
@@ -17,7 +17,6 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-
     fun hentSakerForPerson(personidentifikatorerForPerson: Set<String>): List<ArenaSakOppsummering> {
         if (personidentifikatorerForPerson.isEmpty()) return emptyList()
         return dataSource.connection.use { con ->
@@ -25,8 +24,37 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun finnMaksdatoer(sakidliste: Set<Int>): List<Maksdatolinje> {
+        if (sakidliste.isEmpty()) return emptyList()
+        return dataSource.connection.use { con ->
+            vedtakMedNyesteMaxdatoForSakerMedUnntak(sakidliste, con)
+        }
+    }
+
     companion object {
         private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
+        private const val SAK_LISTE_TOKEN = "?:sak_id"
+
+        private fun vedtakMedNyesteMaxdatoForSakerMedUnntak(sakidliste: Set<Int>, connection: Connection): List<Maksdatolinje> {
+            val alleSakId = sakidliste.joinToString(separator = ",") { "'$it'" }
+            val query = selectVedtakMedNyesteMaxdatoForSakerMedUnntak.replace(SAK_LISTE_TOKEN, alleSakId)
+
+            connection.prepareStatement(query).use { preparedStatement ->
+                val resultSet = preparedStatement.executeQuery()
+                // tom liste om ingen rader blir funnet
+                return resultSet.map { row -> mapperForMaksdatolinje(row) }
+            }
+        }
+
+        fun mapperForMaksdatolinje(row: ResultSet) =
+            Maksdatolinje(
+                sakId = row.getInt("sak_id"),
+                vedtakId = row.getInt("vedtak_id"),
+                aktfaseKode = row.getString("aktfasekode"),
+                vedtaktypeKode = row.getString("vedtaktypekode"),
+                fraDato = row.getDate("fra_dato")?.toLocalDate(),
+                maxUnntakDato = row.getDate("max_unntak_dato")?.toLocalDate()
+            )
 
         private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnumre: Set<String>): String {
             // Oracle støtter ikke listeparametere i PreparedStatement, så vi interpolerer direkte
@@ -56,7 +84,6 @@ class SakRepository(private val dataSource: DataSource) {
                 return saker.first()
             }
         }
-
 
         fun mapperForArenaSak(row: ResultSet) = ArenaSak(
             sakId = row.getString("sak_id"),
@@ -110,6 +137,34 @@ class SakRepository(private val dataSource: DataSource) {
             GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
                 sak.sakstatuskode, sakstatus.sakstatusnavn
         """.trimIndent()
+
+        @Language("OracleSql")
+        internal val selectVedtakMedNyesteMaxdatoForSakerMedUnntak = """
+            -- Hent først nyeste vedtak hvor dato for forlengelse etter 11-12 er satt, for hver av sakene 
+            WITH nyeste_vedtak AS (
+                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, fra_dato FROM (
+                    SELECT v.sak_id,
+                        v.vedtak_id,
+                        v.vedtaktypekode,
+                        v.aktfasekode,
+                        v.fra_dato,
+                        ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') DESC, v.vedtak_id DESC) as rn
+                    FROM vedtak v
+                        JOIN SAK s on s.sak_id = v.sak_id
+                        JOIN VEDTAKFAKTA vf on v.vedtak_id = vf.vedtak_id
+                    WHERE s.SAKSTATUSKODE = 'AKTIV' -- kun aktive saker teller med
+                        AND v.sak_id in ($SAK_LISTE_TOKEN)
+                        AND v.rettighetkode = 'AAP'
+                        AND vf.vedtakfaktakode = 'AAPVILKUNN'
+                        AND vf.vedtakverdi IS NOT NULL -- er bare satt dersom 11-12 unntak er innvilget
+                        AND v.vedtaktypekode != 'S' -- stansede vedtak sin maxdato er ikke meningsfull
+                ) WHERE rn = 1
+            )
+            SELECT nv.sak_id, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, vmd.max_unntak_dato
+            FROM nyeste_vedtak nv
+            JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
+        """.trimIndent()
+
     }
 
 }
