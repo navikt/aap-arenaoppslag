@@ -8,15 +8,16 @@ public data class Vedtak(
     val vedtaksId: String,
     val utbetaling: List<UtbetalingMedMer>,
     val dagsats: Int,
-    val status: String, //Hypotese, vedtaksstatuskode
-    val saksnummer: String, //hypotese sak_id
-    val vedtaksdato: String, //reg_dato
+    val status: String,
+    val saksnummer: String,
+    val vedtaksdato: String,
     val vedtaksTypeKode:String,
     val vedtaksTypeNavn: String,
     val periode: Periode,
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode
     val beregningsgrunnlag: Int,
     val barnMedStonad: Int,
+    val justertG: String?,
 )
 
 /**

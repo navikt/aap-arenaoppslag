@@ -43,6 +43,7 @@ data class Vedtak(
             barnMedStonad = barnMedStonad,
             vedtaksTypeKode = vedtaksTypeKode,
             vedtaksTypeNavn = vedtaksTypeNavn,
+            justertG = justertG,
         )
     }
 }
