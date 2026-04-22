@@ -153,7 +153,14 @@ class MaksimumRepository(
         return connection.prepareStatement(hentVedtakfakta).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
             val resultSet = preparedStatement.executeQuery()
-            val vedtakfakta = VedtakFakta(0, 0, 0, 0, 0, null)
+            val vedtakfakta = VedtakFakta(
+                dagsmbt = 0,
+                barntill = 0,
+                dags = 0,
+                barnmston = 0,
+                dagsfsam = 0,
+                justertg = null
+            )
             resultSet.map { row ->
                 when (row.getString("vedtakfaktakode")) {
                     "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
