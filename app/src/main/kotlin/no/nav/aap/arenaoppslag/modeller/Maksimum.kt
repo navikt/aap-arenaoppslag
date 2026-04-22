@@ -27,6 +27,7 @@ data class Vedtak(
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode
     val beregningsgrunnlag: Int,
     val barnMedStonad: Int,
+    val justertG: String?,
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak {
         return no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak(

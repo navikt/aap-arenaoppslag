@@ -25,7 +25,8 @@ values (90010, 'DAGSMBT', '550'),
        (90010, 'DAGS', '520'),
        (90010, 'BARNMSTON', '2'),
        (90010, 'DAGSFSAM', '520'),
-       (90010, 'GRUNN', '450000');
+       (90010, 'GRUNN', '450000'),
+       (90010, 'JUSTERTG', 'NyG2024');
 
 -- Meldekortperioder
 insert into MELDEKORTPERIODE (AAR, PERIODEKODE, UKENR_UKE1, UKENR_UKE2, DATO_FRA, DATO_TIL)

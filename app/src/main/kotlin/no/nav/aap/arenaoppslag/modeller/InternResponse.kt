@@ -21,7 +21,8 @@ data class VedtakFakta(
     var barntill: Int,
     var dags: Int,
     var barnmston: Int,
-    var dagsfsam: Int
+    var dagsfsam: Int,
+    var justertg: String?,
 )
 
 
