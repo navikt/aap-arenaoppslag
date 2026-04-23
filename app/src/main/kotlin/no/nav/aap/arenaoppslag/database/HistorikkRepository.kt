@@ -109,83 +109,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
-        // S4: Hent alle tilbakebetalinger med relevant historikk for personen
-        // MERK: denne spørringen går veldig tregt, av ukjent grunn
-        @Language("OracleSql")
-        val selectKunRelevanteTilbakebetalinger = """
-        SELECT
-            v.sak_id,
-            vedtakstatuskode,
-            vedtaktypekode,
-            CAST(NULL AS DATE)                    AS fra_dato,
-            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
-            v.rettighetkode, 
-            v.utfallkode, 
-            v.reg_dato
-        FROM
-            vedtak v
-            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
-        WHERE
-            v.person_id = ?
-            AND rettighetkode = 'TILBBET'
-            AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
-            AND vf.vedtakfaktakode = 'INNVF'
-            -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke 
-            AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
-            """.trimIndent()
-
-        // S5: Hent alle spesialutbetalinger med relevant historikk for personen
-        @Language("OracleSql")
-        val selectKunRelevanteSpesialutbetalinger = """
-        SELECT
-            v.sak_id,
-            su.vedtakstatuskode,
-            v.vedtaktypekode, 
-            su.dato_fra AS fra_dato,
-            su.dato_til AS til_dato,
-            'SPESIAL' AS rettighetkode, 
-            v.utfallkode, 
-            v.reg_dato
-        FROM
-            spesialutbetaling su
-            JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
-        WHERE
-            su.person_id = ?
-            -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
-            -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
-            AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ? )
-            -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
-        """.trimIndent()
-
-        // S6: Hent simulerte betalinger.
-        // Saksbehandler gjør noen ganger simuleringer før en reell betaling og vedtak opprettes.
-        @Language("OracleSql")
-        val selectKunRelevanteSimulerteBetalinger = """
-        SELECT
-            v.sak_id, 
-            v.vedtakstatuskode, 
-            CAST(NULL AS VARCHAR2(10)) AS vedtaktypekode, 
-            ssu.dato_periode_fra AS fra_dato,
-            ssu.dato_periode_til AS til_dato,
-            'SIM_UTBET' AS rettighetkode, 
-            v.utfallkode, 
-            v.reg_dato
-        FROM
-            sim_utbetalingsgrunnlag ssu
-            JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
-        WHERE 
-            ssu.person_id = ?
-            -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
-            AND ssu.mod_dato >= ? -- ignorer gamle simuleringer som ikke ble noe av
-        """.trimIndent()
-
         const val tidsBufferUkerGenerell = 78L // 52 uker + 6 måneder tilbakejustering
         const val tidsBufferUkerStans = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val modnedGrenseVedtak = 64L
-        const val modnedGrenseTilbakebetaling = 36L
         const val modnedGrenseKlageInnvilget = 6L
-        const val modnedGrenseSpesialOgSim = 3L
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, nåDato: LocalDate, connection: Connection
@@ -193,18 +120,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
             val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
             val vedtakModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseVedtak))
-            val tilbakebetalingModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseTilbakebetaling))
             val klageInnvilgetGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseKlageInnvilget))
-            val spesialOgSimGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseSpesialOgSim))
 
             val query =
                 listOf(
                     selectKunRelevanteVedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                    selectKunRelevanteTilbakebetalinger,
-                    selectKunRelevanteSpesialutbetalinger,
-                    selectKunRelevanteSimulerteBetalinger
                 ).joinToString("\nUNION ALL\n")
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
@@ -223,15 +145,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 // S3: anker
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                // S4: tilbakebetalinger
-                preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, tilbakebetalingModnedGrense)
-                // S5: spesialutbetalinger
-                preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, spesialOgSimGrense)
-                // S6: sim_utbetalingsgrunnlag
-                preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, spesialOgSimGrense)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }

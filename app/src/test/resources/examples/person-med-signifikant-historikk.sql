@@ -25,10 +25,10 @@ WHERE v.person_id = :person_id
     (vedtaktypekode = 'S' AND
      (fra_dato IS NULL OR fra_dato >= DATE '2023-09-04')) -- ekstra tidsbuffer for Stans, som bare har fra_dato
     )
-  AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND rettighetkode = 'AAP' AND
-           fra_dato <= DATE '2024-10-24')                                               -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
-  AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND rettighetkode = 'AA115')         -- bruker fikk avslag
+  AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= DATE '2024-10-24')   -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+
 UNION ALL
+
 -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres.
 -- Dersom den er null, er klagen fortsatt under behandling.
 SELECT v.sak_id,
@@ -48,11 +48,15 @@ WHERE v.person_id = :person_id
   AND vf.vedtakfaktakode = 'INNVF'
   -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.
   -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
-  AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= DATE '2024-10-24')
+  AND (vf.vedtakverdi IS NULL OR
+       TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= DATE '2024-10-24')
   -- Dersom klagen ble innvilget for lenge nok siden, regnes den som ikke relevant lenger. Ekskluder disse.
-  AND NOT (vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= DATE '2025-09-24' AND
+  AND NOT (vf.vedtakverdi IS NOT NULL AND
+           TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= DATE '2025-09-24' AND
            v.utfallkode IN ('JA', 'DELVIS'))
+
 UNION ALL
+
 SELECT v.sak_id,
        vedtakstatuskode,
        vedtaktypekode,
@@ -67,7 +71,9 @@ WHERE v.person_id = :person_id
   AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
   AND rettighetkode = 'ANKE'
   AND v.MOD_DATO >= DATE '2020-11-01' -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+
 UNION ALL
+
 SELECT v.sak_id,
        vedtakstatuskode,
        vedtaktypekode,
@@ -85,7 +91,9 @@ WHERE v.person_id = :person_id
   AND vf.vedtakfaktakode = 'INNVF'
   -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke
   AND vf.vedtakverdi IS NULL          -- det er ikke satt endelig dato for beslutning på vedtaket
+
 UNION ALL
+
 SELECT v.sak_id,
        su.vedtakstatuskode,
        v.vedtaktypekode,
@@ -97,11 +105,13 @@ SELECT v.sak_id,
 FROM spesialutbetaling su
          JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
 WHERE su.person_id = :person_id
-  -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke.
-  -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
-  AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= DATE '2025-12-24')
+    -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke.
+    -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
+    AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= DATE '2025-12-24')
 -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
+
 UNION ALL
+
 SELECT v.sak_id,
        v.vedtakstatuskode,
        CAST(NULL AS VARCHAR2(10)) AS vedtaktypekode,
@@ -113,6 +123,6 @@ SELECT v.sak_id,
 FROM sim_utbetalingsgrunnlag ssu
          JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
 WHERE ssu.person_id = :person_id
-  -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
-  AND ssu.mod_dato >= DATE '2025-12-24' -- ignorer gamle simuleringer som ikke ble noe av
+    -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
+    AND ssu.mod_dato >= DATE '2025-12-24' -- ignorer gamle simuleringer som ikke ble noe av
 
