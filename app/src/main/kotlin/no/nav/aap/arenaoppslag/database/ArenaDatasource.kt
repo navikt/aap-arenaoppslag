@@ -45,8 +45,11 @@ fun <T : Any> ResultSet.map(block: (ResultSet) -> T): List<T> =
         while (next()) yield(block(this@map))
     }.toList()
 
-// getInt returnerer 0 for NULL-kolonner, så vi bruker getObject for å bevare null-verdier
-fun ResultSet.getIntOrNull(columnLabel: String): Int? = getObject(columnLabel) as? Int
+// getInt returnerer 0 for NULL-kolonner — vi bruker wasNull() for å skille null fra 0
+fun ResultSet.getIntOrNull(columnLabel: String): Int? {
+    val value = getInt(columnLabel)
+    return if (wasNull()) null else value
+}
 
 fun Connection.createParameterizedQuery(queryString: String): PreparedStatement {
     val query = prepareStatement(queryString)

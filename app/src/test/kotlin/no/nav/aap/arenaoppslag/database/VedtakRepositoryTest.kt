@@ -64,5 +64,14 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
         val alleVedtak = vedtakRepository.hentVedtakForSak(1919191919)
         assertThat(alleVedtak).isEmpty()
     }
+
+    @Test
+    fun `hentVedtakForSak returnerer vedtak med relatertVedtak satt`() {
+        val vedtakRepository = VedtakRepository(h2)
+        val vedtak = vedtakRepository.hentVedtakForSak(9)
+
+        assertThat(vedtak).hasSize(1)
+        assertThat(vedtak.single().relatertVedtak).isEqualTo(1234)
+    }
 }
 
