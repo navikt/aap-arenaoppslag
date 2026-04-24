@@ -137,7 +137,7 @@ class VedtakRepository(private val dataSource: DataSource) {
             begrunnelse = row.getString("begrunnelse"),
             saksbehandler = row.getString("brukerid_ansvarlig"),
             beslutter = row.getString("brukerid_beslutter"),
-            relatertVedtak = row.getObject("vedtak_id_relatert") as? Int,
+            relatertVedtak = row.getIntOrNull("vedtak_id_relatert"),
         )
     }
 }
