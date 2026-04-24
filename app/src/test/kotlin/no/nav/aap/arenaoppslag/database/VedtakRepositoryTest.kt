@@ -50,6 +50,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
             begrunnelse = null,
             saksbehandler = null,
             beslutter = null,
+            relatertVedtak = null,
         )
 
         val alleVedtak = vedtakRepository.hentVedtakForSak(1)

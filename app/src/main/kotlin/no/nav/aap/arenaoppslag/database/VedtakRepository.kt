@@ -101,7 +101,7 @@ class VedtakRepository(private val dataSource: DataSource) {
         private val selectVedtakForSak = """
         SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
                v.fra_dato, v.til_dato, v.rettighetkode, rt.rettighetnavn, v.utfallkode, v.begrunnelse,
-               v.brukerid_ansvarlig, v.brukerid_beslutter,
+               v.brukerid_ansvarlig, v.brukerid_beslutter, v.vedtak_id_relatert,
                a.aktfasekode, a.aktfasenavn
           FROM vedtak v
           LEFT JOIN vedtaktype vt ON vt.vedtaktypekode = v.vedtaktypekode
@@ -137,6 +137,7 @@ class VedtakRepository(private val dataSource: DataSource) {
             begrunnelse = row.getString("begrunnelse"),
             saksbehandler = row.getString("brukerid_ansvarlig"),
             beslutter = row.getString("brukerid_beslutter"),
+            relatertVedtak = row.getIntOrNull("vedtak_id_relatert"),
         )
     }
 }
