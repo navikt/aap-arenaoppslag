@@ -256,6 +256,21 @@ back the input identifier as the only FOLKEREGISTERIDENT.
 
 ---
 
+## After making code changes
+
+After completing any code change, always run the full test suite and fix all failures before
+presenting the work as done:
+
+```
+./gradlew :app:test
+```
+
+This applies to every change — including small, seemingly safe edits — because adding or
+renaming fields often breaks existing test assertions or causes compilation errors in tests.
+Do not consider a task finished until the build and all tests pass.
+
+---
+
 ## Git workflow
 
 Before committing, always:

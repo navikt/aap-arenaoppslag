@@ -39,6 +39,7 @@ data class ArenaVedtakRad(
     val begrunnelse: String?,
     val saksbehandler: String?,
     val beslutter: String?,
+    val relatertVedtak: Int?,
 ) {
     fun medFakta(
         fakta: List<ArenaVedtakfakta>,
@@ -60,6 +61,7 @@ data class ArenaVedtakRad(
         begrunnelse = begrunnelse,
         saksbehandler = saksbehandler,
         beslutter = beslutter,
+        relatertVedtak = relatertVedtak,
         fakta = fakta,
         vilkårsvurderinger = vilkårsvurderinger,
     )
@@ -82,6 +84,7 @@ data class ArenaVedtakMedDetaljer(
     val begrunnelse: String?,
     val saksbehandler: String?,
     val beslutter: String?,
+    val relatertVedtak: Int?,
     val fakta: List<ArenaVedtakfakta>,
     val vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
 )
