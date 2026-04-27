@@ -4,6 +4,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
@@ -55,6 +57,16 @@ fun Route.sakerForPerson(sakService: SakService,pdlGateway: IPdlGateway) {
     }
 }
 
+fun Route.maksdato(sakService: SakService) {
+    post("/maksdato") {
+        logger.info("Henter maksdato app for saksliste")
+        val request: MaksdatoRequest = call.receive()
+
+        val respons: MaksdatoResponse = sakService.hentMaksdatoForSaker(request.saker)
+
+        call.respond(HttpStatusCode.OK, respons)
+    }
+}
 
 fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService ) {
     get("/sak/{sakid}/detaljert") {
