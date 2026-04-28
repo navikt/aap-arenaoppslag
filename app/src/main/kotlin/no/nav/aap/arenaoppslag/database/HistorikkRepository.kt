@@ -106,7 +106,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+            AND (vf.vedtakfaktakode='KJENNDATO' AND (vf.vedtakverdi is null OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )) -- lenge siden anken ble avgjort i retten
         """.trimIndent()
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
@@ -186,11 +187,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val modnedGrenseTilbakebetaling = 36L
         const val modnedGrenseKlageInnvilget = 6L
         const val modnedGrenseSpesialOgSim = 3L
+        const val tidsBufferUkerAnke = 24L // 6 uker + saksbehandling/kø i Arena
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, nåDato: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
+            val tidsBufferAnker = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerAnke))
             val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
             val vedtakModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseVedtak))
             val tilbakebetalingModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseTilbakebetaling))
@@ -223,6 +226,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 // S3: anker
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
+                preparedStatement.setDate(p++, tidsBufferAnker)
                 // S4: tilbakebetalinger
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, tilbakebetalingModnedGrense)
