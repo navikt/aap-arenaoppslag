@@ -54,11 +54,12 @@ class VedtakRepository(private val dataSource: DataSource) {
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
+            registrertDato = row.getDate("reg_dato").toLocalDate(),
         )
 
         @Language("OracleSql")
         internal val selectAlleVedtakForFnr = """
-        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, utfallkode
+        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, utfallkode, reg_dato
           FROM vedtak
          WHERE person_id = 
                (SELECT person_id 

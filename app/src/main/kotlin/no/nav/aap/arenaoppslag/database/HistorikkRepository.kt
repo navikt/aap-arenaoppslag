@@ -37,21 +37,23 @@ class HistorikkRepository(private val dataSource: DataSource) {
             fra_dato, 
             til_dato, 
             rettighetkode, 
-            utfallkode
+            utfallkode, 
+            reg_dato
         FROM 
               vedtak v 
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode IN ('AA115', 'AAP')
-          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
-                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
+                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND rettighetkode='AAP' AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND rettighetkode='AA115') -- bruker fikk avslag
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -67,7 +69,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode,
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -75,12 +78,12 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
-            -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
+            -- Dersom klagen ble innvilget for lenge nok siden, regnes den som ikke relevant lenger. Ekskluder disse.
             AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ? AND v.utfallkode IN ('JA', 'DELVIS' ) )
         """.trimIndent()
 
@@ -94,7 +97,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS fra_dato,
             CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode,
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -103,6 +107,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+            AND (vf.vedtakfaktakode='KJENNDATO' AND (vf.vedtakverdi is null OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )) -- lenge siden anken ble avgjort i retten
         """.trimIndent()
 
         // S4: Hent alle tilbakebetalinger med relevant historikk for personen
@@ -116,7 +121,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode, 
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -124,7 +130,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND rettighetkode = 'TILBBET'
             AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (60 mnd)
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke 
             AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
@@ -140,7 +146,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             su.dato_fra AS fra_dato,
             su.dato_til AS til_dato,
             'SPESIAL' AS rettighetkode, 
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             spesialutbetaling su
             JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
@@ -163,27 +170,30 @@ class HistorikkRepository(private val dataSource: DataSource) {
             ssu.dato_periode_fra AS fra_dato,
             ssu.dato_periode_til AS til_dato,
             'SIM_UTBET' AS rettighetkode, 
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato
         FROM
             sim_utbetalingsgrunnlag ssu
             JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
         WHERE 
             ssu.person_id = ?
             -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
-            AND ssu.mod_dato >= ? -- ignorer gamle simuleringer som ikke ble noe av (3 mnd)
+            AND ssu.mod_dato >= ? -- ignorer gamle simuleringer som ikke ble noe av
         """.trimIndent()
 
-        const val tidsBufferUkerGenerell = 78L
-        const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
-        const val modnedGrenseVedtak = 72L
-        const val modnedGrenseTilbakebetaling = 60L
+        const val tidsBufferUkerGenerell = 78L // 52 uker + 6 måneder tilbakejustering
+        const val tidsBufferUkerStans = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
+        const val modnedGrenseVedtak = 64L
+        const val modnedGrenseTilbakebetaling = 36L
         const val modnedGrenseKlageInnvilget = 6L
         const val modnedGrenseSpesialOgSim = 3L
+        const val tidsBufferUkerAnke = 24L // 6 uker + saksbehandling/kø i Arena
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, nåDato: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
+            val tidsBufferAnker = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerAnke))
             val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
             val vedtakModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseVedtak))
             val tilbakebetalingModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseTilbakebetaling))
@@ -216,6 +226,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 // S3: anker
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
+                preparedStatement.setDate(p++, tidsBufferAnker)
                 // S4: tilbakebetalinger
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, tilbakebetalingModnedGrense)
@@ -239,6 +250,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
+            registrertDato = fraDato(row.getDate("reg_dato"))
         )
 
     }

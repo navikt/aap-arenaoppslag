@@ -16,6 +16,7 @@ data class ArenaVedtak(
     val sakId: String,
     val statusKode: String,
     val vedtaktypeKode: String?,
+    val registrertDato: LocalDate?,
     val fraOgMed: LocalDate?,
     val tilDato: LocalDate?,
     val rettighetkode: String,
