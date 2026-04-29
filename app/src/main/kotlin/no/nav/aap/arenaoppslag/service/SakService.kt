@@ -17,10 +17,10 @@ class SakService(private val sakRepository: SakRepository) {
         CaffeineCacheMetrics.monitor(prometheus, sakerCache, "arenaoppslag_saker_per_person")
     }
 
-    fun hentSakerForPerson(fodselsnumre: Set<String>): SakerResponse {
-        val cacheNokkel = fodselsnumre.sorted().joinToString(",")
+    fun hentSakerForPerson(personidentifikatorer: Set<String>): SakerResponse {
+        val cacheNokkel = personidentifikatorer.sorted().joinToString(",")
         return sakerCache.get(cacheNokkel) {
-            val saker: List<ArenaSakOppsummering> = sakRepository.hentSakerForPersnNummere(fodselsnumre)
+            val saker: List<ArenaSakOppsummering> = sakRepository.hentSakerForPerson(personidentifikatorer)
             SakerResponse(saker = saker.map { it.tilKontrakt() })
         }
     }

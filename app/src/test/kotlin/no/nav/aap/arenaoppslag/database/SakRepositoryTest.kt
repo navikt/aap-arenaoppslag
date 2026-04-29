@@ -45,18 +45,20 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
             aar = 2021,
             antallVedtak = 1,
             sakstype = "Arbeidsavklaringspenger",
+            statuskode = "INAKT",
+            statusnavn = "Inaktiv",
             regDato = LocalDate.of(2022, 2, 2),
             avsluttetDato = null,
         )
         val sakRepository = SakRepository(h2)
-        val saker = sakRepository.hentSakerForPersnNummere(setOf("123"))
+        val saker = sakRepository.hentSakerForPerson(setOf("123"))
         assertThat(saker).containsExactly(forventetSak)
     }
 
     @Test
     fun `hentSakerForPersnNummere returnerer tom liste for ukjent person`() {
         val sakRepository = SakRepository(h2)
-        val saker = sakRepository.hentSakerForPersnNummere(setOf("007"))
+        val saker = sakRepository.hentSakerForPerson(setOf("007"))
         assertThat(saker).isEmpty()
     }
 
@@ -64,7 +66,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
     fun `hentSakerForPersnNummere returnerer tom liste for person uten saker`() {
         // Person "ingenvedtak" (person_id=3) er registrert uten noen saker
         val sakRepository = SakRepository(h2)
-        val saker = sakRepository.hentSakerForPersnNummere(setOf("ingenvedtak"))
+        val saker = sakRepository.hentSakerForPerson(setOf("ingenvedtak"))
         assertThat(saker).isEmpty()
     }
 
@@ -77,6 +79,8 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 aar = 2020,
                 antallVedtak = 2,
                 sakstype = "Arbeidsavklaringspenger",
+                statuskode = "INAKT",
+                statusnavn = "Inaktiv",
                 regDato = LocalDate.of(2020, 1, 15),
                 avsluttetDato = null,
             ),
@@ -86,19 +90,21 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 aar = 2023,
                 antallVedtak = 1,
                 sakstype = "Arbeidsavklaringspenger",
+                statuskode = "INAKT",
+                statusnavn = "Inaktiv",
                 regDato = LocalDate.of(2023, 3, 1),
                 avsluttetDato = LocalDate.of(2023, 12, 31),
             ),
         )
         val sakRepository = SakRepository(h2)
-        val saker = sakRepository.hentSakerForPersnNummere(setOf("tosaker"))
+        val saker = sakRepository.hentSakerForPerson(setOf("tosaker"))
         assertThat(saker).containsExactlyInAnyOrderElementsOf(forventedeSaker)
     }
 
     @Test
     fun `hentSakerForPersnNummere returnerer saker for flere personer i ett kall`() {
         val sakRepository = SakRepository(h2)
-        val saker = sakRepository.hentSakerForPersnNummere(setOf("123", "tosaker"))
+        val saker = sakRepository.hentSakerForPerson(setOf("123", "tosaker"))
         // "123" har 1 sak, "tosaker" har 2 saker - totalt 3 saker
         assertThat(saker).hasSize(3)
         assertThat(saker.map { it.sakId }).containsExactlyInAnyOrder("1", "901", "902")
@@ -107,7 +113,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
     @Test
     fun `hentSakerForPersnNummere returnerer tom liste naar settet er tomt`() {
         val sakRepository = SakRepository(h2)
-        val saker = sakRepository.hentSakerForPersnNummere(emptySet())
+        val saker = sakRepository.hentSakerForPerson(emptySet())
         assertThat(saker).isEmpty()
     }
 }

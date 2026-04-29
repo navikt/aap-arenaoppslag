@@ -11,6 +11,8 @@ data class ArenaSakOppsummering(
     val aar: Int,
     val antallVedtak: Int,
     val sakstype: String?,
+    val statuskode: String,
+    val statusnavn: String,
     val regDato: LocalDate,
     val avsluttetDato: LocalDate?,
 ) {
@@ -22,6 +24,8 @@ data class ArenaSakOppsummering(
         sakstype = sakstype,
         regDato = regDato,
         avsluttetDato = avsluttetDato,
+        statuskode = statuskode,
+        statusnavn = statusnavn,
     )
 }
 
