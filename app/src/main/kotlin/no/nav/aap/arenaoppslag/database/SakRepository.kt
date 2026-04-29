@@ -18,10 +18,10 @@ class SakRepository(private val dataSource: DataSource) {
     }
 
 
-    fun hentSakerForPersnNummere(fodselsnumre: Set<String>): List<ArenaSakOppsummering> {
-        if (fodselsnumre.isEmpty()) return emptyList()
+    fun hentSakerForPerson(personidentifikatorerForPerson: Set<String>): List<ArenaSakOppsummering> {
+        if (personidentifikatorerForPerson.isEmpty()) return emptyList()
         return dataSource.connection.use { con ->
-            selectSakerForPersoner(fodselsnumre, con)
+            selectSakerForPersoner(personidentifikatorerForPerson, con)
         }
     }
 
@@ -82,6 +82,8 @@ class SakRepository(private val dataSource: DataSource) {
             sakstype = row.getString("sakstypenavn"),
             regDato = row.getDate("reg_dato").toLocalDate(),
             avsluttetDato = row.getDate("dato_avsluttet")?.toLocalDate(),
+            statusnavn = row.getString("sakstatusnavn"),
+            statuskode = row.getString("sakstatuskode"),
         )
 
         @Language("OracleSql")
@@ -97,13 +99,15 @@ class SakRepository(private val dataSource: DataSource) {
         @Language("OracleSql")
         internal val selectSakerMedAntallVedtakForFnrListe = """
             SELECT sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
-                COUNT(vedtak.vedtak_id) AS antall_vedtak
+                sak.sakstatuskode, sakstatus.sakstatusnavn, COUNT(vedtak.vedtak_id) AS antall_vedtak
             FROM SAK
             JOIN person ON person.person_id = sak.objekt_id
             JOIN sakstype ON sakstype.sakskode = sak.sakskode
+            LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
             LEFT JOIN vedtak ON vedtak.sak_id = sak.sak_id
             WHERE person.fodselsnr IN ($FNR_LISTE_TOKEN) AND sak.tabellnavnalias = 'PERS'
-            GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet
+            GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
+                sak.sakstatuskode, sakstatus.sakstatusnavn
         """.trimIndent()
     }
 
