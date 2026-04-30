@@ -105,6 +105,7 @@ class SakRepository(private val dataSource: DataSource) {
             JOIN sakstype ON sakstype.sakskode = sak.sakskode
             LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
             LEFT JOIN vedtak ON vedtak.sak_id = sak.sak_id
+                AND (vedtak.fra_dato <= vedtak.til_dato OR vedtak.til_dato IS NULL)
             WHERE person.fodselsnr IN ($FNR_LISTE_TOKEN) AND sak.tabellnavnalias = 'PERS'
             GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
                 sak.sakstatuskode, sakstatus.sakstatusnavn
