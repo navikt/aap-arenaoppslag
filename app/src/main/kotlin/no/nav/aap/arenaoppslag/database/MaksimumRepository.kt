@@ -74,7 +74,9 @@ class MaksimumRepository(
                         tilOgMedDato = fraDato(row.getDate("til_dato")),
                     ),
                     beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
+                    barnetillegg = vedtakFakta.barntill,
                     barnMedStonad = vedtakFakta.barnmston,
+                    barnetilleggsats = vedtakFakta.satsbarntg,
                     justertG = vedtakFakta.justertg,
                     vedtaksTypeKode = vedtaktypekode,
                     vedtaksTypeNavn = VedtaksType.entries.find { it.kode == vedtaktypekode }?.navn
@@ -158,15 +160,17 @@ class MaksimumRepository(
                 barntill = 0,
                 dags = 0,
                 barnmston = 0,
+                satsbarntg = 0,
                 dagsfsam = 0,
                 justertg = null
             )
             resultSet.map { row ->
                 when (row.getString("vedtakfaktakode")) {
                     "DAGSMBT" -> vedtakfakta.dagsmbt = row.getInt("vedtakverdi")
-                    "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
                     "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
+                    "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
                     "BARNMSTON" -> vedtakfakta.barnmston = row.getInt("vedtakverdi")
+                    "SATSBARNTG" -> vedtakfakta.satsbarntg = row.getInt("vedtakverdi")
                     "DAGSFSAM" -> vedtakfakta.dagsfsam = row.getInt("vedtakverdi")
                     "JUSTERTG" -> vedtakfakta.justertg = row.getString("vedtakverdi")
                 }
@@ -230,7 +234,7 @@ class MaksimumRepository(
     private val hentVedtakfakta = """
         SELECT vedtakfaktakode, vedtakverdi
           FROM vedtakfakta 
-         WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS', 'BARNMSTON', 'DAGSFSAM', 'JUSTERTG')
+         WHERE vedtak_id = ? AND vedtakfaktakode IN ('DAGSMBT', 'BARNTILL', 'DAGS', 'BARNMSTON', 'DAGSFSAM', 'JUSTERTG', 'SATSBARNTG')
     """.trimIndent()
 
     // Oracle støtter ikke listeparametere i PreparedStatement, så meldekort-IDer interpoleres direkte.

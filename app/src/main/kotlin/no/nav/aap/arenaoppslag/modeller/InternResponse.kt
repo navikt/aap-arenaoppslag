@@ -18,8 +18,9 @@ data class Periode(
 
 data class VedtakFakta(
     var dagsmbt: Int,
-    var barntill: Int,
     var dags: Int,
+    var barntill: Int,
+    var satsbarntg: Int,
     var barnmston: Int,
     var dagsfsam: Int,
     var justertg: String?,

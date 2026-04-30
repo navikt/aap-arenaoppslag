@@ -17,6 +17,8 @@ public data class Vedtak(
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode
     val beregningsgrunnlag: Int,
     val barnMedStonad: Int,
+    val barnetillegg: Int,
+    val barnetilleggsats: Int,
     val justertG: String?,
 )
 
