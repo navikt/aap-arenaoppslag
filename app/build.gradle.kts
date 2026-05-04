@@ -3,12 +3,12 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.4.1"
-    id("io.ktor.plugin") version "3.4.2"
+    id("io.ktor.plugin") version "3.4.3"
     //id("dev.detekt") temporary disabled - missing support for our kotlin-version
     application
 }
 
-val ktorVersion = "3.4.2"
+val ktorVersion = "3.4.3"
 
 application {
     mainClass.set("no.nav.aap.arenaoppslag.AppKt")
@@ -46,7 +46,7 @@ dependencies {
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
     implementation("io.micrometer:micrometer-registry-prometheus:1.16.5")
     implementation("ch.qos.logback:logback-classic:1.5.32")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
@@ -59,7 +59,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:10.9")
-    testImplementation("org.flywaydb:flyway-core:12.3.0")
+    testImplementation("org.flywaydb:flyway-core:12.5.0")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.3.232") // nyeste versjon offisielt støttet av flyway 12.0.3
