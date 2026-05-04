@@ -21,13 +21,15 @@ data class Vedtak(
     val status: String, //Hypotese, vedtaksstatuskode
     val saksnummer: String, //hypotese sak_id
     val vedtaksdato: String, //reg_dato
-    val vedtaksTypeKode:String,
+    val vedtaksTypeKode: String,
     val vedtaksTypeNavn: String,
     val periode: Periode,
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode
     val beregningsgrunnlag: Int,
     val barnMedStonad: Int,
     val justertG: String?,
+    val barnetillegg: Int,
+    val barnetilleggsats: Int,
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak {
         return no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak(
@@ -41,6 +43,8 @@ data class Vedtak(
             rettighetsType = rettighetsType,
             beregningsgrunnlag = beregningsgrunnlag,
             barnMedStonad = barnMedStonad,
+            barnetillegg = barnetillegg,
+            barnetilleggsats = barnetilleggsats,
             vedtaksTypeKode = vedtaksTypeKode,
             vedtaksTypeNavn = vedtaksTypeNavn,
             justertG = justertG,
