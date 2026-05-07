@@ -26,7 +26,7 @@ class SakService(private val sakRepository: SakRepository) {
         }
     }
 
-    fun hentMaksdatoForSaker(sakidliste: Set<Int>): MaksdatoResponse {
+    fun hentMaksdatoOgSisteVedtak(sakidliste: Set<Int>): MaksdatoResponse {
         val sakerMedVedtak = sakRepository.hentSakerMedMaksDatoOgVedtak(sakidliste)
         return MaksdatoResponse(sakerMedVedtak.map { it.tilKontrakt() })
     }

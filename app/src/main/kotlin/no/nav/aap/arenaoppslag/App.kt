@@ -20,6 +20,7 @@ import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.database.PosteringRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
@@ -31,6 +32,7 @@ import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import org.slf4j.LoggerFactory
@@ -95,7 +97,9 @@ fun Application.server(
     val sakService = skapSakervice(datasource)
     val telleverkService = skapTelleverkService(datasource)
     val sakListeService = skapSakListeService(datasource)
-    routes(internService, historikkService, sakService, telleverkService, sakListeService, pdlGateway)
+    val utbetalingService = skapUtbetalingService(datasource)
+    routes(internService, historikkService, sakService, telleverkService, sakListeService, pdlGateway,
+        utbetalingService)
     databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
@@ -170,14 +174,19 @@ private fun skapTelleverkService(datasource: DataSource): TelleverkService {
     return TelleverkService(telleverkRepository)
 }
 
+private fun skapUtbetalingService(datasource: DataSource): PosteringService {
+    val posteringRepository = PosteringRepository(datasource)
+    return PosteringService(posteringRepository)
+}
+
 private fun Application.routes(
     internService: InternService,
     historikkService: HistorikkService,
     sakOgVedtakService: SakOgVedtakService,
     telleverkService: TelleverkService,
     sakService: SakService,
-    pdlGateway: IPdlGateway
-
+    pdlGateway: IPdlGateway,
+    utbetalingService: PosteringService
 ) {
     routing {
         actuator(prometheus)
@@ -196,6 +205,7 @@ private fun Application.routes(
                 telleverk(telleverkService, pdlGateway)
                 sakerForPerson(sakService, pdlGateway)
                 maksdato(sakService)
+                utbetalinger(utbetalingService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
