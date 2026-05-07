@@ -48,7 +48,7 @@ public data class VedtakMedMaksdato(
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
 
 public data class SisteUtbetalingerRequest(
-    val fodselsnummer: String
+    val saker: List<Int>
 )
 
 public data class SisteUtbetalingerResponse(val sakliste: List<SakMedSisteUtbetaling>)
