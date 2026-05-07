@@ -27,7 +27,7 @@ class SakRepository(private val dataSource: DataSource) {
     fun finnMaksdatoer(sakidliste: Set<Int>): List<Maksdatolinje> {
         if (sakidliste.isEmpty()) return emptyList()
         return dataSource.connection.use { con ->
-            vedtakMedNyesteMaxdatoForSakerMedUnntak(sakidliste, con)
+            vedtakMedNyesteMaxdato(sakidliste, con)
         }
     }
 
@@ -35,9 +35,9 @@ class SakRepository(private val dataSource: DataSource) {
         private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
         private const val SAK_LISTE_TOKEN = "?:sak_id"
 
-        private fun vedtakMedNyesteMaxdatoForSakerMedUnntak(sakidliste: Set<Int>, connection: Connection): List<Maksdatolinje> {
+        private fun vedtakMedNyesteMaxdato(sakidliste: Set<Int>, connection: Connection): List<Maksdatolinje> {
             val alleSakId = sakidliste.joinToString(separator = ",") { "'$it'" }
-            val query = selectVedtakMedNyesteMaxdatoForSakerMedUnntak.replace(SAK_LISTE_TOKEN, alleSakId)
+            val query = selectVedtakMedNyesteMaxdato.replace(SAK_LISTE_TOKEN, alleSakId)
 
             connection.prepareStatement(query).use { preparedStatement ->
                 val resultSet = preparedStatement.executeQuery()
@@ -52,8 +52,12 @@ class SakRepository(private val dataSource: DataSource) {
                 vedtakId = row.getInt("vedtak_id"),
                 aktfaseKode = row.getString("aktfasekode"),
                 vedtaktypeKode = row.getString("vedtaktypekode"),
-                fraDato = row.getDate("fra_dato")?.toLocalDate(),
-                maxUnntakDato = row.getDate("max_unntak_dato")?.toLocalDate()
+                fra = row.getDate("fra_dato")?.toLocalDate(),
+                maxUnntakTil = row.getDate("max_unntak_dato")?.toLocalDate(),
+                utvidetKvoteInnvilgetFra = row.getDate("unntaksdato")?.toLocalDate(),
+                sak_registrert = row.getDate("sak_registrert_dato")?.toLocalDate(),
+                sak_avsluttet = row.getDate("sak_avsluttet_dato")?.toLocalDate(),
+                sak_status = row.getString("sak_statuskode")
             )
 
         private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnumre: Set<String>): String {
@@ -139,30 +143,31 @@ class SakRepository(private val dataSource: DataSource) {
         """.trimIndent()
 
         @Language("OracleSql")
-        internal val selectVedtakMedNyesteMaxdatoForSakerMedUnntak = """
-            -- Hent først nyeste vedtak hvor dato for forlengelse etter 11-12 er satt, for hver av sakene 
+        internal val selectVedtakMedNyesteMaxdato = """
+            -- Hent først nyeste vedtak for hver av sakene 
             WITH nyeste_vedtak AS (
-                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, fra_dato FROM (
+                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, unntaksdato, fra_dato FROM (
                     SELECT v.sak_id,
                         v.vedtak_id,
                         v.vedtaktypekode,
                         v.aktfasekode,
                         v.fra_dato,
+                        CASE WHEN vf.vedtakverdi IS NOT NULL THEN TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') END as unntaksdato, -- er bare satt dersom 11-12 unntak er innvilget                        
                         ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') DESC, v.vedtak_id DESC) as rn
                     FROM vedtak v
-                        JOIN SAK s on s.sak_id = v.sak_id
                         JOIN VEDTAKFAKTA vf on v.vedtak_id = vf.vedtak_id
-                    WHERE s.SAKSTATUSKODE = 'AKTIV' -- kun aktive saker teller med
-                        AND v.sak_id in ($SAK_LISTE_TOKEN)
+                    WHERE v.sak_id in ($SAK_LISTE_TOKEN)
                         AND v.rettighetkode = 'AAP'
                         AND vf.vedtakfaktakode = 'AAPVILKUNN'
-                        AND vf.vedtakverdi IS NOT NULL -- er bare satt dersom 11-12 unntak er innvilget
                         AND v.vedtaktypekode != 'S' -- stansede vedtak sin maxdato er ikke meningsfull
                 ) WHERE rn = 1
             )
-            SELECT nv.sak_id, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, vmd.max_unntak_dato
+            SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
+                nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, 
+                vmd.max_unntak_dato
             FROM nyeste_vedtak nv
             JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
+            JOIN sak s on s.sak_id = nv.sak_id
         """.trimIndent()
 
     }

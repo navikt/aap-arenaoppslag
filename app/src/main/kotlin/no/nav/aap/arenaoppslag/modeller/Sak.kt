@@ -45,11 +45,15 @@ data class Maksdatolinje(
     val vedtakId: Int,
     val aktfaseKode: String,
     val vedtaktypeKode: String,
-    val fraDato: LocalDate?,
-    val maxUnntakDato: LocalDate?,
+    val fra: LocalDate?,
+    val maxUnntakTil: LocalDate?,
+    val utvidetKvoteInnvilgetFra: LocalDate?,
+    val sak_registrert: LocalDate?,
+    val sak_avsluttet: LocalDate?,
+    val sak_status: String,
     ) {
     fun tilKontrakt() =
-        no.nav.aap.arenaoppslag.kontrakt.apiv1.Maksdatolinje(this.sakId, this.vedtakId, aktfaseKode, vedtaktypeKode, fraDato, maxUnntakDato)
+        no.nav.aap.arenaoppslag.kontrakt.apiv1.Maksdatolinje(this.sakId, this.vedtakId, aktfaseKode, vedtaktypeKode, fra, maxUnntakTil, utvidetKvoteInnvilgetFra)
 }
 
 data class ArenaSakMedVedtak (

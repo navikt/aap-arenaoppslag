@@ -26,7 +26,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
             lopenr = 1,
             statuskode = "AKTIV",
             statusnavn = "Aktiv",
-            registrertDato = LocalDate.of(2022, 2, 2).atStartOfDay(),
+            registrertDato = LocalDate.of(2022, 2, 1).atStartOfDay(),
             avsluttetDato = null,
             person = ArenaSakPerson(
                 personId = 1,
@@ -55,7 +55,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
             sakstype = "Arbeidsavklaringspenger",
             statuskode = "AKTIV",
             statusnavn = "Aktiv",
-            regDato = LocalDate.of(2022, 2, 2),
+            regDato = LocalDate.of(2022, 2, 1),
             avsluttetDato = null,
         )
         val saker = sakRepository.hentSakerForPerson(setOf("123"))
@@ -124,11 +124,21 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
         val forventet = listOf(
             Maksdatolinje(
                 2, 1335, "IKKE", "O",
-                LocalDate.of(2010, 8, 29), LocalDate.of(2026, 6, 30)
+                LocalDate.of(2010, 8, 29),
+                LocalDate.of(2026, 6, 30),
+                LocalDate.of(2025, 6, 30),
+                sak_registrert = LocalDate.of(2022,2,2),
+                sak_avsluttet = null,
+                sak_status = "AKTIV"
             ),
             Maksdatolinje(
                 3, 30, "IKKE", "O",
-                LocalDate.of(2022, 8, 30), LocalDate.of(2025, 12, 31)
+                LocalDate.of(2022, 8, 30),
+                LocalDate.of(2025, 12, 31),
+                LocalDate.of(2025, 6, 30),
+                sak_registrert = LocalDate.of(2022,2,3),
+                sak_avsluttet = null,
+                sak_status = "AKTIV"
             )
         )
         val saker = sakRepository.finnMaksdatoer(setOf(1, 2, 3))

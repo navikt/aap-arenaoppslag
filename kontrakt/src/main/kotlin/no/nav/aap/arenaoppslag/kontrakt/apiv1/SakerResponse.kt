@@ -31,8 +31,9 @@ public data class Maksdatolinje(
     val vedtakId: Int,
     val aktfaseKode: String,
     val vedtaktypeKode: String,
-    val fraDato: LocalDate?,
-    val maxUnntakDato: LocalDate?
+    val fra: LocalDate?,
+    val maxUnntakTil: LocalDate?,
+    val utvidetKvoteInnvilgetFra: LocalDate?,
 )
 
 public data class MaksdatoResponse(val sakliste: List<Maksdatolinje>)
