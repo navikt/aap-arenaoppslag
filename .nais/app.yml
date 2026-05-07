@@ -56,6 +56,9 @@ spec:
         - application: azure-token-generator
           cluster: dev-gcp
           namespace: nais
+        - application: postmottak-backend
+          cluster: dev-gcp
+          namespace: nais
         {{/if}}
     outbound:
       rules:
