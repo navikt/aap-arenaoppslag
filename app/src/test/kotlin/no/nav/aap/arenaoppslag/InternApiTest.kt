@@ -119,7 +119,7 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
                 )
             )
 
-            assertThat(maksdatoForKjenteSaker.sakliste.map { it.vedtakId }).isEqualTo(listOf(1335, 30))
+            assertThat(maksdatoForKjenteSaker.sakliste.map { it.sisteVedtak.vedtakId }).isEqualTo(listOf(1335, 30))
         }
     }
 

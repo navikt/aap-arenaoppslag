@@ -48,15 +48,31 @@ data class Maksdatolinje(
     val fra: LocalDate?,
     val maxUnntakTil: LocalDate?,
     val utvidetKvoteInnvilgetFra: LocalDate?,
-    val sak_registrert: LocalDate?,
-    val sak_avsluttet: LocalDate?,
-    val sak_status: String,
-    ) {
+    val sakRegistrert: LocalDate,
+    val sakAvsluttet: LocalDate?,
+    val sakStatus: String,
+) {
     fun tilKontrakt() =
-        no.nav.aap.arenaoppslag.kontrakt.apiv1.Maksdatolinje(this.sakId, this.vedtakId, aktfaseKode, vedtaktypeKode, fra, maxUnntakTil, utvidetKvoteInnvilgetFra)
+        no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato(
+            sakId, sakStatus, sakRegistrert, sakAvsluttet,
+            harInnvilget11_12(),
+            utredesForUforStatus(),
+            erLopendeStatus(),
+            no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato(
+                vedtakId,
+                aktfaseKode,
+                vedtaktypeKode,
+                fra,
+                maxUnntakTil
+            )
+        )
+
+    fun erLopendeStatus() = sakStatus == "AKTIV" && vedtaktypeKode in listOf("O", "E", "G")
+    fun utredesForUforStatus() = aktfaseKode == "UVUP"
+    fun harInnvilget11_12() = utvidetKvoteInnvilgetFra != null
 }
 
-data class ArenaSakMedVedtak (
+data class ArenaSakMedVedtak(
     val sakId: String,
     val opprettetAar: Int,
     val lopenr: Int,
@@ -68,7 +84,7 @@ data class ArenaSakMedVedtak (
     val vedtak: List<ArenaVedtakMedDetaljer>
 )
 
-data class ArenaSakPerson (
+data class ArenaSakPerson(
     val personId: Int,
     val fodselsnummer: String,
     val fornavn: String,

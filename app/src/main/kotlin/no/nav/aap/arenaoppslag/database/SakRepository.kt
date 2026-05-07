@@ -24,10 +24,10 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun finnMaksdatoer(sakidliste: Set<Int>): List<Maksdatolinje> {
+    fun hentSakerMedMaksDatoOgVedtak(sakidliste: Set<Int>): List<Maksdatolinje> {
         if (sakidliste.isEmpty()) return emptyList()
         return dataSource.connection.use { con ->
-            vedtakMedNyesteMaxdato(sakidliste, con)
+            selectSakerMedNyesteVedtakOgMaxdato(sakidliste, con)
         }
     }
 
@@ -35,7 +35,7 @@ class SakRepository(private val dataSource: DataSource) {
         private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
         private const val SAK_LISTE_TOKEN = "?:sak_id"
 
-        private fun vedtakMedNyesteMaxdato(sakidliste: Set<Int>, connection: Connection): List<Maksdatolinje> {
+        private fun selectSakerMedNyesteVedtakOgMaxdato(sakidliste: Set<Int>, connection: Connection): List<Maksdatolinje> {
             val alleSakId = sakidliste.joinToString(separator = ",") { "'$it'" }
             val query = selectVedtakMedNyesteMaxdato.replace(SAK_LISTE_TOKEN, alleSakId)
 
@@ -55,9 +55,9 @@ class SakRepository(private val dataSource: DataSource) {
                 fra = row.getDate("fra_dato")?.toLocalDate(),
                 maxUnntakTil = row.getDate("max_unntak_dato")?.toLocalDate(),
                 utvidetKvoteInnvilgetFra = row.getDate("unntaksdato")?.toLocalDate(),
-                sak_registrert = row.getDate("sak_registrert_dato")?.toLocalDate(),
-                sak_avsluttet = row.getDate("sak_avsluttet_dato")?.toLocalDate(),
-                sak_status = row.getString("sak_statuskode")
+                sakRegistrert = row.getDate("sak_registrert_dato").toLocalDate(),
+                sakAvsluttet = row.getDate("sak_avsluttet_dato")?.toLocalDate(),
+                sakStatus = row.getString("sak_statuskode")
             )
 
         private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnumre: Set<String>): String {

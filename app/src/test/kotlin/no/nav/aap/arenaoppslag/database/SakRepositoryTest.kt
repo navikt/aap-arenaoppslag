@@ -127,34 +127,34 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 LocalDate.of(2010, 8, 29),
                 LocalDate.of(2026, 6, 30),
                 LocalDate.of(2025, 6, 30),
-                sak_registrert = LocalDate.of(2022,2,2),
-                sak_avsluttet = null,
-                sak_status = "AKTIV"
+                sakRegistrert = LocalDate.of(2022,2,2),
+                sakAvsluttet = null,
+                sakStatus = "AKTIV"
             ),
             Maksdatolinje(
                 3, 30, "IKKE", "O",
                 LocalDate.of(2022, 8, 30),
                 LocalDate.of(2025, 12, 31),
                 LocalDate.of(2025, 6, 30),
-                sak_registrert = LocalDate.of(2022,2,3),
-                sak_avsluttet = null,
-                sak_status = "AKTIV"
+                sakRegistrert = LocalDate.of(2022,2,3),
+                sakAvsluttet = null,
+                sakStatus = "AKTIV"
             )
         )
-        val saker = sakRepository.finnMaksdatoer(setOf(1, 2, 3))
+        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(setOf(1, 2, 3))
         assertThat(saker).hasSize(2)
         assertThat(saker).containsAll(forventet) // mappingen testes
     }
 
     @Test
     fun `hent maksdato paa saker gir tom liste for tom liste`() {
-        val saker = sakRepository.finnMaksdatoer(emptySet())
+        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(emptySet())
         assertThat(saker).isEmpty()
     }
 
     @Test
     fun `hent maksdato paa saker finner ikke data som mangler`() {
-        val saker = sakRepository.finnMaksdatoer(setOf(4020))
+        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(setOf(4020))
         assertThat(saker).isEmpty()
     }
 }
