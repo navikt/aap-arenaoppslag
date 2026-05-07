@@ -1,0 +1,18 @@
+-- finnes ikke, mangler vedtakfakta
+insert into V_VEDTAK_MAXDATO (VEDTAK_ID, MAX_DATO, MAX_UNNTAK_DATO)
+values (1234, DATE '2025-06-30', DATE '2026-06-30'),
+       (4321, DATE '2024-12-31', DATE '2025-12-31');
+
+-- finnes
+insert into V_VEDTAK_MAXDATO (VEDTAK_ID, MAX_DATO, MAX_UNNTAK_DATO)
+values
+    (1334, DATE '2025-05-30', DATE '2026-05-30'),
+    (1335, DATE '2025-06-30', DATE '2026-06-30'),
+    (30, DATE '2024-12-31', DATE '2025-12-31');
+
+insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI)
+values (1334, 'AAPVILKUNN', '30-06-2025'),
+       (1335, 'AAPVILKUNN', '30-06-2025'),
+       (30, 'AAPVILKUNN', '30-06-2025'),
+       (29, 'AAPVILKUNN', '30-06-2025');
+

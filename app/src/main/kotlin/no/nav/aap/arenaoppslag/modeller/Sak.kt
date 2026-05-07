@@ -40,7 +40,39 @@ data class ArenaSak(
     val avsluttetDato: LocalDateTime?,
 )
 
-data class ArenaSakMedVedtak (
+data class Maksdatolinje(
+    val sakId: Int,
+    val vedtakId: Int,
+    val aktfaseKode: String,
+    val vedtaktypeKode: String,
+    val fra: LocalDate?,
+    val maxUnntakTil: LocalDate?,
+    val utvidetKvoteInnvilgetFra: LocalDate?,
+    val sakRegistrert: LocalDate,
+    val sakAvsluttet: LocalDate?,
+    val sakStatus: String,
+) {
+    fun tilKontrakt() =
+        no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato(
+            sakId, sakStatus, sakRegistrert, sakAvsluttet,
+            harInnvilget11_12(),
+            utredesForUforStatus(),
+            erLopendeStatus(),
+            no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato(
+                vedtakId,
+                aktfaseKode,
+                vedtaktypeKode,
+                fra,
+                maxUnntakTil
+            )
+        )
+
+    fun erLopendeStatus() = sakStatus == "AKTIV" && vedtaktypeKode in listOf("O", "E", "G")
+    fun utredesForUforStatus() = aktfaseKode == "UVUP"
+    fun harInnvilget11_12() = utvidetKvoteInnvilgetFra != null
+}
+
+data class ArenaSakMedVedtak(
     val sakId: String,
     val opprettetAar: Int,
     val lopenr: Int,
@@ -52,7 +84,7 @@ data class ArenaSakMedVedtak (
     val vedtak: List<ArenaVedtakMedDetaljer>
 )
 
-data class ArenaSakPerson (
+data class ArenaSakPerson(
     val personId: Int,
     val fodselsnummer: String,
     val fornavn: String,

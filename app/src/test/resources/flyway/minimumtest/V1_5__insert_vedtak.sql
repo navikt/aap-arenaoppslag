@@ -5,8 +5,8 @@ values (1, '123', 'Bestesen', 'Test');
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
                  DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
                  AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
-values ('1', 'AA', DATE '2022-02-02', 'IMB0826', DATE '2025-02-22',
-        'MM0826', 'PERS', '1', '2021', '1', null, 'INAKT', null, null, null, 'IMB0826', '0826', 1,
+values ('1', 'AA', DATE '2022-02-01', 'IMB0826', DATE '2025-02-22',
+        'MM0826', 'PERS', '1', '2021', '1', null, 'AKTIV', null, null, null, 'IMB0826', '0826', 1,
         DATE '2025-02-22', null, 'N');
 
 insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
@@ -22,7 +22,7 @@ Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABEL
                  DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
                  AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
 values ('2', 'AA', DATE '2022-02-02', 'IMB0826', DATE '2025-02-22',
-        'MM0826', 'PERS', '2', '2021', '2', null, 'INAKT', null, null, null, 'IMB0826', '0826', null,
+        'MM0826', 'PERS', '2', '2021', '2', null, 'AKTIV', null, null, null, 'IMB0826', '0826', null,
         DATE '2025-02-22', null, 'N');
 
 insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
@@ -64,23 +64,23 @@ values (5, 'somevalid', 'Blanding Von', 'Vedtak');
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
                  DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
                  AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
-values ('3', 'AA', DATE '2022-02-02', 'IMB0826', DATE '2025-02-22',
-        'MM0826', 'PERS', '5', '2021', '3', null, 'INAKT', null, null, null, 'IMB0826', '0826', null,
+values ('3', 'AA', DATE '2022-02-03', 'IMB0826', DATE '2025-02-22',
+        'MM0826', 'PERS', '5', '2021', '3', null, 'AKTIV', null, null, null, 'IMB0826', '0826', null,
         DATE '2025-02-22', null, 'N');
 
 insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID, FRA_DATO,
                     TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
-values ('27', 3, 'KONT', 'O', 'JA', 'AAP', '5', DATE '2022-08-27',
+values (27, 3, 'KONT', 'O', 'JA', 'AAP', '5', DATE '2022-08-27',
         DATE '2023-02-04', '4402', 3, '2021', 8, 'IKKE', DATE '2022-08-27'),
-       ('28', 3, 'IVERK', 'N', 'JA', 'AAP', '5', DATE '2022-08-28',
+       (28, 3, 'IVERK', 'N', 'JA', 'AAP', '5', DATE '2022-08-28',
         DATE '2023-02-04', '4402', 3, '2021', 9, 'IKKE', DATE '2022-08-27'),
-       ('29', 3, 'IVERK', 'O', 'NEI', 'AAP', '5', DATE '2022-08-29',
+       (29, 3, 'IVERK', 'O', 'NEI', 'AAP', '5', DATE '2022-08-29',
         DATE '2023-02-04', '4402', 3, '2021', 10, 'IKKE', DATE '2022-08-27'),
        -- gyldig vedtak i denne sammenhengen:
-       ('30', 3, 'IVERK', 'O', 'JA', 'AAP', '5', DATE '2022-08-30',
+       (30, 3, 'IVERK', 'O', 'JA', 'AAP', '5', DATE '2022-08-30',
         DATE '2023-02-04', '4402', 3, '2021', 12, 'IKKE', DATE '2022-08-27'),
 
-       ('31', 3, 'IVERK', 'O', 'JA', 'OOP', '5', DATE '2022-08-31',
+       (31, 3, 'IVERK', 'O', 'JA', 'OOP', '5', DATE '2022-08-31',
         DATE '2023-02-04', '4402', 3, '2021', 11, 'IKKE', DATE '2022-08-27');
 
 
@@ -91,7 +91,7 @@ values (6, 'statuskode', 'Forskjellig', 'Status');
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
                  DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
                  AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
-values ('4', 'AA', DATE '2022-02-02', 'IMB0826', DATE '2025-02-22',
+values ('4', 'AA', DATE '2022-02-04', 'IMB0826', DATE '2025-02-22',
         'MM0826', 'PERS', '6', '2021', '4', null, 'INAKT', null, null, null, 'IMB0826', '0826', null,
         DATE '2025-02-22', null, 'N');
 
@@ -135,7 +135,7 @@ values (9, 'medrelatert', 'Relatert', 'Vedtaksen');
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
                  DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
                  AETATENHET_ANSVARLIG, OBJEKT_KODE, STATUS_ENDRET, PARTISJON, ER_UTLAND)
-values ('9', 'AA', DATE '2023-01-01', 'IMB0826', DATE '2025-02-22',
+values ('9', 'AA', DATE '2023-01-09', 'IMB0826', DATE '2025-02-22',
         'MM0826', 'PERS', '9', '2023', '9', null, 'AKTIV', null, null, null, 'IMB0826', '0826', null,
         DATE '2025-02-22', null, 'N');
 

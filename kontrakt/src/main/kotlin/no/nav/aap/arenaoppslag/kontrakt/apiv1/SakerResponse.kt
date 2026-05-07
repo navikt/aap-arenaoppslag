@@ -6,6 +6,10 @@ public data class SakerRequest(
     val personidentifikator: String
 )
 
+public data class MaksdatoRequest(
+    val saker: List<Int>
+)
+
 public data class SakerResponse(
     val saker: List<ArenaSakOppsummeringKontrakt>
 )
@@ -21,6 +25,27 @@ public data class ArenaSakOppsummeringKontrakt(
     val regDato: LocalDate,
     val avsluttetDato: LocalDate?,
 )
+
+public data class SakMedSisteVedtakOgMaksdato(
+    val sakId: Int,
+    val sakStatus: String,
+    val sakRegistrert: LocalDate,
+    val sakAvsluttet: LocalDate?,
+    val har_11_12_forlengelse: Boolean,
+    val utredesForUfor: Boolean,
+    val lopende: Boolean,
+    val sisteVedtak: VedtakMedMaksdato
+)
+
+public data class VedtakMedMaksdato(
+    val vedtakId: Int,
+    val aktfaseKode: String,
+    val vedtaktypeKode: String,
+    val fra: LocalDate?,
+    val maxUnntakTil: LocalDate?
+)
+
+public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
 
 // SakstypeKontrakt er foreløpig ikke i bruk, men beholdes for fremtidig bruk med enum-basert sakstype
 public enum class SakstypeKontrakt {
