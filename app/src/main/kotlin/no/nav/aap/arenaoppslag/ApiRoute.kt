@@ -16,8 +16,10 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.PosteringService
+import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
@@ -84,8 +86,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         when (val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak")
             else -> {
-                val fodselsnr = sak.person.fodselsnummer
-                val telleverk = telleverkService.hentTelleverkPåPerson(fodselsnr)
+                val telleverk  = telleverkService.hentTelleverkPåPerson(PersonId(sak.person.personId))
                 val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
 
                 call.respond(status = HttpStatusCode.OK, message = response)
@@ -95,20 +96,18 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
     }
 }
 
-fun Route.telleverk(telleverkService: TelleverkService, pdlGateway: IPdlGateway) {
+fun Route.telleverk(telleverkService: TelleverkService, personService: PersonService) {
     post("/telleverk") {
         logger.info("Henter telleverk")
         val request: TellerRequest = call.receive()
-        val fodselsnummer = request.personidentifikator
 
-        //TODO BRUK PDL for å finne andre personidentifikatorer knyttet til samme person
-        val alleIdenterForPerson = pdlGateway.hentAlleIdenterForPerson(fodselsnummer)
+        val personId = personService.hentPersonId(request.personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.InternalServerError, "Noe gikk galt ved henting av telleverk for person")
 
-        when (val telleverk = telleverkService.hentTelleverkPåPerson(fodselsnummer)) {
+        when (val telleverk = telleverkService.hentTelleverkPåPerson(personId)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")
             else -> call.respond(status = HttpStatusCode.OK, message = telleverk)
         }
-
     }
 }
 

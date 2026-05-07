@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.database;
 
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.intellij.lang.annotations.Language
 import javax.sql.DataSource;
 
@@ -14,17 +15,16 @@ class TelleverkRepository(private val datasource: DataSource) {
         internal val selectTelleverkPåPerson = """
             SELECT b.verdi, b.beregningsleddkode
             FROM BEREGNINGSLEDD b
-            JOIN PERSON p ON p.person_id = b.person_id
             WHERE b.tabellnavnalias_kilde = 'KVOTBR'
-              AND p.fodselsnr = ?
+              AND b.person_id = ?
               AND b.beregningsleddkode IN ('AAP', 'MAAPU')
         """.trimIndent()
     }
 
-    fun hentTelleverkPåPerson(fodselsnr: String): Set<KvoteVerdi> {
+    fun hentTelleverkPåPerson(personId: PersonId): Set<KvoteVerdi> {
         return datasource.connection.use { con ->
             con.prepareStatement(selectTelleverkPåPerson).use { preparedStatement ->
-                preparedStatement.setString(1, fodselsnr)
+                preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.map { row ->
                     KvoteVerdi(
@@ -36,4 +36,3 @@ class TelleverkRepository(private val datasource: DataSource) {
         }
     }
 }
-

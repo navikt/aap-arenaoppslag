@@ -32,6 +32,7 @@ import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
@@ -96,10 +97,12 @@ fun Application.server(
     val historikkService = skapHistorikkService(datasource)
     val sakService = skapSakervice(datasource)
     val telleverkService = skapTelleverkService(datasource)
+    val personService = skapPersonService(datasource, pdlGateway)
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
-    routes(internService, historikkService, sakService, telleverkService, sakListeService, pdlGateway,
-        utbetalingService)
+
+    routes(internService, historikkService, sakService, telleverkService, sakListeService,
+        pdlGateway, personService, utbetalingService)
     databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
@@ -143,8 +146,6 @@ private fun skapInternService(datasource: DataSource): InternService {
     val periodeRepository = PeriodeRepository(datasource)
     val maksimumRepository = MaksimumRepository(datasource)
     val vedtakRepository = VedtakRepository(datasource)
-    val telleverkRepository = TelleverkRepository(datasource)
-    val personRepository = PersonRepository(datasource)
 
     return InternService(maksimumRepository, periodeRepository, vedtakRepository)
 }
@@ -179,6 +180,11 @@ private fun skapUtbetalingService(datasource: DataSource): PosteringService {
     return PosteringService(posteringRepository)
 }
 
+private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): PersonService {
+    val personRepository = PersonRepository(datasource)
+    return PersonService(personRepository, pdlGateway)
+}
+
 private fun Application.routes(
     internService: InternService,
     historikkService: HistorikkService,
@@ -186,7 +192,9 @@ private fun Application.routes(
     telleverkService: TelleverkService,
     sakService: SakService,
     pdlGateway: IPdlGateway,
+    personService: PersonService,
     utbetalingService: PosteringService
+
 ) {
     routing {
         actuator(prometheus)
@@ -202,7 +210,7 @@ private fun Application.routes(
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
                 historikk(historikkService)
-                telleverk(telleverkService, pdlGateway)
+                telleverk(telleverkService, personService)
                 sakerForPerson(sakService, pdlGateway)
                 maksdato(sakService)
                 utbetalinger(utbetalingService)

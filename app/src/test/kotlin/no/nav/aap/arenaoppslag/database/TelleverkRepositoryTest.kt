@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.database
 
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -12,7 +13,7 @@ class TelleverkRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumte
 
         val telleverkRepository = TelleverkRepository(h2)
 
-        val kvote = telleverkRepository.hentTelleverkPåPerson("123")
+        val kvote = telleverkRepository.hentTelleverkPåPerson(PersonId(1))
 
         assertThat(kvote).hasSize(2)
         assertThat(kvote).isEqualTo(setOf(KvoteVerdi("AAP", 5280), KvoteVerdi("MAAPU", 460)))
@@ -22,7 +23,7 @@ class TelleverkRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumte
     fun `hentTelleverkPåPerson returnerer tomt sett for ukjent person`() {
         val telleverkRepository = TelleverkRepository(h2)
 
-        val kvote = telleverkRepository.hentTelleverkPåPerson("000")
+        val kvote = telleverkRepository.hentTelleverkPåPerson(PersonId(999))
         assertThat(kvote).isEmpty()
     }
 
@@ -30,8 +31,8 @@ class TelleverkRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumte
     fun `hentTelleverkPåPerson returnerer kun data for etterspurt person`() {
         val telleverkRepository = TelleverkRepository(h2)
 
-        val kvotePerson1 = telleverkRepository.hentTelleverkPåPerson("123")
-        val kvotePerson2 = telleverkRepository.hentTelleverkPåPerson("321")
+        val kvotePerson1 = telleverkRepository.hentTelleverkPåPerson(PersonId(1))
+        val kvotePerson2 = telleverkRepository.hentTelleverkPåPerson(PersonId(2))
 
         val aapPerson1 = kvotePerson1.find { it.kode == "AAP" }!!.verdi
         val aapPerson2 = kvotePerson2.find { it.kode == "AAP" }!!.verdi
