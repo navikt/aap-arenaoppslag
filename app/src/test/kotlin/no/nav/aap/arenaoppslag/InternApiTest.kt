@@ -1,23 +1,13 @@
 package no.nav.aap.arenaoppslag
 
-import io.ktor.server.testing.*
-import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
-import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
+import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
-import no.nav.aap.arenaoppslag.util.AzureTokenGen
-import no.nav.aap.arenaoppslag.util.FakePdlGateway
-import no.nav.aap.arenaoppslag.util.Fakes
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -31,7 +21,7 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
 
     @Test
     fun `Henter ut perioder for fellesordningen`() {
-        withTestServer { gateway ->
+        withTestServer(h2) { gateway ->
             val request = InternVedtakRequest(
                 personidentifikator = kjentPerson,
                 fraOgMedDato = LocalDate.of(2022, 10, 1),
@@ -45,7 +35,7 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
 
     @Test
     fun `Henter ut perioder 11-17 for fellesordningen`() {
-        withTestServer { gateway ->
+        withTestServer(h2) { gateway ->
             val request = InternVedtakRequest(
                 personidentifikator = kjentPerson,
                 fraOgMedDato = LocalDate.of(2022, 1, 1),
@@ -59,7 +49,7 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
 
     @Test
     fun `Henter ut maksimumsvedtak for fellesordningen`() {
-        withTestServer { gateway ->
+        withTestServer(h2) { gateway ->
             val request = InternVedtakRequest(
                 personidentifikator = kjentPerson,
                 fraOgMedDato = LocalDate.of(2022, 10, 1),
@@ -73,7 +63,7 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
 
     @Test
     fun `Henter ut saker by fnr, kjent person`() {
-        withTestServer { gateway ->
+        withTestServer(h2) { gateway ->
             val sakerForKjentPerson: List<SakStatus> = gateway.hentSakerByFnr(
                 SakerRequest(
                     personidentifikatorer = listOf(kjentPerson)
@@ -85,7 +75,7 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
 
     @Test
     fun `Henter ut saker by fnr, ukjent person`() {
-        withTestServer { gateway ->
+        withTestServer(h2) { gateway ->
             val sakerForUkjentPerson: List<SakStatus> = gateway.hentSakerByFnr(
                 SakerRequest(
                     personidentifikatorer = listOf(ukjentPerson)
@@ -95,97 +85,5 @@ class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
         }
     }
 
-    @Test
-    fun `Henter ut maksdato by sakIdListe, ukjente saker`() {
-        withTestServer { gateway ->
-            val maksdatoForUkjenteSaker: MaksdatoResponse = gateway.hentMaksdatoBySakIdListe(
-                MaksdatoRequest(
-                    saker = listOf(
-                        /* ukjente verdier */ 1001, 1002,
-                        /* kjente verdier */ 1234
-                    )
-                )
-            )
-            assertThat(maksdatoForUkjenteSaker.sakliste).isEmpty()
-        }
-    }
-
-    @Test
-    fun `Henter ut maksdato by sakIdListe, kjente saker`() {
-        withTestServer { gateway ->
-            val maksdatoForKjenteSaker: MaksdatoResponse = gateway.hentMaksdatoBySakIdListe(
-                MaksdatoRequest(
-                    saker = listOf(1, 2, 3)
-                )
-            )
-
-            assertThat(maksdatoForKjenteSaker.sakliste.map { it.sisteVedtak.vedtakId }).isEqualTo(listOf(1335, 30))
-        }
-    }
-
-    @Test
-    fun `Person eksisterer i AAP-Arena, ja`() {
-        withTestServer { gateway ->
-            val kjentPerson: PersonEksistererIAAPArena = gateway.hentPersonEksistererIAapContext(
-                SakerRequest(
-                    personidentifikatorer = listOf(kjentPerson)
-                )
-            )
-            assertThat(kjentPerson.eksisterer).isTrue
-        }
-    }
-
-    @Test
-    fun `Person eksisterer i AAP-Arena, nei`() {
-        withTestServer { gateway ->
-            val ukjentPerson: PersonEksistererIAAPArena = gateway.hentPersonEksistererIAapContext(
-                SakerRequest(
-                    personidentifikatorer = listOf(ukjentPerson)
-                )
-            )
-            assertThat(ukjentPerson.eksisterer).isFalse
-        }
-    }
-
-
-    @Test
-    fun `Person har relevant historikk i AAP-Arena`() {
-        withTestServer { gateway ->
-            val kjentPerson: SignifikanteSakerResponse = gateway.personHarSignifikantAAPArenaHistorikk(
-                SignifikanteSakerRequest(
-                    personidentifikatorer = listOf(kjentPerson),
-                    virkningstidspunkt = LocalDate.of(2022, 10, 1),
-                )
-            )
-
-            assertThat(kjentPerson.harSignifikantHistorikk).isTrue
-        }
-    }
-
-    @Test
-    fun `Person har IKKE relevant historikk i AAP-Arena`() {
-        withTestServer { gateway ->
-            val kjentPerson: SignifikanteSakerResponse = gateway.personHarSignifikantAAPArenaHistorikk(
-                SignifikanteSakerRequest(
-                    personidentifikatorer = listOf(ukjentPerson),
-                    virkningstidspunkt = LocalDate.of(2022, 10, 1),
-                )
-            )
-
-            assertThat(kjentPerson.harSignifikantHistorikk).isFalse
-        }
-    }
-
-
-    private fun withTestServer(testBody: suspend (ArenaOppslagGateway) -> Unit) {
-        val config = TestConfig.default(Fakes())
-        val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
-        testApplication {
-            application { server(config, h2, FakePdlGateway()) }
-            val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
-
-            testBody(gateway)
-        }
-    }
 
 }

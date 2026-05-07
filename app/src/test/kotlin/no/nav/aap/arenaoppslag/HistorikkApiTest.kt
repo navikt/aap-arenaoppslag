@@ -1,14 +1,11 @@
 package no.nav.aap.arenaoppslag
 
-import io.ktor.server.testing.*
-import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
-import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway
+import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
+import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
+import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
-import no.nav.aap.arenaoppslag.util.AzureTokenGen
-import no.nav.aap.arenaoppslag.util.FakePdlGateway
-import no.nav.aap.arenaoppslag.util.Fakes
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -21,7 +18,7 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
 
     @Test
     fun `Person har signifikant historikk i AAP-Arena`() {
-        withTestServer { gateway ->
+        withTestServer(h2) { gateway ->
             val kjentPerson: SignifikanteSakerResponse = gateway.personHarSignifikantAAPArenaHistorikk(
                 SignifikanteSakerRequest(
                     personidentifikatorer = listOf(kjentPerson),
@@ -35,7 +32,7 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
 
     @Test
     fun `Person har IKKE signifikant historikk i AAP-Arena`() {
-        withTestServer { gateway ->
+        withTestServer(h2) { gateway ->
             val ukjentPerson: SignifikanteSakerResponse = gateway.personHarSignifikantAAPArenaHistorikk(
                 SignifikanteSakerRequest(
                     personidentifikatorer = listOf(ukjentPerson),
@@ -47,15 +44,27 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
         }
     }
 
+    @Test
+    fun `Person eksisterer i AAP-Arena, ja`() {
+        withTestServer(h2) { gateway ->
+            val kjentPerson: PersonEksistererIAAPArena = gateway.hentPersonEksistererIAapContext(
+                SakerRequest(
+                    personidentifikatorer = listOf(kjentPerson)
+                )
+            )
+            assertThat(kjentPerson.eksisterer).isTrue
+        }
+    }
 
-    private fun withTestServer(testBody: suspend (ArenaOppslagGateway) -> Unit) {
-        val config = TestConfig.default(Fakes())
-        val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
-        testApplication {
-            application { server(config, h2, FakePdlGateway()) }
-            val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
-
-            testBody(gateway)
+    @Test
+    fun `Person eksisterer i AAP-Arena, nei`() {
+        withTestServer(h2) { gateway ->
+            val ukjentPerson: PersonEksistererIAAPArena = gateway.hentPersonEksistererIAapContext(
+                SakerRequest(
+                    personidentifikatorer = listOf(ukjentPerson)
+                )
+            )
+            assertThat(ukjentPerson.eksisterer).isFalse
         }
     }
 

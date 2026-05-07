@@ -8,8 +8,13 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.server.testing.testApplication
+import no.nav.aap.arenaoppslag.TestConfig
+import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
@@ -19,8 +24,12 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
+import no.nav.aap.arenaoppslag.util.FakePdlGateway
+import no.nav.aap.arenaoppslag.util.Fakes
 import org.slf4j.LoggerFactory
+import javax.sql.DataSource
 
 private val log = LoggerFactory.getLogger(ArenaOppslagGateway::class.java)
 
@@ -63,6 +72,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): MaksdatoResponse =
         gjørArenaOppslag<MaksdatoResponse, MaksdatoRequest>(
             "/api/v1/maksdato", req
+        ).getOrThrow()
+
+    suspend fun hentSisteUtbetalingISaker(
+        req: SisteUtbetalingerRequest
+    ): SisteUtbetalingerResponse =
+        gjørArenaOppslag<SisteUtbetalingerResponse, SisteUtbetalingerRequest>(
+            "/api/v1/utbetalinger/siste", req
         ).getOrThrow()
 
     suspend fun hentSakerByFnr(
@@ -114,6 +130,19 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             }
         }
         return parsedResult
+    }
+
+    companion object{
+        fun withTestServer(dataSource: DataSource, testBody: suspend (ArenaOppslagGateway) -> Unit) {
+            val config = TestConfig.default(Fakes())
+            val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
+            testApplication {
+                application { server(config, dataSource, FakePdlGateway()) }
+                val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
+
+                testBody(gateway)
+            }
+        }
     }
 
 }

@@ -47,6 +47,14 @@ public data class VedtakMedMaksdato(
 
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
 
+public data class SisteUtbetalingerRequest(
+    val saker: List<Int>
+)
+
+public data class SisteUtbetalingerResponse(val sakliste: List<SakMedSisteUtbetaling>)
+
+public data class SakMedSisteUtbetaling(val sakId: Int, val sisteAAPUtbetalingsdato: LocalDate?)
+
 // SakstypeKontrakt er foreløpig ikke i bruk, men beholdes for fremtidig bruk med enum-basert sakstype
 public enum class SakstypeKontrakt {
     AA,

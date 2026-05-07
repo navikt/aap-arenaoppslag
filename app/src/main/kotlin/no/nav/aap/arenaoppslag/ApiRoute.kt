@@ -1,13 +1,15 @@
 package no.nav.aap.arenaoppslag
 
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteUtbetaling
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
@@ -15,9 +17,10 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
 import no.nav.aap.arenaoppslag.service.HistorikkService
-import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService) {
     post("/person/signifikant-historikk") {
@@ -40,7 +43,7 @@ fun Route.historikk(historikkService: HistorikkService) {
     }
 }
 
-fun Route.sakerForPerson(sakService: SakService,pdlGateway: IPdlGateway) {
+fun Route.sakerForPerson(sakService: SakService, pdlGateway: IPdlGateway) {
     post("/person/saker") {
         logger.info("Henter saker for person")
         val request: SakerRequestV1 = call.receive()
@@ -59,16 +62,17 @@ fun Route.sakerForPerson(sakService: SakService,pdlGateway: IPdlGateway) {
 
 fun Route.maksdato(sakService: SakService) {
     post("/maksdato") {
-        logger.info("Henter maksdato app for saksliste")
+        logger.info("Henter maksdato-AAP for saksliste")
         val request: MaksdatoRequest = call.receive()
 
-        val respons: MaksdatoResponse = sakService.hentMaksdatoForSaker(request.saker.toSet())
+        val sakidliste = request.saker.toSet()
+        val respons: MaksdatoResponse = sakService.hentMaksdatoOgSisteVedtak(sakidliste)
 
         call.respond(HttpStatusCode.OK, respons)
     }
 }
 
-fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService ) {
+fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]?.toIntOrNull()
 
@@ -77,11 +81,11 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        when(val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
+        when (val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak")
             else -> {
                 val fodselsnr = sak.person.fodselsnummer
-                val telleverk  = telleverkService.hentTelleverkPåPerson(fodselsnr)
+                val telleverk = telleverkService.hentTelleverkPåPerson(fodselsnr)
                 val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
 
                 call.respond(status = HttpStatusCode.OK, message = response)
@@ -100,10 +104,29 @@ fun Route.telleverk(telleverkService: TelleverkService, pdlGateway: IPdlGateway)
         //TODO BRUK PDL for å finne andre personidentifikatorer knyttet til samme person
         val alleIdenterForPerson = pdlGateway.hentAlleIdenterForPerson(fodselsnummer)
 
-        when(val telleverk  = telleverkService.hentTelleverkPåPerson(fodselsnummer)) {
+        when (val telleverk = telleverkService.hentTelleverkPåPerson(fodselsnummer)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")
             else -> call.respond(status = HttpStatusCode.OK, message = telleverk)
         }
 
     }
 }
+
+fun Route.utbetalinger(posteringService: PosteringService) {
+    post("/utbetalinger/siste") {
+        logger.info("Henter maksdato-AAP for saksliste")
+        val request: SisteUtbetalingerRequest = call.receive()
+
+        val sakidliste = request.saker.toSet()
+        val utbetalinger = sakidliste.map {
+            SakMedSisteUtbetaling(
+                it,
+                posteringService.hentSisteUtbetalingISak(it)
+            )
+        }
+
+        call.respond(HttpStatusCode.OK, SisteUtbetalingerResponse(utbetalinger))
+    }
+}
+
+
