@@ -45,18 +45,15 @@ fun Route.historikk(historikkService: HistorikkService) {
     }
 }
 
-fun Route.sakerForPerson(sakService: SakService, pdlGateway: IPdlGateway) {
+fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
     post("/person/saker") {
         logger.info("Henter saker for person")
         val request: SakerRequestV1 = call.receive()
 
-        val alleIdenter = pdlGateway.hentAlleIdenterForPerson(request.personidentifikator)
-            .map { it.ident }
-            .toSet()
-            .also { require(it.isNotEmpty()) { "PDL returnerte ingen identer for person" } }
+        val personId = personService.hentPersonId(request.personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.InternalServerError, "Noe gikk galt ved henting av saker for person")
 
-
-        val respons: SakerResponse = sakService.hentSakerForPerson(alleIdenter)
+        val respons: SakerResponse = sakService.hentSakerForPerson(personId)
 
         call.respond(HttpStatusCode.OK, respons)
     }

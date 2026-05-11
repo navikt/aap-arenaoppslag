@@ -102,7 +102,7 @@ fun Application.server(
     val utbetalingService = skapUtbetalingService(datasource)
 
     routes(internService, historikkService, sakService, telleverkService, sakListeService,
-        pdlGateway, personService, utbetalingService)
+        personService, utbetalingService)
     databaseConnectionWarmup(historikkService)
 
     monitor.subscribe(ApplicationStarted) { environment ->
@@ -191,10 +191,8 @@ private fun Application.routes(
     sakOgVedtakService: SakOgVedtakService,
     telleverkService: TelleverkService,
     sakService: SakService,
-    pdlGateway: IPdlGateway,
     personService: PersonService,
     utbetalingService: PosteringService
-
 ) {
     routing {
         actuator(prometheus)
@@ -211,7 +209,7 @@ private fun Application.routes(
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
                 historikk(historikkService)
                 telleverk(telleverkService, personService)
-                sakerForPerson(sakService, pdlGateway)
+                sakerForPerson(sakService, personService)
                 maksdato(sakService)
                 utbetalinger(utbetalingService)
             }
