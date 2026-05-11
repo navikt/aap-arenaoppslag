@@ -7,21 +7,24 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
+import no.nav.aap.arenaoppslag.modeller.PersonId
+import java.util.concurrent.TimeUnit
 
 class SakService(private val sakRepository: SakRepository) {
 
     private val sakerCache = Caffeine.newBuilder()
         .maximumSize(10_000)
+        .expireAfterAccess(30, TimeUnit.MINUTES)
         .build<String, SakerResponse>()
 
     init {
         CaffeineCacheMetrics.monitor(prometheus, sakerCache, "arenaoppslag_saker_per_person")
     }
 
-    fun hentSakerForPerson(personidentifikatorer: Set<String>): SakerResponse {
-        val cacheNokkel = personidentifikatorer.sorted().joinToString(",")
+    fun hentSakerForPerson(personId: PersonId): SakerResponse {
+        val cacheNokkel = personId.id.toString()
         return sakerCache.get(cacheNokkel) {
-            val saker: List<ArenaSakOppsummering> = sakRepository.hentSakerForPerson(personidentifikatorer)
+            val saker: List<ArenaSakOppsummering> = sakRepository.hentSakerForPerson(personId)
             SakerResponse(saker = saker.map { it.tilKontrakt() })
         }
     }

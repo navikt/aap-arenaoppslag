@@ -4,6 +4,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.ResultSet
@@ -17,10 +18,9 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentSakerForPerson(personidentifikatorerForPerson: Set<String>): List<ArenaSakOppsummering> {
-        if (personidentifikatorerForPerson.isEmpty()) return emptyList()
+    fun hentSakerForPerson(personId: PersonId): List<ArenaSakOppsummering> {
         return dataSource.connection.use { con ->
-            selectSakerForPersoner(personidentifikatorerForPerson, con)
+            selectSakerForPersonId(personId, con)
         }
     }
 
@@ -32,7 +32,6 @@ class SakRepository(private val dataSource: DataSource) {
     }
 
     companion object {
-        private const val FNR_LISTE_TOKEN = "?:fodselsnummer"
         private const val SAK_LISTE_TOKEN = "?:sak_id"
 
         private fun selectSakerMedNyesteVedtakOgMaxdato(sakidliste: Set<Int>, connection: Connection): List<Maksdatolinje> {
@@ -60,16 +59,9 @@ class SakRepository(private val dataSource: DataSource) {
                 sakStatus = row.getString("sak_statuskode")
             )
 
-        private fun queryMedFodselsnummerListe(baseQuery: String, fodselsnumre: Set<String>): String {
-            // Oracle støtter ikke listeparametere i PreparedStatement, så vi interpolerer direkte
-            val allePersonensFodselsnummer = fodselsnumre.joinToString(separator = ",") { "'$it'" }
-            return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
-        }
-
-        fun selectSakerForPersoner(fodselsnumre: Set<String>, connection: Connection): List<ArenaSakOppsummering> {
-            val query = queryMedFodselsnummerListe(selectSakerMedAntallVedtakForFnrListe, fodselsnumre)
-            // Er i teorien unsafe, men data kommer fra PDL så SQL injection risken er lav
-            connection.prepareStatement(query).use { preparedStatement ->
+        fun selectSakerForPersonId(personId: PersonId, connection: Connection): List<ArenaSakOppsummering> {
+            connection.prepareStatement(selectSakerMedAntallVedtakForPersonId).use { preparedStatement ->
+                preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaSakKontrakt(row) }
             }
@@ -128,16 +120,15 @@ class SakRepository(private val dataSource: DataSource) {
         """.trimIndent()
 
         @Language("OracleSql")
-        internal val selectSakerMedAntallVedtakForFnrListe = """
+        internal val selectSakerMedAntallVedtakForPersonId = """
             SELECT sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
                 sak.sakstatuskode, sakstatus.sakstatusnavn, COUNT(vedtak.vedtak_id) AS antall_vedtak
             FROM SAK
-            JOIN person ON person.person_id = sak.objekt_id
             JOIN sakstype ON sakstype.sakskode = sak.sakskode
             LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
             LEFT JOIN vedtak ON vedtak.sak_id = sak.sak_id
                 AND (vedtak.fra_dato <= vedtak.til_dato OR vedtak.til_dato IS NULL)
-            WHERE person.fodselsnr IN ($FNR_LISTE_TOKEN) AND sak.tabellnavnalias = 'PERS'
+            WHERE sak.objekt_id = ? AND sak.tabellnavnalias = 'PERS'
             GROUP BY sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
                 sak.sakstatuskode, sakstatus.sakstatusnavn
         """.trimIndent()
