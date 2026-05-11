@@ -80,8 +80,8 @@ class HistorikkService(
         return fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
             ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
                 ?.also { funnetPersonId ->
-                    fodselsnummerene.forEach { personIdCache.put(it, funnetPersonId) }
-                }
+                    fodselsnummerene.forEach { personIdCache.put(it, funnetPersonId.id) }
+                }?.id
     }
 
 }

@@ -8,6 +8,7 @@ import io.mockk.verify
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -80,7 +81,7 @@ class HistorikkServiceTest {
         val personRepository = mockk<PersonRepository>()
         val historikkRepository = mockk<HistorikkRepository>() // brukes ikke
 
-        every { personRepository.hentPersonIdHvisEksisterer(finnes) } returns 1
+        every { personRepository.hentPersonIdHvisEksisterer(finnes) } returns PersonId(1)
         every { personRepository.hentPersonIdHvisEksisterer(finnesIkke) } returns null
 
         val service = HistorikkService(personRepository, historikkRepository)
@@ -99,7 +100,7 @@ class HistorikkServiceTest {
         val personRepository = mockk<PersonRepository>()
         val historikkRepository = mockk<HistorikkRepository>()
 
-        every { personRepository.hentPersonIdHvisEksisterer(any()) } returns 1
+        every { personRepository.hentPersonIdHvisEksisterer(any()) } returns PersonId(1)
 
         val service = HistorikkService(personRepository, historikkRepository)
 

@@ -1,6 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import org.slf4j.Logger
@@ -11,9 +12,9 @@ import javax.sql.DataSource
 
 class PersonRepository(private val dataSource: DataSource) {
 
-    fun hentPersonIdHvisEksisterer(fodselnummerene: Set<String>): Int? {
+    fun hentPersonIdHvisEksisterer(fodselnummerene: Set<String>): PersonId? {
         dataSource.connection.use { con ->
-            return selectPersonIdFraFnr(fodselnummerene, con)
+            return selectPersonIdFraFnr(fodselnummerene, con)?.let { PersonId(it) }
         }
     }
 
