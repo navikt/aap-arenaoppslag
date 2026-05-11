@@ -211,7 +211,7 @@ private fun Application.routes(
                 telleverk(telleverkService, personService)
                 sakerForPerson(sakService, personService)
                 maksdato(sakService)
-                utbetalinger(utbetalingService)
+                utbetalinger(utbetalingService, personService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner

@@ -6,7 +6,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteUtbetaling
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
@@ -18,8 +17,8 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.service.HistorikkService
-import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.PersonService
+import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
@@ -51,7 +50,10 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
         val request: SakerRequestV1 = call.receive()
 
         val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.InternalServerError, "Noe gikk galt ved henting av saker for person")
+            ?: return@post call.respond(
+                HttpStatusCode.InternalServerError,
+                "Noe gikk galt ved henting av saker for person"
+            )
 
         val respons: SakerResponse = sakService.hentSakerForPerson(personId)
 
@@ -83,7 +85,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         when (val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak")
             else -> {
-                val telleverk  = telleverkService.hentTelleverkPåPerson(PersonId(sak.person.personId))
+                val telleverk = telleverkService.hentTelleverkPåPerson(PersonId(sak.person.personId))
                 val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
 
                 call.respond(status = HttpStatusCode.OK, message = response)
@@ -99,7 +101,10 @@ fun Route.telleverk(telleverkService: TelleverkService, personService: PersonSer
         val request: TellerRequest = call.receive()
 
         val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.InternalServerError, "Noe gikk galt ved henting av telleverk for person")
+            ?: return@post call.respond(
+                HttpStatusCode.InternalServerError,
+                "Noe gikk galt ved henting av telleverk for person"
+            )
 
         when (val telleverk = telleverkService.hentTelleverkPåPerson(personId)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")
@@ -108,20 +113,19 @@ fun Route.telleverk(telleverkService: TelleverkService, personService: PersonSer
     }
 }
 
-fun Route.utbetalinger(posteringService: PosteringService) {
+fun Route.utbetalinger(posteringService: PosteringService, personService: PersonService) {
     post("/utbetalinger/siste") {
         logger.info("Henter maksdato-AAP for saksliste")
         val request: SisteUtbetalingerRequest = call.receive()
 
-        val sakidliste = request.saker.toSet()
-        val utbetalinger = sakidliste.map {
-            SakMedSisteUtbetaling(
-                it,
-                posteringService.hentSisteUtbetalingISak(it)
-            )
+        val fodselsnummer = request.fodselsnummer
+        val personId = personService.hentPersonId(fodselsnummer)
+        val utbetaling = personId?.let {
+                posteringService.hentSisteAapUtbetalingForPerson(it)
         }
+        call.respond(HttpStatusCode.OK, SisteUtbetalingerResponse(utbetaling))
 
-        call.respond(HttpStatusCode.OK, SisteUtbetalingerResponse(utbetalinger))
+
     }
 }
 
