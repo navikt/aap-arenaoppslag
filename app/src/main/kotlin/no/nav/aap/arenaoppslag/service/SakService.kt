@@ -8,11 +8,13 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import java.util.concurrent.TimeUnit
 
 class SakService(private val sakRepository: SakRepository) {
 
     private val sakerCache = Caffeine.newBuilder()
         .maximumSize(10_000)
+        .expireAfterAccess(30, TimeUnit.MINUTES)
         .build<String, SakerResponse>()
 
     init {
