@@ -7,32 +7,31 @@ import org.junit.jupiter.api.Test
 
 class TelleverkForPersonRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumtest", "flyway/eksisterer") {
 
-
     @Test
-    fun `hentTelleverkPåPerson returnerer korrekte verdier for person 1`() {
+    fun `hentTelleverkForPerson returnerer korrekte verdier for person 1`() {
 
         val telleverkRepository = TelleverkRepository(h2)
 
-        val kvote = telleverkRepository.hentTelleverkPåPerson(PersonId(1))
+        val kvote = telleverkRepository.hentTelleverkForPerson(PersonId(1))
 
         assertThat(kvote).hasSize(2)
         assertThat(kvote).isEqualTo(setOf(KvoteVerdi("AAP", 5280), KvoteVerdi("MAAPU", 460)))
     }
 
     @Test
-    fun `hentTelleverkPåPerson returnerer tomt sett for ukjent person`() {
+    fun `hentTelleverkForPerson returnerer tomt sett for ukjent person`() {
         val telleverkRepository = TelleverkRepository(h2)
 
-        val kvote = telleverkRepository.hentTelleverkPåPerson(PersonId(999))
+        val kvote = telleverkRepository.hentTelleverkForPerson(PersonId(999))
         assertThat(kvote).isEmpty()
     }
 
     @Test
-    fun `hentTelleverkPåPerson returnerer kun data for etterspurt person`() {
+    fun `hentTelleverkForPerson returnerer kun data for etterspurt person`() {
         val telleverkRepository = TelleverkRepository(h2)
 
-        val kvotePerson1 = telleverkRepository.hentTelleverkPåPerson(PersonId(1))
-        val kvotePerson2 = telleverkRepository.hentTelleverkPåPerson(PersonId(2))
+        val kvotePerson1 = telleverkRepository.hentTelleverkForPerson(PersonId(1))
+        val kvotePerson2 = telleverkRepository.hentTelleverkForPerson(PersonId(2))
 
         val aapPerson1 = kvotePerson1.find { it.kode == "AAP" }!!.verdi
         val aapPerson2 = kvotePerson2.find { it.kode == "AAP" }!!.verdi

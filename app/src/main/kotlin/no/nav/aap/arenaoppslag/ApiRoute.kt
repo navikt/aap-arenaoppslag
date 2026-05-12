@@ -86,7 +86,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         when (val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak i Arena")
             else -> {
-                val telleverk = telleverkService.hentTelleverkPåPerson(PersonId(sak.person.personId))
+                val telleverk = telleverkService.hentTelleverkForPerson(PersonId(sak.person.personId))
                 val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
 
                 call.respond(status = HttpStatusCode.OK, message = response)
@@ -105,7 +105,7 @@ fun Route.telleverk(telleverkService: TelleverkService, personService: PersonSer
         val personId = personService.hentPersonId(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val telleverk = telleverkService.hentTelleverkPåPerson(personId)
+        val telleverk = telleverkService.hentTelleverkForPerson(personId)
         call.respond(status = HttpStatusCode.OK, message = telleverk)
     }
 }

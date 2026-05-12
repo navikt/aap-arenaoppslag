@@ -21,7 +21,7 @@ class TelleverkRepository(private val datasource: DataSource) {
         """.trimIndent()
     }
 
-    fun hentTelleverkPåPerson(personId: PersonId): Set<KvoteVerdi> {
+    fun hentTelleverkForPerson(personId: PersonId): Set<KvoteVerdi> {
         return datasource.connection.use { con ->
             con.prepareStatement(selectTelleverkPåPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
