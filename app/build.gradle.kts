@@ -4,7 +4,7 @@ plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.4.1"
     id("io.ktor.plugin") version "3.4.2"
-    //id("dev.detekt") temporary disabled - missing support for our kotlin-version
+    id("dev.detekt")
     application
 }
 
@@ -14,7 +14,6 @@ application {
     mainClass.set("no.nav.aap.arenaoppslag.AppKt")
 }
 
-/*
 detekt {
     ignoreFailures = true
     autoCorrect = true
@@ -23,7 +22,6 @@ detekt {
 tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
     jvmTarget.set("21")
 }
-*/
 
 dependencies {
     implementation(project(":kontrakt"))

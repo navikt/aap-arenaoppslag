@@ -49,11 +49,9 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
         logger.info("Henter saker for person")
         val request: SakerRequestV1 = call.receive()
 
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(
-                HttpStatusCode.InternalServerError,
-                "Noe gikk galt ved henting av saker for person"
-            )
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val respons: SakerResponse = sakService.hentSakerForPerson(personId)
 
@@ -61,15 +59,18 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.maksdato(sakService: SakService) {
+fun Route.maksdato(sakService: SakService, personService: PersonService) {
     post("/maksdato") {
         logger.info("Henter maksdato-AAP for saksliste")
         val request: MaksdatoRequest = call.receive()
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val sakidliste = request.saker.toSet()
-        val respons: MaksdatoResponse = sakService.hentMaksdatoOgSisteVedtak(sakidliste)
+        val saker = sakService.hentMaksdatoForVedtakISaker(personId)
 
-        call.respond(HttpStatusCode.OK, respons)
+        // dersom personen finnes i Arena men ikke har AAP-vedtak utenfor Stans blir listen tom
+        call.respond(HttpStatusCode.OK, MaksdatoResponse(saker))
     }
 }
 
@@ -83,7 +84,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         }
 
         when (val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
-            null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak")
+            null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak i Arena")
             else -> {
                 val telleverk = telleverkService.hentTelleverkPåPerson(PersonId(sak.person.personId))
                 val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
@@ -100,16 +101,12 @@ fun Route.telleverk(telleverkService: TelleverkService, personService: PersonSer
         logger.info("Henter telleverk")
         val request: TellerRequest = call.receive()
 
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(
-                HttpStatusCode.InternalServerError,
-                "Noe gikk galt ved henting av telleverk for person"
-            )
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        when (val telleverk = telleverkService.hentTelleverkPåPerson(personId)) {
-            null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke telleverk for person")
-            else -> call.respond(status = HttpStatusCode.OK, message = telleverk)
-        }
+        val telleverk = telleverkService.hentTelleverkPåPerson(personId)
+        call.respond(status = HttpStatusCode.OK, message = telleverk)
     }
 }
 
@@ -120,12 +117,11 @@ fun Route.utbetalinger(posteringService: PosteringService, personService: Person
 
         val personidentifikator = request.personidentifikator
         val personId = personService.hentPersonId(personidentifikator)
-        val utbetaling = personId?.let {
-                posteringService.hentSisteAapUtbetalingForPerson(it)
-        }
-        call.respond(HttpStatusCode.OK, SisteUtbetalingerResponse(utbetaling))
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
+        val utbetaling = posteringService.hentSisteAapUtbetalingForPerson(personId)
+
+        // returnerer tom liste dersom personen ikke har AAP-utbetalinger i Arena
+        call.respond(HttpStatusCode.OK, SisteUtbetalingerResponse(utbetaling))
     }
 }
-
-
