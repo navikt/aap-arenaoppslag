@@ -1,4 +1,4 @@
-package no.nav.aap.arenaoppslag
+package no.nav.aap.arenaoppslag.pdl
 
 data class PdlIdenterData(
     val hentIdenter: PdlIdenter?,

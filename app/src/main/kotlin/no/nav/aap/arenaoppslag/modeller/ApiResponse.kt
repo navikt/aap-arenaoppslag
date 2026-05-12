@@ -12,12 +12,12 @@ data class ArenaSakDetaljertRespons(
     val registrertDato: LocalDateTime,
     val avsluttetDato: LocalDateTime?,
     val vedtak: List<ArenaVedtakMedDetaljer>,
-    val tellerverk: TellerverkPåPerson?
+    val tellerverk: TelleverkPåPerson?
 ) {
     companion object {
         fun fromDomain(
             arenaSakMedVedtak: ArenaSakMedVedtak,
-            tellerverkPåPerson: TellerverkPåPerson?
+            telleverkPåPerson: TelleverkPåPerson?
         ) = ArenaSakDetaljertRespons(
             sakId = arenaSakMedVedtak.sakId,
             opprettetAar = arenaSakMedVedtak.opprettetAar,
@@ -28,7 +28,7 @@ data class ArenaSakDetaljertRespons(
             registrertDato = arenaSakMedVedtak.registrertDato,
             avsluttetDato = arenaSakMedVedtak.avsluttetDato,
             vedtak = arenaSakMedVedtak.vedtak,
-            tellerverk = tellerverkPåPerson
+            tellerverk = telleverkPåPerson
         )
     }
 }

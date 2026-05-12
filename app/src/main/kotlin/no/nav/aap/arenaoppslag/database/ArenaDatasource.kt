@@ -10,9 +10,9 @@ import java.sql.ResultSet
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("MagicNumber")
 internal object ArenaDatasource {
 
-    @Suppress("MagicNumber")
     fun create(dbConfig: DbConfig): HikariDataSource =
         HikariDataSource(HikariConfig().apply {
             jdbcUrl = dbConfig.url

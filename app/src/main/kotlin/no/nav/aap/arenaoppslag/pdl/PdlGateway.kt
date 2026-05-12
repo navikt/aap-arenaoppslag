@@ -3,10 +3,6 @@ package no.nav.aap.arenaoppslag.pdl
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics
-import no.nav.aap.arenaoppslag.PdlIdent
-import no.nav.aap.arenaoppslag.PdlIdenter
-import no.nav.aap.arenaoppslag.PdlIdenterData
-import no.nav.aap.arenaoppslag.PdlRequestVariables
 import java.net.URI
 import java.time.Duration
 

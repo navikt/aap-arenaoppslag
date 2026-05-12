@@ -74,16 +74,6 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/api/v1/maksdato", req
         ).getOrThrow()
 
-    suspend fun hentMaksdatoBySakIdListeRaw(
-        req: MaksdatoRequest
-    ): HttpResponse =
-        httpClient.post("/api/v1/maksdato") {
-            accept(ContentType.Application.Json)
-            bearerAuth(tokenProvider.generate())
-            contentType(ContentType.Application.Json)
-            setBody(req)
-        }
-
     suspend fun hentSisteUtbetalingISaker(
         req: SisteUtbetalingerRequest
     ): SisteUtbetalingerResponse =
