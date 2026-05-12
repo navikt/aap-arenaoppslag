@@ -48,10 +48,10 @@ public data class VedtakMedMaksdato(
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
 
 public data class SisteUtbetalingerRequest(
-    val saker: List<Int>
+    val personidentifikator: String
 )
 
-public data class SisteUtbetalingerResponse(val sakliste: List<SakMedSisteUtbetaling>)
+public data class SisteUtbetalingerResponse(val utbetalingsdato: LocalDate?)
 
 public data class SakMedSisteUtbetaling(val sakId: Int, val sisteAAPUtbetalingsdato: LocalDate?)
 

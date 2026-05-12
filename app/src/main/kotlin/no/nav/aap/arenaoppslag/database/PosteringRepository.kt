@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.database
 
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.time.LocalDate
@@ -7,13 +8,13 @@ import javax.sql.DataSource
 
 class PosteringRepository(private val dataSource: DataSource) {
 
-    fun hentNyestePosteringISak(saksId: Int): LocalDate? {
+    fun hentSisteAapUtbetalingForPerson(personId: PersonId): LocalDate? {
         return dataSource.connection.use { con ->
-            selectMaksPosteringsDatoForSak(saksId, con)
+            selectMaksPosteringsDatoForPerson(personId, con)
         }
     }
 
-    private fun selectMaksPosteringsDatoForSak(saksId: Int, connection: Connection): LocalDate? {
+    private fun selectMaksPosteringsDatoForPerson(personId: PersonId, connection: Connection): LocalDate? {
         @Language("OracleSql")
         val query = """
             select 
@@ -21,12 +22,12 @@ class PosteringRepository(private val dataSource: DataSource) {
             FROM postering p  
               join vedtak v
               on p.vedtak_id = v.vedtak_id
-            WHERE v.sak_id = ? 
+            WHERE v.person_id = ? 
               AND v.rettighetkode = 'AAP'
             """
 
         connection.prepareStatement(query).use { preparedStatement ->
-            preparedStatement.setInt(1, saksId)
+            preparedStatement.setInt(1, personId.id)
             val resultSet = preparedStatement.executeQuery()
             resultSet.next()
             return resultSet.getDate("siste_postering")?.toLocalDate()

@@ -8,8 +8,8 @@ class PersonService(
     private val personRepository: PersonRepository,
     private val pdlGateway: IPdlGateway,
 ) {
-    fun hentPersonId(fodselsnummer: String): PersonId? {
-        val alleIdenter = pdlGateway.hentAlleIdenterForPerson(fodselsnummer)
+    fun hentPersonId(personidentifikator: String): PersonId? {
+        val alleIdenter = pdlGateway.hentAlleIdenterForPerson(personidentifikator)
             .map { it.ident }
             .toSet()
         return personRepository.hentPersonIdHvisEksisterer(alleIdenter)
