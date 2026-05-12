@@ -24,21 +24,16 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentSakerMedMaksDatoOgVedtak(sakidliste: Set<Int>): List<Maksdatolinje> {
-        if (sakidliste.isEmpty()) return emptyList()
+    fun hentSakerMedMaksDatoOgVedtak(personId: PersonId): List<Maksdatolinje> {
         return dataSource.connection.use { con ->
-            selectSakerMedNyesteVedtakOgMaxdato(sakidliste, con)
+            doHentSakerMedMaksDatoOgVedtak(personId, con)
         }
     }
 
     companion object {
-        private const val SAK_LISTE_TOKEN = "?:sak_id"
-
-        private fun selectSakerMedNyesteVedtakOgMaxdato(sakidliste: Set<Int>, connection: Connection): List<Maksdatolinje> {
-            val alleSakId = sakidliste.joinToString(separator = ",") { "'$it'" }
-            val query = selectVedtakMedNyesteMaxdato.replace(SAK_LISTE_TOKEN, alleSakId)
-
-            connection.prepareStatement(query).use { preparedStatement ->
+        private fun doHentSakerMedMaksDatoOgVedtak(personId: PersonId, connection: Connection): List<Maksdatolinje> {
+            connection.prepareStatement(selectVedtakMedNyesteMaxdatoForPerson).use { preparedStatement ->
+                preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 // tom liste om ingen rader blir funnet
                 return resultSet.map { row -> mapperForMaksdatolinje(row) }
@@ -134,7 +129,7 @@ class SakRepository(private val dataSource: DataSource) {
         """.trimIndent()
 
         @Language("OracleSql")
-        internal val selectVedtakMedNyesteMaxdato = """
+        internal val selectVedtakMedNyesteMaxdatoForPerson = """
             -- Hent først nyeste vedtak for hver av sakene 
             WITH nyeste_vedtak AS (
                 SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, unntaksdato, fra_dato FROM (
@@ -147,7 +142,7 @@ class SakRepository(private val dataSource: DataSource) {
                         ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') DESC, v.vedtak_id DESC) as rn
                     FROM vedtak v
                         JOIN VEDTAKFAKTA vf on v.vedtak_id = vf.vedtak_id
-                    WHERE v.sak_id in ($SAK_LISTE_TOKEN)
+                    WHERE v.person_id = ?
                         AND v.rettighetkode = 'AAP'
                         AND vf.vedtakfaktakode = 'AAPVILKUNN'
                         AND v.vedtaktypekode != 'S' -- stansede vedtak sin maxdato er ikke meningsfull
@@ -159,6 +154,7 @@ class SakRepository(private val dataSource: DataSource) {
             FROM nyeste_vedtak nv
             JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
             JOIN sak s on s.sak_id = nv.sak_id
+            order by vmd.max_unntak_dato ASC
         """.trimIndent()
 
     }

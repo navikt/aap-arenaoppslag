@@ -109,13 +109,22 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
     }
 
     @Test
-    fun `hent maksdato paa saker finner forventede data`() {
-        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(setOf(1, 2, 3))
+    fun `hent maksdato paa saker for person finner forventede data`() {
+        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(PersonId(100))
         assertThat(saker).hasSize(2)
         assertThat(saker).containsExactly(
             // mappingen testes
             Maksdatolinje(
-                2, 1335, "IKKE", "O",
+                1_10_3, 1_10_3, "IKKE", "O",
+                LocalDate.of(2022, 8, 30),
+                LocalDate.of(2025, 12, 31),
+                LocalDate.of(2025, 6, 30),
+                sakRegistrert = LocalDate.of(2022, 2, 3),
+                sakAvsluttet = null,
+                sakStatus = "AKTIV"
+            ),
+            Maksdatolinje(
+                1_10_2, 1_10_1, "IKKE", "O",
                 LocalDate.of(2010, 8, 29),
                 LocalDate.of(2026, 6, 30),
                 LocalDate.of(2025, 6, 30),
@@ -123,27 +132,19 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 sakAvsluttet = null,
                 sakStatus = "AKTIV"
             ),
-            Maksdatolinje(
-                3, 30, "IKKE", "O",
-                LocalDate.of(2022, 8, 30),
-                LocalDate.of(2025, 12, 31),
-                LocalDate.of(2025, 6, 30),
-                sakRegistrert = LocalDate.of(2022, 2, 3),
-                sakAvsluttet = null,
-                sakStatus = "AKTIV"
-            )
         )
     }
 
     @Test
-    fun `hent maksdato paa saker gir tom liste for tom liste`() {
-        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(emptySet())
+    fun `hent maksdato paa saker for person som mangler data`() {
+        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(PersonId(101))
         assertThat(saker).isEmpty()
     }
 
     @Test
-    fun `hent maksdato paa saker finner ikke data som mangler`() {
-        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(setOf(4020))
+    fun `hent maksdato paa saker for person som ikke finnes`() {
+        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(PersonId(0xcafebabe.toInt()))
         assertThat(saker).isEmpty()
     }
+
 }

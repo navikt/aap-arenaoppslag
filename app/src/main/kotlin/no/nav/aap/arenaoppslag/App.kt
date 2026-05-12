@@ -210,7 +210,7 @@ private fun Application.routes(
                 historikk(historikkService)
                 telleverk(telleverkService, personService)
                 sakerForPerson(sakService, personService)
-                maksdato(sakService)
+                maksdato(sakService, personService)
                 utbetalinger(utbetalingService, personService)
             }
             route("/api/intern") {

@@ -7,7 +7,7 @@ public data class SakerRequest(
 )
 
 public data class MaksdatoRequest(
-    val saker: List<Int>
+    val personidentifikator: String
 )
 
 public data class SakerResponse(
