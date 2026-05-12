@@ -13,30 +13,27 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 
+@SuppressWarnings("MagicNumber")
 class InternService(
     private val maksimumRepository: MaksimumRepository,
     private val periodeRepository: PeriodeRepository,
     private val vedtakRepository: VedtakRepository,
 ) {
-    @SuppressWarnings("MagicNumber")
     private val maksimumCache = Caffeine.newBuilder()
         .maximumSize(10_000)
         .expireAfterWrite(Duration.ofMinutes(15))
         .build<String, Maksimum>()
 
-    @SuppressWarnings("MagicNumber")
     private val sakerCache = Caffeine.newBuilder()
         .maximumSize(10_000)
         .expireAfterWrite(Duration.ofMinutes(15))
         .build<String, List<SakStatus>>()
 
-    @SuppressWarnings("MagicNumber")
     private val perioderCache = Caffeine.newBuilder()
         .maximumSize(10_000)
         .expireAfterWrite(Duration.ofMinutes(15))
         .build<String, PerioderResponse>()
 
-    @SuppressWarnings("MagicNumber")
     private val perioder11_17Cache = Caffeine.newBuilder()
         .maximumSize(10_000)
         .expireAfterWrite(Duration.ofMinutes(15))
