@@ -1,6 +1,6 @@
 package no.nav.aap.arenaoppslag.modeller
 
-data class TelleverkPåPerson(
+data class TelleverkForPerson(
     val ordineerAAPKvote: Int,
     val utvidetAAPKvote: Int?,
 )

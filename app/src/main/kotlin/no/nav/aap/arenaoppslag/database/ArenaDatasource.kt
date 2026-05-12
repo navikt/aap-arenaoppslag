@@ -10,40 +10,37 @@ import java.sql.ResultSet
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-@Suppress("MagicNumber")
 internal object ArenaDatasource {
+    @Suppress("MagicNumber")
 
-    fun create(dbConfig: DbConfig): HikariDataSource =
-        HikariDataSource(HikariConfig().apply {
-            jdbcUrl = dbConfig.url
-            username = dbConfig.username
-            password = dbConfig.password
-            driverClassName = dbConfig.driver
-            initializationFailTimeout = 15.seconds.inWholeMilliseconds
-            connectionTimeout = 5.seconds.inWholeMilliseconds
-            keepaliveTime = 2.minutes.inWholeMilliseconds
-            maxLifetime = 5.minutes.inWholeMilliseconds
-            connectionTestQuery = "SELECT 1 FROM DUAL"
-            // performance:
-            // do not set minimumIdle, it defaults to maximumPoolSize, matching hikaricp performance recommendations.
-            // idleTimeout is not relevant in this case and is omitted.
-            isReadOnly = true
-            isAutoCommit = true // performance optimization for read-only operations, saves transaction work
-            metricRegistry = Metrics.prometheus
+    fun create(dbConfig: DbConfig): HikariDataSource = HikariDataSource(HikariConfig().apply {
+        jdbcUrl = dbConfig.url
+        username = dbConfig.username
+        password = dbConfig.password
+        driverClassName = dbConfig.driver
+        initializationFailTimeout = 15.seconds.inWholeMilliseconds
+        connectionTimeout = 5.seconds.inWholeMilliseconds
+        keepaliveTime = 2.minutes.inWholeMilliseconds
+        maxLifetime = 5.minutes.inWholeMilliseconds
+        connectionTestQuery = "SELECT 1 FROM DUAL"
+        // performance:
+        // do not set minimumIdle, it defaults to maximumPoolSize, matching hikaricp performance recommendations.
+        // idleTimeout is not relevant in this case and is omitted.
+        isReadOnly = true
+        isAutoCommit = true // performance optimization for read-only operations, saves transaction work
+        metricRegistry = Metrics.prometheus
 
-            // By default, there is no read timeout, and an application might hang indefinitely
-            // in case of a network failure.
-            addDataSourceProperty(
-                "oracle.jdbc.ReadTimeout",
-                5.minutes.inWholeMilliseconds.toString()
-            )
-        })
+        // By default, there is no read timeout, and an application might hang indefinitely
+        // in case of a network failure.
+        addDataSourceProperty(
+            "oracle.jdbc.ReadTimeout", 5.minutes.inWholeMilliseconds.toString()
+        )
+    })
 }
 
-fun <T : Any> ResultSet.map(block: (ResultSet) -> T): List<T> =
-    sequence {
-        while (next()) yield(block(this@map))
-    }.toList()
+fun <T : Any> ResultSet.map(block: (ResultSet) -> T): List<T> = sequence {
+    while (next()) yield(block(this@map))
+}.toList()
 
 // getInt returnerer 0 for NULL-kolonner — vi bruker wasNull() for å skille null fra 0
 fun ResultSet.getIntOrNull(columnLabel: String): Int? {
@@ -51,6 +48,7 @@ fun ResultSet.getIntOrNull(columnLabel: String): Int? {
     return if (wasNull()) null else value
 }
 
+@Suppress("MagicNumber")
 fun Connection.createParameterizedQuery(queryString: String): PreparedStatement {
     val query = prepareStatement(queryString)
     query.queryTimeout = 300 // set a timeout in seconds, to avoid long running queries

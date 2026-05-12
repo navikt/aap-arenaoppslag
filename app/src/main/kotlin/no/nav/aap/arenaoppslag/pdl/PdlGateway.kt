@@ -88,11 +88,11 @@ class PdlGateway : IPdlGateway {
     }
 }
 
-private const val ident = "\$ident"
+private const val IDENT_VAR = "\$ident"
 val IDENT_QUERY =
     """
-    query($ident: ID!) {
-        hentIdenter(ident: $ident, historikk: true) {
+    query($IDENT_VAR: ID!) {
+        hentIdenter(ident: $IDENT_VAR, historikk: true) {
             identer {
                 ident,
                 historisk,

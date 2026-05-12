@@ -19,6 +19,7 @@ class HistorikkService(
 ) {
 
     // Lagrer mappingen fødselsnr -> arena-personId. Bare treff i databasen lagres.
+    @Suppress("MagicNumber")
     private val personIdCache = Caffeine.newBuilder()
         .maximumSize(30_000)
         .recordStats()

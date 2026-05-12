@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 
-class TelleverkRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumtest", "flyway/eksisterer") {
+class TelleverkForPersonRepositoryTest : H2TestBase("flyway/telleverk", "flyway/minimumtest", "flyway/eksisterer") {
 
 
     @Test

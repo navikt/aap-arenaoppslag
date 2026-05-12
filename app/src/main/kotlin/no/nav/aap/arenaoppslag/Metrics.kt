@@ -7,7 +7,7 @@ import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 
-@SuppressWarnings("MagicNumber")
+@Suppress("MagicNumber")
 object Metrics {
     val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
