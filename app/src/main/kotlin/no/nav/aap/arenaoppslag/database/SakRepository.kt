@@ -146,6 +146,9 @@ class SakRepository(private val dataSource: DataSource) {
                         AND v.rettighetkode = 'AAP'
                         AND vf.vedtakfaktakode = 'AAPVILKUNN'
                         AND v.vedtaktypekode != 'S' -- stansede vedtak sin maxdato er ikke meningsfull
+                        -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
+                        AND v.fra_dato IS NOT NULL
+                        AND NOT ((v.fra_dato is not null and v.til_dato is not null) AND v.fra_dato > v.til_dato) 
                 ) WHERE rn = 1
             )
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
