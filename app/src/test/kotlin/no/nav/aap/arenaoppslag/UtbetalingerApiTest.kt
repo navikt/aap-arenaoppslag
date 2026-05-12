@@ -14,7 +14,7 @@ class UtbetalingerApiTest : H2TestBase("flyway/postering") {
     fun `Henter ut siste utbetaling by sakIdListe, ukjent personId`() {
         withTestServer(h2) { gateway ->
             val utbetalingForUkjenteSaker: SisteUtbetalingerResponse = gateway.hentSisteUtbetalingISaker(
-                SisteUtbetalingerRequest(fodselsnummer = "007")
+                SisteUtbetalingerRequest("007")
             )
             assertThat(utbetalingForUkjenteSaker.utbetalingsdato).isNull()
         }
@@ -25,7 +25,7 @@ class UtbetalingerApiTest : H2TestBase("flyway/postering") {
         withTestServer(h2) { gateway ->
             val utbetalingForKjenteSaker: SisteUtbetalingerResponse = gateway.hentSisteUtbetalingISaker(
                 SisteUtbetalingerRequest(
-                    fodselsnummer = "1"
+                    "1"
                 )
             )
             assertThat(utbetalingForKjenteSaker.utbetalingsdato)

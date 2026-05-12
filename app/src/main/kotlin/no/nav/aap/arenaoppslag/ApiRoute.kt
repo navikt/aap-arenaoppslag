@@ -118,13 +118,12 @@ fun Route.utbetalinger(posteringService: PosteringService, personService: Person
         logger.info("Henter maksdato-AAP for saksliste")
         val request: SisteUtbetalingerRequest = call.receive()
 
-        val fodselsnummer = request.fodselsnummer
-        val personId = personService.hentPersonId(fodselsnummer)
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator)
         val utbetaling = personId?.let {
                 posteringService.hentSisteAapUtbetalingForPerson(it)
         }
         call.respond(HttpStatusCode.OK, SisteUtbetalingerResponse(utbetaling))
-
 
     }
 }

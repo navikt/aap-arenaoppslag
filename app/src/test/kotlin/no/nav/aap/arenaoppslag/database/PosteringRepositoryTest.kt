@@ -16,13 +16,13 @@ class PosteringRepositoryTest : H2TestBase("flyway/postering") {
     }
 
     @Test
-    fun `finner ingen på ukjent sak_id`() {
+    fun `finner ingen på ukjent person_id`() {
         val funnet = posteringRepository.hentSisteAapUtbetalingForPerson(PersonId(0xdeadbeef.toInt()))
         assertThat(funnet).isNull()
     }
 
     @Test
-    fun `finner nyeste postering på kjent sak_id`() {
+    fun `finner nyeste postering på kjent person_id`() {
         val funnet = posteringRepository.hentSisteAapUtbetalingForPerson(PersonId(1))
         assertThat(funnet).isNotNull
         assertThat(funnet).isEqualTo(LocalDate.of(2023, 9, 12))
