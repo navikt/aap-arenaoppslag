@@ -26,6 +26,8 @@ import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.pdl.IPdlGateway
+import no.nav.aap.arenaoppslag.pdl.PdlGateway
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.arenaoppslag.plugins.authentication
 import no.nav.aap.arenaoppslag.plugins.bruker

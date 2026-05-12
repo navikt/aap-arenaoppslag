@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit
 
 class SakService(private val sakRepository: SakRepository) {
 
+    @SuppressWarnings("MagicNumber")
     private val sakerCache = Caffeine.newBuilder()
         .maximumSize(10_000)
         .expireAfterAccess(30, TimeUnit.MINUTES)

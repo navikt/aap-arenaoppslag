@@ -1,6 +1,6 @@
 package no.nav.aap.arenaoppslag.util
 
-import no.nav.aap.arenaoppslag.IPdlGateway
+import no.nav.aap.arenaoppslag.pdl.IPdlGateway
 import no.nav.aap.arenaoppslag.PdlIdent
 
 class FakePdlGateway : IPdlGateway {
