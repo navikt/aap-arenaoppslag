@@ -106,6 +106,7 @@ fun Route.telleverk(telleverkService: TelleverkService, personService: PersonSer
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke telleverk for personen i Arena")
         call.respond(status = HttpStatusCode.OK, message = telleverk)
     }
 }
