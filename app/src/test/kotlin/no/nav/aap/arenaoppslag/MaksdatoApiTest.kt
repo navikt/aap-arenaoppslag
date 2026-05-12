@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag
 
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.http.HttpStatusCode
+import io.ktor.client.plugins.*
+import io.ktor.http.*
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest

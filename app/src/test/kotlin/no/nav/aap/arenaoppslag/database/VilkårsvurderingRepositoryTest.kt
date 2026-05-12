@@ -1,6 +1,5 @@
 package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.modeller.ArenaVilkårsvurdering
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

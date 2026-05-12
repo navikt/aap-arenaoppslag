@@ -23,8 +23,8 @@ import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.PosteringRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
-import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
+import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.pdl.IPdlGateway
 import no.nav.aap.arenaoppslag.pdl.PdlGateway
@@ -95,17 +95,9 @@ fun Application.server(
 
     authentication(config)
 
-    val internService = skapInternService(datasource)
-    val historikkService = skapHistorikkService(datasource)
-    val sakService = skapSakervice(datasource)
-    val telleverkService = skapTelleverkService(datasource)
-    val personService = skapPersonService(datasource, pdlGateway)
-    val sakListeService = skapSakListeService(datasource)
-    val utbetalingService = skapUtbetalingService(datasource)
+    routes(datasource, pdlGateway)
 
-    routes(internService, historikkService, sakService, telleverkService, sakListeService,
-        personService, utbetalingService)
-    databaseConnectionWarmup(historikkService)
+    databaseConnectionWarmup(skapHistorikkService(datasource))
 
     monitor.subscribe(ApplicationStarted) { environment ->
         environment.log.info("ktor har startet opp.")
@@ -159,7 +151,7 @@ private fun skapHistorikkService(datasource: DataSource): HistorikkService {
     return HistorikkService(personRepository, historikkRepository)
 }
 
-private fun skapSakervice(datasource: DataSource): SakOgVedtakService {
+private fun skapSakOgVedtakService(datasource: DataSource): SakOgVedtakService {
     val vedtakRepository = VedtakRepository(datasource)
     val sakRepository = SakRepository(datasource)
     val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
@@ -187,32 +179,32 @@ private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): 
     return PersonService(personRepository, pdlGateway)
 }
 
-private fun Application.routes(
-    internService: InternService,
-    historikkService: HistorikkService,
-    sakOgVedtakService: SakOgVedtakService,
-    telleverkService: TelleverkService,
-    sakService: SakService,
-    personService: PersonService,
-    utbetalingService: PosteringService
-) {
+private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
+    val internService = skapInternService(datasource)
+    val historikkService = skapHistorikkService(datasource)
+    val sakOgVedtakService = skapSakOgVedtakService(datasource)
+    val telleverkService = skapTelleverkService(datasource)
+    val personService = skapPersonService(datasource, pdlGateway)
+    val sakListeService = skapSakListeService(datasource)
+    val utbetalingService = skapUtbetalingService(datasource)
+
     routing {
         actuator(prometheus)
 
         authenticate {
             route("/intern") {
                 // Eksterne APIer i hovedsak brukt av aap-api-intern
-                // Gammelt endepunkt, ikke legg til nye  routes her!
+                // Gammelt endepunkt, ikke legg til nye routes her!
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
             }
             route("/api/v1") {
-                // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres
+                // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres.
                 historikk(historikkService)
                 telleverk(telleverkService, personService)
-                sakerForPerson(sakService, personService)
-                maksdato(sakService, personService)
+                sakerForPerson(sakListeService, personService)
+                maksdato(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
             }
             route("/api/intern") {

@@ -1,11 +1,10 @@
 package no.nav.aap.arenaoppslag.plugins
 
 import com.fasterxml.jackson.core.JacksonException
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.response.respond
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -28,6 +27,7 @@ fun Application.statusPages() {
                         FeilRespons("Feil i tjeneste: ${cause.message}"),
                     )
                 }
+
                 else -> {
                     logger.error("Uhåndtert feil", cause)
                     call.respond(

@@ -58,7 +58,7 @@ enum class VedtaksType(
 ) {
     REAKSJON("A", "Reaksjon"),
     ENDRING("E", "Endring"),
-    FORLENGET_VENTETID("F","Forlenget ventetid"),
+    FORLENGET_VENTETID("F", "Forlenget ventetid"),
     GJENOPPTAK("G", "Gjenopptak"),
     KONTROLL("K", "Kontroll"),
     OMGJØR_REAKSJON("M", "Omgjør reaksjon"),

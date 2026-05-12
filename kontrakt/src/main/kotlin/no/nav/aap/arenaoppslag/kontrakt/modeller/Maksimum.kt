@@ -11,7 +11,7 @@ public data class Vedtak(
     val status: String,
     val saksnummer: String,
     val vedtaksdato: String,
-    val vedtaksTypeKode:String,
+    val vedtaksTypeKode: String,
     val vedtaksTypeNavn: String,
     val periode: Periode,
     val rettighetsType: String, ////aktivitetsfase //Aktfasekode

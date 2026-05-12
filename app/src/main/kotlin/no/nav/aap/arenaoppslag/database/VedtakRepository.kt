@@ -10,10 +10,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
 import java.sql.ResultSet
-import java.time.LocalDate
 import javax.sql.DataSource
-import kotlin.collections.map
-import kotlin.use
 
 class VedtakRepository(private val dataSource: DataSource) {
 

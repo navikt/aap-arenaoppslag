@@ -8,7 +8,7 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.server.testing.testApplication
+import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.TestConfig
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
@@ -17,12 +17,12 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
+import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
-import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
@@ -132,7 +132,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         return parsedResult
     }
 
-    companion object{
+    companion object {
         fun withTestServer(dataSource: DataSource, testBody: suspend (ArenaOppslagGateway) -> Unit) {
             val config = TestConfig.default(Fakes())
             val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)

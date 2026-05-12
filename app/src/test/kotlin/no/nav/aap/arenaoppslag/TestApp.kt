@@ -5,8 +5,8 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
-import no.nav.aap.arenaoppslag.util.Fakes
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
+import no.nav.aap.arenaoppslag.util.Fakes
 import no.nav.aap.arenaoppslag.util.azure
 import no.nav.aap.arenaoppslag.util.port
 import org.flywaydb.core.Flyway

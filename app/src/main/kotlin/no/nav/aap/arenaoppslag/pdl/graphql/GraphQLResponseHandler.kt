@@ -6,8 +6,6 @@ import java.io.InputStream
 import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinToString
 
 /**
  * Kopiet fra Api-inter repo https://github.com/navikt/aap-api-intern/tree/main/app/src/main/kotlin/no/nav/aap/api/util/graphql

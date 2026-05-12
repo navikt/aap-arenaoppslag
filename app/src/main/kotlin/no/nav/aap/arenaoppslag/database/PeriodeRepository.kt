@@ -70,45 +70,45 @@ class PeriodeRepository(private val dataSource: DataSource) {
             fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate, connection: Connection
         ): List<Periode> {
             return connection.prepareStatement(selectVedtakMedTidsbegrensningSql).use { preparedStatement ->
-                    preparedStatement.setString(1, fodselsnr)
-                    preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
-                    preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
+                preparedStatement.setString(1, fodselsnr)
+                preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
+                preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
-                    val resultSet = preparedStatement.executeQuery()
+                val resultSet = preparedStatement.executeQuery()
 
-                    val perioder = resultSet.map { row ->
-                        Periode(
-                            fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                            tilOgMedDato = fraDato(row.getDate("til_dato")),
-                        )
-                    }.toList()
+                val perioder = resultSet.map { row ->
+                    Periode(
+                        fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                        tilOgMedDato = fraDato(row.getDate("til_dato")),
+                    )
+                }.toList()
 
-                    perioder
-                }
+                perioder
+            }
         }
 
         fun selectVedtakMedTidsbegrensningOg11_17(
             fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate, connection: Connection
         ): List<PeriodeMed11_17> {
             return connection.prepareStatement(selectVedtakMedTidsbegrensningMed11_17Sql).use { preparedStatement ->
-                    preparedStatement.setString(1, fodselsnr)
-                    preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
-                    preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
+                preparedStatement.setString(1, fodselsnr)
+                preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
+                preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
-                    val resultSet = preparedStatement.executeQuery()
+                val resultSet = preparedStatement.executeQuery()
 
-                    val perioder = resultSet.map { row ->
-                        PeriodeMed11_17(
-                            Periode(
-                                fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                                tilOgMedDato = fraDato(row.getDate("til_dato")),
-                            ),
-                            aktivitetsfaseKode = row.getString("aktfasekode"),
-                            aktivitetsfaseNavn = row.getString("aktfasenavn"),
-                        )
-                    }
-                    perioder
+                val perioder = resultSet.map { row ->
+                    PeriodeMed11_17(
+                        Periode(
+                            fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                            tilOgMedDato = fraDato(row.getDate("til_dato")),
+                        ),
+                        aktivitetsfaseKode = row.getString("aktfasekode"),
+                        aktivitetsfaseNavn = row.getString("aktfasenavn"),
+                    )
                 }
+                perioder
+            }
         }
 
     }

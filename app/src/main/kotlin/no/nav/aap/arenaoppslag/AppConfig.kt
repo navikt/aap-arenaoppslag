@@ -30,11 +30,11 @@ data class AppConfig(
 
 data class DbConfig(
     val url: String = runCatching { Path(getEnvVar("DB_JDBC_URL_PATH")).readText() }.getOrElse {
-        logger.warn( "Could not read DB_JDBC_URL_PATH " )
+        logger.warn("Could not read DB_JDBC_URL_PATH ")
         "localhost"
     },
     val username: String = runCatching { Path(getEnvVar("DB_USERNAME_PATH")).readText() }.getOrElse {
-        logger.warn("Could not read DB_USERNAME_PATH " )
+        logger.warn("Could not read DB_USERNAME_PATH ")
         "username"
     },
     val password: String = runCatching { Path(getEnvVar("DB_PASSWORD_PATH")).readText() }.getOrElse {

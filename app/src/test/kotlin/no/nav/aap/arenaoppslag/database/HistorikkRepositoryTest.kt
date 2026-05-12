@@ -11,6 +11,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     private lateinit var historikkRepository: HistorikkRepository
     private lateinit var vedtakRepository: VedtakRepository
     private val testDato = LocalDate.parse("2025-12-15")
+
     // Pinnet "nå"-dato for deterministiske tester — uavhengig av faktisk systemklokke
     private val nåDato = LocalDate.parse("2026-03-01")
 
@@ -23,7 +24,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `ingen signifikante vedtak for person som ikke finnes`() {
         val alleVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
-            arenaPersonId = 54601 /* finnes ikke */,
+            arenaPersonId = 54601, /* finnes ikke */
             testDato,
             nåDato,
         )

@@ -3,9 +3,6 @@ package no.nav.aap.arenaoppslag.pdl
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics
-import java.net.URI
-import java.time.Duration
-
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLQueryException
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLRequest
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponse
@@ -15,10 +12,11 @@ import no.nav.aap.komponenter.httpklient.httpclient.ClientConfig
 import no.nav.aap.komponenter.httpklient.httpclient.Header
 import no.nav.aap.komponenter.httpklient.httpclient.RestClient
 import no.nav.aap.komponenter.httpklient.httpclient.post
-
 import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.ClientCredentialsTokenProvider
 import org.slf4j.LoggerFactory
+import java.net.URI
+import java.time.Duration
 
 interface IPdlGateway {
     fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent>
@@ -49,7 +47,7 @@ class PdlGateway : IPdlGateway {
             responseHandler = GraphQLResponseHandler(),
         )
 
-    override fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent> = cache.get(personIdent){
+    override fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent> = cache.get(personIdent) {
         val request = GraphQLRequest(IDENT_QUERY, variables = PdlRequestVariables(personIdent))
         val response = query(request)
         val pdlIdenter =

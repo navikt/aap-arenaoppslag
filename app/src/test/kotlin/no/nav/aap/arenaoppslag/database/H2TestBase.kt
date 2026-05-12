@@ -8,7 +8,6 @@ import org.flywaydb.core.Flyway
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import javax.sql.DataSource
-import kotlin.time.Duration.Companion.seconds
 
 abstract class H2TestBase(private vararg val migrationLocations: String = emptyArray()) {
 
@@ -20,13 +19,19 @@ abstract class H2TestBase(private vararg val migrationLocations: String = emptyA
         private val dbCounter = AtomicInteger(0)
         private val databases = ConcurrentHashMap<Class<*>, DataSource>()
 
-        private fun getOrCreateDatabaseForTestClass(testClass: Class<*>, additionalLocations: Array<out String>): DataSource {
+        private fun getOrCreateDatabaseForTestClass(
+            testClass: Class<*>,
+            additionalLocations: Array<out String>
+        ): DataSource {
             return databases.computeIfAbsent(testClass) { clazz ->
                 createAndInitializeDatabase(clazz.simpleName, additionalLocations)
             }
         }
 
-        private fun createAndInitializeDatabase(testClassName: String, additionalLocations: Array<out String>): DataSource {
+        private fun createAndInitializeDatabase(
+            testClassName: String,
+            additionalLocations: Array<out String>
+        ): DataSource {
             val dbId = dbCounter.incrementAndGet()
             val dbName = "test_${testClassName}_${dbId}"
 
