@@ -51,11 +51,11 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
 
         val personidentifikator = request.personidentifikator
         val personId = personService.hentPersonId(personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+        val response = personId?.let {
+            sakService.hentSakerForPerson(personId)
+        } ?: SakerResponse(emptyList())
 
-        val respons: SakerResponse = sakService.hentSakerForPerson(personId)
-
-        call.respond(HttpStatusCode.OK, respons)
+        call.respond(HttpStatusCode.OK, response)
     }
 }
 
