@@ -52,11 +52,11 @@ spec:
         - application: arenavisningsklient
           cluster: {{cluster}}-gcp
           namespace: aap
+        - application: postmottak-backend
+          cluster: dev-gcp
+          namespace: aap
         {{#if isdev}}
         - application: azure-token-generator
-          cluster: dev-gcp
-          namespace: nais
-        - application: postmottak-backend
           cluster: dev-gcp
           namespace: nais
         {{/if}}
