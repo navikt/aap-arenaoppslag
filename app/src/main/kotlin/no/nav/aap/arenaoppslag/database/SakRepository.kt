@@ -47,7 +47,8 @@ class SakRepository(private val dataSource: DataSource) {
                 aktfaseKode = row.getString("aktfasekode"),
                 vedtaktypeKode = row.getString("vedtaktypekode"),
                 fra = row.getDate("fra_dato")?.toLocalDate(),
-                maxUnntakTil = row.getDate("max_unntak_dato")?.toLocalDate(),
+                maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
+                maxdato = row.getDate("max_dato")?.toLocalDate(),
                 utvidetKvoteInnvilgetFra = row.getDate("unntaksdato")?.toLocalDate(),
                 sakRegistrert = row.getDate("sak_registrert_dato").toLocalDate(),
                 sakAvsluttet = row.getDate("sak_avsluttet_dato")?.toLocalDate(),
@@ -153,11 +154,11 @@ class SakRepository(private val dataSource: DataSource) {
             )
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
                 nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, 
-                vmd.max_unntak_dato
+                vmd.max_dato, vmd.max_unntak_dato
             FROM nyeste_vedtak nv
             JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
             JOIN sak s on s.sak_id = nv.sak_id
-            order by vmd.max_unntak_dato ASC
+            order by vmd.max_unntak_dato, vmd.max_dato ASC
         """.trimIndent()
 
     }

@@ -46,7 +46,8 @@ data class Maksdatolinje(
     val aktfaseKode: String,
     val vedtaktypeKode: String,
     val fra: LocalDate?,
-    val maxUnntakTil: LocalDate?,
+    val maxdatoUnntak: LocalDate?,
+    val maxdato: LocalDate?,
     val utvidetKvoteInnvilgetFra: LocalDate?,
     val sakRegistrert: LocalDate,
     val sakAvsluttet: LocalDate?,
@@ -64,7 +65,7 @@ data class Maksdatolinje(
                 aktfaseKode,
                 vedtaktypeKode,
                 fra,
-                maxUnntakTil
+                maxdatoUnntak ?: maxdato
             )
         )
 

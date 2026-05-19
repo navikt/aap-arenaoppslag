@@ -43,7 +43,7 @@ public data class VedtakMedMaksdato(
     val aktfaseKode: String,
     val vedtaktypeKode: String,
     val fra: LocalDate?,
-    val maxUnntakTil: LocalDate?
+    val maxdatoAap: LocalDate?
 )
 
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
