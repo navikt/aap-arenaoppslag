@@ -33,7 +33,8 @@ public data class SakMedSisteVedtakOgMaksdato(
     val sakAvsluttet: LocalDate?,
     val har_11_12_forlengelse: Boolean,
     val utredesForUfor: Boolean,
-    val lopende: Boolean,
+    val ferdigAvklart: Boolean,
+    val lopendeVedtak: Boolean,
     val sisteVedtak: VedtakMedMaksdato
 )
 

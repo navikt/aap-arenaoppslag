@@ -56,8 +56,9 @@ data class Maksdatolinje(
         no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato(
             sakId, sakStatus, sakRegistrert, sakAvsluttet,
             harInnvilget11_12(),
-            utredesForUforStatus(),
-            erLopendeStatus(),
+            utredesForUfor(),
+            erFerdigAvklart(),
+            erLopende(),
             no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato(
                 vedtakId,
                 aktfaseKode,
@@ -67,8 +68,9 @@ data class Maksdatolinje(
             )
         )
 
-    fun erLopendeStatus() = sakStatus == "AKTIV" && vedtaktypeKode in listOf("O", "E", "G")
-    fun utredesForUforStatus() = aktfaseKode == "UVUP"
+    fun erLopende() = sakStatus == "AKTIV" && vedtaktypeKode in listOf("O", "E", "G")
+    fun utredesForUfor() = aktfaseKode == "UVUP"
+    fun erFerdigAvklart() = aktfaseKode == "FA"
     fun harInnvilget11_12() = utvidetKvoteInnvilgetFra != null
 }
 
