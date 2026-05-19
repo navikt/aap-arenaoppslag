@@ -6,6 +6,10 @@ import java.io.InputStream
 import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import no.nav.aap.arenaoppslag.pdl.PdlIdenter
+import no.nav.aap.arenaoppslag.pdl.PdlIdenterData
+import no.nav.aap.komponenter.httpklient.exception.InternfeilException
+import no.nav.aap.komponenter.httpklient.exception.UgyldigForespørselException
 
 /**
  * Kopiet fra Api-inter repo https://github.com/navikt/aap-api-intern/tree/main/app/src/main/kotlin/no/nav/aap/api/util/graphql
@@ -23,11 +27,13 @@ class GraphQLResponseHandler : RestResponseHandler<InputStream> {
 
         if (håndtertResponse != null && håndtertResponse is GraphQLResponse<*>) {
             if (håndtertResponse.errors?.isNotEmpty() == true) {
-                val feilmeldinger = håndtertResponse.errors.joinToString(transform = GraphQLError::message)
-                throw GraphQLQueryException(
-                    "Feil $feilmeldinger ved GraphQL oppslag mot ${request.uri()}",
-                    håndtertResponse.errors.first().extensions.code ?: "Ukjent"
-                )
+                val feilmelding = håndtertResponse.errors.first()
+
+                when (val errorCode = feilmelding.extensions.code) {
+                    "bad_request" -> throw UgyldigForespørselException("Bad request fra PDL med feilmelding: '${feilmelding.message}'")
+                    "not_found" -> GraphQLResponse(data = PdlIdenterData(PdlIdenter(emptyList())), errors = null)
+                    else -> throw InternfeilException("Ukjent feil fra PDL (${errorCode}): ${feilmelding.message}")
+                }
             }
         }
 
@@ -36,8 +42,3 @@ class GraphQLResponseHandler : RestResponseHandler<InputStream> {
 
     override fun bodyHandler(): HttpResponse.BodyHandler<InputStream> = defaultResponseHandler.bodyHandler()
 }
-
-class GraphQLQueryException(
-    msg: String,
-    val code: String
-) : RuntimeException(msg)

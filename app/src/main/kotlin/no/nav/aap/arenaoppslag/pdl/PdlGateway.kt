@@ -2,8 +2,9 @@ package no.nav.aap.arenaoppslag.pdl
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
+import java.net.URI
+import java.time.Duration
 import no.nav.aap.arenaoppslag.Metrics
-import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLQueryException
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLRequest
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponse
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponseHandler
@@ -14,9 +15,6 @@ import no.nav.aap.komponenter.httpklient.httpclient.RestClient
 import no.nav.aap.komponenter.httpklient.httpclient.post
 import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.ClientCredentialsTokenProvider
-import org.slf4j.LoggerFactory
-import java.net.URI
-import java.time.Duration
 
 interface IPdlGateway {
     fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent>
@@ -38,8 +36,6 @@ class PdlGateway : IPdlGateway {
             additionalHeaders = listOf(Header("Behandlingsnummer", SAKSBEHANDLING_NUMMER)),
         )
 
-    private val log = LoggerFactory.getLogger(javaClass)
-
     private val client =
         RestClient(
             config = config,
@@ -60,17 +56,8 @@ class PdlGateway : IPdlGateway {
 
     private fun query(request: GraphQLRequest<PdlRequestVariables>): GraphQLResponse<PdlIdenterData> {
         val httpRequest = PostRequest(body = request)
-        return try {
-            requireNotNull(client.post(uri = graphqlUrl, request = httpRequest))
-        } catch (e: GraphQLQueryException) {
-            log.info("Feil ved oppslag mot PDL. Melding: ${e.message}. Kode: ${e.code}")
-            if (e.code == "not_found") {
-                GraphQLResponse(data = PdlIdenterData(PdlIdenter(emptyList())), errors = null)
-            } else {
-                throw e
-            }
-        }
 
+        return requireNotNull(client.post(uri = graphqlUrl, request = httpRequest))
     }
 
     companion object {
