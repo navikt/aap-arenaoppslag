@@ -131,8 +131,7 @@ values (987, 'korrekt', 'Gammel', 'Rettighet', 'AKTIV'),
        (876, 'duplikat', 'Se f.nr korrekt', 'Må ikke brukes', 'DUPLIKAT_TIL_BEH');
 
 
-
--- Porten-sak: FAGSYSTEM-426282
+-- person med nyere vedtak som ikke har til og fra dato fordi det ikke er jobbet med
 insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
 values (426282, '426282', 'Buggeson', 'Test');
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
