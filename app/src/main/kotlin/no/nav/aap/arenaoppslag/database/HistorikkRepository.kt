@@ -51,7 +51,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND rettighetkode='AAP' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+          AND NOT (utfallkode = 'NEI' AND rettighetkode='AA115' AND til_dato IS NULL) -- bruker fikk avslag
+
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -173,8 +175,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND ssu.mod_dato >= ? -- ignorer gamle simuleringer som ikke ble noe av (3 mnd)
         """.trimIndent()
 
-        const val tidsBufferUkerGenerell = 78L
-        const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
+        const val tidsBufferUkerGenerell = 78L // 52 uker + 6 måneder tilbakejustering
+        const val tidsBufferUkerStans = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val modnedGrenseVedtak = 72L
         const val modnedGrenseTilbakebetaling = 60L
         const val modnedGrenseKlageInnvilget = 6L
