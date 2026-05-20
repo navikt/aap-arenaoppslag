@@ -65,4 +65,15 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         assertThat(signifikanteVedtak).hasSize(1)
     }
 
+    @Test
+    fun `Ingen signifikante vedtak for person med kun avslag på AA115`() {
+        val testPersonFnr = "426282"
+        val testPersonId = 426282
+        val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
+        assertThat(alleVedtak).hasSize(1)
+
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        assertThat(signifikanteVedtak).hasSize(0)
+    }
+
 }

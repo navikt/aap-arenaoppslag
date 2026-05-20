@@ -29,7 +29,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // dagpenger eller tiltakspenger. Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et ordinært
         // vedtak i samme periode.
         @Language("OracleSql")
-        val selectKunRelevanteVedtak = """
+        val selectKunRelevanteAapVedtak = """
         SELECT 
             sak_id, 
             vedtakstatuskode, 
@@ -42,7 +42,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
               vedtak v 
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
-          AND v.rettighetkode IN ('AA115', 'AAP')
+          AND v.rettighetkode = 'AAP'
           AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
@@ -51,11 +51,38 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND rettighetkode='AAP' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
-          AND NOT (utfallkode = 'NEI' AND rettighetkode='AA115' AND til_dato IS NULL) -- bruker fikk avslag
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
         """.trimIndent()
 
-        // S2: Hent alle AAP-klager med relevant historikk for personen
+
+        // S2: Hent alle AA115-vedtak med relevant historikk for personen
+        @Language("OracleSql")
+        val selectKunRelevante11_5Vedtak = """
+        SELECT 
+            sak_id, 
+            vedtakstatuskode, 
+            vedtaktypekode, 
+            fra_dato, 
+            til_dato, 
+            rettighetkode, 
+            utfallkode
+        FROM 
+              vedtak v 
+        WHERE v.person_id = ?
+          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+          AND v.rettighetkode = 'AA115'
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+          AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
+          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
+          AND ( 
+                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
+                  OR
+                (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+              )
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
+        """.trimIndent()
+
+        // S3: Hent alle AAP-klager med relevant historikk for personen
         // Forbedringsmulighet: Vi kan se bort i fra klag1 for de som har klag2, angitt ved vedtak.vedtak_id_relatert
         @Language("OracleSql")
         val selectKunRelevanteKlager = """
@@ -85,7 +112,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ? AND v.utfallkode IN ('JA', 'DELVIS' ) )
         """.trimIndent()
 
-        // S3: Hent alle AAP-anker med relevant historikk for personen
+        // S4: Hent alle AAP-anker med relevant historikk for personen
         @Language("OracleSql")
         val selectKunRelevanteAnker = """
         SELECT
@@ -109,9 +136,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val tidsBufferUkerGenerell = 78L // 52 uker + 6 måneder tilbakejustering
         const val tidsBufferUkerStans = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val modnedGrenseVedtak = 72L
-        const val modnedGrenseTilbakebetaling = 60L
         const val modnedGrenseKlageInnvilget = 6L
-        const val modnedGrenseSpesialOgSim = 3L
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
@@ -123,25 +148,31 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
             val query =
                 listOf(
-                    selectKunRelevanteVedtak,
+                    selectKunRelevanteAapVedtak,
+                    selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
                 ).joinToString("\nUNION ALL\n")
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
-                // S1: vedtak
+                // S1: AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, tidsBufferGenerell)
                 preparedStatement.setDate(p++, nyesteTillateStans)
                 preparedStatement.setDate(p++, tidsBufferGenerell)
-                // S2: klager
+                // S2: 11-5-vedtak
+                preparedStatement.setInt(p++, arenaPersonId)
+                preparedStatement.setDate(p++, vedtakModnedGrense)
+                preparedStatement.setDate(p++, tidsBufferGenerell)
+                preparedStatement.setDate(p++, nyesteTillateStans)
+                // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, tidsBufferGenerell)
                 preparedStatement.setDate(p++, klageInnvilgetGrense)
-                // S3: anker
+                // S4: anker
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
 
