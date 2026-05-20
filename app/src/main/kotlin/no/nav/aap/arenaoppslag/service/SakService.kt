@@ -30,7 +30,7 @@ class SakService(private val sakRepository: SakRepository) {
         }
     }
 
-    fun hentMaksdatoForVedtakISaker(personId: PersonId): List<SakMedSisteVedtakOgMaksdato> {
+    fun hentMaksdatoAapForVedtakISaker(personId: PersonId): List<SakMedSisteVedtakOgMaksdato> {
         val sakerMedVedtak = sakRepository.hentSakerMedMaksDatoOgVedtak(personId)
         return sakerMedVedtak.map { it.tilKontrakt() }
     }

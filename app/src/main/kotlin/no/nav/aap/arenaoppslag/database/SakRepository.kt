@@ -129,6 +129,7 @@ class SakRepository(private val dataSource: DataSource) {
                 sak.sakstatuskode, sakstatus.sakstatusnavn
         """.trimIndent()
 
+
         @Language("OracleSql")
         internal val selectVedtakMedNyesteMaxdatoForPerson = """
             -- Hent først nyeste vedtak for hver av sakene 
@@ -145,22 +146,22 @@ class SakRepository(private val dataSource: DataSource) {
                         JOIN VEDTAKFAKTA vf on v.vedtak_id = vf.vedtak_id
                     WHERE v.person_id = ?
                         AND v.rettighetkode = 'AAP'
-                        AND vf.vedtakfaktakode = 'AAPVILKUNN'
-                        AND v.vedtaktypekode != 'S' -- stansede vedtak sin maxdato er ikke meningsfull
+                        AND v.utfallkode = 'JA'
+                        AND v.vedtakstatuskode IN ('IVERK','AVSLU')
+                        AND vf.vedtakfaktakode = 'AAPVILKUNN' -- vi tar med denne som ekstra informasjon
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
-                        AND NOT ((v.fra_dato is not null and v.til_dato is not null) AND v.fra_dato > v.til_dato) 
+                        AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato) 
                 ) WHERE rn = 1
             )
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
                 nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, 
                 vmd.max_dato, vmd.max_unntak_dato
             FROM nyeste_vedtak nv
-            JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
-            JOIN sak s on s.sak_id = nv.sak_id
-            order by vmd.max_unntak_dato, vmd.max_dato ASC
+                JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
+                JOIN sak s on s.sak_id = nv.sak_id
+            ORDER BY s.reg_dato DESC
         """.trimIndent()
-
     }
 
 }

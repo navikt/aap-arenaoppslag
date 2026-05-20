@@ -13,21 +13,21 @@ values (100, 'maksdato100', 'Maks', 'Datosen'),
        -- annen person med tilsvarende data — skal IKKE komme med pga person_id-filter
        (101, 'annen101', 'Annen', 'Person');
 
--- Sak 1102 — to vedtak, men bare det med nyeste AAPVILKUNN-dato (1101) skal vinne ROW_NUMBER
+-- Sak 1102 — flere vedtak
+-- Saken er avsluttet (sakstatuskode != 'AKTIV') for å verifisere at AKTIV-kravet er fjernet.
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
                  DATO_AVSLUTTET, SAKSTATUSKODE, AETATENHET_ANSVARLIG, ER_UTLAND)
-values (1102, 'AA', DATE '2022-02-02', DATE '2022-02-02', 'TEST', 'PERS', 100, 2022, 1102, null, 'AKTIV', '0826', 'N');
+values (1102, 'AA', DATE '2022-02-02', DATE '2022-02-02', 'TEST', 'PERS', 100, 2022, 1102,
+        DATE '2024-06-15', 'AVSLU', '0826', 'N');
 
 insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID,
                     FRA_DATO, TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
 values
-    -- nyeste AAPVILKUNN er ('30-06-2025')
     (1101, 1102, 'IVERK', 'O', 'JA', 'AAP', 100, DATE '2010-08-29', DATE '2026-06-30',
      '4402', 1102, 2022, 1, 'IKKE', DATE '2010-08-29'),
-    -- taper: eldre AAPVILKUNN ('30-05-2025') → filtreres bort av rn=1
     (1100, 1102, 'IVERK', 'O', 'JA', 'AAP', 100, DATE '2009-01-01', DATE '2025-05-30',
      '4402', 1102, 2022, 0, 'IKKE', DATE '2009-01-01'),
-    -- skal filtreres bort: stanset vedtak (vedtaktypekode = 'S')
+    -- stanset vedtak
     (1109, 1102, 'IVERK', 'S', 'JA', 'AAP', 100, DATE '2024-01-01', DATE '2024-12-31',
      '4402', 1102, 2022, 9, 'IKKE', DATE '2024-01-01');
 
@@ -59,7 +59,7 @@ values
     -- person 100, sak 1102
     (1101, 'AAPVILKUNN', '30-06-2025'),
     (1100, 'AAPVILKUNN', '30-05-2025'),
-    (1109, 'AAPVILKUNN', '30-06-2025'),
+    (1109, 'AAPVILKUNN', '31-12-2024'),
     -- person 100, sak 1103
     (1103, 'AAPVILKUNN', '30-06-2025'),
     (1108, 'AAPVILKUNN', '30-06-2025'),

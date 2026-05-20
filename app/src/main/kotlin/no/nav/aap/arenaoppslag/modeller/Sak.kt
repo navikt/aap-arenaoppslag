@@ -68,8 +68,7 @@ data class Maksdatolinje(
                 maxdatoUnntak ?: maxdato
             )
         )
-
-    fun erLopende() = sakStatus == "AKTIV" && vedtaktypeKode in listOf("O", "E", "G")
+    fun erLopende() = vedtaktypeKode in listOf("O", "E", "G") // Stansede vedtak har udefinert maxdato
     fun utredesForUfor() = aktfaseKode == "UVUP"
     fun erFerdigAvklart() = aktfaseKode == "FA"
     fun harInnvilget11_12() = utvidetKvoteInnvilgetFra != null
