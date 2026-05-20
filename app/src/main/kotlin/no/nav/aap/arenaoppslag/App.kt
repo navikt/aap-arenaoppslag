@@ -210,7 +210,12 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
                 // Kontrakten på disse endepunktene kan endre seg helt uten forvarsel
-                sak(sakOgVedtakService, telleverkService)
+                sak(
+                    sakService = sakListeService,
+                    posteringService = utbetalingService,
+                    sakOgVedtakService = sakOgVedtakService,
+                    telleverkService = telleverkService
+                )
             }
         }
     }

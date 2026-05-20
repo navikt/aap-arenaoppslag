@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.modeller
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Suppress("MatchingDeclarationName")
@@ -13,12 +14,16 @@ data class ArenaSakDetaljertRespons(
     val registrertDato: LocalDateTime,
     val avsluttetDato: LocalDateTime?,
     val vedtak: List<ArenaVedtakMedDetaljer>,
-    val telleverkForPerson: TelleverkForPerson?
+    val telleverkForPerson: TelleverkForPerson?,
+    val maksDato: LocalDate?,
+    val sisteUtbetalingsDato: LocalDate?,
 ) {
     companion object {
         fun fromDomain(
             arenaSakMedVedtak: ArenaSakMedVedtak,
-            telleverkForPerson: TelleverkForPerson?
+            telleverkForPerson: TelleverkForPerson?,
+            maksDato: LocalDate?,
+            sisteUtbetalingsDato: LocalDate?,
         ) = ArenaSakDetaljertRespons(
             sakId = arenaSakMedVedtak.sakId,
             opprettetAar = arenaSakMedVedtak.opprettetAar,
@@ -29,7 +34,10 @@ data class ArenaSakDetaljertRespons(
             registrertDato = arenaSakMedVedtak.registrertDato,
             avsluttetDato = arenaSakMedVedtak.avsluttetDato,
             vedtak = arenaSakMedVedtak.vedtak,
-            telleverkForPerson = telleverkForPerson
+            telleverkForPerson = telleverkForPerson,
+            maksDato = maksDato,
+            sisteUtbetalingsDato = sisteUtbetalingsDato
+
         )
     }
 }

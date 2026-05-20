@@ -74,7 +74,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
+fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]?.toIntOrNull()
 
@@ -86,8 +86,19 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         when (val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak i Arena")
             else -> {
-                val telleverk = telleverkService.hentTelleverkForPerson(PersonId(sak.person.personId))
-                val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
+                val personId = PersonId(sak.person.personId)
+                val telleverk = telleverkService.hentTelleverkForPerson(personId)
+                val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
+
+                val saker = sakService.hentMaksdatoForVedtakISaker(personId)
+
+                val maksdato = saker.mapNotNull { it.sisteVedtak.maxdatoAap }.maxOrNull()
+                val response = ArenaSakDetaljertRespons.fromDomain(
+                    arenaSakMedVedtak = sak,
+                    telleverkForPerson = telleverk,
+                    sisteUtbetalingsDato = sisteUtbetalingDato,
+                    maksDato = maksdato
+                )
 
                 call.respond(status = HttpStatusCode.OK, message = response)
             }
