@@ -39,31 +39,48 @@ class TelleverkRepository(private val datasource: DataSource) {
 
         @Language("OracleSql")
         internal val selectKvotePåPerson = """
-        SELECT /*+ INDEX(KB KVOTBR_PK) ALL_ROWS */
-       KB.KVOTEBRUK_ID,
-       KB.KVOTETYPEKODE,
-       KB.TABELLNAVNALIAS_GRUNNLAG,
-       KB.OBJEKT_ID_GRUNNLAG,
-       KB.POSTERINGTYPEKODE,
-       KB.ANTALL_BEVEGELSE,
-       KB.BEGRUNNELSE,
-       BL.BEREGNINGSLEDD_ID,
-       BL.DATO_FRA,
-       BL.DATO_TIL,
-       BL.VERDI,
-       KT.KVOTETYPENAVN,
-       BLT.VALIDER_HELE_DAGER
-FROM BEREGNINGSLEDD BL
-JOIN KVOTEBRUK KB ON KB.KVOTEBRUK_ID = BL.OBJEKT_ID_KILDE
-JOIN KVOTETYPE KT ON KT.KVOTETYPEKODE = KB.KVOTETYPEKODE
-JOIN BEREGNINGSLEDDTYPE BLT ON BL.BEREGNINGSLEDDKODE = BLT.BEREGNINGSLEDDKODE
-WHERE BL.TABELLNAVNALIAS_KILDE = 'KVOTBR'
-  AND BL.PERSON_ID = ?
+           BL.PERSON_ID
+     , KB.KVOTEBRUK_ID
+     , KB.KVOTETYPEKODE
+     , KB.TABELLNAVNALIAS_GRUNNLAG
+     , KB.OBJEKT_ID_GRUNNLAG
+     , KB.POSTERINGTYPEKODE
+     , KB.ANTALL_BEVEGELSE
+     , KB.BEGRUNNELSE
+     , KB.ANTALL_BEVEGELSE
+     , BL.BEREGNINGSLEDD_ID
+     , BL.DATO_FRA
+     , BL.DATO_TIL
+     , BL.VERDI
+     , BL.VERDI
+     , DECODE(KB.TABELLNAVNALIAS_GRUNNLAG, 'VEDTAK', KB.OBJEKT_ID_GRUNNLAG)
+     , KT.KVOTETYPENAVN
+     , BLT.VALIDER_HELE_DAGER
+  FROM BEREGNINGSLEDD     BL
+     , KVOTEBRUK          KB
+     , KVOTETYPE          KT
+     , BEREGNINGSLEDDTYPE BLT
+ WHERE BL.TABELLNAVNALIAS_KILDE = 'KVOTBR'
+   AND KB.KVOTEBRUK_ID       = BL.OBJEKT_ID_KILDE
+   AND KT.KVOTETYPEKODE      = KB.KVOTETYPEKODE
+   AND BL.BEREGNINGSLEDDKODE = BLT.BEREGNINGSLEDDKODE
+   and bl.person_id = ?;
         """.trimIndent()
 
     }
 
     fun hentKvoteForPerson(personId: PersonId): Set<KvotebrukHendelse> {
+
+        /**
+         * dato =
+         * Type =
+         * Endret av =
+         * Endring =
+         * Gjenværende =
+         * Begrunnelse = KVOTEBRUK.BEGRUNNELSE
+         */
+
+
         return datasource.connection.use { connection ->
             connection.prepareStatement(selectKvotePåPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
@@ -82,11 +99,11 @@ WHERE BL.TABELLNAVNALIAS_KILDE = 'KVOTBR'
                         datoTil = row.getString("dato_til"),
                         verdi = row.getInt("verdi"),
                         kvoteTypeNavn = row.getString("kvotetypenavn"),
-                        validerHeleDager = row.getBoolean("valider_hele_dager")
+                        // VALIDER_HELE_DAGER er VARCHAR2(1) med verdiene 'J'/'N' i Oracle
+                        validerHeleDager = row.getString("valider_hele_dager") == "J"
                     )
                 }.toSet()
             }
-
         }
     }
 

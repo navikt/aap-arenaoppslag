@@ -88,8 +88,8 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
             else -> {
                 val personId = PersonId(sak.person.personId)
                 val telleverk = telleverkService.hentTelleverkForPerson(personId)
-                val kvoteBrukHistorikk = telleverkService.hentKvoteBrukHistorikkForPerson(personId)
-                val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk, kvoteBrukHistorikk)
+                val kvoteHistorikk = telleverkService.hentKvoteBrukHistorikkForPerson(personId)
+                val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk, kvoteHistorikk)
                 call.respond(status = HttpStatusCode.OK, message = response)
             }
         }
