@@ -90,9 +90,7 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
                 val telleverk = telleverkService.hentTelleverkForPerson(personId)
                 val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
 
-                val saker = sakService.hentMaksdatoForVedtakISaker(personId)
-
-                val maksdato = saker.mapNotNull { it.sisteVedtak.maxdatoAap }.maxOrNull()
+                val maksdato = sakService.hentMaksdatoAapForPerson(personId)
                 val response = ArenaSakDetaljertRespons.fromDomain(
                     arenaSakMedVedtak = sak,
                     telleverkForPerson = telleverk,
