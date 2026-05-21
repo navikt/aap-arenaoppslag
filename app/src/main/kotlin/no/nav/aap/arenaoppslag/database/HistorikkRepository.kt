@@ -12,10 +12,10 @@ import javax.sql.DataSource
 class HistorikkRepository(private val dataSource: DataSource) {
 
     fun hentAlleSignifikanteVedtakForPerson(
-        arenaPersonId: Int, søknadMottattPå: LocalDate, nåDato: LocalDate = LocalDate.now()
+        arenaPersonId: Int, søknadMottattPå: LocalDate
     ): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            hentAlleSignifikanteVedtakForPerson(arenaPersonId, søknadMottattPå, nåDato, con)
+            hentAlleSignifikanteVedtakForPerson(arenaPersonId, søknadMottattPå, con)
         }
     }
 
@@ -51,7 +51,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND fra_dato <= ?) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
         """.trimIndent()
 
         // S2: Hent alle AAP-klager med relevant historikk for personen
@@ -181,14 +181,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val modnedGrenseSpesialOgSim = 3L
 
         fun hentAlleSignifikanteVedtakForPerson(
-            arenaPersonId: Int, søknadMottattPå: LocalDate, nåDato: LocalDate, connection: Connection
+            arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
-            val tidsBufferGenerell = søknadMottattPå.minusWeeks(tidsBufferUkerGenerell)
-            val nyesteTillateStans = søknadMottattPå.minusWeeks(tidsBufferUkerStans)
-            val vedtakModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseVedtak))
-            val tilbakebetalingModnedGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseTilbakebetaling))
-            val klageInnvilgetGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseKlageInnvilget))
-            val spesialOgSimGrense = Date.valueOf(nåDato.minusMonths(modnedGrenseSpesialOgSim))
+            val tidsBufferGenerell = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerGenerell))
+            val nyesteTillateStans = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerStans))
+            val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
+            val tilbakebetalingModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseTilbakebetaling))
+            val klageInnvilgetGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseKlageInnvilget))
+            val spesialOgSimGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseSpesialOgSim))
 
             val query =
                 listOf(
@@ -205,13 +205,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 // S1: vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
-                preparedStatement.setDate(p++, Date.valueOf(nyesteTillateStans))
-                preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
+                preparedStatement.setDate(p++, tidsBufferGenerell)
+                preparedStatement.setDate(p++, nyesteTillateStans)
+                preparedStatement.setDate(p++, tidsBufferGenerell)
                 // S2: klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, Date.valueOf(tidsBufferGenerell))
+                preparedStatement.setDate(p++, tidsBufferGenerell)
                 preparedStatement.setDate(p++, klageInnvilgetGrense)
                 // S3: anker
                 preparedStatement.setInt(p++, arenaPersonId)

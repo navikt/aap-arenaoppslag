@@ -53,7 +53,7 @@ spec:
           cluster: {{cluster}}-gcp
           namespace: aap
         - application: postmottak-backend
-          cluster: dev-gcp
+          cluster: {{cluster}}-gcp
           namespace: aap
         {{#if isdev}}
         - application: azure-token-generator

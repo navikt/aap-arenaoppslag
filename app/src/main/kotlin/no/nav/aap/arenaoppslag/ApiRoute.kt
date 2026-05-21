@@ -67,7 +67,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         val personId = personService.hentPersonId(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val saker = sakService.hentMaksdatoForVedtakISaker(personId)
+        val saker = sakService.hentMaksdatoAapForVedtakISaker(personId)
 
         // dersom personen finnes i Arena men ikke har AAP-vedtak utenfor Stans blir listen tom
         call.respond(HttpStatusCode.OK, MaksdatoResponse(saker))
