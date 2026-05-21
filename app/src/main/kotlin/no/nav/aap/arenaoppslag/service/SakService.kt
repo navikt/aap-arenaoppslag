@@ -8,6 +8,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 class SakService(private val sakRepository: SakRepository) {
@@ -33,6 +34,14 @@ class SakService(private val sakRepository: SakRepository) {
     fun hentMaksdatoAapForVedtakISaker(personId: PersonId): List<SakMedSisteVedtakOgMaksdato> {
         val sakerMedVedtak = sakRepository.hentSakerMedMaksDatoOgVedtak(personId)
         return sakerMedVedtak.map { it.tilKontrakt() }
+    }
+
+    fun hentMaksdatoAapForPerson(personId: PersonId): LocalDate? {
+        val maksdatoene = hentMaksdatoAapForVedtakISaker(personId)
+        return maksdatoene
+            .filter { it.lopendeVedtak }
+            .mapNotNull { it.sisteVedtak.maxdatoAap }
+            .maxOrNull()
     }
 
 }
