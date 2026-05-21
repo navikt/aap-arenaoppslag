@@ -86,9 +86,10 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         when (val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
             null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak i Arena")
             else -> {
-                val telleverk = telleverkService.hentTelleverkForPerson(PersonId(sak.person.personId))
-                val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
-
+                val personId = PersonId(sak.person.personId)
+                val telleverk = telleverkService.hentTelleverkForPerson(personId)
+                val kvoteBrukHistorikk = telleverkService.hentKvoteBrukHistorikkForPerson(personId)
+                val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk, kvoteBrukHistorikk)
                 call.respond(status = HttpStatusCode.OK, message = response)
             }
         }
