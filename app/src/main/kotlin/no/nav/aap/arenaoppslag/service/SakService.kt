@@ -36,23 +36,21 @@ class SakService(private val sakRepository: SakRepository) {
         return sakerMedVedtak.map { it.tilKontrakt() }
     }
 
-    fun hentMaksdatoAapForPerson(personId: PersonId): LocalDate? {
-        val maksdatoene = hentMaksdatoAapForVedtakISaker(personId)
-        val sisteSak = maksdatoene
-            .filter { it.sisteVedtak.maxdatoAap != null }.maxBy { it.sisteVedtak.maxdatoAap!! }
-        /** Maksdato er funner basert på reglen:
-         * Finner siste AAP-vedtak for denne brukeren
-         * Finner sak knytet til dette vedtaket
-         * Hvis løpende vedtak. Returner beregnet maksdato
-         * Hvis sak som har gått til maks: Returner maksdato
-         * Hvis siste vedtak er stansvedtak: Returnere null
-         * Hvis vi ikke finner noen relevante saker: Returnere null
-         */
+
+    /** Maksdato er funner basert på reglen:
+     * Finner siste AAP-vedtak for denne brukeren
+     * Finner sak knytet til dette vedtaket
+     * Hvis løpende vedtak. Returner beregnet maksdato
+     * Hvis sak som har gått til maks: Returner maksdato
+     * Hvis siste vedtak er stansvedtak: Returnere null
+     * Hvis vi ikke finner noen relevante saker: Returnere null
+     */
+    fun hentMaksdatoAapForPerson(personId: PersonId): LocalDate? =
+        hentMaksdatoAapForVedtakISaker(personId)
+            .filter { it.lopendeVedtak }
+            .mapNotNull { it.sisteVedtak.maxdatoAap }
+            .maxOrNull()
 
 
-        if (!sisteSak.lopendeVedtak) return null
-
-        return sisteSak.sisteVedtak.maxdatoAap
-    }
 
 }
