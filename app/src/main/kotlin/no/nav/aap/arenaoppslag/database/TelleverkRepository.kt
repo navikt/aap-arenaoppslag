@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.database;
 
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.intellij.lang.annotations.Language
+import java.time.LocalDate
 import javax.sql.DataSource;
 
 
@@ -14,10 +15,10 @@ data class KvotebrukHendelse(
     val objektIdGrunnlag: Int,
     val posteringTypeKode: String,
     val antallBevegelse: Int,
-    val begrunnelse: String,
+    val begrunnelse: String?,
     val beregningsleddId: Int,
-    val datoFra: String,
-    val datoTil: String,
+    val datoFra: LocalDate,
+    val datoTil: LocalDate?,
     val verdi: Int,
     val kvoteTypeNavn: String,
     val validerHeleDager: Boolean
@@ -39,7 +40,8 @@ class TelleverkRepository(private val datasource: DataSource) {
 
         @Language("OracleSql")
         internal val selectKvotePåPerson = """
-           BL.PERSON_ID
+   SELECT /*+ INDEX (kb KVOTBR_PK) ALL_ROWS*/
+       BL.PERSON_ID
      , KB.KVOTEBRUK_ID
      , KB.KVOTETYPEKODE
      , KB.TABELLNAVNALIAS_GRUNNLAG
@@ -47,11 +49,9 @@ class TelleverkRepository(private val datasource: DataSource) {
      , KB.POSTERINGTYPEKODE
      , KB.ANTALL_BEVEGELSE
      , KB.BEGRUNNELSE
-     , KB.ANTALL_BEVEGELSE
      , BL.BEREGNINGSLEDD_ID
      , BL.DATO_FRA
      , BL.DATO_TIL
-     , BL.VERDI
      , BL.VERDI
      , DECODE(KB.TABELLNAVNALIAS_GRUNNLAG, 'VEDTAK', KB.OBJEKT_ID_GRUNNLAG)
      , KT.KVOTETYPENAVN
@@ -64,7 +64,7 @@ class TelleverkRepository(private val datasource: DataSource) {
    AND KB.KVOTEBRUK_ID       = BL.OBJEKT_ID_KILDE
    AND KT.KVOTETYPEKODE      = KB.KVOTETYPEKODE
    AND BL.BEREGNINGSLEDDKODE = BLT.BEREGNINGSLEDDKODE
-   and bl.person_id = ?;
+   and bl.person_id = ? 
         """.trimIndent()
 
     }
@@ -82,7 +82,7 @@ class TelleverkRepository(private val datasource: DataSource) {
 
 
         return datasource.connection.use { connection ->
-            connection.prepareStatement(selectKvotePåPerson).use { preparedStatement ->
+            connection.createParameterizedQuery(selectKvotePåPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.map { row ->
@@ -95,8 +95,8 @@ class TelleverkRepository(private val datasource: DataSource) {
                         antallBevegelse = row.getInt("antall_bevegelse"),
                         begrunnelse = row.getString("begrunnelse"),
                         beregningsleddId = row.getInt("beregningsledd_id"),
-                        datoFra = row.getString("dato_fra"),
-                        datoTil = row.getString("dato_til"),
+                        datoFra = row.getDate("dato_fra").toLocalDate(),
+                        datoTil = row.getDate("dato_til")?.toLocalDate(),
                         verdi = row.getInt("verdi"),
                         kvoteTypeNavn = row.getString("kvotetypenavn"),
                         // VALIDER_HELE_DAGER er VARCHAR2(1) med verdiene 'J'/'N' i Oracle
@@ -109,7 +109,7 @@ class TelleverkRepository(private val datasource: DataSource) {
 
     fun hentTelleverkForPerson(personId: PersonId): Set<KvoteVerdi> {
         return datasource.connection.use { con ->
-            con.prepareStatement(selectTelleverkPåPerson).use { preparedStatement ->
+            con.createParameterizedQuery(selectTelleverkPåPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.map { row ->
