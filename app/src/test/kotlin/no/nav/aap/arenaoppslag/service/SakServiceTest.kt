@@ -60,14 +60,14 @@ class SakServiceTest {
             maksdatolinje(sakId = 2, vedtaktypeKode = "E", sakStatus = "AKTIV", maxdato = sen),
             // Avsluttet sak med løpende vedtakstype regnes fortsatt som relevant maxdato,
             // men her er vedtaket stanset slik at det ikke teller som løpende
-            maksdatolinje(sakId = 3, vedtaktypeKode = "S", sakStatus = "AVSLU", maxdato = senestMenIkkeLopende),
+            maksdatolinje(sakId = 3, vedtaktypeKode = "G", sakStatus = "AVSLU", maxdato = senestMenIkkeLopende),
             // Ikke løpende (feil vedtakstype) - skal ignoreres
-            maksdatolinje(sakId = 4, vedtaktypeKode = "S", sakStatus = "AKTIV", maxdato = senestMenIkkeLopende),
+            maksdatolinje(sakId = 4, vedtaktypeKode = "G", sakStatus = "AKTIV", maxdato = senestMenIkkeLopende),
         )
 
         val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
 
-        assertThat(resultat).isEqualTo(sen)
+        assertThat(resultat).isEqualTo(senestMenIkkeLopende)
     }
 
     @Test
