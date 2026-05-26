@@ -218,7 +218,6 @@ class MaksimumRepository(
            AND rettighetkode = 'AAP'
            AND vedtaktypekode IN ('O', 'E', 'G', 'S')
            AND vedtakstatuskode IN ('IVERK', 'AVSLU')
-           AND (fra_dato <= til_dato OR til_dato IS NULL)
            AND (til_dato >= ? OR til_dato IS NULL) 
            AND fra_dato <= ?
     """.trimIndent()
