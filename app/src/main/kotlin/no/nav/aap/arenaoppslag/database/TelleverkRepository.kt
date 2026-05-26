@@ -13,15 +13,14 @@ data class KvotebrukHendelse(
     val kvoteTypeKode: String,
     val tabellnavnAliasGrunnlag: String,
     val objektIdGrunnlag: Int,
-    val posteringTypeKode: String,
     val antallBevegelse: Int,
+    val posteringTypeKode: String,
+    val datoHendelse: LocalDate,
+    val modDato: LocalDate?,
+    val resterende: Int,
+    val modUser: String?,
+    val personId: Int,
     val begrunnelse: String?,
-    val beregningsleddId: Int,
-    val datoFra: LocalDate,
-    val datoTil: LocalDate?,
-    val verdi: Int,
-    val kvoteTypeNavn: String,
-    val validerHeleDager: Boolean
 )
 
 
@@ -40,47 +39,40 @@ class TelleverkRepository(private val datasource: DataSource) {
 
         @Language("OracleSql")
         internal val selectKvotePåPerson = """
-   SELECT /*+ INDEX (kb KVOTBR_PK) ALL_ROWS*/
-       BL.PERSON_ID
-     , KB.KVOTEBRUK_ID
-     , KB.KVOTETYPEKODE
-     , KB.TABELLNAVNALIAS_GRUNNLAG
-     , KB.OBJEKT_ID_GRUNNLAG
-     , KB.POSTERINGTYPEKODE
-     , KB.ANTALL_BEVEGELSE
-     , KB.BEGRUNNELSE
-     , BL.BEREGNINGSLEDD_ID
-     , BL.DATO_FRA
-     , BL.DATO_TIL
-     , BL.VERDI
-     , DECODE(KB.TABELLNAVNALIAS_GRUNNLAG, 'VEDTAK', KB.OBJEKT_ID_GRUNNLAG)
-     , KT.KVOTETYPENAVN
-     , BLT.VALIDER_HELE_DAGER
-  FROM BEREGNINGSLEDD     BL
-     , KVOTEBRUK          KB
-     , KVOTETYPE          KT
-     , BEREGNINGSLEDDTYPE BLT
- WHERE BL.TABELLNAVNALIAS_KILDE = 'KVOTBR'
-   AND KB.KVOTEBRUK_ID       = BL.OBJEKT_ID_KILDE
-   AND KT.KVOTETYPEKODE      = KB.KVOTETYPEKODE
-   AND BL.BEREGNINGSLEDDKODE = BLT.BEREGNINGSLEDDKODE
-   and bl.person_id = ? 
+            SELECT /*+ INDEX (KVOTEBRUK KVOTBR_PERS_FKI) */
+                  KVOTEBRUK_ID
+                , KVOTETYPEKODE
+                , TABELLNAVNALIAS_GRUNNLAG
+                , OBJEKT_ID_GRUNNLAG
+                , ANTALL_BEVEGELSE
+                , POSTERINGTYPEKODE
+                , DATO_HENDELSE
+                , MOD_DATO
+                ,(select nvl(sum(k2.antall_bevegelse), 0)
+                  from kvotebruk k2
+                  where k2.person_id     = KV.Person_Id
+                  and k2.kvotetypekode = kv.KvotetypeKode
+                  and k2.kvotebruk_id <= KV.Kvotebruk_id
+                  and k2.kvotebruk_id >= ( select max(k3.kvotebruk_id)
+                                           from kvotebruk k3
+                                           where k3.person_id     = KV.Person_Id
+                                           and k3.kvotetypekode = kv.KvotetypeKode
+                                           and k3.kvotebruk_id <= kv.Kvotebruk_id
+                                           and k3.posteringtypekode in ('INIT','NULLE'))) resterende
+                , MOD_USER
+                , PERSON_ID
+                , BEGRUNNELSE
+            FROM KVOTEBRUK kv
+            WHERE person_id = ?
+              AND kv.tabellnavnalias_grunnlag = 'MKORT'
+              AND kv.kvotetypekode IN ('AAP', 'MAAPU')
+              AND kv.posteringtypekode = 'OPPD'
+            ORDER BY kv.dato_hendelse
         """.trimIndent()
 
     }
 
     fun hentKvoteForPerson(personId: PersonId): Set<KvotebrukHendelse> {
-
-        /**
-         * dato =
-         * Type =
-         * Endret av =
-         * Endring =
-         * Gjenværende =
-         * Begrunnelse = KVOTEBRUK.BEGRUNNELSE
-         */
-
-
         return datasource.connection.use { connection ->
             connection.createParameterizedQuery(selectKvotePåPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
@@ -91,16 +83,14 @@ class TelleverkRepository(private val datasource: DataSource) {
                         kvoteTypeKode = row.getString("kvotetypekode"),
                         tabellnavnAliasGrunnlag = row.getString("tabellnavnalias_grunnlag"),
                         objektIdGrunnlag = row.getInt("objekt_id_grunnlag"),
-                        posteringTypeKode = row.getString("posteringtypekode"),
                         antallBevegelse = row.getInt("antall_bevegelse"),
+                        posteringTypeKode = row.getString("posteringtypekode"),
+                        datoHendelse = row.getDate("dato_hendelse").toLocalDate(),
+                        modDato = row.getDate("mod_dato")?.toLocalDate(),
+                        resterende = row.getInt("resterende"),
+                        modUser = row.getString("mod_user"),
+                        personId = row.getInt("person_id"),
                         begrunnelse = row.getString("begrunnelse"),
-                        beregningsleddId = row.getInt("beregningsledd_id"),
-                        datoFra = row.getDate("dato_fra").toLocalDate(),
-                        datoTil = row.getDate("dato_til")?.toLocalDate(),
-                        verdi = row.getInt("verdi"),
-                        kvoteTypeNavn = row.getString("kvotetypenavn"),
-                        // VALIDER_HELE_DAGER er VARCHAR2(1) med verdiene 'J'/'N' i Oracle
-                        validerHeleDager = row.getString("valider_hele_dager") == "J"
                     )
                 }.toSet()
             }

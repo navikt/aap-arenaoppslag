@@ -26,16 +26,13 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
         val aap = hendelser.first { it.kvoteTypeKode == "AAP" }
 
         assertThat(aap.kvoteBrukId).isEqualTo(100)
-        assertThat(aap.tabellnavnAliasGrunnlag).isEqualTo("VEDTAK")
+        assertThat(aap.tabellnavnAliasGrunnlag).isEqualTo("MKORT")
         assertThat(aap.objektIdGrunnlag).isEqualTo(1)
         assertThat(aap.antallBevegelse).isEqualTo(20)
-        assertThat(aap.posteringTypeKode).isEqualTo("ORD")
+        assertThat(aap.posteringTypeKode).isEqualTo("OPPD")
         assertThat(aap.begrunnelse).isEqualTo("Automatisk")
-        assertThat(aap.verdi).isEqualTo(5280)
-        assertThat(aap.kvoteTypeNavn).isEqualTo("Resterende AAP-periode med aktivitetsfase UA og AU")
-        assertThat(aap.validerHeleDager).isTrue()
-        assertThat(aap.datoFra).isNotNull()
-        assertThat(aap.datoTil).isNotNull()
+        assertThat(aap.datoHendelse).isNotNull()
+        assertThat(aap.personId).isEqualTo(4873545)
     }
 
     @Test
@@ -46,9 +43,8 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
         assertThat(maapu.kvoteBrukId).isEqualTo(101)
         assertThat(maapu.antallBevegelse).isEqualTo(10)
         assertThat(maapu.begrunnelse).isEqualTo("Utvidet")
-        assertThat(maapu.verdi).isEqualTo(460)
-        assertThat(maapu.kvoteTypeNavn).isEqualTo("Resterende unntaksperiode med aktivitetsfase UA og AU")
-        assertThat(maapu.validerHeleDager).isTrue()
+        assertThat(maapu.posteringTypeKode).isEqualTo("OPPD")
+        assertThat(maapu.personId).isEqualTo(4873545)
     }
 
     @Test
