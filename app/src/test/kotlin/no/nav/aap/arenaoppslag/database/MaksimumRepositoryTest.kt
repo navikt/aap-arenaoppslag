@@ -79,6 +79,17 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
     }
 
     @Test
+    fun `utbetalinger inneholder ikke duplikater når vi henter vedtak med perioder som går over flere år`() {
+        // En test som reproduserer en bug vi opplevde. Vi fikk duplikater av utbetalinger når vi hentet
+        // ut vedtak over flere år (f.eks. tilDato = NULL). Årsaken til dette er at MELDEKORTPERIODE har
+        // Primary key (periodekode, aar), men vi joinet kun på periodekode.
+        val resultat = repo.hentMaksimumsløsning("22222222222", LocalDate.of(2023, 1, 1), LocalDate.of(2024, 12, 31))
+
+        val vedtak = resultat.vedtak.single()
+        assertThat(vedtak.utbetaling).hasSize(1)
+    }
+
+    @Test
     fun `henter meldekortdata per utbetalingsperiode`() {
         val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak, søkeperiodeFra, søkeperiodeTil)
             .vedtak.first().utbetaling

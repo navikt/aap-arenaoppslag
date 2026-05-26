@@ -272,7 +272,7 @@ class MaksimumRepository(
              WHERE vedtak_id = ?) p
             ON m.meldekort_id = p.meldekort_id
         JOIN
-            MELDEKORTPERIODE mkp ON mkp.periodekode = m.periodekode
+            MELDEKORTPERIODE mkp ON mkp.periodekode = m.periodekode AND mkp.aar = m.aar
         WHERE 
             m.person_id = (SELECT person_id FROM person WHERE fodselsnr = ?)
         AND 
