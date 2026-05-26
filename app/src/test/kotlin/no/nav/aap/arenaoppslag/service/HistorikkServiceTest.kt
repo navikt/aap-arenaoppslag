@@ -67,12 +67,11 @@ class HistorikkServiceTest {
         sakId.toString(),
         "O",
         "AKTIV",
-        LocalDate.now().minusYears(5),
-        tilDato = tilDato,
+        LocalDate.now().minusYears(5).minusDays(10),
+        tilDato,
         "AAP",
         "Ja"
     )
-
 
     @Test
     fun `personEksistererIAapArena finner person når den skal`() {

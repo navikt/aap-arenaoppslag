@@ -29,7 +29,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // dagpenger eller tiltakspenger. Vi ekskluderer også disse vedtakene her, ettersom det altså finnes et ordinært
         // vedtak i samme periode.
         @Language("OracleSql")
-        val selectKunRelevanteVedtak = """
+        val selectKunRelevanteAapVedtak = """
         SELECT 
             sak_id, 
             vedtakstatuskode, 
@@ -42,7 +42,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
               vedtak v 
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
-          AND v.rettighetkode IN ('AA115', 'AAP')
+          AND v.rettighetkode = 'AAP'
           AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
@@ -51,10 +51,38 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle 
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
         """.trimIndent()
 
-        // S2: Hent alle AAP-klager med relevant historikk for personen
+
+        // S2: Hent alle AA115-vedtak med relevant historikk for personen
+        @Language("OracleSql")
+        val selectKunRelevante11_5Vedtak = """
+        SELECT 
+            sak_id, 
+            vedtakstatuskode, 
+            vedtaktypekode, 
+            fra_dato, 
+            til_dato, 
+            rettighetkode, 
+            utfallkode
+        FROM 
+              vedtak v 
+        WHERE v.person_id = ?
+          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+          AND v.rettighetkode = 'AA115'
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+          AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
+          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
+          AND ( 
+                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
+                  OR
+                (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+              )
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
+        """.trimIndent()
+
+        // S3: Hent alle AAP-klager med relevant historikk for personen
         // Forbedringsmulighet: Vi kan se bort i fra klag1 for de som har klag2, angitt ved vedtak.vedtak_id_relatert
         @Language("OracleSql")
         val selectKunRelevanteKlager = """
@@ -84,7 +112,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ? AND v.utfallkode IN ('JA', 'DELVIS' ) )
         """.trimIndent()
 
-        // S3: Hent alle AAP-anker med relevant historikk for personen
+        // S4: Hent alle AAP-anker med relevant historikk for personen
         @Language("OracleSql")
         val selectKunRelevanteAnker = """
         SELECT
@@ -105,80 +133,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
         """.trimIndent()
 
-        // S4: Hent alle tilbakebetalinger med relevant historikk for personen
-        // MERK: denne spørringen går veldig tregt, av ukjent grunn
-        @Language("OracleSql")
-        val selectKunRelevanteTilbakebetalinger = """
-        SELECT
-            v.sak_id,
-            vedtakstatuskode,
-            vedtaktypekode,
-            CAST(NULL AS DATE)                    AS fra_dato,
-            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
-            v.rettighetkode, 
-            v.utfallkode
-        FROM
-            vedtak v
-            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
-        WHERE
-            v.person_id = ?
-            AND rettighetkode = 'TILBBET'
-            AND (v.utfallkode IS NOT NULL AND v.utfallkode != 'AVBRUTT')
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (60 mnd)
-            AND vf.vedtakfaktakode = 'INNVF'
-            -- Vi regner tilbakebetalinger med null INNVF som åpne, ellers ikke 
-            AND vf.vedtakverdi IS NULL -- det er ikke satt endelig dato for beslutning på vedtaket
-            """.trimIndent()
-
-        // S5: Hent alle spesialutbetalinger med relevant historikk for personen
-        @Language("OracleSql")
-        val selectKunRelevanteSpesialutbetalinger = """
-        SELECT
-            v.sak_id,
-            su.vedtakstatuskode,
-            v.vedtaktypekode, 
-            su.dato_fra AS fra_dato,
-            su.dato_til AS til_dato,
-            'SPESIAL' AS rettighetkode, 
-            v.utfallkode
-        FROM
-            spesialutbetaling su
-            JOIN vedtak v ON v.vedtak_id = su.vedtak_id -- for å få sak_id
-        WHERE
-            su.person_id = ?
-            -- Dersom utbetalingen ikke er datofestet, eller den har skjedd nylig, regner vi saken som åpen, ellers ikke. 
-            -- Vi bruker en tidsbuffer her i tilfelle det klages på spesialutbetalingen etter at den er utbetalt.
-            AND (su.dato_utbetaling IS NULL OR su.dato_utbetaling >= ? )
-            -- MERK: ingen index i spesialutbetaling på dato_utbetaling eller andre dato-felt, så det går tregt
-        """.trimIndent()
-
-        // S6: Hent simulerte betalinger.
-        // Saksbehandler gjør noen ganger simuleringer før en reell betaling og vedtak opprettes.
-        @Language("OracleSql")
-        val selectKunRelevanteSimulerteBetalinger = """
-        SELECT
-            v.sak_id, 
-            v.vedtakstatuskode, 
-            CAST(NULL AS VARCHAR2(10)) AS vedtaktypekode, 
-            ssu.dato_periode_fra AS fra_dato,
-            ssu.dato_periode_til AS til_dato,
-            'SIM_UTBET' AS rettighetkode, 
-            v.utfallkode
-        FROM
-            sim_utbetalingsgrunnlag ssu
-            JOIN vedtak v ON v.vedtak_id = ssu.vedtak_id
-        WHERE 
-            ssu.person_id = ?
-            -- MERK: ingen index i sim_utbetalingsgrunnlag på mod_dato eller andre datofelt, så blir tregt
-            AND ssu.mod_dato >= ? -- ignorer gamle simuleringer som ikke ble noe av (3 mnd)
-        """.trimIndent()
-
-        const val tidsBufferUkerGenerell = 78L
-        const val tidsBufferUkerStans = 119L // foreldrepenger 80% utbetalt, trillinger alenemor
+        const val tidsBufferUkerGenerell = 78L // 52 uker + 6 måneder tilbakejustering
+        const val tidsBufferUkerStans = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val modnedGrenseVedtak = 72L
-        const val modnedGrenseTilbakebetaling = 60L
         const val modnedGrenseKlageInnvilget = 6L
-        const val modnedGrenseSpesialOgSim = 3L
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
@@ -186,45 +144,37 @@ class HistorikkRepository(private val dataSource: DataSource) {
             val tidsBufferGenerell = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerGenerell))
             val nyesteTillateStans = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerStans))
             val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
-            val tilbakebetalingModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseTilbakebetaling))
             val klageInnvilgetGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseKlageInnvilget))
-            val spesialOgSimGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseSpesialOgSim))
 
             val query =
                 listOf(
-                    selectKunRelevanteVedtak,
+                    selectKunRelevanteAapVedtak,
+                    selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                    selectKunRelevanteTilbakebetalinger,
-                    selectKunRelevanteSpesialutbetalinger,
-                    selectKunRelevanteSimulerteBetalinger
                 ).joinToString("\nUNION ALL\n")
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
-                // S1: vedtak
+                // S1: AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, tidsBufferGenerell)
                 preparedStatement.setDate(p++, nyesteTillateStans)
                 preparedStatement.setDate(p++, tidsBufferGenerell)
-                // S2: klager
+                // S2: 11-5-vedtak
+                preparedStatement.setInt(p++, arenaPersonId)
+                preparedStatement.setDate(p++, vedtakModnedGrense)
+                preparedStatement.setDate(p++, tidsBufferGenerell)
+                preparedStatement.setDate(p++, nyesteTillateStans)
+                // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, tidsBufferGenerell)
                 preparedStatement.setDate(p++, klageInnvilgetGrense)
-                // S3: anker
+                // S4: anker
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                // S4: tilbakebetalinger
-                preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, tilbakebetalingModnedGrense)
-                // S5: spesialutbetalinger
-                preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, spesialOgSimGrense)
-                // S6: sim_utbetalingsgrunnlag
-                preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, spesialOgSimGrense)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }

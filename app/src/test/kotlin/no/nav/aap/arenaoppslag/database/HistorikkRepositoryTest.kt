@@ -43,10 +43,15 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         val testPersonFnr = "kun_nye"
         val testPersonId = 996
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
-        assertThat(alleVedtak).hasSize(3)
+        assertThat(alleVedtak).hasSize(3) // antall i vedtak-tabellen
 
         val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
-        assertThat(signifikanteVedtak).hasSize(4)
+        assertThat(signifikanteVedtak.map { it.rettighetkode }.sorted()).isEqualTo(
+            listOf(
+                "AA115",
+                "AAP"
+            )
+        )
     }
 
     @Test
@@ -57,18 +62,18 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         assertThat(alleVedtak).hasSize(6)
 
         val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
-        assertThat(signifikanteVedtak).hasSize(2)
+        assertThat(signifikanteVedtak).hasSize(1)
     }
 
     @Test
-    fun `Signifikante vedtak for person med AA115 som ikke er påbegynt`() {
+    fun `Ingen signifikante vedtak for person med kun avslag på AA115`() {
         val testPersonFnr = "426282"
         val testPersonId = 426282
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(1)
 
         val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
-        assertThat(signifikanteVedtak).hasSize(1)
+        assertThat(signifikanteVedtak).hasSize(0)
     }
 
 }

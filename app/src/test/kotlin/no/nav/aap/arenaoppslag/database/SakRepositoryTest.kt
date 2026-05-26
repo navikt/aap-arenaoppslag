@@ -131,8 +131,8 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 LocalDate.of(2025, 6, 30),
                 LocalDate.of(2025, 6, 30),
                 sakRegistrert = LocalDate.of(2022, 2, 2),
-                sakAvsluttet = null,
-                sakStatus = "AKTIV",
+                sakAvsluttet = LocalDate.of(2024, 6, 15),
+                sakStatus = "AVSLU",
             ),
         )
     }
