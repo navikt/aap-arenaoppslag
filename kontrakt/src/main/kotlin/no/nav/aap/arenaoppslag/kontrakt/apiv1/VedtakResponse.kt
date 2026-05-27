@@ -22,8 +22,7 @@ public data class ArenaVedtakMedDetaljerKontrakt(
     val saksbehandler: String?,
     val beslutter: String?,
     val relatertVedtak: Int?,
-    val fakta: List<ArenaVedtakfaktaKontrakt>,
-    val vilkårsvurderinger: List<ArenaVilkårsvurderingKontrakt>,
+    val fakta: List<ArenaVedtakfaktaKontrakt>
 )
 
 public data class ArenaVedtakfaktaKontrakt(
