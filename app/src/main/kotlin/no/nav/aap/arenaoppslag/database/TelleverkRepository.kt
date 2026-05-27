@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 data class KvoteVerdi(val kode: String, val verdi: Int)
 
 data class KvotebrukHendelse(
+    val id: Int,
     val kvoteTypeKode: String,
     val tabellnavnAliasGrunnlag: String,
     val antallBevegelse: Int,
@@ -75,6 +76,7 @@ class TelleverkRepository(private val datasource: DataSource) {
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.map { row ->
                     KvotebrukHendelse(
+                        id = row.getInt("kvotebruk_id"),
                         kvoteTypeKode = row.getString("kvotetypekode"),
                         tabellnavnAliasGrunnlag = row.getString("tabellnavnalias_grunnlag"),
                         antallBevegelse = row.getInt("antall_bevegelse"),

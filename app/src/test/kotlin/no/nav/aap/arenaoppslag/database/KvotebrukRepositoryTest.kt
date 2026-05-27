@@ -25,6 +25,7 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
         val hendelser = repo.value.hentKvoteForPerson(PersonId(4873545))
         val aap = hendelser.first { it.kvoteTypeKode == "AAP" }
 
+        assertThat(aap.id).isEqualTo(100)
         assertThat(aap.tabellnavnAliasGrunnlag).isEqualTo("MKORT")
         assertThat(aap.antallBevegelse).isEqualTo(20)
         assertThat(aap.posteringTypeKode).isEqualTo("OPPD")
@@ -37,6 +38,7 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
         val hendelser = repo.value.hentKvoteForPerson(PersonId(4873545))
         val maapu = hendelser.first { it.kvoteTypeKode == "MAAPU" }
 
+        assertThat(maapu.id).isEqualTo(101)
         assertThat(maapu.antallBevegelse).isEqualTo(10)
         assertThat(maapu.begrunnelse).isEqualTo("Utvidet")
         assertThat(maapu.posteringTypeKode).isEqualTo("OPPD")
@@ -49,6 +51,8 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
 
         assertThat(hendelserKjentPerson).hasSize(2)
         assertThat(hendelserAnnenPerson).hasSize(1)
-        assertThat(hendelserKjentPerson).doesNotContainAnyElementsOf(hendelserAnnenPerson)
+        assertThat(hendelserKjentPerson.map { it.id }).doesNotContainAnyElementsOf(
+            hendelserAnnenPerson.map { it.id }
+        )
     }
 }
