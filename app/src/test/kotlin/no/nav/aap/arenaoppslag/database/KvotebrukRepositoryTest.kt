@@ -26,7 +26,7 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
         val aap = hendelser.first { it.kvoteTypeKode == "AAP" }
 
         assertThat(aap.id).isEqualTo(100)
-        assertThat(aap.tabellnavnAliasGrunnlag).isEqualTo("MKORT")
+        assertThat(aap.endringsGrunnlag).isEqualTo("MKORT")
         assertThat(aap.antallBevegelse).isEqualTo(20)
         assertThat(aap.posteringTypeKode).isEqualTo("OPPD")
         assertThat(aap.begrunnelse).isEqualTo("Automatisk")

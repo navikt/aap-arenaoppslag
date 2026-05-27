@@ -11,7 +11,7 @@ data class KvoteVerdi(val kode: String, val verdi: Int)
 data class KvotebrukHendelse(
     val id: Int,
     val kvoteTypeKode: String,
-    val tabellnavnAliasGrunnlag: String,
+    val endringsGrunnlag: String,
     val antallBevegelse: Int,
     val posteringTypeKode: String,
     val datoHendelse: LocalDate,
@@ -78,7 +78,7 @@ class TelleverkRepository(private val datasource: DataSource) {
                     KvotebrukHendelse(
                         id = row.getInt("kvotebruk_id"),
                         kvoteTypeKode = row.getString("kvotetypekode"),
-                        tabellnavnAliasGrunnlag = row.getString("tabellnavnalias_grunnlag"),
+                        endringsGrunnlag = row.getString("tabellnavnalias_grunnlag"),
                         antallBevegelse = row.getInt("antall_bevegelse"),
                         posteringTypeKode = row.getString("posteringtypekode"),
                         datoHendelse = row.getDate("dato_hendelse").toLocalDate(),
