@@ -11,6 +11,8 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.TestConfig
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljerKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
@@ -79,6 +81,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): SisteUtbetalingerResponse =
         gjørArenaOppslag<SisteUtbetalingerResponse, SisteUtbetalingerRequest>(
             "/api/v1/utbetalinger/siste", req
+        ).getOrThrow()
+
+    suspend fun hentVedtakForPerson(
+        req: VedtakForPersonRequest
+    ): List<ArenaVedtakMedDetaljerKontrakt> =
+        gjørArenaOppslag<List<ArenaVedtakMedDetaljerKontrakt>, VedtakForPersonRequest>(
+            "/api/v1/person/vedtak", req
         ).getOrThrow()
 
     suspend fun hentSakerByFnr(
