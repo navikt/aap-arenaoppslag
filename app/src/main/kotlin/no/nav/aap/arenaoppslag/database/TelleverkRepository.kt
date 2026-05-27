@@ -9,17 +9,13 @@ import javax.sql.DataSource;
 data class KvoteVerdi(val kode: String, val verdi: Int)
 
 data class KvotebrukHendelse(
-    val kvoteBrukId: Int,
     val kvoteTypeKode: String,
     val tabellnavnAliasGrunnlag: String,
-    val objektIdGrunnlag: Int,
     val antallBevegelse: Int,
     val posteringTypeKode: String,
     val datoHendelse: LocalDate,
-    val modDato: LocalDate?,
     val resterende: Int,
     val modUser: String?,
-    val personId: Int,
     val begrunnelse: String?,
 )
 
@@ -79,17 +75,13 @@ class TelleverkRepository(private val datasource: DataSource) {
                 val resultSet = preparedStatement.executeQuery()
                 resultSet.map { row ->
                     KvotebrukHendelse(
-                        kvoteBrukId = row.getInt("kvotebruk_id"),
                         kvoteTypeKode = row.getString("kvotetypekode"),
                         tabellnavnAliasGrunnlag = row.getString("tabellnavnalias_grunnlag"),
-                        objektIdGrunnlag = row.getInt("objekt_id_grunnlag"),
                         antallBevegelse = row.getInt("antall_bevegelse"),
                         posteringTypeKode = row.getString("posteringtypekode"),
                         datoHendelse = row.getDate("dato_hendelse").toLocalDate(),
-                        modDato = row.getDate("mod_dato")?.toLocalDate(),
                         resterende = row.getInt("resterende"),
                         modUser = row.getString("mod_user"),
-                        personId = row.getInt("person_id"),
                         begrunnelse = row.getString("begrunnelse"),
                     )
                 }.toSet()
