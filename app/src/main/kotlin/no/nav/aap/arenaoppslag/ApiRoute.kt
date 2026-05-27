@@ -101,7 +101,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         val kvoteHistorikk = telleverkService.hentKvoteBrukHistorikkForPerson(personId)
 
         val telleverk = telleverkService.hentTelleverkForPerson(PersonId(sak.person.personId))
-        val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
+        val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk,kvoteHistorikk)
 
         call.respond(status = HttpStatusCode.OK, message = response)
     }
