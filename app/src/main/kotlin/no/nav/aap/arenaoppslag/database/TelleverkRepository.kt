@@ -21,7 +21,6 @@ data class KvotebrukHendelse(
 )
 
 
-
 class TelleverkRepository(private val datasource: DataSource) {
 
     companion object {
