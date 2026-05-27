@@ -5,6 +5,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.SakId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -36,13 +37,13 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 etternavn = "Bestesen",
             )
         )
-        val sak = sakRepository.hentSak(1)
+        val sak = sakRepository.hentSak(SakId(1))
         assertThat(sak).isEqualTo(forventetSak)
     }
 
     @Test
     fun `returnerer NULL om saken ikke finnes i databasen`() {
-        val sak = sakRepository.hentSak(1919191919)
+        val sak = sakRepository.hentSak(SakId(1919191919))
         assertThat(sak).isNull()
     }
 

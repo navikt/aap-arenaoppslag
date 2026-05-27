@@ -5,16 +5,23 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
 
 class SakRepository(private val dataSource: DataSource) {
-
-    fun hentSak(saksId: Int): ArenaSak? {
+    fun hentSak(saksId: SakId): ArenaSak? {
         return dataSource.connection.use { con ->
             selectSakMedId(saksId, con)
+        }
+    }
+
+    fun hentSak(saksnummer: Saksnummer): ArenaSak? {
+        return dataSource.connection.use { con ->
+            selectSakMedSaksnummer(saksnummer, con)
         }
     }
 
@@ -63,9 +70,24 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectSakMedId(saksid: Int, connection: Connection): ArenaSak? {
+        fun selectSakMedId(saksid: SakId, connection: Connection): ArenaSak? {
             connection.prepareStatement(selectSakMedSaksId).use { preparedStatement ->
-                preparedStatement.setInt(1, saksid)
+                preparedStatement.setInt(1, saksid.id)
+                val resultSet = preparedStatement.executeQuery()
+                val saker = resultSet.map { row -> mapperForArenaSak(row) }
+
+                if (saker.isEmpty()) {
+                    return null
+                }
+
+                return saker.first()
+            }
+        }
+
+        fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
+            connection.prepareStatement(selectSakMedSaksnummer).use { preparedStatement ->
+                preparedStatement.setInt(1, saksnummer.lopenummer)
+                preparedStatement.setInt(2, saksnummer.aar)
                 val resultSet = preparedStatement.executeQuery()
                 val saker = resultSet.map { row -> mapperForArenaSak(row) }
 
@@ -113,6 +135,16 @@ class SakRepository(private val dataSource: DataSource) {
             LEFT JOIN person ON person.person_id = sak.objekt_id
             LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
             WHERE SAK_ID = ? AND TABELLNAVNALIAS='PERS'
+        """.trimIndent()
+
+        @Language("OracleSql")
+        internal val selectSakMedSaksnummer = """
+            SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id, 
+                person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
+            FROM SAK
+            LEFT JOIN person ON person.person_id = sak.objekt_id
+            LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
+            WHERE LOPENRSAK = ? AND AAR = ? AND TABELLNAVNALIAS='PERS'
         """.trimIndent()
 
         @Language("OracleSql")

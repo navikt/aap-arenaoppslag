@@ -5,6 +5,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
@@ -26,7 +27,7 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentVedtakForSak(saksId: Int): List<ArenaVedtakRad> {
+    fun hentVedtakForSak(saksId: SakId): List<ArenaVedtakRad> {
         return dataSource.connection.use { con ->
             selectVedtakForSak(saksId, con)
         }
@@ -109,9 +110,9 @@ class VedtakRepository(private val dataSource: DataSource) {
            AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
-        private fun selectVedtakForSak(sakId: Int, connection: Connection): List<ArenaVedtakRad> {
+        private fun selectVedtakForSak(sakId: SakId, connection: Connection): List<ArenaVedtakRad> {
             connection.createParameterizedQuery(selectVedtakForSak).use { preparedStatement ->
-                preparedStatement.setInt(1, sakId)
+                preparedStatement.setInt(1, sakId.id)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { mapperForArenaVedtakRad(it) }.toList()
             }

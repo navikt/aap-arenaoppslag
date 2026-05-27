@@ -4,7 +4,10 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
+import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
 
 class SakOgVedtakService(
@@ -13,10 +16,18 @@ class SakOgVedtakService(
     private val vedtakfaktaRepository: VedtakfaktaRepository,
     private val vilkårsvurderingRepository: VilkårsvurderingRepository,
 ) {
-    fun hentSakMedVedtak(saksId: Int): ArenaSakMedVedtak? {
+    fun hentSakMedVedtak(saksId: SakId): ArenaSakMedVedtak? {
         val sak = sakRepository.hentSak(saksId) ?: return null
+        return getArenaSakMedVedtak(sak)
+    }
 
-        val vedtak = vedtakRepository.hentVedtakForSak(saksId)
+    fun hentSakMedVedtak(saksnummer: Saksnummer): ArenaSakMedVedtak? {
+        val sak = sakRepository.hentSak(saksnummer) ?: return null
+        return getArenaSakMedVedtak(sak)
+    }
+
+    private fun getArenaSakMedVedtak(sak: ArenaSak): ArenaSakMedVedtak {
+        val vedtak = vedtakRepository.hentVedtakForSak(SakId(sak.sakId.toInt()))
         val vedtakIder = vedtak.map { it.vedtakId }
 
         val faktaPerVedtak = vedtakfaktaRepository.hentForVedtakIder(vedtakIder)

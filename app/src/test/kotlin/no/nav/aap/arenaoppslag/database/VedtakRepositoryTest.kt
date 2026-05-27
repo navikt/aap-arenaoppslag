@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -53,7 +54,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
             relatertVedtak = null,
         )
 
-        val alleVedtak = vedtakRepository.hentVedtakForSak(1)
+        val alleVedtak = vedtakRepository.hentVedtakForSak(SakId(1))
 
         assertThat(alleVedtak).containsExactly(forventetVedtak)
     }
@@ -61,14 +62,14 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `hentVedtakForSak returnerer tom liste om det ikke er noen vedtak knyttet til denne saken`() {
         val vedtakRepository = VedtakRepository(h2)
-        val alleVedtak = vedtakRepository.hentVedtakForSak(1919191919)
+        val alleVedtak = vedtakRepository.hentVedtakForSak(SakId(1919191919))
         assertThat(alleVedtak).isEmpty()
     }
 
     @Test
     fun `hentVedtakForSak returnerer vedtak med relatertVedtak satt`() {
         val vedtakRepository = VedtakRepository(h2)
-        val vedtak = vedtakRepository.hentVedtakForSak(9)
+        val vedtak = vedtakRepository.hentVedtakForSak(SakId(9))
 
         assertThat(vedtak).hasSize(1)
         assertThat(vedtak.single().relatertVedtak).isEqualTo(1234)
