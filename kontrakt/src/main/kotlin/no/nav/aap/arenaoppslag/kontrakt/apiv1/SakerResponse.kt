@@ -28,6 +28,7 @@ public data class ArenaSakOppsummeringKontrakt(
 
 public data class SakMedSisteVedtakOgMaksdato(
     val sakId: Int,
+    val saknummer: String,
     val sakStatus: String,
     val sakRegistrert: LocalDate,
     val sakAvsluttet: LocalDate?,
@@ -35,7 +36,7 @@ public data class SakMedSisteVedtakOgMaksdato(
     val utredesForUfor: Boolean,
     val ferdigAvklart: Boolean,
     val lopendeVedtak: Boolean,
-    val sisteVedtak: VedtakMedMaksdato
+    val sisteVedtak: VedtakMedMaksdato,
 )
 
 public data class VedtakMedMaksdato(
@@ -43,7 +44,9 @@ public data class VedtakMedMaksdato(
     val aktfaseKode: String,
     val vedtaktypeKode: String,
     val fra: LocalDate?,
-    val maxdatoAap: LocalDate?
+    val maxdatoBeregnet: LocalDate?,
+    val maxdatoUnntak: LocalDate?,
+    val maxdatoAap: LocalDate?,
 )
 
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)

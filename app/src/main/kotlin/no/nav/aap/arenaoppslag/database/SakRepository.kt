@@ -50,12 +50,14 @@ class SakRepository(private val dataSource: DataSource) {
         fun mapperForMaksdatolinje(row: ResultSet) =
             Maksdatolinje(
                 sakId = row.getInt("sak_id"),
+                opprettetAar = row.getInt("aar"),
+                lopenr = row.getInt("lopenrsak"),
                 vedtakId = row.getInt("vedtak_id"),
                 aktfaseKode = row.getString("aktfasekode"),
                 vedtaktypeKode = row.getString("vedtaktypekode"),
                 fra = row.getDate("fra_dato")?.toLocalDate(),
                 maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
-                maxdato = row.getDate("max_dato")?.toLocalDate(),
+                maxdatoOrdinaer = row.getDate("max_dato")?.toLocalDate(),
                 utvidetKvoteInnvilgetFra = row.getDate("unntaksdato")?.toLocalDate(),
                 sakRegistrert = row.getDate("sak_registrert_dato").toLocalDate(),
                 sakAvsluttet = row.getDate("sak_avsluttet_dato")?.toLocalDate(),
@@ -173,7 +175,7 @@ class SakRepository(private val dataSource: DataSource) {
                         v.aktfasekode,
                         v.fra_dato,
                         CASE WHEN vf.vedtakverdi IS NOT NULL THEN TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') END as unntaksdato, -- er bare satt dersom 11-12 unntak er innvilget                        
-                        ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') DESC, v.vedtak_id DESC) as rn
+                        ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY v.til_dato DESC, v.vedtak_id DESC) as rn
                     FROM vedtak v
                         JOIN VEDTAKFAKTA vf ON v.vedtak_id = vf.vedtak_id
                     WHERE vf.vedtakfaktakode = 'AAPVILKUNN'
@@ -187,7 +189,7 @@ class SakRepository(private val dataSource: DataSource) {
                 ) WHERE rn = 1
             )
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
-                nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, 
+                s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, 
                 vmd.max_dato, vmd.max_unntak_dato
             FROM nyeste_vedtak nv
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
