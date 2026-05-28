@@ -98,11 +98,11 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         }
         val personId = PersonId(sak.person.personId)
 
-        val kvoteHistorikk = telleverkService.hentKvoteBrukHistorikkForPerson(personId)
+        val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
+        val telleverk = telleverkService.hentTelleverkForPerson(personId)
 
-        val telleverk = telleverkService.hentTelleverkForPerson(PersonId(sak.person.personId))
+        logger.info("Henter saksdetaljer")
         val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk,kvoteHistorikk)
-
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }

@@ -34,7 +34,7 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
     }
 
     @Test
-    fun `hentKvoteForPerson returnerer korrekte feltverdier for MAAPU-hendelse`() {
+    fun `hentKvoteForPerson returnerer korrekte feltverdier for utvidet kvote hendelse`() {
         val hendelser = repo.value.hentKvoteForPerson(PersonId(4873545))
         val maapu = hendelser.first { it.kvoteTypeKode == "MAAPU" }
 
