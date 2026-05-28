@@ -68,7 +68,13 @@ data class Maksdatolinje(
                 maxdatoUnntak ?: maxdato
             )
         )
-    fun erLopende() = vedtaktypeKode in listOf("O", "E", "G") // Stansede vedtak har udefinert maxdato
+
+    fun erLopende(): Boolean {
+        // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
+        // Vi filtrer også ut vedtak med sjeldne typer som K (kontroll) for nå.
+        return vedtaktypeKode in listOf("O", "E", "G") && sakStatus == "AKTIV"
+    }
+
     fun utredesForUfor() = aktfaseKode == "UVUP"
     fun erFerdigAvklart() = aktfaseKode == "FA"
     fun harInnvilget11_12() = utvidetKvoteInnvilgetFra != null
