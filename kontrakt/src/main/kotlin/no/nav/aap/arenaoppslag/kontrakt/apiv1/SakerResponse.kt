@@ -44,7 +44,7 @@ public data class VedtakMedMaksdato(
     val aktfaseKode: String,
     val vedtaktypeKode: String,
     val fra: LocalDate?,
-    val maxdatoBeregnet: LocalDate?,
+    val maxdatoOrdinaer: LocalDate?,
     val maxdatoUnntak: LocalDate?,
     val maxdatoAap: LocalDate?,
 )
