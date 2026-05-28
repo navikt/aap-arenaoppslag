@@ -10,19 +10,19 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
 
     @Test
     fun `hentKvoteForPerson returnerer tomt sett for ukjent person`() {
-        val hendelser = repo.value.hentKvoteForPerson(PersonId(999))
+        val hendelser = repo.value.hentKvoteBrukHendelserForPerson(PersonId(999))
         assertThat(hendelser).isEmpty()
     }
 
     @Test
     fun `hentKvoteForPerson returnerer riktig antall hendelser for kjent person`() {
-        val hendelser = repo.value.hentKvoteForPerson(PersonId(4873545))
+        val hendelser = repo.value.hentKvoteBrukHendelserForPerson(PersonId(4873545))
         assertThat(hendelser).hasSize(2)
     }
 
     @Test
     fun `hentKvoteForPerson returnerer korrekte feltverdier for AAP-hendelse`() {
-        val hendelser = repo.value.hentKvoteForPerson(PersonId(4873545))
+        val hendelser = repo.value.hentKvoteBrukHendelserForPerson(PersonId(4873545))
         val aap = hendelser.first { it.kvoteTypeKode == "AAP" }
 
         assertThat(aap.id).isEqualTo(100)
@@ -35,7 +35,7 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
 
     @Test
     fun `hentKvoteForPerson returnerer korrekte feltverdier for utvidet kvote hendelse`() {
-        val hendelser = repo.value.hentKvoteForPerson(PersonId(4873545))
+        val hendelser = repo.value.hentKvoteBrukHendelserForPerson(PersonId(4873545))
         val maapu = hendelser.first { it.kvoteTypeKode == "MAAPU" }
 
         assertThat(maapu.id).isEqualTo(101)
@@ -46,8 +46,8 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
 
     @Test
     fun `hentKvoteForPerson returnerer kun data for etterspurt person`() {
-        val hendelserKjentPerson = repo.value.hentKvoteForPerson(PersonId(4873545))
-        val hendelserAnnenPerson = repo.value.hentKvoteForPerson(PersonId(99999))
+        val hendelserKjentPerson = repo.value.hentKvoteBrukHendelserForPerson(PersonId(4873545))
+        val hendelserAnnenPerson = repo.value.hentKvoteBrukHendelserForPerson(PersonId(99999))
 
         assertThat(hendelserKjentPerson).hasSize(2)
         assertThat(hendelserAnnenPerson).hasSize(1)

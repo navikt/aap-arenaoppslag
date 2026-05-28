@@ -68,7 +68,7 @@ class TelleverkRepository(private val datasource: DataSource) {
 
     }
 
-    fun hentKvoteForPerson(personId: PersonId): Set<KvotebrukHendelse> {
+    fun hentKvoteBrukHendelserForPerson(personId: PersonId): Set<KvotebrukHendelse> {
         return datasource.connection.use { connection ->
             connection.createParameterizedQuery(selectKvotePåPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
