@@ -175,7 +175,7 @@ class SakRepository(private val dataSource: DataSource) {
                         v.aktfasekode,
                         v.fra_dato,
                         CASE WHEN vf.vedtakverdi IS NOT NULL THEN TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') END as unntaksdato, -- er bare satt dersom 11-12 unntak er innvilget                        
-                        ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY v.til_dato DESC, v.vedtak_id DESC) as rn
+                        ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY v.til_dato DESC NULLS LAST, v.vedtak_id DESC) as rn
                     FROM vedtak v
                         JOIN VEDTAKFAKTA vf ON v.vedtak_id = vf.vedtak_id
                     WHERE vf.vedtakfaktakode = 'AAPVILKUNN'
