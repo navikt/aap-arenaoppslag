@@ -24,7 +24,7 @@ class TelleverkService(private val telleverkRepository: TelleverkRepository) {
     }
 
     fun hentKvoteBrukHendelserForPerson(personId: PersonId): Set<KvotebrukHendelse> {
-        val kvotebrukHendelser = telleverkRepository.hentKvoteForPerson(personId)
+        val kvotebrukHendelser = telleverkRepository.hentKvoteBrukHendelserForPerson(personId)
         return kvotebrukHendelser
     }
 
