@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.service
 
+import no.nav.aap.arenaoppslag.database.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
@@ -21,4 +22,10 @@ class TelleverkService(private val telleverkRepository: TelleverkRepository) {
             utvidetAAPKvote = utvidetAAPKvote
         )
     }
+
+    fun hentKvoteBrukHendelserForPerson(personId: PersonId): Set<KvotebrukHendelse> {
+        val kvotebrukHendelser = telleverkRepository.hentKvoteBrukHendelserForPerson(personId)
+        return kvotebrukHendelser
+    }
+
 }
