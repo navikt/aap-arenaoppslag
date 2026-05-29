@@ -42,12 +42,14 @@ data class ArenaSak(
 
 data class Maksdatolinje(
     val sakId: Int,
+    val opprettetAar: Int,
+    val lopenr: Int,
     val vedtakId: Int,
     val aktfaseKode: String,
     val vedtaktypeKode: String,
     val fra: LocalDate?,
     val maxdatoUnntak: LocalDate?,
-    val maxdato: LocalDate?,
+    val maxdatoOrdinaer: LocalDate?,
     val utvidetKvoteInnvilgetFra: LocalDate?,
     val sakRegistrert: LocalDate,
     val sakAvsluttet: LocalDate?,
@@ -55,7 +57,8 @@ data class Maksdatolinje(
 ) {
     fun tilKontrakt() =
         no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato(
-            sakId, sakStatus, sakRegistrert, sakAvsluttet,
+            sakId, "${opprettetAar}-${lopenr}",
+            sakStatus, sakRegistrert, sakAvsluttet,
             harInnvilget11_12(),
             utredesForUfor(),
             erFerdigAvklart(),
@@ -65,10 +68,18 @@ data class Maksdatolinje(
                 aktfaseKode,
                 vedtaktypeKode,
                 fra,
-                maxdatoUnntak ?: maxdato
+                maxdatoOrdinaer,
+                maxdatoUnntak,
+                maxdatoUnntak ?: maxdatoOrdinaer
             )
         )
-    fun erLopende() = vedtaktypeKode in listOf("O", "E", "G") // Stansede vedtak har udefinert maxdato
+
+    fun erLopende(): Boolean {
+        // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
+        // Vi filtrer også ut vedtak med sjeldne typer som K (kontroll) for nå.
+        return vedtaktypeKode in listOf("O", "E", "G") && sakStatus == "AKTIV"
+    }
+
     fun utredesForUfor() = aktfaseKode == "UVUP"
     fun erFerdigAvklart() = aktfaseKode == "FA"
     fun harInnvilget11_12() = utvidetKvoteInnvilgetFra != null

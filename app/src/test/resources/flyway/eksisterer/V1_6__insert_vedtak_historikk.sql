@@ -149,6 +149,6 @@ Insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, REG_DAT
                     SF_OPPFOLGING_ID, STATUS_SOSIALDATA, KONTOR_SOSIALDATA, TEKSTVARIANTKODE, VALGT_BESLUTTER,
                     TEKNISK_VEDTAK, DATO_INNSTILT, ER_UTLAND)
 values (6, 5, 'REGIS', 'O', DATE '2026-02-06', 'IZA0393',
-        DATE '2026-03-10', 'IZA0393', null, null, 'XKLB0393', '0393', 2025, 449943, 1, 'AA115', 'IKKE',
+        DATE '2026-03-10', 'IZA0393', 'NEI', null, 'XKLB0393', '0393', 2025, 449943, 1, 'AA115', 'IKKE',
         null, null, DATE '2026-02-06', null, null, 426282, null, null, null, null, null, null, null,
         null, null, null, null, 'N', null, null, null, null, null, 'N');

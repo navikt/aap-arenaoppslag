@@ -15,7 +15,8 @@ override them.
 `aap-arenaoppslag` is a read-only SQL lookup service running in the NAV FSS zone,
 querying the Arena Oracle database through dedicated views for AAP (Arbeidsavklaringspenger).
 Built with Ktor/Kotlin, Azure AD JWT auth, Micrometer/Prometheus metrics, and a `kontrakt`
-submodule published to GitHub Packages for external consumers.
+submodule published to GitHub Packages for external consumers. 
+It has two runtime environments: Prod and Dev. 
 
 ---
 

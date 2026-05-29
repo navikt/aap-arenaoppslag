@@ -5,16 +5,23 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
 
 class SakRepository(private val dataSource: DataSource) {
-
-    fun hentSak(saksId: Int): ArenaSak? {
+    fun hentSak(saksId: SakId): ArenaSak? {
         return dataSource.connection.use { con ->
             selectSakMedId(saksId, con)
+        }
+    }
+
+    fun hentSak(saksnummer: Saksnummer): ArenaSak? {
+        return dataSource.connection.use { con ->
+            selectSakMedSaksnummer(saksnummer, con)
         }
     }
 
@@ -43,12 +50,14 @@ class SakRepository(private val dataSource: DataSource) {
         fun mapperForMaksdatolinje(row: ResultSet) =
             Maksdatolinje(
                 sakId = row.getInt("sak_id"),
+                opprettetAar = row.getInt("aar"),
+                lopenr = row.getInt("lopenrsak"),
                 vedtakId = row.getInt("vedtak_id"),
                 aktfaseKode = row.getString("aktfasekode"),
                 vedtaktypeKode = row.getString("vedtaktypekode"),
                 fra = row.getDate("fra_dato")?.toLocalDate(),
                 maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
-                maxdato = row.getDate("max_dato")?.toLocalDate(),
+                maxdatoOrdinaer = row.getDate("max_dato")?.toLocalDate(),
                 utvidetKvoteInnvilgetFra = row.getDate("unntaksdato")?.toLocalDate(),
                 sakRegistrert = row.getDate("sak_registrert_dato").toLocalDate(),
                 sakAvsluttet = row.getDate("sak_avsluttet_dato")?.toLocalDate(),
@@ -63,9 +72,24 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectSakMedId(saksid: Int, connection: Connection): ArenaSak? {
+        fun selectSakMedId(saksid: SakId, connection: Connection): ArenaSak? {
             connection.prepareStatement(selectSakMedSaksId).use { preparedStatement ->
-                preparedStatement.setInt(1, saksid)
+                preparedStatement.setInt(1, saksid.id)
+                val resultSet = preparedStatement.executeQuery()
+                val saker = resultSet.map { row -> mapperForArenaSak(row) }
+
+                if (saker.isEmpty()) {
+                    return null
+                }
+
+                return saker.first()
+            }
+        }
+
+        fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
+            connection.prepareStatement(selectSakMedSaksnummer).use { preparedStatement ->
+                preparedStatement.setInt(1, saksnummer.lopenummer)
+                preparedStatement.setInt(2, saksnummer.aar)
                 val resultSet = preparedStatement.executeQuery()
                 val saker = resultSet.map { row -> mapperForArenaSak(row) }
 
@@ -116,6 +140,16 @@ class SakRepository(private val dataSource: DataSource) {
         """.trimIndent()
 
         @Language("OracleSql")
+        internal val selectSakMedSaksnummer = """
+            SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id, 
+                person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
+            FROM SAK
+            LEFT JOIN person ON person.person_id = sak.objekt_id
+            LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
+            WHERE LOPENRSAK = ? AND AAR = ? AND TABELLNAVNALIAS='PERS'
+        """.trimIndent()
+
+        @Language("OracleSql")
         internal val selectSakerMedAntallVedtakForPersonId = """
             SELECT sak.sak_id, sak.aar, sak.lopenrsak, sakstype.sakstypenavn, sak.reg_dato, sak.dato_avsluttet,
                 sak.sakstatuskode, sakstatus.sakstatusnavn, COUNT(vedtak.vedtak_id) AS antall_vedtak
@@ -141,21 +175,21 @@ class SakRepository(private val dataSource: DataSource) {
                         v.aktfasekode,
                         v.fra_dato,
                         CASE WHEN vf.vedtakverdi IS NOT NULL THEN TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') END as unntaksdato, -- er bare satt dersom 11-12 unntak er innvilget                        
-                        ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') DESC, v.vedtak_id DESC) as rn
+                        ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY v.til_dato DESC NULLS LAST, v.vedtak_id DESC) as rn
                     FROM vedtak v
-                        JOIN VEDTAKFAKTA vf on v.vedtak_id = vf.vedtak_id
-                    WHERE v.person_id = ?
+                        JOIN VEDTAKFAKTA vf ON v.vedtak_id = vf.vedtak_id
+                    WHERE vf.vedtakfaktakode = 'AAPVILKUNN'
+                        AND v.person_id = ?
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
-                        AND vf.vedtakfaktakode = 'AAPVILKUNN' -- vi tar med denne som ekstra informasjon
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato) 
                 ) WHERE rn = 1
             )
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
-                nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, 
+                s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, 
                 vmd.max_dato, vmd.max_unntak_dato
             FROM nyeste_vedtak nv
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id

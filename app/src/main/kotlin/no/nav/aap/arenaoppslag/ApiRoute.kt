@@ -16,6 +16,8 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
@@ -76,32 +78,32 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
 
 fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
     get("/sak/{sakid}/detaljert") {
-        val sakid = call.parameters["sakid"]?.toIntOrNull()
+        val sakid = call.parameters["sakid"]
 
         if (sakid == null) {
-            logger.info("Sakid kan ikke være NULL eller et ugyldig tall")
+            logger.info("Sakid kan ikke være NULL")
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        when (val sak = sakOgVedtakService.hentSakMedVedtak(sakid)) {
-            null -> call.respond(status = HttpStatusCode.NotFound, message = "Fant ikke sak i Arena")
-            else -> {
-                val personId = PersonId(sak.person.personId)
-                val telleverk = telleverkService.hentTelleverkForPerson(personId)
-                val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
-
-                val maksdato = sakService.hentMaksdatoAapForPerson(personId)
-                val response = ArenaSakDetaljertRespons.fromDomain(
-                    arenaSakMedVedtak = sak,
-                    telleverkForPerson = telleverk,
-                    sisteUtbetalingsDato = sisteUtbetalingDato,
-                    maksDato = maksdato
-                )
-
-                call.respond(status = HttpStatusCode.OK, message = response)
-            }
+        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
+        val sak = when (sakidentifikator) {
+            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId =  sakidentifikator)
+            is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
+            else -> null
         }
 
+        if (sak == null) {
+            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+        val personId = PersonId(sak.person.personId)
+
+        val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
+        val telleverk = telleverkService.hentTelleverkForPerson(personId)
+
+        logger.info("Henter saksdetaljer")
+        val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk,kvoteHistorikk)
+        call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
 
