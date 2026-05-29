@@ -3,12 +3,12 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.4.1"
-    id("io.ktor.plugin") version "3.4.3"
+    id("io.ktor.plugin") version "3.5.0"
     id("dev.detekt")
     application
 }
 
-val ktorVersion = "3.4.3"
+val ktorVersion = "3.5.0"
 
 application {
     mainClass.set("no.nav.aap.arenaoppslag.AppKt")
@@ -51,13 +51,13 @@ dependencies {
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
 
-    implementation("com.oracle.database.jdbc:ojdbc11:23.26.1.0.0")
+    implementation("com.oracle.database.jdbc:ojdbc11:23.26.2.0.0")
     implementation("com.zaxxer:HikariCP:7.0.2")
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("com.nimbusds:nimbus-jose-jwt:10.9")
-    testImplementation("org.flywaydb:flyway-core:12.6.0")
+    testImplementation("org.flywaydb:flyway-core:12.6.2")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("com.h2database:h2:2.3.232") // nyeste versjon offisielt støttet av flyway 12.0.3
