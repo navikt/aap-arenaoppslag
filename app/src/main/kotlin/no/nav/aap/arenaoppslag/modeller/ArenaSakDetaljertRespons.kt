@@ -1,5 +1,7 @@
 package no.nav.aap.arenaoppslag.modeller
 
+import no.nav.aap.arenaoppslag.database.KvotebrukHendelse
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Suppress("MatchingDeclarationName")

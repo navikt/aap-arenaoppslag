@@ -100,9 +100,11 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
 
         val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
+        val maksdato = sakService.hentMaksdatoAapForPerson(personId)
+        val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
 
         logger.info("Henter saksdetaljer")
-        val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk,kvoteHistorikk)
+        val response = ArenaSakDetaljertRespons.fromDomain(sak, maksdato ,sisteUtbetalingDato,telleverk,kvoteHistorikk)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }

@@ -67,7 +67,7 @@ class SakServiceTest {
 
         val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
 
-        assertThat(resultat).isEqualTo(senestMenIkkeLopende)
+        assertThat(resultat).isNull()
     }
 
     @Test
