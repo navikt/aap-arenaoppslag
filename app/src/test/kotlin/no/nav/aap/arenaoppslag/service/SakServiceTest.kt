@@ -119,6 +119,7 @@ class SakServiceTest {
         aktfaseKode = "FA",
         vedtaktypeKode = vedtaktypeKode,
         fra = LocalDate.of(2025, 1, 1),
+        til = LocalDate.of(2026, 1, 1),
         maxdatoUnntak = null,
         maxdatoOrdinaer = maxdato,
         utvidetKvoteInnvilgetFra = null,

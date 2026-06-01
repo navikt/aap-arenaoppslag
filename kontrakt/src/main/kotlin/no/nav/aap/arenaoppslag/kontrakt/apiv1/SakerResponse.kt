@@ -37,13 +37,20 @@ public data class SakMedSisteVedtakOgMaksdato(
     val ferdigAvklart: Boolean,
     val lopendeVedtak: Boolean,
     val sisteVedtak: VedtakMedMaksdato,
-)
+) {
+    public fun medUdefinertMaxsdato(): SakMedSisteVedtakOgMaksdato {
+        val sisteVedtakKopi = this.sisteVedtak.copy(maxdatoAap = null, maxdatoUnntak = null, maxdatoOrdinaer = null)
+
+        return this.copy(sisteVedtak = sisteVedtakKopi)
+    }
+}
 
 public data class VedtakMedMaksdato(
     val vedtakId: Int,
     val aktfaseKode: String,
     val vedtaktypeKode: String,
     val fra: LocalDate?,
+    val til: LocalDate?,
     val maxdatoOrdinaer: LocalDate?,
     val maxdatoUnntak: LocalDate?,
     val maxdatoAap: LocalDate?,
