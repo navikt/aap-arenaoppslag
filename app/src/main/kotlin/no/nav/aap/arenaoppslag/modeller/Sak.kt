@@ -70,9 +70,15 @@ data class Maksdatolinje(
                 fra,
                 maxdatoOrdinaer,
                 maxdatoUnntak,
-                maxdatoUnntak ?: maxdatoOrdinaer
+                utledMaxdato()
             )
         )
+
+    private fun utledMaxdato(): LocalDate? = if (harInnvilget11_12()) {
+        maxdatoUnntak ?: maxdatoOrdinaer
+    } else {
+        maxdatoOrdinaer
+    }
 
     fun erLopende(): Boolean {
         // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
