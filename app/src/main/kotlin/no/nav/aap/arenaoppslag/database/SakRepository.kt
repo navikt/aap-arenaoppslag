@@ -37,6 +37,12 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentSakerDetaljerForPerson(personId: PersonId): List<ArenaSak> {
+        return dataSource.connection.use { con ->
+            selectSakerDetaljerForPersonId(personId, con)
+        }
+    }
+
     companion object {
         private fun doHentSakerMedMaksDatoOgVedtak(personId: PersonId, connection: Connection): List<Maksdatolinje> {
             connection.prepareStatement(selectVedtakMedNyesteMaxdatoForPerson).use { preparedStatement ->
@@ -70,6 +76,14 @@ class SakRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaSakKontrakt(row) }
+            }
+        }
+
+        fun selectSakerDetaljerForPersonId(personId: PersonId, connection: Connection): List<ArenaSak> {
+            connection.prepareStatement(selectSakerDetaljerForPersonId).use { preparedStatement ->
+                preparedStatement.setInt(1, personId.id)
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForArenaSak(row) }
             }
         }
 
@@ -129,6 +143,16 @@ class SakRepository(private val dataSource: DataSource) {
             statusnavn = row.getString("sakstatusnavn"),
             statuskode = row.getString("sakstatuskode"),
         )
+
+        @Language("OracleSql")
+        internal val selectSakerDetaljerForPersonId = """
+            SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id,
+                person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
+            FROM SAK
+            LEFT JOIN person ON person.person_id = sak.objekt_id
+            LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
+            WHERE sak.objekt_id = ? AND TABELLNAVNALIAS='PERS'
+        """.trimIndent()
 
         @Language("OracleSql")
         internal val selectSakMedSaksId = """

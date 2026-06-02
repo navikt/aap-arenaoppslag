@@ -15,6 +15,8 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljerKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
@@ -104,6 +106,21 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         logger.info("Henter saksdetaljer")
         val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk,kvoteHistorikk)
         call.respond(status = HttpStatusCode.OK, message = response)
+    }
+}
+
+fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
+    post("/person/vedtak") {
+        logger.info("Henter alle vedtak for person")
+        val request: VedtakForPersonRequest = call.receive()
+
+        val personId = personService.hentPersonId(request.personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+
+        val vedtak: List<ArenaVedtakMedDetaljerKontrakt> = sakOgVedtakService.hentVedtakForPerson(personId)
+            .map { it.tilKontrakt() }
+
+        call.respond(HttpStatusCode.OK, vedtak)
     }
 }
 
