@@ -103,7 +103,24 @@ data class ArenaSakMedVedtak(
     val registrertDato: LocalDateTime,
     val avsluttetDato: LocalDateTime?,
     val vedtak: List<ArenaVedtakMedDetaljer>
-)
+) {
+    fun tilKontrakt(
+        telleverkForPerson: TelleverkForPerson?,
+        kvoteHistorikk: Set<KvotebrukHendelse>
+    ) = ArenaSakDetaljert(
+        sakId = sakId,
+        opprettetAar = opprettetAar,
+        lopenr = lopenr,
+        person = person,
+        statuskode = statuskode,
+        statusnavn = statusnavn,
+        registrertDato = registrertDato,
+        avsluttetDato = avsluttetDato,
+        vedtak = vedtak,
+        telleverkForPerson = telleverkForPerson,
+        kvoteHistorikk = kvoteHistorikk
+    )
+}
 
 data class ArenaSakPerson(
     val personId: Int,

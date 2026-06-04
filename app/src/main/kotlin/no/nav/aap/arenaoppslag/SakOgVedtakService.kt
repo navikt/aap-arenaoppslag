@@ -28,7 +28,7 @@ class SakOgVedtakService(
         return getArenaSakMedVedtak(sak)
     }
 
-    fun hentVedtakForPerson(personId: PersonId): List<ArenaVedtakMedDetaljer> {
+    fun hentVedtakDetaljerForPerson(personId: PersonId): List<ArenaVedtakMedDetaljer> {
         val saker = sakRepository.hentSakerDetaljerForPerson(personId)
         return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
     }

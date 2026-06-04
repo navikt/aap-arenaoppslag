@@ -67,7 +67,7 @@ public data class SisteUtbetalingerResponse(val utbetalingsdato: LocalDate?)
 public data class SakMedSisteUtbetaling(val sakId: Int, val sisteAAPUtbetalingsdato: LocalDate?)
 
 // SakstypeKontrakt er foreløpig ikke i bruk, men beholdes for fremtidig bruk med enum-basert sakstype
-public enum class SakstypeKontrakt {
+public enum class Sakstype {
     AA,
     ARBEID,
     ATTF,

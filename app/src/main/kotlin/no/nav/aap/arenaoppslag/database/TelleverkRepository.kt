@@ -1,24 +1,10 @@
 package no.nav.aap.arenaoppslag.database;
 
+import no.nav.aap.arenaoppslag.modeller.KvoteVerdi
+import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.intellij.lang.annotations.Language
-import java.time.LocalDate
 import javax.sql.DataSource;
-
-
-data class KvoteVerdi(val kode: String, val verdi: Int)
-
-data class KvotebrukHendelse(
-    val id: Int,
-    val kvoteTypeKode: String,
-    val endringsGrunnlag: String,
-    val antallBevegelse: Int,
-    val posteringTypeKode: String,
-    val datoHendelse: LocalDate,
-    val resterende: Int,
-    val modUser: String?,
-    val begrunnelse: String?,
-)
 
 
 class TelleverkRepository(private val datasource: DataSource) {

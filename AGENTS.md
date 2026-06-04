@@ -135,7 +135,7 @@ Domain objects must **never** be returned directly from a route — map them to 
 
 ### Mapping from domain to response
 
-Use one of two patterns — pick whichever is most readable in context:
+Use `tilKontrakt()` on domain objects as the default mapping pattern:
 
 **Pattern 1 — method on the domain class (`tilKontrakt()`):**
 
@@ -149,33 +149,9 @@ data class Periode(val fraOgMedDato: LocalDate, val tilOgMedDato: LocalDate?) {
 }
 ```
 
-Use this when one domain object maps to one contract/response object.
+Use this both for simple 1:1 mappings and for richer responses that include related domain data.
 
-**Pattern 2 — `companion object { fun fromDomain(...) }` on the response class:**
-
-```kotlin
-data class ArenaSakDetaljertRespons(
-    val sakId: String,
-    // ...
-) {
-    companion object {
-        fun fromDomain(sak: ArenaSakMedVedtak, telleverk: TellerverkPåPerson?) =
-            ArenaSakDetaljertRespons(
-                sakId = sak.sakId,
-                // ...
-            )
-    }
-}
-```
-
-Use this when the response is assembled from multiple domain objects at the route level.
-
-In the route handler:
-
-```kotlin
-val respons = ArenaSakDetaljertRespons.fromDomain(sak, telleverk)
-call.respond(HttpStatusCode.OK, respons)
-```
+In route handlers, call `tilKontrakt()` on the domain object and respond with the mapped contract type.
 
 ### Database access pattern
 
