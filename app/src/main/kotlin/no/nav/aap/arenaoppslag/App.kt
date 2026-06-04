@@ -40,6 +40,8 @@ import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayMockImpl
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.util.*
@@ -205,6 +207,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val personService = skapPersonService(datasource, pdlGateway)
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
+    val tilgangService = TilgangService(TilgangmaskinGatewayMockImpl(), sakListeService)
 
     routing {
         actuator(prometheus)
@@ -224,7 +227,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 sakerForPerson(sakListeService, personService)
                 maksdato(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
-                vedtakForPerson(sakOgVedtakService, personService)
+                vedtakForPerson(sakOgVedtakService, personService, tilgangService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner

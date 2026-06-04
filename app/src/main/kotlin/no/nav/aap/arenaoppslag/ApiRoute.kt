@@ -25,6 +25,8 @@ import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangService
+import no.nav.aap.arenaoppslag.util.token
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService) {
@@ -111,31 +113,52 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
     }
 }
 
-fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
+fun Route.vedtakForPerson(
+    sakOgVedtakService: SakOgVedtakService,
+    personService: PersonService,
+    tilgangService: TilgangService,
+) {
     post("/person/vedtak") {
         logger.info("Henter alle vedtak for person")
         val request: VedtakForPersonRequest = call.receive()
+        val personidentifikator = request.personidentifikator
 
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+        // verifiserTilgangTilPerson returns AuthorizedPersonId — a proof that access was checked.
+        // Without it (null), we stop here with 403.
+        val authorized = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
+            ?: return@post call.respond(HttpStatusCode.Forbidden)
 
-        val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson(personId)
-            .map { it.tilKontrakt() }
+        // context(authorized) establishes AuthorizedPersonId in scope for the block.
+        // Any function declared `context(id: AuthorizedPersonId)` can now be called without
+        // passing the value explicitly.
+        context(authorized) {
+            val personId = personService.hentPersonId(personidentifikator)
+                ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        call.respond(HttpStatusCode.OK, vedtak)
+            val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson(personId)
+                .map { it.tilKontrakt() }
+
+            call.respond(HttpStatusCode.OK, vedtak)
+        }
     }
 
     post("/person/vedtak/detaljert") {
         logger.info("Henter alle vedtak med detalj for person")
         val request: VedtakForPersonRequest = call.receive()
+        val personidentifikator = request.personidentifikator
 
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+        val authorized = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
+            ?: return@post call.respond(HttpStatusCode.Forbidden)
 
-        val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(personId)
-            .map { it.tilKontrakt() }
+        context(authorized) {
+            val personId = personService.hentPersonId(personidentifikator)
+                ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        call.respond(HttpStatusCode.OK, vedtak)
+            val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(personId)
+                .map { it.tilKontrakt() }
+
+            call.respond(HttpStatusCode.OK, vedtak)
+        }
     }
 }
 
