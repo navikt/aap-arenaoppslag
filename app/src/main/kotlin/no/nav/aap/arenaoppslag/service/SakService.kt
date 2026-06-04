@@ -49,16 +49,6 @@ class SakService(private val sakRepository: SakRepository) {
         val maksdatoene = hentMaksdatoAapForVedtakISaker(personId)
         val sisteSak = maksdatoene
             .filter { it.sisteVedtak.maxdatoAap != null }.maxByOrNull { it.sisteVedtak.maxdatoAap!! }
-        /** Maksdato er funner basert på reglen:
-         * Finner siste AAP-vedtak for denne brukeren
-         * Finner sak knytet til dette vedtaket
-         * Hvis løpende vedtak. Returner beregnet maksdato
-         * Hvis sak som har gått til maks: Returner maksdato
-         * Hvis siste vedtak er stansvedtak: Returnere null
-         * Hvis vi ikke finner noen relevante saker: Returnere null
-         */
-
-
         if (sisteSak == null || !sisteSak.lopendeVedtak) return null
 
         return sisteSak.sisteVedtak.maxdatoAap
