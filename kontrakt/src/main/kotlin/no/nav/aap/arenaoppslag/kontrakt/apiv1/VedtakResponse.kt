@@ -13,8 +13,8 @@ public data class ArenaVedtak(
     val utfallkode: String?
 ){
     public fun erLopende(): Boolean {
-        // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
-        // Vi filtrer også ut vedtak med sjeldne typer som K (kontroll) for nå.
+        // Stansede vedtak (kode=S) og vedtak med sjeldne koder som K (kontroll)
+        // regnes som ikke løpende
         return vedtaktypeKode in listOf("O", "E", "G")
     }
 }
