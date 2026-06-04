@@ -15,15 +15,18 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
+import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
-import no.nav.aap.arenaoppslag.modeller.SakId
-import no.nav.aap.arenaoppslag.modeller.Saksnummer
+import no.nav.aap.arenaoppslag.modeller.SakIdentifikator
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
+import no.nav.aap.arenaoppslag.service.SakOgVedtakService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.service.TilgangService
+import no.nav.aap.arenaoppslag.util.token
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService) {
@@ -77,7 +80,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
+fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, tilgangService: TilgangService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -86,27 +89,36 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
-        val sak = when (sakidentifikator) {
-            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId =  sakidentifikator)
-            is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
-            else -> null
+        val sakIdentifikator = SakIdentifikator.fromString(sakid)
+
+        if (sakIdentifikator == null) {
+            logger.info("Klarte ikke tolke saksnummer: $sakid")
+            return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        if (sak == null) {
-            logger.info("Klarte ikke hente sak for saksnummer $sakid")
-            return@get call.respond(HttpStatusCode.NotFound)
-        }
-        val personId = PersonId(sak.person.personId)
+        tilgangService.harTilgangTilSak(sakIdentifikator, call.token())
+            .mapNotNull { sakOgVedtakService.hentSakMedVedtak(sakIdentifikator) }
+            .map { sak: ArenaSakMedVedtak ->
+                val personId = PersonId(sak.person.personId)
 
-        val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
-        val telleverk = telleverkService.hentTelleverkForPerson(personId)
-        val maksdato = sakService.hentMaksdatoAapForPerson(personId)
-        val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
+                logger.info("Henter saksdetaljer")
+                val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
+                val telleverk = telleverkService.hentTelleverkForPerson(personId)
+                val maksdato = sakService.hentMaksdatoAapForPerson(personId)
+                val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
 
-        logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt( telleverk,kvoteHistorikk,sisteUtbetalingDato,maksdato)
-        call.respond(status = HttpStatusCode.OK, message = response)
+                sak.tilKontrakt( telleverk,kvoteHistorikk,sisteUtbetalingDato,maksdato)
+            }.fold(
+                suksess = { call.respond(status = HttpStatusCode.OK, message = it) },
+                ikkeFunnet = {
+                    logger.info("Klarte ikke hente sak for saksnummer $sakid")
+                    call.respond(HttpStatusCode.NotFound)
+                },
+                ikkeTilgang = {
+                    logger.info("Bruker har ikke tilgang til å behandle sak $sakid")
+                    call.respond(HttpStatusCode.Forbidden)
+                }
+            )
     }
 }
 
@@ -125,18 +137,22 @@ fun Route.vedtakDetaljerForPerson(sakOgVedtakService: SakOgVedtakService, person
     }
 }
 
-fun Route.telleverk(telleverkService: TelleverkService, personService: PersonService) {
+fun Route.telleverk(telleverkService: TelleverkService, personService: PersonService, tilgangService: TilgangService) {
     post("/telleverk") {
         logger.info("Henter telleverk")
         val request: TellerRequest = call.receive()
-
         val personidentifikator = request.personidentifikator
-        val personId = personService.hentPersonId(personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val telleverk = telleverkService.hentTelleverkForPerson(personId)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke telleverk for personen i Arena")
-        call.respond(status = HttpStatusCode.OK, message = telleverk)
+        tilgangService.harTilgangTilPerson(personidentifikator, call.token())
+            .mapNotNull { personService.hentPersonId(personidentifikator) }
+            .onError { logger.info("Fant ikke person i Arena for henting av telleverk") }
+            .mapNotNull { telleverkService.hentTelleverkForPerson(it) }
+            .onError { logger.info("Fant ikke telleverk for person i Arena") }
+            .fold(
+                suksess = { call.respond(status = HttpStatusCode.OK, message = it) },
+                ikkeFunnet = { call.respond(HttpStatusCode.NotFound, "Fant ikke telleverk for person") },
+                ikkeTilgang = { call.respond(HttpStatusCode.Forbidden) }
+            )
     }
 }
 
