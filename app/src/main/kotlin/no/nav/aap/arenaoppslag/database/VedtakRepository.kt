@@ -37,13 +37,13 @@ class VedtakRepository(private val dataSource: DataSource) {
 
     /**
      * Context-parameter variant: only callable when [AuthorizedPersonId] is in scope,
-     * meaning tilgang has already been verified. The fnr comes from the context — no
-     * separate parameter needed, and no way to accidentally pass the wrong person.
+     * meaning tilgang has already been verified. The resolved [PersonId] comes from the
+     * context object, so the call site cannot accidentally mix in a different person.
      */
-    context(id: AuthorizedPersonId)
+    context(personId: AuthorizedPersonId)
     fun hentVedtak(): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            selectVedtak(id.fnr, con)
+            selectAlleVedtakForPerson(personId.personId, con)
         }
     }
 

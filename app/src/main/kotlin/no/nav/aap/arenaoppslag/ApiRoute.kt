@@ -123,19 +123,17 @@ fun Route.vedtakForPerson(
         val request: VedtakForPersonRequest = call.receive()
         val personidentifikator = request.personidentifikator
 
+        val personId = personService.hentPersonId(personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+
         // verifiserTilgangTilPerson returns AuthorizedPersonId — a proof that access was checked.
-        // Without it (null), we stop here with 403.
-        val authorized = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
+        // The returned object also carries the resolved internal PersonId.
+        val authorizedPersonId = tilgangService.verifiserTilgangTilPerson(personidentifikator, personId, call.token())
             ?: return@post call.respond(HttpStatusCode.Forbidden)
 
-        // context(authorized) establishes AuthorizedPersonId in scope for the block.
-        // Any function declared `context(id: AuthorizedPersonId)` can now be called without
-        // passing the value explicitly.
-        context(authorized) {
-            val personId = personService.hentPersonId(personidentifikator)
-                ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
-
-            val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson(personId)
+        context(authorizedPersonId) {
+            // kompileringsfeil om kalles utenfor en context som inneholder authorizedPersonId
+            val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson()
                 .map { it.tilKontrakt() }
 
             call.respond(HttpStatusCode.OK, vedtak)
@@ -147,14 +145,14 @@ fun Route.vedtakForPerson(
         val request: VedtakForPersonRequest = call.receive()
         val personidentifikator = request.personidentifikator
 
-        val authorized = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
+        val personId = personService.hentPersonId(personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+
+        val authorized = tilgangService.verifiserTilgangTilPerson(personidentifikator, personId, call.token())
             ?: return@post call.respond(HttpStatusCode.Forbidden)
 
         context(authorized) {
-            val personId = personService.hentPersonId(personidentifikator)
-                ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
-
-            val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(personId)
+            val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson()
                 .map { it.tilKontrakt() }
 
             call.respond(HttpStatusCode.OK, vedtak)
