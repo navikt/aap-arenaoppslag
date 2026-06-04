@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag.service
 
-import no.nav.aap.arenaoppslag.database.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
+import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
 
