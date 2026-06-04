@@ -5,6 +5,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.intellij.lang.annotations.Language
@@ -21,9 +22,16 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
+    @TestOnly
     fun hentVedtak(fnr: String): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
             selectVedtak(fnr, con)
+        }
+    }
+
+    fun hentVedtak(personId: PersonId): List<ArenaVedtak> {
+        return dataSource.connection.use { con ->
+            selectAlleVedtakForPerson(personId, con)
         }
     }
 
@@ -39,6 +47,14 @@ class VedtakRepository(private val dataSource: DataSource) {
         fun selectVedtak(fodselsnummer: String, connection: Connection): List<ArenaVedtak> {
             connection.prepareStatement(selectAlleVedtakForFnr).use { preparedStatement ->
                 preparedStatement.setString(1, fodselsnummer)
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForArenaVedtak(row) }.toList()
+            }
+        }
+
+        fun selectAlleVedtakForPerson(personId: PersonId, connection: Connection): List<ArenaVedtak> {
+            connection.prepareStatement(selectAlleVedtakForPerson).use { preparedStatement ->
+                preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }.toList()
             }
@@ -62,6 +78,13 @@ class VedtakRepository(private val dataSource: DataSource) {
                (SELECT person_id 
                   FROM person 
                  WHERE fodselsnr = ?) 
+        """.trimIndent()
+
+        @Language("OracleSql")
+        internal val selectAlleVedtakForPerson = """
+        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, utfallkode
+          FROM vedtak
+         WHERE person_id = ? 
         """.trimIndent()
 
         @Language("OracleSql")

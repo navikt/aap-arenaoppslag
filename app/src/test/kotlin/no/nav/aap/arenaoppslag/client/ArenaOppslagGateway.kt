@@ -11,6 +11,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.TestConfig
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
@@ -83,11 +84,18 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/api/v1/utbetalinger/siste", req
         ).getOrThrow()
 
+    suspend fun hentVedtakForPerson(
+        req: VedtakForPersonRequest
+    ): List<ArenaVedtak> =
+        gjørArenaOppslag<List<ArenaVedtak>, VedtakForPersonRequest>(
+            "/api/v1/person/vedtak", req
+        ).getOrThrow()
+
     suspend fun hentVedtakDetaljerForPerson(
         req: VedtakForPersonRequest
     ): List<ArenaVedtakMedDetaljer> =
         gjørArenaOppslag<List<ArenaVedtakMedDetaljer>, VedtakForPersonRequest>(
-            "/api/v1/person/vedtak", req
+            "/api/v1/person/vedtak/detaljert", req
         ).getOrThrow()
 
     suspend fun hentSakerByFnr(
@@ -100,8 +108,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     suspend fun hentMaksimum(
         req: InternVedtakRequest
 
-    ): Maksimum = gjørArenaOppslag<Maksimum, InternVedtakRequest
-            >(
+    ): Maksimum = gjørArenaOppslag<Maksimum, InternVedtakRequest>(
         "/intern/maksimum", req
     ).getOrThrow()
 
@@ -121,7 +128,8 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
                 accept(ContentType.Application.Json)
                 bearerAuth(token)
                 contentType(ContentType.Application.Json)
-                setBody(req)
+                // Serialize explicitly to avoid flaky request streaming races in Ktor test host.
+                setBody(objectMapper.writeValueAsString(req))
             }.also {
                 if (it.status.isSuccess()) {
                     fikkArenaData = true
@@ -143,13 +151,15 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     companion object {
         fun withTestServer(dataSource: DataSource, testBody: suspend (ArenaOppslagGateway) -> Unit) {
-            val config = TestConfig.default(Fakes())
-            val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
-            testApplication {
-                application { server(config, dataSource, FakePdlGateway()) }
-                val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
+            Fakes().use { fakes ->
+                val config = TestConfig.default(fakes)
+                val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
+                testApplication {
+                    application { server(config, dataSource, FakePdlGateway()) }
+                    val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
 
-                testBody(gateway)
+                    testBody(gateway)
+                }
             }
         }
     }

@@ -2,9 +2,11 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.groups.Tuple.tuple
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -73,6 +75,52 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
 
         assertThat(vedtak).hasSize(1)
         assertThat(vedtak.single().relatertVedtak).isEqualTo(1234)
+    }
+
+    @Test
+    fun `hentVedtak for person returnerer forventet vedtak`() {
+        val vedtakRepository = VedtakRepository(h2)
+
+        val vedtak = vedtakRepository.hentVedtak(PersonId(1))
+        val enesteVedtak = vedtak.single()
+
+        assertThat(enesteVedtak.sakId).isEqualTo("1")
+        assertThat(enesteVedtak.statusKode).isEqualTo("IVERK")
+        assertThat(enesteVedtak.vedtaktypeKode).isEqualTo("O")
+        assertThat(enesteVedtak.fraOgMed).isEqualTo(LocalDate.of(2022, 8, 30))
+        assertThat(enesteVedtak.tilDato).isEqualTo(LocalDate.of(2023, 8, 30))
+        assertThat(enesteVedtak.rettighetkode).isEqualTo("AAP")
+        assertThat(enesteVedtak.utfallkode).isEqualTo("JA")
+    }
+
+    @Test
+    fun `hentVedtak for person returnerer tom liste når person ikke har vedtak`() {
+        val vedtakRepository = VedtakRepository(h2)
+
+        val vedtak = vedtakRepository.hentVedtak(PersonId(3))
+
+        assertThat(vedtak).isEmpty()
+    }
+
+    @Test
+    fun `hentVedtak for person returnerer alle vedtak for person uten filtrering`() {
+        val vedtakRepository = VedtakRepository(h2)
+
+        val vedtak = vedtakRepository.hentVedtak(PersonId(5))
+
+        assertThat(vedtak).hasSize(5)
+        assertThat(vedtak).extracting(
+            "statusKode",
+            "vedtaktypeKode",
+            "rettighetkode",
+            "utfallkode"
+        ).containsExactlyInAnyOrder(
+            tuple("KONT", "O", "AAP", "JA"),
+            tuple("IVERK", "N", "AAP", "JA"),
+            tuple("IVERK", "O", "AAP", "NEI"),
+            tuple("IVERK", "O", "AAP", "JA"),
+            tuple("IVERK", "O", "OOP", "JA"),
+        )
     }
 }
 
