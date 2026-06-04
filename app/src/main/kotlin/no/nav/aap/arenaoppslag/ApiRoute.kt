@@ -26,7 +26,7 @@ import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangService
-import no.nav.aap.arenaoppslag.tilgangsmaskin.handlePersonTilgang
+import no.nav.aap.arenaoppslag.tilgangsmaskin.medTilgangSjekket
 import no.nav.aap.arenaoppslag.util.token
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
@@ -128,17 +128,15 @@ fun Route.vedtakForPerson(
         val request: VedtakForPersonRequest = call.receive()
         val personidentifikator = request.personidentifikator
 
-        handlePersonTilgang(
-            tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token()),
-            onGranted = { granted ->
-                context(granted.authorizedPersonId) {
-                    val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson()
-                        .map { it.tilKontrakt() }
+        val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
+        medTilgangSjekket(tilgang) { godkjent ->
+            context(godkjent.authorizedPersonId) {
+                val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson()
+                    .map { it.tilKontrakt() }
 
-                    call.respond(HttpStatusCode.OK, vedtak)
-                }
-            },
-        )
+                call.respond(HttpStatusCode.OK, vedtak)
+            }
+        }
     }
 
     post("/person/vedtak/detaljert") {
@@ -147,7 +145,7 @@ fun Route.vedtakForPerson(
         val personidentifikator = request.personidentifikator
 
         val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
-        handlePersonTilgang(tilgang) { granted ->
+        medTilgangSjekket(tilgang) { granted ->
             context(granted.authorizedPersonId) {
                 val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson()
                     .map { it.tilKontrakt() }

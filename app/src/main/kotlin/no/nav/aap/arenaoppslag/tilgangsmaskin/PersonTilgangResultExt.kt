@@ -4,7 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-suspend fun RoutingContext.handlePersonTilgang(
+suspend fun RoutingContext.medTilgangSjekket(
     tilgang: PersonTilgangResult,
     onAccessDenied: suspend RoutingContext.() -> Unit = { call.respond(HttpStatusCode.Forbidden) },
     onNotFound: suspend RoutingContext.() -> Unit = {
