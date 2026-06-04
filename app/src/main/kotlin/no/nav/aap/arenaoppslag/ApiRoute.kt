@@ -4,7 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljerKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
@@ -116,7 +116,7 @@ fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService:
         val personId = personService.hentPersonId(request.personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val vedtak: List<ArenaVedtakMedDetaljerKontrakt> = sakOgVedtakService.hentVedtakForPerson(personId)
+        val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakForPerson(personId)
             .map { it.tilKontrakt() }
 
         call.respond(HttpStatusCode.OK, vedtak)

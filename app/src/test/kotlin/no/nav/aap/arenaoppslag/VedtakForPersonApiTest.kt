@@ -4,7 +4,7 @@ import io.ktor.client.plugins.*
 import io.ktor.http.*
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljerKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -15,7 +15,7 @@ class VedtakForPersonApiTest : H2TestBase("flyway/minimumtest") {
     fun `Henter vedtak for kjent person`() {
         withTestServer(h2) { gateway ->
             // Person med fodselsnr '123' har én sak med ett vedtak (id=1234)
-            val vedtak: List<ArenaVedtakMedDetaljerKontrakt> =
+            val vedtak: List<ArenaVedtakMedDetaljer> =
                 gateway.hentVedtakForPerson(VedtakForPersonRequest("123"))
 
             assertThat(vedtak).isNotEmpty()
@@ -39,7 +39,7 @@ class VedtakForPersonApiTest : H2TestBase("flyway/minimumtest") {
     fun `Henter tom liste for person uten saker`() {
         withTestServer(h2) { gateway ->
             // Person med fodselsnr 'ingenvedtak' eksisterer i Arena men har ingen saker
-            val vedtak: List<ArenaVedtakMedDetaljerKontrakt> =
+            val vedtak: List<ArenaVedtakMedDetaljer> =
                 gateway.hentVedtakForPerson(VedtakForPersonRequest("ingenvedtak"))
 
             assertThat(vedtak).isEmpty()

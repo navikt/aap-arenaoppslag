@@ -11,7 +11,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import no.nav.aap.arenaoppslag.TestConfig
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljerKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
@@ -85,8 +85,8 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     suspend fun hentVedtakForPerson(
         req: VedtakForPersonRequest
-    ): List<ArenaVedtakMedDetaljerKontrakt> =
-        gjørArenaOppslag<List<ArenaVedtakMedDetaljerKontrakt>, VedtakForPersonRequest>(
+    ): List<ArenaVedtakMedDetaljer> =
+        gjørArenaOppslag<List<ArenaVedtakMedDetaljer>, VedtakForPersonRequest>(
             "/api/v1/person/vedtak", req
         ).getOrThrow()
 

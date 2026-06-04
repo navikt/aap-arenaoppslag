@@ -4,7 +4,10 @@ import java.time.LocalDate
 
 public data class VedtakForPersonRequest(val personidentifikator: String)
 
-public data class ArenaVedtakMedDetaljerKontrakt(
+@Deprecated("bruk nytt navn uten -Kontrakt suffiks", level= DeprecationLevel.ERROR)
+public typealias ArenaVedtakMedDetaljerKontrakt = ArenaVedtakMedDetaljer
+
+public data class ArenaVedtakMedDetaljer(
     val vedtakId: Int,
     val lopenrvedtak: Int,
     val statusKode: String,
@@ -22,17 +25,23 @@ public data class ArenaVedtakMedDetaljerKontrakt(
     val saksbehandler: String?,
     val beslutter: String?,
     val relatertVedtak: Int?,
-    val fakta: List<ArenaVedtakfaktaKontrakt>
+    val fakta: List<ArenaVedtakfakta>
 )
 
-public data class ArenaVedtakfaktaKontrakt(
+@Deprecated("bruk nytt navn uten -Kontrakt suffiks", level= DeprecationLevel.ERROR)
+public typealias ArenaVedtakfaktaKontrakt = ArenaVedtakfakta
+
+public data class ArenaVedtakfakta(
     val kode: String,
     val navn: String,
     val verdi: String?,
     val registrertDato: LocalDate,
 )
 
-public data class ArenaVilkårsvurderingKontrakt(
+@Deprecated("bruk nytt navn uten -Kontrakt suffiks", level= DeprecationLevel.ERROR)
+public typealias ArenaVilkårsvurderingKontrakt = ArenaVilkårsvurdering
+
+public data class ArenaVilkårsvurdering(
     val vilkårsvurderingId: Long,
     val vilkårkode: String,
     val begrunnelse: String?,
