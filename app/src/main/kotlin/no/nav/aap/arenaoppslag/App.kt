@@ -13,6 +13,7 @@ import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
@@ -26,6 +27,7 @@ import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.pdl.IPdlGateway
 import no.nav.aap.arenaoppslag.pdl.PdlGateway
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
@@ -97,7 +99,7 @@ fun Application.server(
 
     routes(datasource, pdlGateway)
 
-    databaseConnectionWarmup(skapHistorikkService(datasource))
+    warmup(datasource, pdlGateway)
 
     monitor.subscribe(ApplicationStarted) { environment ->
         environment.log.info("ktor har startet opp.")
@@ -129,9 +131,26 @@ fun Application.server(
     }
 }
 
-private fun databaseConnectionWarmup(historikkService: HistorikkService) {
-    // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
-    historikkService.signifikanteSakerForPerson(setOf("007"), LocalDate.now())
+private fun Application.warmup(
+    datasource: DataSource,
+    pdlGateway: IPdlGateway
+) {
+    val historikkService = skapHistorikkService(datasource)
+    val sakService = skapSakListeService(datasource)
+    val fiktivtFødselsnummer = "007"
+    val fiktivArenaPerson = PersonId(0xcafebabe.toInt())
+
+    try {
+        // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
+        historikkService.signifikanteSakerForPerson(setOf(fiktivtFødselsnummer), LocalDate.now())
+
+        // Generell innlasting av objektgraf og cache-opprettelse
+        pdlGateway.hentAlleIdenterForPerson(fiktivtFødselsnummer)
+        sakService.hentSakerForPerson(fiktivArenaPerson)
+    } catch (e: CancellationException) {
+        logger.warn("Warmup avbrutt fordi applikasjonen stopper.")
+        throw e
+    }
 }
 
 // Bruker ikke RepositoryRegistry fra Kelvin-komponenter fordi vi er på Oracle DB her,
@@ -206,6 +225,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 sakerForPerson(sakListeService, personService)
                 maksdato(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
+                vedtakDetaljerForPerson(sakOgVedtakService, personService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner

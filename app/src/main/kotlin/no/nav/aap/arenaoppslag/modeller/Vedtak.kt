@@ -3,6 +3,9 @@ package no.nav.aap.arenaoppslag.modeller
 import no.nav.aap.arenaoppslag.kontrakt.intern.Kilde
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer as ArenaVedtakMedDetaljerKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakfakta as ArenaVedtakfaktaKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVilkårsvurdering as ArenaVilkårsvurderingKontrakt
 import java.time.LocalDate
 
 data class VedtakStatus(
@@ -87,14 +90,42 @@ data class ArenaVedtakMedDetaljer(
     val relatertVedtak: Int?,
     val fakta: List<ArenaVedtakfakta>,
     val vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
-)
+) {
+    fun tilKontrakt() = ArenaVedtakMedDetaljerKontrakt(
+        vedtakId = vedtakId,
+        lopenrvedtak = lopenrvedtak,
+        statusKode = statusKode,
+        statusNavn = statusNavn,
+        vedtaktypeKode = vedtaktypeKode,
+        vedtaktypeNavn = vedtaktypeNavn,
+        aktivitetsfaseKode = aktivitetsfaseKode,
+        aktivitetsfaseNavn = aktivitetsfaseNavn,
+        fraOgMed = fraOgMed,
+        tilDato = tilDato,
+        rettighetkode = rettighetkode,
+        rettighetnavn = rettighetnavn,
+        utfallkode = utfallkode,
+        begrunnelse = begrunnelse,
+        saksbehandler = saksbehandler,
+        beslutter = beslutter,
+        relatertVedtak = relatertVedtak,
+        fakta = fakta.map { it.tilKontrakt() },
+    )
+}
 
 data class ArenaVedtakfakta(
     val kode: String,
     val navn: String,
     val verdi: String?,
     val registrertDato: LocalDate,
-)
+) {
+    fun tilKontrakt() = ArenaVedtakfaktaKontrakt(
+        kode = kode,
+        navn = navn,
+        verdi = verdi,
+        registrertDato = registrertDato,
+    )
+}
 
 data class ArenaVilkårsvurdering(
     val vilkårsvurderingId: Long,

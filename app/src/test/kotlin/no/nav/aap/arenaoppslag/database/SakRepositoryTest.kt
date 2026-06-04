@@ -117,6 +117,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
             // mappingen testes
             Maksdatolinje(
                 1_10_3, 2022, 1_10_3, 1_10_3, "IKKE", "O",
+                LocalDate.of(2025, 12, 31),
                 LocalDate.of(2022, 8, 30),
                 LocalDate.of(2025, 12, 31),
                 LocalDate.of(2025, 6, 30),
@@ -127,6 +128,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
             ),
             Maksdatolinje(
                 1_10_2, 2022, 1_10_2, 1_10_1, "IKKE", "O",
+                LocalDate.of(2026, 6, 30),
                 LocalDate.of(2010, 8, 29),
                 LocalDate.of(2026, 6, 30),
                 LocalDate.of(2025, 6, 30),

@@ -37,6 +37,12 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentSakerDetaljerForPerson(personId: PersonId): List<ArenaSak> {
+        return dataSource.connection.use { con ->
+            selectSakerDetaljerForPersonId(personId, con)
+        }
+    }
+
     companion object {
         private fun doHentSakerMedMaksDatoOgVedtak(personId: PersonId, connection: Connection): List<Maksdatolinje> {
             connection.prepareStatement(selectVedtakMedNyesteMaxdatoForPerson).use { preparedStatement ->
@@ -55,6 +61,7 @@ class SakRepository(private val dataSource: DataSource) {
                 vedtakId = row.getInt("vedtak_id"),
                 aktfaseKode = row.getString("aktfasekode"),
                 vedtaktypeKode = row.getString("vedtaktypekode"),
+                til = row.getDate("til_dato")?.toLocalDate(),
                 fra = row.getDate("fra_dato")?.toLocalDate(),
                 maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
                 maxdatoOrdinaer = row.getDate("max_dato")?.toLocalDate(),
@@ -69,6 +76,14 @@ class SakRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaSakKontrakt(row) }
+            }
+        }
+
+        fun selectSakerDetaljerForPersonId(personId: PersonId, connection: Connection): List<ArenaSak> {
+            connection.prepareStatement(selectSakerDetaljerForPersonId).use { preparedStatement ->
+                preparedStatement.setInt(1, personId.id)
+                val resultSet = preparedStatement.executeQuery()
+                return resultSet.map { row -> mapperForArenaSak(row) }
             }
         }
 
@@ -130,6 +145,16 @@ class SakRepository(private val dataSource: DataSource) {
         )
 
         @Language("OracleSql")
+        internal val selectSakerDetaljerForPersonId = """
+            SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id,
+                person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
+            FROM SAK
+            LEFT JOIN person ON person.person_id = sak.objekt_id
+            LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
+            WHERE sak.objekt_id = ? AND TABELLNAVNALIAS='PERS'
+        """.trimIndent()
+
+        @Language("OracleSql")
         internal val selectSakMedSaksId = """
             SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id, 
                 person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
@@ -168,12 +193,13 @@ class SakRepository(private val dataSource: DataSource) {
         internal val selectVedtakMedNyesteMaxdatoForPerson = """
             -- Hent først nyeste vedtak for hver av sakene 
             WITH nyeste_vedtak AS (
-                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, unntaksdato, fra_dato FROM (
+                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, unntaksdato, fra_dato, til_dato FROM (
                     SELECT v.sak_id,
                         v.vedtak_id,
                         v.vedtaktypekode,
                         v.aktfasekode,
                         v.fra_dato,
+                        v.til_dato,
                         CASE WHEN vf.vedtakverdi IS NOT NULL THEN TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') END as unntaksdato, -- er bare satt dersom 11-12 unntak er innvilget                        
                         ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY v.til_dato DESC NULLS LAST, v.vedtak_id DESC) as rn
                     FROM vedtak v
@@ -189,7 +215,7 @@ class SakRepository(private val dataSource: DataSource) {
                 ) WHERE rn = 1
             )
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
-                s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, 
+                s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, nv.til_dato,  
                 vmd.max_dato, vmd.max_unntak_dato
             FROM nyeste_vedtak nv
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id

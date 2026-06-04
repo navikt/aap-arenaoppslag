@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
@@ -14,7 +15,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
-import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
@@ -104,8 +105,23 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
 
         logger.info("Henter saksdetaljer")
-        val response = ArenaSakDetaljertRespons.fromDomain(sak, maksdato ,sisteUtbetalingDato,telleverk,kvoteHistorikk)
+        val response = sak.tilKontrakt(sak, maksdato ,sisteUtbetalingDato,telleverk,kvoteHistorikk)
         call.respond(status = HttpStatusCode.OK, message = response)
+    }
+}
+
+fun Route.vedtakDetaljerForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
+    post("/person/vedtak") {
+        logger.info("Henter alle vedtak for person")
+        val request: VedtakForPersonRequest = call.receive()
+
+        val personId = personService.hentPersonId(request.personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+
+        val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(personId)
+            .map { it.tilKontrakt() }
+
+        call.respond(HttpStatusCode.OK, vedtak)
     }
 }
 

@@ -47,6 +47,7 @@ data class Maksdatolinje(
     val vedtakId: Int,
     val aktfaseKode: String,
     val vedtaktypeKode: String,
+    val til: LocalDate?,
     val fra: LocalDate?,
     val maxdatoUnntak: LocalDate?,
     val maxdatoOrdinaer: LocalDate?,
@@ -67,12 +68,19 @@ data class Maksdatolinje(
                 vedtakId,
                 aktfaseKode,
                 vedtaktypeKode,
+                til,
                 fra,
                 maxdatoOrdinaer,
                 maxdatoUnntak,
-                maxdatoUnntak ?: maxdatoOrdinaer
+                utledMaxdato()
             )
         )
+
+    private fun utledMaxdato(): LocalDate? = if (harInnvilget11_12()) {
+        maxdatoUnntak ?: maxdatoOrdinaer
+    } else {
+        maxdatoOrdinaer
+    }
 
     fun erLopende(): Boolean {
         // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
@@ -95,7 +103,24 @@ data class ArenaSakMedVedtak(
     val registrertDato: LocalDateTime,
     val avsluttetDato: LocalDateTime?,
     val vedtak: List<ArenaVedtakMedDetaljer>
-)
+) {
+    fun tilKontrakt(
+        telleverkForPerson: TelleverkForPerson?,
+        kvoteHistorikk: Set<KvotebrukHendelse>
+    ) = ArenaSakDetaljert(
+        sakId = sakId,
+        opprettetAar = opprettetAar,
+        lopenr = lopenr,
+        person = person,
+        statuskode = statuskode,
+        statusnavn = statusnavn,
+        registrertDato = registrertDato,
+        avsluttetDato = avsluttetDato,
+        vedtak = vedtak,
+        telleverkForPerson = telleverkForPerson,
+        kvoteHistorikk = kvoteHistorikk
+    )
+}
 
 data class ArenaSakPerson(
     val personId: Int,
