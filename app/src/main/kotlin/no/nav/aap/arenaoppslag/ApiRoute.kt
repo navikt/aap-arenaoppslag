@@ -11,12 +11,12 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
@@ -26,6 +26,7 @@ import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.handlePersonTilgang
 import no.nav.aap.arenaoppslag.util.token
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
@@ -80,7 +81,12 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
+fun Route.sak(
+    sakService: SakService,
+    posteringService: PosteringService,
+    sakOgVedtakService: SakOgVedtakService,
+    telleverkService: TelleverkService
+) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -122,21 +128,17 @@ fun Route.vedtakForPerson(
         val request: VedtakForPersonRequest = call.receive()
         val personidentifikator = request.personidentifikator
 
-        when (val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())) {
-            is no.nav.aap.arenaoppslag.tilgangsmaskin.PersonTilgangResult.AccessDenied ->
-                return@post call.respond(HttpStatusCode.Forbidden)
-
-            is no.nav.aap.arenaoppslag.tilgangsmaskin.PersonTilgangResult.NotFound ->
-                return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
-
-            is no.nav.aap.arenaoppslag.tilgangsmaskin.PersonTilgangResult.Granted ->
-                context(tilgang.authorizedPersonId) {
+        handlePersonTilgang(
+            tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token()),
+            onGranted = { granted ->
+                context(granted.authorizedPersonId) {
                     val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson()
                         .map { it.tilKontrakt() }
 
                     call.respond(HttpStatusCode.OK, vedtak)
                 }
-        }
+            },
+        )
     }
 
     post("/person/vedtak/detaljert") {
@@ -144,20 +146,14 @@ fun Route.vedtakForPerson(
         val request: VedtakForPersonRequest = call.receive()
         val personidentifikator = request.personidentifikator
 
-        when (val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())) {
-            is no.nav.aap.arenaoppslag.tilgangsmaskin.PersonTilgangResult.AccessDenied ->
-                return@post call.respond(HttpStatusCode.Forbidden)
+        val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
+        handlePersonTilgang(tilgang) { granted ->
+            context(granted.authorizedPersonId) {
+                val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson()
+                    .map { it.tilKontrakt() }
 
-            is no.nav.aap.arenaoppslag.tilgangsmaskin.PersonTilgangResult.NotFound ->
-                return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
-
-            is no.nav.aap.arenaoppslag.tilgangsmaskin.PersonTilgangResult.Granted ->
-                context(tilgang.authorizedPersonId) {
-                    val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson()
-                        .map { it.tilKontrakt() }
-
-                    call.respond(HttpStatusCode.OK, vedtak)
-                }
+                call.respond(HttpStatusCode.OK, vedtak)
+            }
         }
     }
 }
