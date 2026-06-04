@@ -137,7 +137,7 @@ private fun Application.warmup(
 ) {
     val historikkService = skapHistorikkService(datasource)
     val sakService = skapSakListeService(datasource)
-    val fiktivtFødselsnummer = "007"
+    val fiktivtFødselsnummer = "14224432837"
     val fiktivArenaPerson = PersonId(0xcafebabe.toInt())
 
     try {
@@ -145,7 +145,6 @@ private fun Application.warmup(
         historikkService.signifikanteSakerForPerson(setOf(fiktivtFødselsnummer), LocalDate.now())
 
         // Generell innlasting av objektgraf og cache-opprettelse
-        pdlGateway.hentAlleIdenterForPerson(fiktivtFødselsnummer)
         sakService.hentSakerForPerson(fiktivArenaPerson)
     } catch (e: CancellationException) {
         logger.warn("Warmup avbrutt fordi applikasjonen stopper.")
