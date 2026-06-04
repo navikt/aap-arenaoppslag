@@ -13,11 +13,8 @@ import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
@@ -102,10 +99,7 @@ fun Application.server(
 
     routes(datasource, pdlGateway)
 
-    warmup(
-        datasource,
-        pdlGateway,
-    )
+    warmup(datasource, pdlGateway)
 
     monitor.subscribe(ApplicationStarted) { environment ->
         environment.log.info("ktor har startet opp.")
@@ -146,22 +140,16 @@ private fun Application.warmup(
     val fiktivtFødselsnummer = "007"
     val fiktivArenaPerson = PersonId(0xcafebabe.toInt())
 
-    launch {
-        try {
-            withContext(Dispatchers.IO) {
-                // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
-                historikkService.signifikanteSakerForPerson(setOf(fiktivtFødselsnummer), LocalDate.now())
+    try {
+        // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
+        historikkService.signifikanteSakerForPerson(setOf(fiktivtFødselsnummer), LocalDate.now())
 
-                // Generell innlasting av objektgraf og cache-opprettelse
-                pdlGateway.hentAlleIdenterForPerson(fiktivtFødselsnummer)
-                sakService.hentSakerForPerson(fiktivArenaPerson)
-            }
-        } catch (e: CancellationException) {
-            logger.info("Warmup avbrutt fordi applikasjonen stopper.")
-            throw e
-        } catch (e: Exception) {
-            logger.warn("Warmup feilet, fortsetter oppstart uten warmup.", e)
-        }
+        // Generell innlasting av objektgraf og cache-opprettelse
+        pdlGateway.hentAlleIdenterForPerson(fiktivtFødselsnummer)
+        sakService.hentSakerForPerson(fiktivArenaPerson)
+    } catch (e: CancellationException) {
+        logger.warn("Warmup avbrutt fordi applikasjonen stopper.")
+        throw e
     }
 }
 
