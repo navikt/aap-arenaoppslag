@@ -50,31 +50,48 @@ class SakServiceTest {
     }
 
     @Test
-    fun `hentMaksdatoAapForPerson returnerer seneste maksdato blant lopende vedtak`() {
+    fun `hentMaksdatoAapForPerson returnerer maksdato for lopende vedtak`() {
         val sakRepository = mockk<SakRepository>()
-        val tidlig = LocalDate.of(2026, 1, 1)
-        val sen = LocalDate.of(2027, 6, 30)
-        val senestMenIkkeLopende = LocalDate.of(2030, 1, 1)
+        val tidlig = LocalDate.of(2025, 1, 1)
+        val midt = LocalDate.of(2026, 6, 1)
+        val senest = LocalDate.of(2027, 6, 30)
         every { sakRepository.hentSakerMedMaksDatoOgVedtak(personId) } returns listOf(
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = tidlig),
-            maksdatolinje(sakId = 2, vedtaktypeKode = "E", sakStatus = "AKTIV", maxdato = sen),
-            // Avsluttet sak med løpende vedtakstype regnes fortsatt som relevant maxdato,
-            // men her er vedtaket stanset slik at det ikke teller som løpende
-            maksdatolinje(sakId = 3, vedtaktypeKode = "S", sakStatus = "AVSLU", maxdato = senestMenIkkeLopende),
-            // Ikke løpende (feil vedtakstype) - skal ignoreres
-            maksdatolinje(sakId = 4, vedtaktypeKode = "S", sakStatus = "AKTIV", maxdato = senestMenIkkeLopende),
+            maksdatolinje(sakId = 2, vedtaktypeKode = "E", sakStatus = "AKTIV", maxdato = midt),
+            maksdatolinje(sakId = 3, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = senest),
         )
 
         val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
 
-        assertThat(resultat).isEqualTo(sen)
+        assertThat(resultat).isEqualTo(senest)
     }
 
     @Test
-    fun `hentMaksdatoAapForPerson returnerer null naar ingen lopende vedtak finnes`() {
+    fun `hentMaksdatoAapForPerson returnerer null naar sak med hoeyest maxdato ikke er lopende`() {
         val sakRepository = mockk<SakRepository>()
+        val lopende = LocalDate.of(2027, 6, 30)
+        val hoeyestMenIkkeLopende = LocalDate.of(2030, 1, 1)
         every { sakRepository.hentSakerMedMaksDatoOgVedtak(personId) } returns listOf(
-            maksdatolinje(sakId = 1, vedtaktypeKode = "S", sakStatus = "AKTIV", maxdato = LocalDate.now()),
+            maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = lopende),
+            // Avsluttet sak med høyest maxdato — ikke løpende, skal ikke returneres
+            maksdatolinje(sakId = 2, vedtaktypeKode = "O", sakStatus = "AVSLU", maxdato = hoeyestMenIkkeLopende),
+        )
+
+        val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
+
+        assertThat(resultat).isNull()
+    }
+
+    @Test
+    fun `hentMaksdatoAapForPerson returnerer null naar siste vedtak er stansvedtak`() {
+        val sakRepository = mockk<SakRepository>()
+        val lopende = LocalDate.of(2026, 1, 1)
+        val stansMaxdato = LocalDate.of(2027, 1, 1)
+        every { sakRepository.hentSakerMedMaksDatoOgVedtak(personId) } returns listOf(
+            // Løpende sak finnes, men har lavere maxdato enn stansvedtaket
+            maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = lopende),
+            // Stansvedtak har høyest maxdato og plukkes først — ikke løpende → null
+            maksdatolinje(sakId = 2, vedtaktypeKode = "S", sakStatus = "AKTIV", maxdato = stansMaxdato),
         )
 
         val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
@@ -88,6 +105,16 @@ class SakServiceTest {
         every { sakRepository.hentSakerMedMaksDatoOgVedtak(personId) } returns listOf(
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = null),
         )
+
+        val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
+
+        assertThat(resultat).isNull()
+    }
+
+    @Test
+    fun `hentMaksdatoAapForPerson returnerer null naar det ikke finnes noen saker`() {
+        val sakRepository = mockk<SakRepository>()
+        every { sakRepository.hentSakerMedMaksDatoOgVedtak(personId) } returns emptyList()
 
         val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
 

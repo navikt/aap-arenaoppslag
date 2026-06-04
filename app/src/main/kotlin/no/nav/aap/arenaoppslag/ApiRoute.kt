@@ -77,7 +77,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
+fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -101,9 +101,11 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
 
         val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
+        val maksdato = sakService.hentMaksdatoAapForPerson(personId)
+        val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt(telleverk, kvoteHistorikk)
+        val response = sak.tilKontrakt( telleverk,kvoteHistorikk,sisteUtbetalingDato,maksdato)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }

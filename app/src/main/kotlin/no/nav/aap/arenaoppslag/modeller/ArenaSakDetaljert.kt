@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.modeller
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class ArenaSakDetaljert(
@@ -13,6 +14,9 @@ data class ArenaSakDetaljert(
     val avsluttetDato: LocalDateTime?,
     val vedtak: List<ArenaVedtakMedDetaljer>,
     val telleverkForPerson: TelleverkForPerson?,
-    val kvoteHistorikk: Set<KvotebrukHendelse>
-)
+    val kvoteHistorikk: Set<KvotebrukHendelse>,
+    val maksdato: LocalDate?,
+    val sisteUtbetalingDato: LocalDate?,
+
+    )
 
