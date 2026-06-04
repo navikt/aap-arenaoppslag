@@ -38,6 +38,7 @@ import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
+import no.nav.aap.arenaoppslag.service.SakOgVedtakService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import org.slf4j.LoggerFactory

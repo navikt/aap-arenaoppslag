@@ -7,7 +7,11 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
+import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.SakIdentifikator
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
@@ -56,4 +60,18 @@ class SakService(private val sakRepository: SakRepository) {
 
 
 
+    fun hentPersonForSak(sakIdentifikator: SakIdentifikator): ArenaSakPerson? {
+        return when(sakIdentifikator) {
+            is SakId -> hentPersonForSak(sakIdentifikator)
+            is Saksnummer -> hentPersonForSak(sakIdentifikator)
+        }
+    }
+
+    fun hentPersonForSak(sakId: SakId): ArenaSakPerson? {
+        TODO("IMPLEMENT ME")
+    }
+
+    fun hentPersonForSak(saksnummer: Saksnummer): ArenaSakPerson? {
+        TODO("IMPLEMENT ME")
+    }
 }

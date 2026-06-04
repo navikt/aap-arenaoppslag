@@ -1,4 +1,4 @@
-package no.nav.aap.arenaoppslag
+package no.nav.aap.arenaoppslag.service
 
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
@@ -9,6 +9,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.SakIdentifikator
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
 
@@ -18,6 +19,13 @@ class SakOgVedtakService(
     private val vedtakfaktaRepository: VedtakfaktaRepository,
     private val vilkårsvurderingRepository: VilkårsvurderingRepository,
 ) {
+    fun hentSakMedVedtak(sakIdentifikator: SakIdentifikator): ArenaSakMedVedtak? {
+        return when(sakIdentifikator) {
+            is SakId -> hentSakMedVedtak(sakIdentifikator)
+            is Saksnummer -> hentSakMedVedtak(sakIdentifikator)
+        }
+    }
+
     fun hentSakMedVedtak(saksId: SakId): ArenaSakMedVedtak? {
         val sak = sakRepository.hentSak(saksId) ?: return null
         return getArenaSakMedVedtak(sak)
