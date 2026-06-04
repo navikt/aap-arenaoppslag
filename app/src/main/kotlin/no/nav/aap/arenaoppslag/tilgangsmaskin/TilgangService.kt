@@ -1,6 +1,5 @@
 package no.nav.aap.arenaoppslag.tilgangsmaskin
 
-import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -42,7 +41,7 @@ class TilgangService(
 }
 
 sealed interface PersonTilgangResult {
-    data class Granted(val authorizedPersonId: AuthorizedPersonId) : PersonTilgangResult
+    data class Granted(val authorizedPerson: AuthorizedPersonId) : PersonTilgangResult
     data object NotFound : PersonTilgangResult
     data object AccessDenied : PersonTilgangResult
 }

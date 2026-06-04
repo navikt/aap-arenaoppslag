@@ -44,9 +44,7 @@ class SakOgVedtakServiceTest {
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(101, 102)) } returns emptyMap()
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(201)) } returns emptyMap()
 
-        val vedtak = context(authorizedPersonId) {
-            service.hentVedtakDetaljerForPerson()
-        }
+        val vedtak = service.hentVedtakDetaljerForPerson(authorizedPersonId)
 
         assertThat(vedtak).hasSize(3)
         assertThat(vedtak.map { it.vedtakId }).containsExactlyInAnyOrder(101, 102, 201)
@@ -55,12 +53,10 @@ class SakOgVedtakServiceTest {
     @Test
     fun `hentVedtakDetaljerForPerson returnerer tom liste når person ikke har saker`() {
         val personId = PersonId(99)
-        val authorized = AuthorizedPersonId(personId)
+        val authorizedPersonId = AuthorizedPersonId(personId)
         every { sakRepository.hentSakerDetaljerForPerson(personId) } returns emptyList()
 
-        val vedtak = context(authorized) {
-            service.hentVedtakDetaljerForPerson()
-        }
+        val vedtak = service.hentVedtakDetaljerForPerson(authorizedPersonId)
 
         assertThat(vedtak).isEmpty()
     }

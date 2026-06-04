@@ -130,12 +130,10 @@ fun Route.vedtakForPerson(
 
         val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
         medTilgangSjekket(tilgang) { godkjent ->
-            context(godkjent.authorizedPersonId) {
-                val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson()
-                    .map { it.tilKontrakt() }
+            val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson(godkjent.authorizedPerson)
+                .map { it.tilKontrakt() }
 
-                call.respond(HttpStatusCode.OK, vedtak)
-            }
+            call.respond(HttpStatusCode.OK, vedtak)
         }
     }
 
@@ -145,13 +143,13 @@ fun Route.vedtakForPerson(
         val personidentifikator = request.personidentifikator
 
         val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
-        medTilgangSjekket(tilgang) { granted ->
-            context(granted.authorizedPersonId) {
-                val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson()
+        medTilgangSjekket(tilgang) { godkjent ->
+            val vedtak: List<ArenaVedtakMedDetaljer> =
+                sakOgVedtakService.hentVedtakDetaljerForPerson(godkjent.authorizedPerson)
                     .map { it.tilKontrakt() }
 
-                call.respond(HttpStatusCode.OK, vedtak)
-            }
+            call.respond(HttpStatusCode.OK, vedtak)
+
         }
     }
 }
