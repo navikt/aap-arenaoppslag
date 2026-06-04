@@ -108,8 +108,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     suspend fun hentMaksimum(
         req: InternVedtakRequest
 
-    ): Maksimum = gjørArenaOppslag<Maksimum, InternVedtakRequest
-            >(
+    ): Maksimum = gjørArenaOppslag<Maksimum, InternVedtakRequest>(
         "/intern/maksimum", req
     ).getOrThrow()
 

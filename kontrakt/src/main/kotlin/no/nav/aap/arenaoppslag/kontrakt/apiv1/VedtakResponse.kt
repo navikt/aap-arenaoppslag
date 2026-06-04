@@ -12,10 +12,8 @@ public data class ArenaVedtak(
     val rettighetkode: String,
     val utfallkode: String?
 ){
-    public fun erLopende(): Boolean {
-        // Stansede vedtak (kode=S) og vedtak med sjeldne koder som K (kontroll)
-        // regnes som ikke løpende
-        return vedtaktypeKode in listOf("O", "E", "G")
+    public fun erStans(): Boolean {
+        return vedtaktypeKode == "S"
     }
 }
 
