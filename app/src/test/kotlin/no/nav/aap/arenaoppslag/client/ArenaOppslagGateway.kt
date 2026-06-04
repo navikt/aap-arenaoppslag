@@ -83,7 +83,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/api/v1/utbetalinger/siste", req
         ).getOrThrow()
 
-    suspend fun hentVedtakForPerson(
+    suspend fun hentVedtakDetaljerForPerson(
         req: VedtakForPersonRequest
     ): List<ArenaVedtakMedDetaljer> =
         gjørArenaOppslag<List<ArenaVedtakMedDetaljer>, VedtakForPersonRequest>(

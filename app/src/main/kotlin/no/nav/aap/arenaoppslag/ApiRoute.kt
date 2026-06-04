@@ -108,7 +108,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
     }
 }
 
-fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
+fun Route.vedtakDetaljerForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
     post("/person/vedtak") {
         logger.info("Henter alle vedtak for person")
         val request: VedtakForPersonRequest = call.receive()
@@ -116,7 +116,7 @@ fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService:
         val personId = personService.hentPersonId(request.personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakForPerson(personId)
+        val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(personId)
             .map { it.tilKontrakt() }
 
         call.respond(HttpStatusCode.OK, vedtak)

@@ -29,7 +29,7 @@ class SakOgVedtakServiceTest {
     )
 
     @Test
-    fun `hentVedtakForPerson returnerer flattened vedtakliste fra alle saker`() {
+    fun `hentVedtakDetaljerForPerson returnerer flattened vedtakliste fra alle saker`() {
         val personId = PersonId(42)
         val sak1 = lagArenaSak(sakId = "1")
         val sak2 = lagArenaSak(sakId = "2")
@@ -42,18 +42,18 @@ class SakOgVedtakServiceTest {
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(101, 102)) } returns emptyMap()
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(201)) } returns emptyMap()
 
-        val vedtak = service.hentVedtakForPerson(personId)
+        val vedtak = service.hentVedtakDetaljerForPerson(personId)
 
         assertThat(vedtak).hasSize(3)
         assertThat(vedtak.map { it.vedtakId }).containsExactlyInAnyOrder(101, 102, 201)
     }
 
     @Test
-    fun `hentVedtakForPerson returnerer tom liste når person ikke har saker`() {
+    fun `hentVedtakDetaljerForPerson returnerer tom liste når person ikke har saker`() {
         val personId = PersonId(99)
         every { sakRepository.hentSakerDetaljerForPerson(personId) } returns emptyList()
 
-        val vedtak = service.hentVedtakForPerson(personId)
+        val vedtak = service.hentVedtakDetaljerForPerson(personId)
 
         assertThat(vedtak).isEmpty()
     }
