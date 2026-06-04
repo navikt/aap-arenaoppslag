@@ -2,31 +2,53 @@ package no.nav.aap.arenaoppslag.tilgangsmaskin
 
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
+import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 
 class TilgangService(
     private val tilgangmaskinGateway: TilgangmaskinGateway,
     private val sakService: SakService,
+    private val personService: PersonService,
 ) {
     /**
-     * Returns an [AuthorizedPersonId] if the token is allowed to read data for [personIdentifikator].
-     * The returned object carries the resolved internal [PersonId] so downstream code can use it directly.
+     * Access-first: if the token cannot read this identifier, return `AccessDenied` without
+     * revealing whether the person exists. If access is granted, resolve the person id and
+     * return `NotFound` only for callers who are allowed to know that the object is missing.
      */
-    fun verifiserTilgangTilPerson(personIdentifikator: String, personId: PersonId, token: OidcToken): AuthorizedPersonId? {
-        if (!tilgangmaskinGateway.harTilgangTilPerson(personIdentifikator, token)) return null
-        return AuthorizedPersonId(personId)
+    fun verifiserTilgangTilPerson(personIdentifikator: String, token: OidcToken): PersonTilgangResult {
+        if (!tilgangmaskinGateway.harTilgangTilPerson(personIdentifikator, token)) {
+            return PersonTilgangResult.AccessDenied
+        }
+
+        val personId = personService.hentPersonId(personIdentifikator)
+            ?: return PersonTilgangResult.NotFound
+
+        return PersonTilgangResult.Granted(AuthorizedPersonId(personId))
     }
 
     /**
      * Resolves the person behind [saksnummer], then verifies token access to that person.
-     * Returns null if the sak is not found or access is denied.
+     * Returns a sealed result so callers can distinguish `NotFound` from `AccessDenied`.
      */
-    fun verifiserTilgangTilSak(saksnummer: Saksnummer, token: OidcToken): AuthorizedSakId? {
-        val person = sakService.hentPersonForSak(saksnummer) ?: return null
-        return if (tilgangmaskinGateway.harTilgangTilPerson(person.fodselsnummer, token))
-            AuthorizedSakId(saksnummer.toString())
-        else
-            null
+    fun verifiserTilgangTilSak(saksnummer: Saksnummer, token: OidcToken): SakTilgangResult {
+        val person = sakService.hentPersonForSak(saksnummer) ?: return SakTilgangResult.NotFound
+        return if (tilgangmaskinGateway.harTilgangTilPerson(person.fodselsnummer, token)) {
+            SakTilgangResult.Granted(AuthorizedSakId(saksnummer.toString()))
+        } else {
+            SakTilgangResult.AccessDenied
+        }
     }
+}
+
+sealed interface PersonTilgangResult {
+    data class Granted(val authorizedPersonId: AuthorizedPersonId) : PersonTilgangResult
+    data object NotFound : PersonTilgangResult
+    data object AccessDenied : PersonTilgangResult
+}
+
+sealed interface SakTilgangResult {
+    data class Granted(val authorizedSakId: AuthorizedSakId) : SakTilgangResult
+    data object NotFound : SakTilgangResult
+    data object AccessDenied : SakTilgangResult
 }
