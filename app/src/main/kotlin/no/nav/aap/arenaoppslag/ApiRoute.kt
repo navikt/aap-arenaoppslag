@@ -15,7 +15,6 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
-import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljertRespons
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
@@ -104,7 +103,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, telleverkService: Tellever
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
 
         logger.info("Henter saksdetaljer")
-        val response = ArenaSakDetaljertRespons.fromDomain(sak, telleverk,kvoteHistorikk)
+        val response = sak.tilKontrakt(telleverk, kvoteHistorikk)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }

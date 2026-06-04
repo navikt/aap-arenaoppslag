@@ -15,25 +15,5 @@ data class ArenaSakDetaljertRespons(
     val vedtak: List<ArenaVedtakMedDetaljer>,
     val telleverkForPerson: TelleverkForPerson?,
     val kvoteHistorikk: Set<KvotebrukHendelse>
-) {
-    companion object {
-        fun fromDomain(
-            arenaSakMedVedtak: ArenaSakMedVedtak,
-            telleverkForPerson: TelleverkForPerson?,
-            kvoteHistorikk: Set<KvotebrukHendelse>
-        ) = ArenaSakDetaljertRespons(
-            sakId = arenaSakMedVedtak.sakId,
-            opprettetAar = arenaSakMedVedtak.opprettetAar,
-            lopenr = arenaSakMedVedtak.lopenr,
-            person = arenaSakMedVedtak.person,
-            statuskode = arenaSakMedVedtak.statuskode,
-            statusnavn = arenaSakMedVedtak.statusnavn,
-            registrertDato = arenaSakMedVedtak.registrertDato,
-            avsluttetDato = arenaSakMedVedtak.avsluttetDato,
-            vedtak = arenaSakMedVedtak.vedtak,
-            telleverkForPerson = telleverkForPerson,
-            kvoteHistorikk = kvoteHistorikk
-        )
-    }
-}
+)
 
