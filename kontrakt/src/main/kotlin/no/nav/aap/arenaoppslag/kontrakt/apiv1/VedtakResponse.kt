@@ -11,7 +11,13 @@ public data class ArenaVedtak(
     val tilDato: LocalDate?,
     val rettighetkode: String,
     val utfallkode: String?
-)
+){
+    public fun erLopende(): Boolean {
+        // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
+        // Vi filtrer også ut vedtak med sjeldne typer som K (kontroll) for nå.
+        return vedtaktypeKode in listOf("O", "E", "G")
+    }
+}
 
 @Deprecated("bruk nytt navn uten -Kontrakt suffiks", level= DeprecationLevel.ERROR)
 public typealias ArenaVedtakMedDetaljerKontrakt = ArenaVedtakMedDetaljer
