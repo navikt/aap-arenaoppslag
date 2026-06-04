@@ -107,7 +107,7 @@ data class ArenaSakMedVedtak(
     fun tilKontrakt(
         telleverkForPerson: TelleverkForPerson?,
         kvoteHistorikk: Set<KvotebrukHendelse>
-    ) = ArenaSakDetaljertRespons(
+    ) = ArenaSakDetaljert(
         sakId = sakId,
         opprettetAar = opprettetAar,
         lopenr = lopenr,

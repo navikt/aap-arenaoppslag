@@ -2,8 +2,7 @@ package no.nav.aap.arenaoppslag.modeller
 
 import java.time.LocalDateTime
 
-@Suppress("MatchingDeclarationName")
-data class ArenaSakDetaljertRespons(
+data class ArenaSakDetaljert(
     val sakId: String,
     val opprettetAar: Int,
     val lopenr: Int,
