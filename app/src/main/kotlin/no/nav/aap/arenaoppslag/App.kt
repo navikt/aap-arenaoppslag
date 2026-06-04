@@ -225,7 +225,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 sakerForPerson(sakListeService, personService)
                 maksdato(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
-                vedtakDetaljerForPerson(sakOgVedtakService, personService)
+                vedtakForPerson(sakOgVedtakService, personService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner

@@ -4,6 +4,15 @@ import java.time.LocalDate
 
 public data class VedtakForPersonRequest(val personidentifikator: String)
 
+public data class ArenaVedtak(
+    val statusKode: String,
+    val vedtaktypeKode: String?,
+    val fraOgMed: LocalDate?,
+    val tilDato: LocalDate?,
+    val rettighetkode: String,
+    val utfallkode: String?
+)
+
 @Deprecated("bruk nytt navn uten -Kontrakt suffiks", level= DeprecationLevel.ERROR)
 public typealias ArenaVedtakMedDetaljerKontrakt = ArenaVedtakMedDetaljer
 

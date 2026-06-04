@@ -8,6 +8,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
@@ -26,6 +27,10 @@ class SakOgVedtakService(
     fun hentSakMedVedtak(saksnummer: Saksnummer): ArenaSakMedVedtak? {
         val sak = sakRepository.hentSak(saksnummer) ?: return null
         return getArenaSakMedVedtak(sak)
+    }
+
+    fun hentVedtakForPerson(personId: PersonId): List<ArenaVedtak> {
+        return vedtakRepository.hentVedtak(personId)
     }
 
     fun hentVedtakDetaljerForPerson(personId: PersonId): List<ArenaVedtakMedDetaljer> {

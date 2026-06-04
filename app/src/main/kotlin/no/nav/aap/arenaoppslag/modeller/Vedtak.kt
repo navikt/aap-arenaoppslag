@@ -3,6 +3,7 @@ package no.nav.aap.arenaoppslag.modeller
 import no.nav.aap.arenaoppslag.kontrakt.intern.Kilde
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak as ArenaVedtakKontrakt
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer as ArenaVedtakMedDetaljerKontrakt
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakfakta as ArenaVedtakfaktaKontrakt
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVilkårsvurdering as ArenaVilkårsvurderingKontrakt
@@ -23,7 +24,16 @@ data class ArenaVedtak(
     val tilDato: LocalDate?,
     val rettighetkode: String,
     val utfallkode: String?
-)
+) {
+    fun tilKontrakt() = ArenaVedtakKontrakt(
+        statusKode = statusKode,
+        vedtaktypeKode = vedtaktypeKode,
+        fraOgMed = fraOgMed,
+        tilDato = tilDato,
+        rettighetkode = rettighetkode,
+        utfallkode = utfallkode,
+    )
+}
 
 data class ArenaVedtakRad(
     val vedtakId: Int,
