@@ -105,7 +105,7 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt(sak, maksdato ,sisteUtbetalingDato,telleverk,kvoteHistorikk)
+        val response = sak.tilKontrakt( telleverk,kvoteHistorikk,sisteUtbetalingDato,maksdato)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }

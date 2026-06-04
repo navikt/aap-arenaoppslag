@@ -106,7 +106,9 @@ data class ArenaSakMedVedtak(
 ) {
     fun tilKontrakt(
         telleverkForPerson: TelleverkForPerson?,
-        kvoteHistorikk: Set<KvotebrukHendelse>
+        kvoteHistorikk: Set<KvotebrukHendelse>,
+        sisteUtbetalingDato: LocalDate?,
+        maksdato: LocalDate?,
     ) = ArenaSakDetaljert(
         sakId = sakId,
         opprettetAar = opprettetAar,
@@ -118,7 +120,9 @@ data class ArenaSakMedVedtak(
         avsluttetDato = avsluttetDato,
         vedtak = vedtak,
         telleverkForPerson = telleverkForPerson,
-        kvoteHistorikk = kvoteHistorikk
+        kvoteHistorikk = kvoteHistorikk,
+        maksdato = maksdato,
+        sisteUtbetalingDato = sisteUtbetalingDato
     )
 }
 
