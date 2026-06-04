@@ -111,7 +111,7 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
 }
 
 fun Route.vedtakDetaljerForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
-    post("/person/vedtak") {
+    post("/person/vedtak/detaljert") {
         logger.info("Henter alle vedtak for person")
         val request: VedtakForPersonRequest = call.receive()
 

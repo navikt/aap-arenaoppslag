@@ -87,7 +87,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         req: VedtakForPersonRequest
     ): List<ArenaVedtakMedDetaljer> =
         gjørArenaOppslag<List<ArenaVedtakMedDetaljer>, VedtakForPersonRequest>(
-            "/api/v1/person/vedtak", req
+            "/api/v1/person/vedtak/detaljert", req
         ).getOrThrow()
 
     suspend fun hentSakerByFnr(
