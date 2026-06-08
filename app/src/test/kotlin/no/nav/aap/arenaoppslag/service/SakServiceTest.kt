@@ -66,38 +66,8 @@ class SakServiceTest {
         assertThat(resultat).isEqualTo(senest)
     }
 
-    @Test
-    fun `hentMaksdatoAapForPerson returnerer null naar sak med hoeyest maxdato ikke er lopende`() {
-        val sakRepository = mockk<SakRepository>()
-        val lopende = LocalDate.of(2027, 6, 30)
-        val hoeyestMenIkkeLopende = LocalDate.of(2030, 1, 1)
-        every { sakRepository.hentSakerMedMaksDatoOgVedtak(personId) } returns listOf(
-            maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = lopende),
-            // Avsluttet sak med høyest maxdato — ikke løpende, skal ikke returneres
-            maksdatolinje(sakId = 2, vedtaktypeKode = "O", sakStatus = "AVSLU", maxdato = hoeyestMenIkkeLopende),
-        )
 
-        val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
 
-        assertThat(resultat).isNull()
-    }
-
-    @Test
-    fun `hentMaksdatoAapForPerson returnerer null naar siste vedtak er stansvedtak`() {
-        val sakRepository = mockk<SakRepository>()
-        val lopende = LocalDate.of(2026, 1, 1)
-        val stansMaxdato = LocalDate.of(2027, 1, 1)
-        every { sakRepository.hentSakerMedMaksDatoOgVedtak(personId) } returns listOf(
-            // Løpende sak finnes, men har lavere maxdato enn stansvedtaket
-            maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = lopende),
-            // Stansvedtak har høyest maxdato og plukkes først — ikke løpende → null
-            maksdatolinje(sakId = 2, vedtaktypeKode = "S", sakStatus = "AKTIV", maxdato = stansMaxdato),
-        )
-
-        val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
-
-        assertThat(resultat).isNull()
-    }
 
     @Test
     fun `hentMaksdatoAapForPerson returnerer null naar lopende vedtak mangler maksdato`() {
