@@ -46,7 +46,6 @@ class TelleverkRepository(private val datasource: DataSource) {
                 , BEGRUNNELSE
             FROM KVOTEBRUK kv
             WHERE person_id = ?
-              AND kv.tabellnavnalias_grunnlag = 'MKORT'
               AND kv.kvotetypekode IN ('AAP', 'MAAPU')
             ORDER BY kv.dato_hendelse DESC, KVOTEBRUK_ID DESC
         """.trimIndent()
