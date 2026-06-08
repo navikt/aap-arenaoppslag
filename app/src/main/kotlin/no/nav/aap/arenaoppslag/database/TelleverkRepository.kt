@@ -48,8 +48,7 @@ class TelleverkRepository(private val datasource: DataSource) {
             WHERE person_id = ?
               AND kv.tabellnavnalias_grunnlag = 'MKORT'
               AND kv.kvotetypekode IN ('AAP', 'MAAPU')
-              AND kv.posteringtypekode = 'OPPD'
-            ORDER BY kv.dato_hendelse DESC, resterende DESC
+            ORDER BY kv.dato_hendelse DESC, KVOTEBRUK_ID DESC
         """.trimIndent()
 
     }
