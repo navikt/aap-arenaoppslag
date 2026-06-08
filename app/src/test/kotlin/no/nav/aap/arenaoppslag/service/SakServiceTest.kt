@@ -149,7 +149,7 @@ class SakServiceTest {
         til = LocalDate.of(2026, 1, 1),
         maxdatoUnntak = null,
         maxdatoOrdinaer = maxdato,
-        utvidetKvoteInnvilgetFra = null,
+        unntaksvilkaarGjelderFra = null,
         sakRegistrert = LocalDate.of(2025, 1, 1),
         sakAvsluttet = null,
         sakStatus = sakStatus,
