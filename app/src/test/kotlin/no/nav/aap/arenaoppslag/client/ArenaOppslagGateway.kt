@@ -13,19 +13,20 @@ import no.nav.aap.arenaoppslag.TestConfig
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
@@ -55,20 +56,6 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             >(
         "/intern/perioder/11-17", req
     ).getOrThrow()
-
-    suspend fun hentPersonEksistererIAapContext(
-        req: SakerRequest,
-    ): PersonEksistererIAAPArena =
-        gjørArenaOppslag<PersonEksistererIAAPArena, SakerRequest>(
-            "/api/v1/person/eksisterer", req
-        ).getOrThrow()
-
-    suspend fun personHarSignifikantAAPArenaHistorikk(
-        req: SignifikanteSakerRequest
-    ): SignifikanteSakerResponse =
-        gjørArenaOppslag<SignifikanteSakerResponse, SignifikanteSakerRequest>(
-            "/api/v1/person/signifikant-historikk", req
-        ).getOrThrow()
 
     suspend fun hentMaksdatoBySakIdListe(
         req: MaksdatoRequest
@@ -111,6 +98,20 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): Maksimum = gjørArenaOppslag<Maksimum, InternVedtakRequest>(
         "/intern/maksimum", req
     ).getOrThrow()
+
+    suspend fun harHistorikk(
+        req: HarHistorikkRequest
+    ): HarHistorikkResponse =
+        gjørArenaOppslag<HarHistorikkResponse, HarHistorikkRequest>(
+            "/api/v1/person/historikk", req
+        ).getOrThrow()
+
+    suspend fun harSignifikantHistorikk(
+        req: SignifikantHistorikkRequest
+    ): SignifikantHistorikkResponse =
+        gjørArenaOppslag<SignifikantHistorikkResponse, SignifikantHistorikkRequest>(
+            "/api/v1/person/historikk/signifikant", req
+        ).getOrThrow()
 
     private suspend inline fun <reified T, reified V> gjørArenaOppslag(
         endepunkt: String, req: V
