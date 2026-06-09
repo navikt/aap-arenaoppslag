@@ -5,6 +5,7 @@ import java.time.LocalDate
 public data class VedtakForPersonRequest(val personidentifikator: String)
 
 public data class ArenaVedtak(
+    val sakId: Int,
     val statusKode: String,
     val vedtaktypeKode: String?,
     val fraOgMed: LocalDate?,

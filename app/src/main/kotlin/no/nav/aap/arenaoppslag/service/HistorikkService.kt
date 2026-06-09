@@ -8,17 +8,20 @@ import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantEnkeltVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import java.time.LocalDate
 
 class HistorikkService(
-    private val personRepository: PersonRepository,
-    private val historikkRepository: HistorikkRepository
+    private val personRepository: PersonRepository, // fixme fjernes
+    private val historikkRepository: HistorikkRepository,
 ) {
 
     // Lagrer mappingen fødselsnr -> arena-personId. Bare treff i databasen lagres.
+    // TODO deprekert, fjern
     @Suppress("MagicNumber")
     private val personIdCache = Caffeine.newBuilder()
         .maximumSize(30_000)
@@ -29,6 +32,7 @@ class HistorikkService(
         CaffeineCacheMetrics.monitor(prometheus, personIdCache, "arenaoppslag_person_id")
     }
 
+    @Deprecated("Bruk signifikantHistorikk")
     fun signifikanteSakerForPerson(
         fodselsnummerene: Set<String>, virkningstidspunkt: LocalDate
     ): SignifikanteSakerResponse {
@@ -48,6 +52,24 @@ class HistorikkService(
         val arenaSakIdListe = sorterVedtak(signifikanteVedtak).map { it.sakId }.distinct()
 
         return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
+    }
+
+    fun signifikantHistorikk(
+        personId: PersonId,
+        virkningstidspunkt: LocalDate
+    ): SignifikantHistorikkResponse {
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
+            personId,
+            virkningstidspunkt
+        )
+        rapporterMetrikker(signifikanteVedtak)
+
+        val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
+        val arenaSakIdListe = sorterVedtak(signifikanteVedtak)
+
+        return SignifikantHistorikkResponse(harSignifikantHistorikk, arenaSakIdListe.map {
+            it.tilKontrakt()
+        })
     }
 
     private fun rapporterMetrikker(vedtakene: List<ArenaVedtak>) {
@@ -78,6 +100,7 @@ class HistorikkService(
     }
 
     private fun hentPersonId(fodselsnummerene: Set<String>): Int? {
+        // TODO deprekert, fjern
         return fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
             ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
                 ?.also { funnetPersonId ->

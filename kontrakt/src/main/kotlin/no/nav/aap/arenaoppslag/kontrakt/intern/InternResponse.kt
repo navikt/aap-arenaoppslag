@@ -2,10 +2,12 @@ package no.nav.aap.arenaoppslag.kontrakt.intern
 
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 
+@Deprecated("Bruk nytt endepunkt person/historikk", level = DeprecationLevel.WARNING)
 public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
 
+@Deprecated("Bruk nytt endepunkt person/historikk/signifikant", level = DeprecationLevel.WARNING)
 public data class SignifikanteSakerResponse(
     val harSignifikantHistorikk: Boolean,
     val signifikanteSaker: List<String> // signifikante Arena-saker, sortert på dato, nyeste først

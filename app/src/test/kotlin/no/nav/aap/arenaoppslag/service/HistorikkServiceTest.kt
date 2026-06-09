@@ -92,7 +92,6 @@ class HistorikkServiceTest {
         Assertions.assertThat(ikkeFunnet).isEqualTo(false)
     }
 
-
     @Test
     fun `personEksistererIAapArena bruker cachet verdi andre gang`() {
         val personIdentifikatorer = setOf("12345678901")
