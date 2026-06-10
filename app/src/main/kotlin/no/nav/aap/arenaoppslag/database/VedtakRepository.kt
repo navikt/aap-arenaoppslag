@@ -8,6 +8,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
+import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorizedPersonId
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
@@ -22,7 +23,6 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
-    @TestOnly
     fun hentVedtak(fnr: String): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
             selectVedtak(fnr, con)
@@ -32,6 +32,18 @@ class VedtakRepository(private val dataSource: DataSource) {
     fun hentVedtak(personId: PersonId): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
             selectAlleVedtakForPerson(personId, con)
+        }
+    }
+
+    /**
+     * Context-parameter variant: only callable when [AuthorizedPersonId] is in scope,
+     * meaning tilgang has already been verified. The resolved [PersonId] comes from the
+     * context object, so the call site cannot accidentally mix in a different person.
+     */
+    context(personId: AuthorizedPersonId)
+    fun hentVedtak(): List<ArenaVedtak> {
+        return dataSource.connection.use { con ->
+            selectAlleVedtakForPerson(personId.personId, con)
         }
     }
 

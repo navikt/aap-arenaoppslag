@@ -7,7 +7,9 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
+import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
@@ -37,14 +39,6 @@ class SakService(private val sakRepository: SakRepository) {
     }
 
 
-    /** Maksdato er funner basert på reglen:
-     * Finner siste AAP-vedtak for denne brukeren
-     * Finner sak knytet til dette vedtaket
-     * Hvis løpende vedtak. Returner beregnet maksdato
-     * Hvis sak som har gått til maks: Returner maksdato
-     * Hvis siste vedtak er stansvedtak: Returnere null
-     * Hvis vi ikke finner noen relevante saker: Returnere null
-     */
     fun hentMaksdatoAapForPerson(personId: PersonId): LocalDate? {
         val maksdatoene = hentMaksdatoAapForVedtakISaker(personId)
         val sisteSak = maksdatoene
@@ -54,6 +48,7 @@ class SakService(private val sakRepository: SakRepository) {
         return sisteSak.sisteVedtak.maxdatoAap
     }
 
-
-
+    /** Looks up the person associated with the given [saksnummer], used for access control. */
+    fun hentPersonForSak(saksnummer: Saksnummer): ArenaSakPerson? =
+        sakRepository.hentSak(saksnummer)?.person
 }

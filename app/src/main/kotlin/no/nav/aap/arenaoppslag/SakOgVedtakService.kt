@@ -5,13 +5,13 @@ import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
-import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
+import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorizedPersonId
 
 class SakOgVedtakService(
     private val sakRepository: SakRepository,
@@ -29,12 +29,12 @@ class SakOgVedtakService(
         return getArenaSakMedVedtak(sak)
     }
 
-    fun hentVedtakForPerson(personId: PersonId): List<ArenaVedtak> {
-        return vedtakRepository.hentVedtak(personId)
+    fun hentVedtakForPerson(authorized: AuthorizedPersonId): List<ArenaVedtak> {
+        return vedtakRepository.hentVedtak(authorized.personId)
     }
 
-    fun hentVedtakDetaljerForPerson(personId: PersonId): List<ArenaVedtakMedDetaljer> {
-        val saker = sakRepository.hentSakerDetaljerForPerson(personId)
+    fun hentVedtakDetaljerForPerson(authorized: AuthorizedPersonId): List<ArenaVedtakMedDetaljer> {
+        val saker = sakRepository.hentSakerDetaljerForPerson(authorized.personId)
         return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
     }
 
