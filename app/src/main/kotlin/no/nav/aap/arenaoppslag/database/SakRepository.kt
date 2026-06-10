@@ -65,7 +65,7 @@ class SakRepository(private val dataSource: DataSource) {
                 fra = row.getDate("fra_dato")?.toLocalDate(),
                 maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
                 maxdatoOrdinaer = row.getDate("max_dato")?.toLocalDate(),
-                utvidetKvoteInnvilgetFra = row.getDate("unntaksdato")?.toLocalDate(),
+                unntaksvilkaarGjelderFra = row.getDate("unntaksdato")?.toLocalDate(),
                 sakRegistrert = row.getDate("sak_registrert_dato").toLocalDate(),
                 sakAvsluttet = row.getDate("sak_avsluttet_dato")?.toLocalDate(),
                 sakStatus = row.getString("sak_statuskode")

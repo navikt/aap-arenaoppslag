@@ -1,6 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -21,7 +22,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `ingen signifikante vedtak for person som ikke finnes`() {
         val alleVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
-            arenaPersonId = 54601, /* finnes ikke */
+            PersonId(54601), /* finnes ikke */
             testDato,
         )
         assertThat(alleVedtak).isEmpty()
@@ -30,7 +31,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `ingen signifikante vedtak for person med kun veldig gamle vedtak`() {
         val testPerson = "kun_gamle"
-        val testPersonId = 992
+        val testPersonId = PersonId(992)
         val alleVedtak: List<ArenaVedtak> = vedtakRepository.hentVedtak(testPerson)
         assertThat(alleVedtak).hasSize(2)
 
@@ -41,7 +42,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `finner signifikante vedtak for person med kun nye vedtak`() {
         val testPersonFnr = "kun_nye"
-        val testPersonId = 996
+        val testPersonId = PersonId(996)
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(3) // antall i vedtak-tabellen
 
@@ -57,7 +58,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `finner signifikante vedtak for person med både gamle og nye vedtak`() {
         val testPersonFnr = "blanding"
-        val testPersonId = 997
+        val testPersonId = PersonId(997)
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(6)
 
@@ -68,7 +69,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `Ingen signifikante vedtak for person med kun avslag på AA115`() {
         val testPersonFnr = "426282"
-        val testPersonId = 426282
+        val testPersonId = PersonId(426282)
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(1)
 

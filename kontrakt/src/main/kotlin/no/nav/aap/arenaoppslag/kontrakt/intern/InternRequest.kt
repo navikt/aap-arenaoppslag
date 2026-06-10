@@ -16,6 +16,7 @@ public data class TellerRequest(
     val personidentifikator: String
 )
 
+@Deprecated("Bruk nytt endepunkt person/historikk/signifikant", level = DeprecationLevel.WARNING)
 public data class SignifikanteSakerRequest(
     val personidentifikatorer: List<String>,
     val virkningstidspunkt: LocalDate, // datoen søknaden ble mottatt, feks. per post

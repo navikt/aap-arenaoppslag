@@ -6,17 +6,21 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
@@ -27,8 +31,9 @@ import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
-fun Route.historikk(historikkService: HistorikkService) {
+fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
     post("/person/signifikant-historikk") {
+        //TODO deprekert, skal fjernes
         logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
         val request: SignifikanteSakerRequest = call.receive()
         val response: SignifikanteSakerResponse = historikkService.signifikanteSakerForPerson(
@@ -38,7 +43,35 @@ fun Route.historikk(historikkService: HistorikkService) {
         call.respond(response)
     }
 
+    post("/person/historikk/signifikant") {
+        logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
+        val request: SignifikantHistorikkRequest = call.receive()
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator)
+            ?: return@post call.respond(SignifikantHistorikkResponse.ingen)
+
+        val response: SignifikantHistorikkResponse = historikkService.signifikantHistorikk(
+            personId, request.virkningstidspunkt
+        )
+
+        call.respond(response)
+    }
+
+    post("/person/historikk") {
+        logger.info("Sjekker om person har historikk i AAP-Arena")
+        val request: HarHistorikkRequest = call.receive()
+        val personidentifikator = request.personidentifikator
+
+        val personId = personService.hentPersonId(personidentifikator)
+        val response = when (personId) {
+            null -> HarHistorikkResponse.nei
+            else -> HarHistorikkResponse.ja
+        }
+        call.respond(response)
+    }
+
     post("/person/eksisterer") {
+        //TODO deprekert, skal fjernes
         logger.info("Sjekker om person eksisterer i AAP-Arena")
         val request: SakerRequest = call.receive()
         val response: PersonEksistererIAAPArena =
@@ -89,7 +122,7 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
 
         val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
         val sak = when (sakidentifikator) {
-            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId =  sakidentifikator)
+            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId = sakidentifikator)
             is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
             else -> null
         }
@@ -106,7 +139,7 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt( telleverk,kvoteHistorikk,sisteUtbetalingDato,maksdato)
+        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }

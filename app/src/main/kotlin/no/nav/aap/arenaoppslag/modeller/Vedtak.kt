@@ -26,6 +26,7 @@ data class ArenaVedtak(
     val utfallkode: String?
 ) {
     fun tilKontrakt() = ArenaVedtakKontrakt(
+        sakId = sakId.toInt(),
         statusKode = statusKode,
         vedtaktypeKode = vedtaktypeKode,
         fraOgMed = fraOgMed,

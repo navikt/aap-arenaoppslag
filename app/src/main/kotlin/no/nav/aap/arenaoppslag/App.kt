@@ -99,7 +99,7 @@ fun Application.server(
 
     routes(datasource, pdlGateway)
 
-    warmup(datasource, pdlGateway)
+    warmup(datasource)
 
     monitor.subscribe(ApplicationStarted) { environment ->
         environment.log.info("ktor har startet opp.")
@@ -131,18 +131,14 @@ fun Application.server(
     }
 }
 
-private fun Application.warmup(
-    datasource: DataSource,
-    pdlGateway: IPdlGateway
-) {
+private fun Application.warmup(datasource: DataSource) {
     val historikkService = skapHistorikkService(datasource)
     val sakService = skapSakListeService(datasource)
-    val fiktivtFødselsnummer = "14224432837"
     val fiktivArenaPerson = PersonId(0xcafebabe.toInt())
 
     try {
         // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
-        historikkService.signifikanteSakerForPerson(setOf(fiktivtFødselsnummer), LocalDate.now())
+        historikkService.signifikantHistorikk(fiktivArenaPerson, LocalDate.now())
 
         // Generell innlasting av objektgraf og cache-opprettelse
         sakService.hentSakerForPerson(fiktivArenaPerson)
@@ -199,10 +195,10 @@ private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): 
 
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
     val internService = skapInternService(datasource)
-    val historikkService = skapHistorikkService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
     val telleverkService = skapTelleverkService(datasource)
     val personService = skapPersonService(datasource, pdlGateway)
+    val historikkService = skapHistorikkService(datasource)
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
 
@@ -219,7 +215,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
             }
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres.
-                historikk(historikkService)
+                historikk(historikkService, personService)
                 telleverk(telleverkService, personService)
                 sakerForPerson(sakListeService, personService)
                 maksdato(sakListeService, personService)
