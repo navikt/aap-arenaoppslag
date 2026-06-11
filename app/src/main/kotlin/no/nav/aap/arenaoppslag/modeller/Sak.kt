@@ -61,7 +61,7 @@ data class Maksdatolinje(
             sakId, "${opprettetAar}-${lopenr}",
             sakStatus, sakRegistrert, sakAvsluttet,
             unntaksvilkaarGjelderFra,
-            harInnvilget11_12(),
+            harInnvilgetUnntak(),
             utredesForUfor(),
             erFerdigAvklart(),
             erLopende(),
@@ -77,11 +77,13 @@ data class Maksdatolinje(
             )
         )
 
-    private fun utledMaxdato(): LocalDate? = if (harInnvilget11_12()) {
+    private fun utledMaxdato(): LocalDate? = if (harInnvilgetUnntak() && unntaksperiodenHarBegynt()) {
         maxdatoUnntak ?: maxdatoOrdinaer
     } else {
         maxdatoOrdinaer
     }
+
+    private fun unntaksperiodenHarBegynt(): Boolean = unntaksvilkaarGjelderFra?.isBefore(LocalDate.now()) == true
 
     fun erLopende(): Boolean {
         // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
@@ -91,7 +93,7 @@ data class Maksdatolinje(
 
     fun utredesForUfor() = aktfaseKode == "UVUP"
     fun erFerdigAvklart() = aktfaseKode == "FA"
-    fun harInnvilget11_12() = unntaksvilkaarGjelderFra != null
+    fun harInnvilgetUnntak() = unntaksvilkaarGjelderFra != null // paragraf 11-12 er innvilget
 }
 
 data class ArenaSakMedVedtak(
