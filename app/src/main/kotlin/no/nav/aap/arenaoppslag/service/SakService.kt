@@ -49,7 +49,7 @@ class SakService(private val sakRepository: SakRepository) {
         val maksdatoene = hentMaksdatoAapForVedtakISaker(personId)
         val sisteSak = maksdatoene
             .filter { it.sisteVedtak.maxdatoAap != null }.maxByOrNull { it.sisteVedtak.maxdatoAap!! }
-        if (sisteSak == null || !sisteSak.lopendeVedtak) return null
+        if (sisteSak == null) return null
 
         return sisteSak.sisteVedtak.maxdatoAap
     }

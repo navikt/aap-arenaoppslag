@@ -46,10 +46,8 @@ class TelleverkRepository(private val datasource: DataSource) {
                 , BEGRUNNELSE
             FROM KVOTEBRUK kv
             WHERE person_id = ?
-              AND kv.tabellnavnalias_grunnlag = 'MKORT'
               AND kv.kvotetypekode IN ('AAP', 'MAAPU')
-              AND kv.posteringtypekode = 'OPPD'
-            ORDER BY kv.dato_hendelse
+            ORDER BY kv.dato_hendelse DESC, KVOTEBRUK_ID DESC
         """.trimIndent()
 
     }
@@ -71,7 +69,7 @@ class TelleverkRepository(private val datasource: DataSource) {
                         modUser = row.getString("mod_user"),
                         begrunnelse = row.getString("begrunnelse"),
                     )
-                }.toSet()
+                }.toCollection(LinkedHashSet())
             }
         }
     }

@@ -208,6 +208,7 @@ class SakRepository(private val dataSource: DataSource) {
                         AND v.person_id = ?
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
+                        AND v.vedtaktypekode != 'S'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
