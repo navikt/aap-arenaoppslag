@@ -28,6 +28,7 @@ import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
+import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
@@ -202,3 +203,14 @@ fun Route.utbetalinger(posteringService: PosteringService, personService: Person
         call.respond(HttpStatusCode.OK, SisteUtbetalingerResponse(utbetaling))
     }
 }
+
+fun Route.saksopplysningerForVedtak(saksopplysningService: SaksopplysningService) {
+    get("/vedtak/{vedtakId}/saksopplysninger") {
+        val vedtakId = call.parameters["vedtakId"]?.toIntOrNull()
+            ?: return@get call.respond(HttpStatusCode.BadRequest, "vedtakId må være et heltall")
+
+        val saksopplysninger = saksopplysningService.hentForVedtakId(vedtakId)
+        call.respond(HttpStatusCode.OK, saksopplysninger)
+    }
+}
+
