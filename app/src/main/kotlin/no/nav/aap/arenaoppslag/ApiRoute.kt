@@ -28,6 +28,7 @@ import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
+import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
@@ -111,7 +112,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
+fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -137,9 +138,11 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
+        val alleSaksopplysninger = sak.vedtak.flatMap { saksopplysningService.hentForVedtakId(it.vedtakId) }
+        val samordningOgInstitusjon = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato)
+        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, samordningOgInstitusjon)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
@@ -202,3 +205,14 @@ fun Route.utbetalinger(posteringService: PosteringService, personService: Person
         call.respond(HttpStatusCode.OK, SisteUtbetalingerResponse(utbetaling))
     }
 }
+
+fun Route.saksopplysningerForVedtak(saksopplysningService: SaksopplysningService) {
+    get("/vedtak/{vedtakId}/saksopplysninger") {
+        val vedtakId = call.parameters["vedtakId"]?.toIntOrNull()
+            ?: return@get call.respond(HttpStatusCode.BadRequest, "vedtakId må være et heltall")
+
+        val saksopplysninger = saksopplysningService.hentForVedtakId(vedtakId)
+        call.respond(HttpStatusCode.OK, saksopplysninger)
+    }
+}
+

@@ -110,6 +110,7 @@ data class ArenaSakMedVedtak(
         kvoteHistorikk: Set<KvotebrukHendelse>,
         sisteUtbetalingDato: LocalDate?,
         maksdato: LocalDate?,
+        samordningOgInstitusjon: SamordningOgInstitusjon,
     ) = ArenaSakDetaljert(
         sakId = sakId,
         opprettetAar = opprettetAar,
@@ -123,7 +124,8 @@ data class ArenaSakMedVedtak(
         telleverkForPerson = telleverkForPerson,
         kvoteHistorikk = kvoteHistorikk,
         maksdato = maksdato,
-        sisteUtbetalingDato = sisteUtbetalingDato
+        sisteUtbetalingDato = sisteUtbetalingDato,
+        samordningOgInstitusjon = samordningOgInstitusjon,
     )
 }
 
