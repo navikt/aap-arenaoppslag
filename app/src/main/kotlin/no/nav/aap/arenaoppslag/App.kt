@@ -237,7 +237,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     sakService = sakListeService,
                     posteringService = utbetalingService,
                     sakOgVedtakService = sakOgVedtakService,
-                    telleverkService = telleverkService
+                    telleverkService = telleverkService,
+                    saksopplysningService = saksopplysningService
                 )
                 saksopplysningerForVedtak(saksopplysningService)
             }
