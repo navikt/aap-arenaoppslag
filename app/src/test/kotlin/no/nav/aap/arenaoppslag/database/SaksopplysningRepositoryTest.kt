@@ -16,7 +16,7 @@ class SaksopplysningRepositoryTest : H2TestBase("flyway/minimumtest") {
         assertThat(resultat).hasSize(1)
 
         val saksopplysning = resultat.single()
-        assertThat(saksopplysning.saksopplysningkode).isEqualTo("ARBEIDSEVNE")
+        assertThat(saksopplysning.saksopplysningkode).isEqualTo("ARBEVNE")
         assertThat(saksopplysning.saksopplysningnavn).isEqualTo("Arbeidsevne")
         assertThat(saksopplysning.skjermbildetekst).isEqualTo("Vurdering av arbeidsevne")
         assertThat(saksopplysning.statusRepeterbar).isEqualTo("N")
@@ -56,4 +56,3 @@ class SaksopplysningRepositoryTest : H2TestBase("flyway/minimumtest") {
         assertThat(resultat).isEmpty()
     }
 }
-

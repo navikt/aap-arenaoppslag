@@ -138,10 +138,11 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
-        val saksopplysninger = sak.vedtak.flatMap { saksopplysningService.hentForVedtakId(it.vedtakId) }
+        val alleSaksopplysninger = sak.vedtak.flatMap { saksopplysningService.hentForVedtakId(it.vedtakId) }
+        val samordningOgInstitusjon = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato,saksopplysninger)
+        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, samordningOgInstitusjon)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
