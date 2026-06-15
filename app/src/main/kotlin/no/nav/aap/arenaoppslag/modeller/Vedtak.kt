@@ -101,6 +101,7 @@ data class ArenaVedtakMedDetaljer(
     val relatertVedtak: Int?,
     val fakta: List<ArenaVedtakfakta>,
     val vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
+    val samordningOgInstitusjon: SamordningOgInstitusjon = SamordningOgInstitusjon(emptyList(), emptyList()),
 ) {
     fun tilKontrakt() = ArenaVedtakMedDetaljerKontrakt(
         vedtakId = vedtakId,
