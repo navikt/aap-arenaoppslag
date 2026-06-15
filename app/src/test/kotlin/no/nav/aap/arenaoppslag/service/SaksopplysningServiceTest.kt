@@ -95,7 +95,7 @@ class SaksopplysningServiceTest {
         assertThat(resultat.institusjonOpphold).hasSize(1)
         assertThat(resultat.andreYtelser).isEmpty()
         val opphold = resultat.institusjonOpphold.single()
-        assertThat(opphold.type).isEqualTo(InstitusjonOppholdType.Helseinstitusjon)
+        assertThat(opphold.type).isEqualTo(InstitusjonOppholdType.HELSEINSTITUSJON)
         assertThat(opphold.fra).isEqualTo(LocalDate.of(2024, 1, 1))
         assertThat(opphold.til).isEqualTo(LocalDate.of(2024, 12, 31))
         assertThat(opphold.friKostOgLosji).isTrue()
@@ -162,6 +162,7 @@ class SaksopplysningServiceTest {
     fun `hentSamordningOgInstitusjon returnerer begge typer nar begge finnes`() {
         val saksopplysninger = listOf(
             lagSaksopplysning(
+                id = 1L,
                 kode = InstitusjonOpphold.SAKSOPPLYSNINGKODE,
                 attributter = listOf(
                     lagAttributt(InstitusjonOpphold.ATTRIBUTT_STRAFFEGJENNOMFORING, "J"),
@@ -169,6 +170,7 @@ class SaksopplysningServiceTest {
                 ),
             ),
             lagSaksopplysning(
+                id = 2L,
                 kode = AnnenYtelse.SAKSOPPLYSNINGKODE,
                 attributter = listOf(lagAttributt(AnnenYtelse.ATTRIBUTT_TYPE, AnnenYtelseType.BARNEPENSJON.kode)),
             ),
@@ -180,12 +182,30 @@ class SaksopplysningServiceTest {
         assertThat(resultat.andreYtelser).hasSize(1)
     }
 
+    @Test
+    fun `hentSamordningOgInstitusjon deduplicerer saksopplysninger med samme id`() {
+        // Samme INSOPPH-post kan dukke opp flere ganger via flatMap over vedtak
+        val insopph = lagSaksopplysning(
+            id = 42L,
+            kode = InstitusjonOpphold.SAKSOPPLYSNINGKODE,
+            attributter = listOf(
+                lagAttributt(InstitusjonOpphold.ATTRIBUTT_STRAFFEGJENNOMFORING, "J"),
+                lagAttributt(InstitusjonOpphold.ATTRIBUTT_FRA, "01-01-2024"),
+            ),
+        )
+
+        val resultat = service.hentSamordningOgInstitusjon(listOf(insopph, insopph))
+
+        assertThat(resultat.institusjonOpphold).hasSize(1)
+    }
+
     private fun lagSaksopplysning(
         kode: String,
+        id: Long = 1L,
         verdi: String? = null,
         attributter: List<ArenaSaksopplysningAttributt> = emptyList(),
     ) = ArenaSaksopplysning(
-        saksopplysningId = 1L,
+        saksopplysningId = id,
         saksopplysningkode = kode,
         saksopplysningnavn = kode,
         skjermbildetekst = null,

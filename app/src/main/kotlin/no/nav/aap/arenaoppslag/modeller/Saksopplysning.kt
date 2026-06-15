@@ -68,7 +68,7 @@ fun ArenaSaksopplysning.tilInstitusjonOpphold(): InstitusjonOpphold? {
     // Vises kun når straffegjennomføring (STRFG) eller institusjonsopphold (INSTA) er J
     val type = when {
         attr(InstitusjonOpphold.ATTRIBUTT_STRAFFEGJENNOMFORING) == "J" -> InstitusjonOppholdType.FENGSEL
-        attr(InstitusjonOpphold.ATTRIBUTT_INSTA) == "J" -> InstitusjonOppholdType.Helseinstitusjon
+        attr(InstitusjonOpphold.ATTRIBUTT_INSTA) == "J" -> InstitusjonOppholdType.HELSEINSTITUSJON
         else -> return null
     }
     val fra = attr(InstitusjonOpphold.ATTRIBUTT_FRA)?.let { LocalDate.parse(it, INSTITUSJON_DATO_FORMAT) } ?: return null
@@ -90,7 +90,7 @@ fun ArenaSaksopplysning.tilAnnenYtelse(): AnnenYtelse? {
 
 enum class InstitusjonOppholdType(val kode: String, val visningsnavn: String) {
     FENGSEL("FENGSEL", "Straffegjennomføring"),
-    Helseinstitusjon("HELSEINS", "Helseinstitusjon");
+    HELSEINSTITUSJON("HELSEINS", "Helseinstitusjon");
 
     companion object {
         fun fraKode(kode: String): InstitusjonOppholdType? = entries.find { it.kode == kode }
