@@ -134,12 +134,17 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         }
         val personId = PersonId(sak.person.personId)
 
+        
+        
         val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
-        val alleSaksopplysninger = sak.vedtak.flatMap { saksopplysningService.hentForVedtakId(it.vedtakId) }
+        val alleSaksopplysninger = sak.vedtak.associate { vedtak ->
+            vedtak.vedtakId to saksopplysningService.hentForVedtakId(vedtak.vedtakId)
+        }
         val samordningOgInstitusjon = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
+
 
         logger.info("Henter saksdetaljer")
         val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, samordningOgInstitusjon)

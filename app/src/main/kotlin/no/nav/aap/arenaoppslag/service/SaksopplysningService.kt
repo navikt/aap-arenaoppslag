@@ -12,13 +12,12 @@ class SaksopplysningService(private val saksopplysningRepository: Saksopplysning
         return saksopplysningRepository.hentForVedtakId(vedtakId)
     }
 
-    fun hentSamordningOgInstitusjon(areaSaksOpplysninger: List<ArenaSaksopplysning>): SamordningOgInstitusjon {
-        // Saksopplysninger tilhører en sak men kobles til vedtak via LOV_VEDTAK_SAKSOPPLYSNING,
-        // så samme post kan dukke opp flere ganger når vi samler via flatMap over vedtak.
-        val unike = areaSaksOpplysninger.distinctBy { it.saksopplysningId }
-        return SamordningOgInstitusjon(
-            institusjonOpphold = unike.mapNotNull { it.tilInstitusjonOpphold() },
-            andreYtelser = unike.mapNotNull { it.tilAnnenYtelse() },
-        )
+    fun hentSamordningOgInstitusjon(saksopplysningerPerVedtak: Map<Int, List<ArenaSaksopplysning>>): Map<Int, SamordningOgInstitusjon> {
+        return saksopplysningerPerVedtak.mapValues { (_, saksopplysninger) ->
+            SamordningOgInstitusjon(
+                institusjonOpphold = saksopplysninger.mapNotNull { it.tilInstitusjonOpphold() },
+                andreYtelser = saksopplysninger.mapNotNull { it.tilAnnenYtelse() },
+            )
+        }
     }
 }
