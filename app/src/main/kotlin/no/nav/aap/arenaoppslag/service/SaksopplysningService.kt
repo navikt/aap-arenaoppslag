@@ -15,7 +15,7 @@ class SaksopplysningService(private val saksopplysningRepository: Saksopplysning
     fun hentSamordningOgInstitusjon(saksopplysningerPerVedtak: Map<Int, List<ArenaSaksopplysning>>): Map<Int, SamordningOgInstitusjon> {
         return saksopplysningerPerVedtak.mapValues { (_, saksopplysninger) ->
             SamordningOgInstitusjon(
-                institusjonOpphold = saksopplysninger.mapNotNull { it.tilInstitusjonOpphold() },
+                institusjonOpphold = saksopplysninger.firstNotNullOfOrNull { it.tilInstitusjonOpphold() },
                 andreYtelser = saksopplysninger.mapNotNull { it.tilAnnenYtelse() },
             )
         }

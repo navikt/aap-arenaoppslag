@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.ArenaSaksopplysning
 import no.nav.aap.arenaoppslag.modeller.ArenaSaksopplysningAttributt
+import no.nav.aap.arenaoppslag.modeller.Attributtkode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -36,13 +37,13 @@ class SaksopplysningRepositoryTest : H2TestBase("flyway/minimumtest") {
     fun `returnerer korrekte attributtverdier`() {
         val saksopplysning = repo.hentForVedtakId(37067849).single()
 
-        val begrunnelse = saksopplysning.attributter.find { it.attributtkode == "BEGRUNNELSE" }!!
+        val begrunnelse = saksopplysning.attributter.find { it.attributtkode == Attributtkode.BEGRUNNELSE }!!
         assertThat(begrunnelse.verdi).isEqualTo("Bruker kan ikke jobbe")
         assertThat(begrunnelse.formatnavn).isEqualTo("TEKST")
         assertThat(begrunnelse.posisjon).isEqualTo(1)
         assertThat(begrunnelse.statusSjekketAv).isEqualTo("A")
 
-        val dato = saksopplysning.attributter.find { it.attributtkode == "DATO" }!!
+        val dato = saksopplysning.attributter.find { it.attributtkode == Attributtkode.DATO }!!
         assertThat(dato.verdi).isEqualTo("2022-08-30")
         assertThat(dato.formatnavn).isEqualTo("DATO")
         assertThat(dato.posisjon).isEqualTo(2)

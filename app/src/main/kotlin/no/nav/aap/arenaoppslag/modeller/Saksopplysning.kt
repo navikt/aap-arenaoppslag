@@ -14,7 +14,7 @@ data class ArenaSaksopplysning(
 )
 
 data class ArenaSaksopplysningAttributt(
-    val attributtkode: String,
+    val attributtkode: Attributtkode,
     val skjermbildetekst: String?,
     val formatnavn: String?,
     val posisjon: Int,
@@ -22,21 +22,37 @@ data class ArenaSaksopplysningAttributt(
     val statusSjekketAv: String?,
 )
 
+// Entry-namn tilsvarer Arena-koden direkte — fraKode-fallback fanger ukjente koder fra databasen
+enum class Attributtkode {
+    STRFG, INSTA, INFRA, INTIL, FRIKL, REDPR,
+    TYPE, GRAD, BELOP, BELPR,
+    BEGRUNNELSE, DATO,
+    UKJENT;
+
+    companion object {
+        fun fraKode(kode: String): Attributtkode = entries.find { it.name == kode } ?: UKJENT
+    }
+}
+
 data class InstitusjonOpphold(
-    val type : InstitusjonOppholdType,
+    val type: InstitusjonOppholdType,
     val fra: LocalDate,
     val til: LocalDate?,
     val friKostOgLosji: Boolean,
     val reduksjonsType: ReduksjonType?,
 ) {
     companion object {
-        const val SAKSOPPLYSNINGKODE = "INSOPPH"
-        const val ATTRIBUTT_STRAFFEGJENNOMFORING = "STRFG"
-        const val ATTRIBUTT_INSTA = "INSTA"
-        const val ATTRIBUTT_FRA = "INFRA"
-        const val ATTRIBUTT_TIL = "INTIL"
-        const val ATTRIBUTT_FRI_KOST_LOSJI = "FRIKL"
-        const val ATTRIBUTT_REDUKSJON = "REDPR"
+        const val KODE = "INSOPPH"
+        val DATO_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    }
+
+    enum class Attributt(val kode: Attributtkode) {
+        STRAFFEGJENNOMFORING(Attributtkode.STRFG),
+        INSTA(Attributtkode.INSTA),
+        FRA(Attributtkode.INFRA),
+        TIL(Attributtkode.INTIL),
+        FRI_KOST_LOSJI(Attributtkode.FRIKL),
+        REDUKSJON(Attributtkode.REDPR),
     }
 }
 
@@ -47,44 +63,39 @@ data class AnnenYtelse(
     val beløp: String?,
 ) {
     companion object {
-        const val SAKSOPPLYSNINGKODE = "AAOKYT"
-        const val ATTRIBUTT_TYPE = "TYPE"
-        const val ATTRIBUTT_GRAD = "GRAD"
-        const val ATTRIBUTT_BELOP = "BELOP"
-        const val ATTRIBUTT_BELOP_PERIODE = "BELPR"
+        const val KODE = "AAOKYT"
     }
 }
 
 data class SamordningOgInstitusjon(
-    val institusjonOpphold: List<InstitusjonOpphold>,
+    val institusjonOpphold: InstitusjonOpphold?,
     val andreYtelser: List<AnnenYtelse>,
 )
 
-private val INSTITUSJON_DATO_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
 fun ArenaSaksopplysning.tilInstitusjonOpphold(): InstitusjonOpphold? {
-    if (saksopplysningkode != InstitusjonOpphold.SAKSOPPLYSNINGKODE) return null
-    fun attr(kode: String) = attributter.find { it.attributtkode == kode }?.verdi
+    if (saksopplysningkode != InstitusjonOpphold.KODE) return null
+    fun attr(a: InstitusjonOpphold.Attributt) = attributter.find { it.attributtkode == a.kode }?.verdi
     // Vises kun når straffegjennomføring (STRFG) eller institusjonsopphold (INSTA) er J
     val type = when {
-        attr(InstitusjonOpphold.ATTRIBUTT_STRAFFEGJENNOMFORING) == "J" -> InstitusjonOppholdType.FENGSEL
-        attr(InstitusjonOpphold.ATTRIBUTT_INSTA) == "J" -> InstitusjonOppholdType.HELSEINSTITUSJON
+        attr(InstitusjonOpphold.Attributt.STRAFFEGJENNOMFORING) == "J" -> InstitusjonOppholdType.FENGSEL
+        attr(InstitusjonOpphold.Attributt.INSTA) == "J" -> InstitusjonOppholdType.HELSEINSTITUSJON
         else -> return null
     }
-    val fra = attr(InstitusjonOpphold.ATTRIBUTT_FRA)?.let { LocalDate.parse(it, INSTITUSJON_DATO_FORMAT) } ?: return null
-    val til = attr(InstitusjonOpphold.ATTRIBUTT_TIL)?.let { LocalDate.parse(it, INSTITUSJON_DATO_FORMAT) }
-    val friKostOgLosji = attr(InstitusjonOpphold.ATTRIBUTT_FRI_KOST_LOSJI) == "J"
-    val reduksjonsType = attr(InstitusjonOpphold.ATTRIBUTT_REDUKSJON)?.let { ReduksjonType.fraKode(it) }
+    val fra = attr(InstitusjonOpphold.Attributt.FRA)?.let { LocalDate.parse(it, InstitusjonOpphold.DATO_FORMAT) } ?: return null
+    val til = attr(InstitusjonOpphold.Attributt.TIL)?.let { LocalDate.parse(it, InstitusjonOpphold.DATO_FORMAT) }
+    val friKostOgLosji = attr(InstitusjonOpphold.Attributt.FRI_KOST_LOSJI) == "J"
+    val reduksjonsType = attr(InstitusjonOpphold.Attributt.REDUKSJON)?.let { ReduksjonType.fraKode(it) }
     return InstitusjonOpphold(type, fra, til, friKostOgLosji, reduksjonsType)
 }
 
 fun ArenaSaksopplysning.tilAnnenYtelse(): AnnenYtelse? {
-    if (saksopplysningkode != AnnenYtelse.SAKSOPPLYSNINGKODE) return null
-    fun attr(kode: String) = attributter.find { it.attributtkode == kode }?.verdi
-    val type = attr(AnnenYtelse.ATTRIBUTT_TYPE)?.let { AnnenYtelseType.fraKode(it) } ?: return null
-    val belopPeriode = attr(AnnenYtelse.ATTRIBUTT_BELOP_PERIODE)?.let { BelopPeriode.fraKode(it) }
-    val grad = attr(AnnenYtelse.ATTRIBUTT_GRAD)
-    val beløp = attr(AnnenYtelse.ATTRIBUTT_BELOP)
+    if (saksopplysningkode != AnnenYtelse.KODE) return null
+    fun attr(kode: Attributtkode) = attributter.find { it.attributtkode == kode }?.verdi
+    val type = attr(Attributtkode.TYPE)?.let { AnnenYtelseType.fraKode(it) } ?: return null
+    val belopPeriode = attr(Attributtkode.BELPR)?.let { BelopPeriode.fraKode(it) }
+    val grad = attr(Attributtkode.GRAD)
+    val beløp = attr(Attributtkode.BELOP)
     return AnnenYtelse(type, belopPeriode, grad, beløp)
 }
 
@@ -99,7 +110,7 @@ enum class InstitusjonOppholdType(val kode: String, val visningsnavn: String) {
 
 enum class ReduksjonType(val kode: String, val prosent: Int) {
     INGEN("RED00", 0),
-    HALV( "RED50", 50);
+    HALV("RED50", 50);
 
     companion object {
         fun fraKode(kode: String): ReduksjonType? = entries.find { it.kode == kode }
@@ -123,11 +134,12 @@ enum class AnnenYtelseType(val kode: String, val visningsnavn: String) {
 }
 
 enum class BelopPeriode(val kode: String, val visningsnavn: String) {
-    DAG( "DAG", "Per dag"),
-    UKE( "UKE", "Per uke"),
-    MND( "MND", "Per måned");
+    DAG("DAG", "Per dag"),
+    UKE("UKE", "Per uke"),
+    MND("MND", "Per måned");
 
     companion object {
         fun fraKode(kode: String): BelopPeriode? = entries.find { it.kode == kode }
     }
 }
+

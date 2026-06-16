@@ -6,6 +6,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSaksopplysning
 import no.nav.aap.arenaoppslag.modeller.ArenaSaksopplysningAttributt
 import no.nav.aap.arenaoppslag.modeller.AnnenYtelse
 import no.nav.aap.arenaoppslag.modeller.AnnenYtelseType
+import no.nav.aap.arenaoppslag.modeller.Attributtkode
 import no.nav.aap.arenaoppslag.modeller.BelopPeriode
 import no.nav.aap.arenaoppslag.modeller.InstitusjonOpphold
 import no.nav.aap.arenaoppslag.modeller.InstitusjonOppholdType
@@ -30,7 +31,7 @@ class SaksopplysningServiceTest {
     fun `hentSamordningOgInstitusjon filtrerer ut saksopplysninger med ukjente koder`() {
         val resultat = service.hentSamordningOgInstitusjon(mapOf(1 to listOf(lagSaksopplysning(kode = "ARBEVNE"))))
 
-        assertThat(resultat[1]?.institusjonOpphold).isEmpty()
+        assertThat(resultat[1]?.institusjonOpphold).isNull()
         assertThat(resultat[1]?.andreYtelser).isEmpty()
     }
 
@@ -39,18 +40,18 @@ class SaksopplysningServiceTest {
         // Arena-eksempel: saksopplysningkode er alltid AAOKYT, type hentes fra TYPE-attributt
         val resultat = service.hentSamordningOgInstitusjon(mapOf(1 to listOf(
             lagSaksopplysning(
-                kode = AnnenYtelse.SAKSOPPLYSNINGKODE,
+                kode = AnnenYtelse.KODE,
                 attributter = listOf(
-                    lagAttributt(AnnenYtelse.ATTRIBUTT_TYPE, AnnenYtelseType.UFORETRYGD.kode),
-                    lagAttributt(AnnenYtelse.ATTRIBUTT_BELOP_PERIODE, BelopPeriode.MND.kode),
-                    lagAttributt(AnnenYtelse.ATTRIBUTT_GRAD, "50"),
-                    lagAttributt(AnnenYtelse.ATTRIBUTT_BELOP, "0"),
+                    lagAttributt(Attributtkode.TYPE, AnnenYtelseType.UFORETRYGD.kode),
+                    lagAttributt(Attributtkode.BELPR, BelopPeriode.MND.kode),
+                    lagAttributt(Attributtkode.GRAD, "50"),
+                    lagAttributt(Attributtkode.BELOP, "0"),
                 ),
             ),
         )))
 
         val ytelse = resultat[1]!!.andreYtelser.single()
-        assertThat(resultat[1]!!.institusjonOpphold).isEmpty()
+        assertThat(resultat[1]!!.institusjonOpphold).isNull()
         assertThat(ytelse.type).isEqualTo(AnnenYtelseType.UFORETRYGD)
         assertThat(ytelse.belopPeriode).isEqualTo(BelopPeriode.MND)
         assertThat(ytelse.grad).isEqualTo("50")
@@ -60,7 +61,7 @@ class SaksopplysningServiceTest {
     @Test
     fun `hentSamordningOgInstitusjon utelater AAOKYT nar TYPE-attributt mangler`() {
         val resultat = service.hentSamordningOgInstitusjon(mapOf(1 to listOf(
-            lagSaksopplysning(kode = AnnenYtelse.SAKSOPPLYSNINGKODE, attributter = emptyList()),
+            lagSaksopplysning(kode = AnnenYtelse.KODE, attributter = emptyList()),
         )))
 
         assertThat(resultat[1]?.andreYtelser).isEmpty()
@@ -71,18 +72,18 @@ class SaksopplysningServiceTest {
         // INSTA=J aktiverer helseinstitusjon; datoformat fra Arena er dd-MM-yyyy
         val resultat = service.hentSamordningOgInstitusjon(mapOf(1 to listOf(
             lagSaksopplysning(
-                kode = InstitusjonOpphold.SAKSOPPLYSNINGKODE,
+                kode = InstitusjonOpphold.KODE,
                 attributter = listOf(
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_INSTA, "J"),
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_FRA, "01-01-2024"),
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_TIL, "31-12-2024"),
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_FRI_KOST_LOSJI, "J"),
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_REDUKSJON, "RED00"),
+                    lagAttributt(InstitusjonOpphold.Attributt.INSTA.kode, "J"),
+                    lagAttributt(InstitusjonOpphold.Attributt.FRA.kode, "01-01-2024"),
+                    lagAttributt(InstitusjonOpphold.Attributt.TIL.kode, "31-12-2024"),
+                    lagAttributt(InstitusjonOpphold.Attributt.FRI_KOST_LOSJI.kode, "J"),
+                    lagAttributt(InstitusjonOpphold.Attributt.REDUKSJON.kode, "RED00"),
                 ),
             ),
         )))
 
-        val opphold = resultat[1]!!.institusjonOpphold.single()
+        val opphold = resultat[1]!!.institusjonOpphold!!
         assertThat(resultat[1]!!.andreYtelser).isEmpty()
         assertThat(opphold.type).isEqualTo(InstitusjonOppholdType.HELSEINSTITUSJON)
         assertThat(opphold.fra).isEqualTo(LocalDate.of(2024, 1, 1))
@@ -96,15 +97,15 @@ class SaksopplysningServiceTest {
         // STRFG=J identifiserer straffegjennomføring
         val resultat = service.hentSamordningOgInstitusjon(mapOf(1 to listOf(
             lagSaksopplysning(
-                kode = InstitusjonOpphold.SAKSOPPLYSNINGKODE,
+                kode = InstitusjonOpphold.KODE,
                 attributter = listOf(
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_STRAFFEGJENNOMFORING, "J"),
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_FRA, "01-03-2023"),
+                    lagAttributt(InstitusjonOpphold.Attributt.STRAFFEGJENNOMFORING.kode, "J"),
+                    lagAttributt(InstitusjonOpphold.Attributt.FRA.kode, "01-03-2023"),
                 ),
             ),
         )))
 
-        val opphold = resultat[1]!!.institusjonOpphold.single()
+        val opphold = resultat[1]!!.institusjonOpphold!!
         assertThat(opphold.type).isEqualTo(InstitusjonOppholdType.FENGSEL)
         assertThat(opphold.fra).isEqualTo(LocalDate.of(2023, 3, 1))
         assertThat(opphold.til).isNull()
@@ -115,28 +116,28 @@ class SaksopplysningServiceTest {
     fun `hentSamordningOgInstitusjon utelater INSOPPH nar bade STRFG og INSTA er N`() {
         val resultat = service.hentSamordningOgInstitusjon(mapOf(1 to listOf(
             lagSaksopplysning(
-                kode = InstitusjonOpphold.SAKSOPPLYSNINGKODE,
+                kode = InstitusjonOpphold.KODE,
                 attributter = listOf(
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_STRAFFEGJENNOMFORING, "N"),
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_INSTA, "N"),
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_FRA, "01-01-2024"),
+                    lagAttributt(InstitusjonOpphold.Attributt.STRAFFEGJENNOMFORING.kode, "N"),
+                    lagAttributt(InstitusjonOpphold.Attributt.INSTA.kode, "N"),
+                    lagAttributt(InstitusjonOpphold.Attributt.FRA.kode, "01-01-2024"),
                 ),
             ),
         )))
 
-        assertThat(resultat[1]?.institusjonOpphold).isEmpty()
+        assertThat(resultat[1]?.institusjonOpphold).isNull()
     }
 
     @Test
     fun `hentSamordningOgInstitusjon utelater InstitusjonOpphold uten fra-dato`() {
         val resultat = service.hentSamordningOgInstitusjon(mapOf(1 to listOf(
             lagSaksopplysning(
-                kode = InstitusjonOpphold.SAKSOPPLYSNINGKODE,
-                attributter = listOf(lagAttributt(InstitusjonOpphold.ATTRIBUTT_INSTA, "J")),
+                kode = InstitusjonOpphold.KODE,
+                attributter = listOf(lagAttributt(InstitusjonOpphold.Attributt.INSTA.kode, "J")),
             ),
         )))
 
-        assertThat(resultat[1]?.institusjonOpphold).isEmpty()
+        assertThat(resultat[1]?.institusjonOpphold).isNull()
     }
 
     @Test
@@ -144,22 +145,22 @@ class SaksopplysningServiceTest {
         // Hvert vedtak skal ha sin egen SamordningOgInstitusjon — ikke blandes sammen
         val resultat = service.hentSamordningOgInstitusjon(mapOf(
             1 to listOf(lagSaksopplysning(
-                kode = InstitusjonOpphold.SAKSOPPLYSNINGKODE,
+                kode = InstitusjonOpphold.KODE,
                 attributter = listOf(
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_STRAFFEGJENNOMFORING, "J"),
-                    lagAttributt(InstitusjonOpphold.ATTRIBUTT_FRA, "01-01-2024"),
+                    lagAttributt(InstitusjonOpphold.Attributt.STRAFFEGJENNOMFORING.kode, "J"),
+                    lagAttributt(InstitusjonOpphold.Attributt.FRA.kode, "01-01-2024"),
                 ),
             )),
             2 to listOf(lagSaksopplysning(
-                kode = AnnenYtelse.SAKSOPPLYSNINGKODE,
-                attributter = listOf(lagAttributt(AnnenYtelse.ATTRIBUTT_TYPE, AnnenYtelseType.UFORETRYGD.kode)),
+                kode = AnnenYtelse.KODE,
+                attributter = listOf(lagAttributt(Attributtkode.TYPE, AnnenYtelseType.UFORETRYGD.kode)),
             )),
         ))
 
-        assertThat(resultat[1]!!.institusjonOpphold).hasSize(1)
+        assertThat(resultat[1]!!.institusjonOpphold).isNotNull()
         assertThat(resultat[1]!!.andreYtelser).isEmpty()
         assertThat(resultat[2]!!.andreYtelser).hasSize(1)
-        assertThat(resultat[2]!!.institusjonOpphold).isEmpty()
+        assertThat(resultat[2]!!.institusjonOpphold).isNull()
     }
 
     private fun lagSaksopplysning(
@@ -177,7 +178,7 @@ class SaksopplysningServiceTest {
         attributter = attributter,
     )
 
-    private fun lagAttributt(kode: String, verdi: String?) = ArenaSaksopplysningAttributt(
+    private fun lagAttributt(kode: Attributtkode, verdi: String?) = ArenaSaksopplysningAttributt(
         attributtkode = kode,
         skjermbildetekst = null,
         formatnavn = null,

@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.ArenaSaksopplysning
 import no.nav.aap.arenaoppslag.modeller.ArenaSaksopplysningAttributt
+import no.nav.aap.arenaoppslag.modeller.Attributtkode
 import org.intellij.lang.annotations.Language
 import java.sql.ResultSet
 import javax.sql.DataSource
@@ -26,7 +27,7 @@ class SaksopplysningRepository(private val dataSource: DataSource) {
                             verdi = foerste.saksopplysningVerdi,
                             attributter = rader.map { rad ->
                                 ArenaSaksopplysningAttributt(
-                                    attributtkode = rad.attributtkode,
+                                    attributtkode = Attributtkode.fraKode(rad.attributtkode),
                                     skjermbildetekst = rad.attributtSkjermbildetekst,
                                     formatnavn = rad.formatnavn,
                                     posisjon = rad.posisjon,

@@ -145,12 +145,14 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
             vedtak.vedtakId to saksopplysningService.hentForVedtakId(vedtak.vedtakId)
         }
         val samordningPerVedtak = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
-        val vedtakMedSamordning = sak.vedtak.map { vedtak ->
-            vedtak.copy(samordningOgInstitusjon = samordningPerVedtak[vedtak.vedtakId] ?: SamordningOgInstitusjon(emptyList(), emptyList()))
-        }
+        val sakMedSamordning = sak.copy(
+            vedtak = sak.vedtak.map { vedtak ->
+                vedtak.copy(samordningOgInstitusjon = samordningPerVedtak[vedtak.vedtakId] ?: SamordningOgInstitusjon(null, emptyList()))
+            }
+        )
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, vedtakMedSamordning)
+        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }

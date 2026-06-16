@@ -6,7 +6,6 @@ import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak as ArenaVedtakKontrakt
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer as ArenaVedtakMedDetaljerKontrakt
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakfakta as ArenaVedtakfaktaKontrakt
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVilkårsvurdering as ArenaVilkårsvurderingKontrakt
 import java.time.LocalDate
 
 data class VedtakStatus(
@@ -101,7 +100,7 @@ data class ArenaVedtakMedDetaljer(
     val relatertVedtak: Int?,
     val fakta: List<ArenaVedtakfakta>,
     val vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
-    val samordningOgInstitusjon: SamordningOgInstitusjon = SamordningOgInstitusjon(emptyList(), emptyList()),
+    val samordningOgInstitusjon: SamordningOgInstitusjon = SamordningOgInstitusjon(null, emptyList()),
 ) {
     fun tilKontrakt() = ArenaVedtakMedDetaljerKontrakt(
         vedtakId = vedtakId,
