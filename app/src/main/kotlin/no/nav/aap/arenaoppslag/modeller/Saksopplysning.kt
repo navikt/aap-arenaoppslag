@@ -22,7 +22,6 @@ data class ArenaSaksopplysningAttributt(
     val statusSjekketAv: String?,
 )
 
-// Entry-namn tilsvarer Arena-koden direkte — fraKode-fallback fanger ukjente koder fra databasen
 enum class Attributtkode {
     STRFG, INSTA, INFRA, INTIL, FRIKL, REDPR,
     TYPE, GRAD, BELOP, BELPR,
@@ -60,7 +59,7 @@ data class AnnenYtelse(
     val type: AnnenYtelseType,
     val belopPeriode: BelopPeriode?,
     val grad: String?,
-    val beløp: String?,
+    val belop: String?,
 ) {
     companion object {
         const val KODE = "AAOKYT"
@@ -76,7 +75,6 @@ data class SamordningOgInstitusjon(
 fun ArenaSaksopplysning.tilInstitusjonOpphold(): InstitusjonOpphold? {
     if (saksopplysningkode != InstitusjonOpphold.KODE) return null
     fun attr(a: InstitusjonOpphold.Attributt) = attributter.find { it.attributtkode == a.kode }?.verdi
-    // Vises kun når straffegjennomføring (STRFG) eller institusjonsopphold (INSTA) er J
     val type = when {
         attr(InstitusjonOpphold.Attributt.STRAFFEGJENNOMFORING) == "J" -> InstitusjonOppholdType.FENGSEL
         attr(InstitusjonOpphold.Attributt.INSTA) == "J" -> InstitusjonOppholdType.HELSEINSTITUSJON
@@ -99,13 +97,9 @@ fun ArenaSaksopplysning.tilAnnenYtelse(): AnnenYtelse? {
     return AnnenYtelse(type, belopPeriode, grad, beløp)
 }
 
-enum class InstitusjonOppholdType(val kode: String, val visningsnavn: String) {
-    FENGSEL("FENGSEL", "Straffegjennomføring"),
-    HELSEINSTITUSJON("HELSEINS", "Helseinstitusjon");
-
-    companion object {
-        fun fraKode(kode: String): InstitusjonOppholdType? = entries.find { it.kode == kode }
-    }
+enum class InstitusjonOppholdType(val kode: String) {
+    FENGSEL("FENGSEL"),
+    HELSEINSTITUSJON("HELSEINS");
 }
 
 enum class ReduksjonType(val kode: String, val prosent: Int) {
@@ -117,26 +111,26 @@ enum class ReduksjonType(val kode: String, val prosent: Int) {
     }
 }
 
-enum class AnnenYtelseType(val kode: String, val visningsnavn: String) {
-    FORELDREPENGER_ADOPSJON("AP",   "Foreldrepenger adopsjon"),
-    BARNEPENSJON(           "BP",   "Barnepensjon"),
-    OMSORGSPENGER(          "BS",   "Omsorgspenger ved barns eller barnepassers sykdom"),
-    FORELDREPENGER_FODSEL(  "FP",   "Foreldrepenger fødsel"),
-    LONN_FRA_ARBEIDSGIVER(  "LØNN", "Økonomiske ytelser fra tidligere arbeidsgiver"),
-    OPPLARINGSPENGER(       "OP",   "Opplæringspenger"),
-    PLEIEPENGER(            "PB",   "Pleiepenger"),
-    SVANGERSKAPSPENGER(     "SV",   "Svangerskapspenger"),
-    UFORETRYGD(             "UP",   "Uføretrygd");
+enum class AnnenYtelseType(val kode: String) {
+    FORELDREPENGER_ADOPSJON("AP"),
+    BARNEPENSJON(           "BP"),
+    OMSORGSPENGER(          "BS"),
+    FORELDREPENGER_FODSEL(  "FP"),
+    LONN_FRA_ARBEIDSGIVER(  "LØNN"),
+    OPPLARINGSPENGER(       "OP"),
+    PLEIEPENGER(            "PB"),
+    SVANGERSKAPSPENGER(     "SV"),
+    UFORETRYGD(             "UP");
 
     companion object {
         fun fraKode(kode: String): AnnenYtelseType? = entries.find { it.kode == kode }
     }
 }
 
-enum class BelopPeriode(val kode: String, val visningsnavn: String) {
-    DAG("DAG", "Per dag"),
-    UKE("UKE", "Per uke"),
-    MND("MND", "Per måned");
+enum class BelopPeriode(val kode: String) {
+    DAG("DAG"),
+    UKE("UKE"),
+    MND("MND");
 
     companion object {
         fun fraKode(kode: String): BelopPeriode? = entries.find { it.kode == kode }

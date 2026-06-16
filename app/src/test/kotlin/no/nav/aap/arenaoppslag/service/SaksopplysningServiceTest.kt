@@ -55,7 +55,7 @@ class SaksopplysningServiceTest {
         assertThat(ytelse.type).isEqualTo(AnnenYtelseType.UFORETRYGD)
         assertThat(ytelse.belopPeriode).isEqualTo(BelopPeriode.MND)
         assertThat(ytelse.grad).isEqualTo("50")
-        assertThat(ytelse.beløp).isEqualTo("0")
+        assertThat(ytelse.belop).isEqualTo("0")
     }
 
     @Test

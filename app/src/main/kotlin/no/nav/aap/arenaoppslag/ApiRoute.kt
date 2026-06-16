@@ -24,7 +24,6 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
-import no.nav.aap.arenaoppslag.modeller.SamordningOgInstitusjon
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
@@ -146,9 +145,7 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         }
         val samordningPerVedtak = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
         val sakMedSamordning = sak.copy(
-            vedtak = sak.vedtak.map { vedtak ->
-                vedtak.copy(samordningOgInstitusjon = samordningPerVedtak[vedtak.vedtakId] ?: SamordningOgInstitusjon(null, emptyList()))
-            }
+            vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
         )
 
         logger.info("Henter saksdetaljer")

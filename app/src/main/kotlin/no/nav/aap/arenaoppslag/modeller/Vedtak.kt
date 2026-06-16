@@ -100,8 +100,14 @@ data class ArenaVedtakMedDetaljer(
     val relatertVedtak: Int?,
     val fakta: List<ArenaVedtakfakta>,
     val vilkårsvurderinger: List<ArenaVilkårsvurdering> = emptyList(),
-    val samordningOgInstitusjon: SamordningOgInstitusjon = SamordningOgInstitusjon(null, emptyList()),
+    val institusjonOpphold: InstitusjonOpphold? = null,
+    val andreYtelser: List<AnnenYtelse> = emptyList(),
 ) {
+    fun medSamordning(samordning: SamordningOgInstitusjon?) = copy(
+        institusjonOpphold = samordning?.institusjonOpphold,
+        andreYtelser = samordning?.andreYtelser ?: emptyList(),
+    )
+
     fun tilKontrakt() = ArenaVedtakMedDetaljerKontrakt(
         vedtakId = vedtakId,
         lopenrvedtak = lopenrvedtak,
