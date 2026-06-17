@@ -2,6 +2,8 @@ package no.nav.aap.arenaoppslag.modeller
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
+import org.slf4j.LoggerFactory
 
 data class ArenaSaksopplysning(
     val saksopplysningId: Long,
@@ -29,7 +31,15 @@ enum class Attributtkode {
     UKJENT;
 
     companion object {
-        fun fraKode(kode: String): Attributtkode = entries.find { it.name == kode } ?: UKJENT
+        private val log = LoggerFactory.getLogger(Attributtkode::class.java)
+        private val loggetUkjenteKoder = ConcurrentHashMap.newKeySet<String>()
+
+        fun fraKode(kode: String): Attributtkode =
+            entries.find { it.name == kode } ?: UKJENT.also {
+                if (loggetUkjenteKoder.add(kode)) {
+                    log.warn("Ukjent attributtkode fra Arena: {}", kode)
+                }
+            }
     }
 }
 
@@ -66,45 +76,55 @@ data class AnnenYtelse(
     }
 }
 
-data class SamordningOgInstitusjon(
+data class SamordningMedInstitusjon(
     val institusjonOpphold: InstitusjonOpphold?,
     val andreYtelser: List<AnnenYtelse>,
 )
 
 
+private fun ArenaSaksopplysning.verdiFor(kode: Attributtkode): String? =
+    attributter.find { it.attributtkode == kode }?.verdi
+
+private fun ArenaSaksopplysning.verdiFor(attributt: InstitusjonOpphold.Attributt): String? =
+    verdiFor(attributt.kode)
+
 fun ArenaSaksopplysning.tilInstitusjonOpphold(): InstitusjonOpphold? {
     if (saksopplysningkode != InstitusjonOpphold.KODE) return null
-    fun attr(a: InstitusjonOpphold.Attributt) = attributter.find { it.attributtkode == a.kode }?.verdi
+
     val type = when {
-        attr(InstitusjonOpphold.Attributt.STRAFFEGJENNOMFORING) == "J" -> InstitusjonOppholdType.FENGSEL
-        attr(InstitusjonOpphold.Attributt.INSTA) == "J" -> InstitusjonOppholdType.HELSEINSTITUSJON
+        verdiFor(InstitusjonOpphold.Attributt.STRAFFEGJENNOMFORING) == "J" -> InstitusjonOppholdType.FENGSEL
+        verdiFor(InstitusjonOpphold.Attributt.INSTA) == "J" -> InstitusjonOppholdType.HELSEINSTITUSJON
         else -> return null
     }
-    val fra = attr(InstitusjonOpphold.Attributt.FRA)?.let { LocalDate.parse(it, InstitusjonOpphold.DATO_FORMAT) } ?: return null
-    val til = attr(InstitusjonOpphold.Attributt.TIL)?.let { LocalDate.parse(it, InstitusjonOpphold.DATO_FORMAT) }
-    val friKostOgLosji = attr(InstitusjonOpphold.Attributt.FRI_KOST_LOSJI) == "J"
-    val reduksjonsType = attr(InstitusjonOpphold.Attributt.REDUKSJON)?.let { ReduksjonType.fraKode(it) }
+
+    val fra = verdiFor(InstitusjonOpphold.Attributt.FRA)?.let { LocalDate.parse(it, InstitusjonOpphold.DATO_FORMAT) }
+        ?: return null
+    val til = verdiFor(InstitusjonOpphold.Attributt.TIL)?.let { LocalDate.parse(it, InstitusjonOpphold.DATO_FORMAT) }
+    val friKostOgLosji = verdiFor(InstitusjonOpphold.Attributt.FRI_KOST_LOSJI) == "J"
+    val reduksjonsType = verdiFor(InstitusjonOpphold.Attributt.REDUKSJON)?.let { ReduksjonType.fraKode(it) }
+
     return InstitusjonOpphold(type, fra, til, friKostOgLosji, reduksjonsType)
 }
 
 fun ArenaSaksopplysning.tilAnnenYtelse(): AnnenYtelse? {
     if (saksopplysningkode != AnnenYtelse.KODE) return null
-    fun attr(kode: Attributtkode) = attributter.find { it.attributtkode == kode }?.verdi
-    val type = attr(Attributtkode.TYPE)?.let { AnnenYtelseType.fraKode(it) } ?: return null
-    val belopPeriode = attr(Attributtkode.BELPR)?.let { BelopPeriode.fraKode(it) }
-    val grad = attr(Attributtkode.GRAD)
-    val beløp = attr(Attributtkode.BELOP)
-    return AnnenYtelse(type, belopPeriode, grad, beløp)
+
+    val type = verdiFor(Attributtkode.TYPE)?.let { AnnenYtelseType.fraKode(it) } ?: return null
+    val belopPeriode = verdiFor(Attributtkode.BELPR)?.let { BelopPeriode.fraKode(it) }
+    val grad = verdiFor(Attributtkode.GRAD)
+    val belop = verdiFor(Attributtkode.BELOP)
+
+    return AnnenYtelse(type = type, belopPeriode = belopPeriode, grad = grad, belop = belop)
 }
 
-enum class InstitusjonOppholdType(val kode: String) {
-    FENGSEL("FENGSEL"),
-    HELSEINSTITUSJON("HELSEINS");
+enum class InstitusjonOppholdType {
+    FENGSEL,
+    HELSEINSTITUSJON,
 }
 
-enum class ReduksjonType(val kode: String, val prosent: Int) {
-    INGEN("RED00", 0),
-    HALV("RED50", 50);
+enum class ReduksjonType(val kode: String) {
+    INGEN("RED00"),
+    HALV("RED50");
 
     companion object {
         fun fraKode(kode: String): ReduksjonType? = entries.find { it.kode == kode }
@@ -113,14 +133,14 @@ enum class ReduksjonType(val kode: String, val prosent: Int) {
 
 enum class AnnenYtelseType(val kode: String) {
     FORELDREPENGER_ADOPSJON("AP"),
-    BARNEPENSJON(           "BP"),
-    OMSORGSPENGER(          "BS"),
-    FORELDREPENGER_FODSEL(  "FP"),
-    LONN_FRA_ARBEIDSGIVER(  "LØNN"),
-    OPPLARINGSPENGER(       "OP"),
-    PLEIEPENGER(            "PB"),
-    SVANGERSKAPSPENGER(     "SV"),
-    UFORETRYGD(             "UP");
+    BARNEPENSJON("BP"),
+    OMSORGSPENGER("BS"),
+    FORELDREPENGER_FODSEL("FP"),
+    LONN_FRA_ARBEIDSGIVER("LØNN"),
+    OPPLARINGSPENGER("OP"),
+    PLEIEPENGER("PB"),
+    SVANGERSKAPSPENGER("SV"),
+    UFORETRYGD("UP");
 
     companion object {
         fun fraKode(kode: String): AnnenYtelseType? = entries.find { it.kode == kode }

@@ -103,7 +103,7 @@ data class ArenaVedtakMedDetaljer(
     val institusjonOpphold: InstitusjonOpphold? = null,
     val andreYtelser: List<AnnenYtelse> = emptyList(),
 ) {
-    fun medSamordning(samordning: SamordningOgInstitusjon?) = copy(
+    fun medSamordning(samordning: SamordningMedInstitusjon?) = copy(
         institusjonOpphold = samordning?.institusjonOpphold,
         andreYtelser = samordning?.andreYtelser ?: emptyList(),
     )

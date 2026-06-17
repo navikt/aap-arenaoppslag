@@ -19,7 +19,7 @@ class SaksopplysningRepository(private val dataSource: DataSource) {
             val query = queryMedVedtakIdListe(vedtakIder)
             con.createParameterizedQuery(query).use { ps ->
                 ps.executeQuery()
-                    .map { row -> mapperForRad(row) }
+                    .map { row -> mapperForSaksopplysningsRad(row) }
                     .groupBy { it.vedtakId }
                     .mapValues { (_, rader) -> rader.tilSaksopplysninger() }
             }
@@ -100,7 +100,7 @@ class SaksopplysningRepository(private val dataSource: DataSource) {
             val statusSjekketAv: String?,
         )
 
-        private fun mapperForRad(row: ResultSet) = SaksopplysningRad(
+        private fun mapperForSaksopplysningsRad(row: ResultSet) = SaksopplysningRad(
             vedtakId = row.getInt("vedtak_id"),
             saksopplysningId = row.getLong("saksopplysning_id"),
             saksopplysningkode = row.getString("saksopplysningkode"),
