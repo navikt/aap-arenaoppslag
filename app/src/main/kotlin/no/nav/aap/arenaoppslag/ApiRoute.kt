@@ -140,8 +140,9 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
+        val saksopplysningerPerVedtak = saksopplysningService.hentForVedtakIder(sak.vedtak.map { it.vedtakId })
         val alleSaksopplysninger = sak.vedtak.associate { vedtak ->
-            vedtak.vedtakId to saksopplysningService.hentForVedtakId(vedtak.vedtakId)
+            vedtak.vedtakId to (saksopplysningerPerVedtak[vedtak.vedtakId] ?: emptyList())
         }
         val samordningPerVedtak = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
         val sakMedSamordning = sak.copy(

@@ -12,6 +12,10 @@ class SaksopplysningService(private val saksopplysningRepository: Saksopplysning
         return saksopplysningRepository.hentForVedtakId(vedtakId)
     }
 
+    fun hentForVedtakIder(vedtakIder: List<Int>): Map<Int, List<ArenaSaksopplysning>> {
+        return saksopplysningRepository.hentForVedtakIder(vedtakIder)
+    }
+
     fun hentSamordningOgInstitusjon(saksopplysningerPerVedtak: Map<Int, List<ArenaSaksopplysning>>): Map<Int, SamordningOgInstitusjon> {
         return saksopplysningerPerVedtak.mapValues { (_, saksopplysninger) ->
             SamordningOgInstitusjon(

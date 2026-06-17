@@ -9,42 +9,60 @@ import javax.sql.DataSource
 
 class SaksopplysningRepository(private val dataSource: DataSource) {
 
-    fun hentForVedtakId(vedtakId: Int): List<ArenaSaksopplysning> {
+    fun hentForVedtakId(vedtakId: Int): List<ArenaSaksopplysning> =
+        hentForVedtakIder(listOf(vedtakId))[vedtakId] ?: emptyList()
+
+    fun hentForVedtakIder(vedtakIder: List<Int>): Map<Int, List<ArenaSaksopplysning>> {
+        if (vedtakIder.isEmpty()) return emptyMap()
+
         return dataSource.connection.use { con ->
-            con.createParameterizedQuery(selectSaksopplysningerForVedtakId).use { ps ->
-                ps.setInt(1, vedtakId)
+            val query = queryMedVedtakIdListe(vedtakIder)
+            con.createParameterizedQuery(query).use { ps ->
                 ps.executeQuery()
                     .map { row -> mapperForRad(row) }
-                    .groupBy { it.saksopplysningId }
-                    .map { (_, rader) ->
-                        val foerste = rader.first()
-                        ArenaSaksopplysning(
-                            saksopplysningId = foerste.saksopplysningId,
-                            saksopplysningkode = foerste.saksopplysningkode,
-                            saksopplysningnavn = foerste.saksopplysningnavn,
-                            skjermbildetekst = foerste.saksopplysningSkjermbildetekst,
-                            statusRepeterbar = foerste.statusRepeterbar,
-                            verdi = foerste.saksopplysningVerdi,
-                            attributter = rader.map { rad ->
-                                ArenaSaksopplysningAttributt(
-                                    attributtkode = Attributtkode.fraKode(rad.attributtkode),
-                                    skjermbildetekst = rad.attributtSkjermbildetekst,
-                                    formatnavn = rad.formatnavn,
-                                    posisjon = rad.posisjon,
-                                    verdi = rad.attributtVerdi,
-                                    statusSjekketAv = rad.statusSjekketAv,
-                                )
-                            },
-                        )
-                    }
+                    .groupBy { it.vedtakId }
+                    .mapValues { (_, rader) -> rader.tilSaksopplysninger() }
             }
         }
     }
 
     companion object {
+        private const val VEDTAK_ID_LISTE_TOKEN = "?:vedtakider"
+
+        private fun queryMedVedtakIdListe(vedtakIder: List<Int>): String {
+            val idListe = vedtakIder.joinToString(separator = ",")
+            return selectSaksopplysningerForVedtakIder.replace(VEDTAK_ID_LISTE_TOKEN, idListe)
+        }
+
+
+        private fun List<SaksopplysningRad>.tilSaksopplysninger(): List<ArenaSaksopplysning> =
+            groupBy { it.saksopplysningId }
+                .map { (_, rader) ->
+                    val foerste = rader.first()
+                    ArenaSaksopplysning(
+                        saksopplysningId = foerste.saksopplysningId,
+                        saksopplysningkode = foerste.saksopplysningkode,
+                        saksopplysningnavn = foerste.saksopplysningnavn,
+                        skjermbildetekst = foerste.saksopplysningSkjermbildetekst,
+                        statusRepeterbar = foerste.statusRepeterbar,
+                        verdi = foerste.saksopplysningVerdi,
+                        attributter = rader.map { rad ->
+                            ArenaSaksopplysningAttributt(
+                                attributtkode = Attributtkode.fraKode(rad.attributtkode),
+                                skjermbildetekst = rad.attributtSkjermbildetekst,
+                                formatnavn = rad.formatnavn,
+                                posisjon = rad.posisjon,
+                                verdi = rad.attributtVerdi,
+                                statusSjekketAv = rad.statusSjekketAv,
+                            )
+                        },
+                    )
+                }
+
         @Language("OracleSql")
-        private val selectSaksopplysningerForVedtakId = """
-            SELECT s.saksopplysning_id,
+        private val selectSaksopplysningerForVedtakIder = """
+            SELECT lov.vedtak_id,
+                   s.saksopplysning_id,
                    s.saksopplysningkode,
                    st.saksopplysningnavn,
                    st.skjermbildetekst  AS saksopplysning_skjermbildetekst,
@@ -62,11 +80,12 @@ class SaksopplysningRepository(private val dataSource: DataSource) {
               JOIN attributtype at  ON at.saksopplysningkode = s.saksopplysningkode
               JOIN attributt a      ON a.saksopplysning_id_eier = s.saksopplysning_id
                                    AND a.attributtype_id        = at.attributtype_id
-             WHERE lov.vedtak_id = ?
-             ORDER BY s.saksopplysningkode, at.posisjon
+             WHERE lov.vedtak_id IN ($VEDTAK_ID_LISTE_TOKEN)
+             ORDER BY lov.vedtak_id, s.saksopplysningkode, at.posisjon
         """.trimIndent()
 
         private data class SaksopplysningRad(
+            val vedtakId: Int,
             val saksopplysningId: Long,
             val saksopplysningkode: String,
             val saksopplysningnavn: String,
@@ -82,6 +101,7 @@ class SaksopplysningRepository(private val dataSource: DataSource) {
         )
 
         private fun mapperForRad(row: ResultSet) = SaksopplysningRad(
+            vedtakId = row.getInt("vedtak_id"),
             saksopplysningId = row.getLong("saksopplysning_id"),
             saksopplysningkode = row.getString("saksopplysningkode"),
             saksopplysningnavn = row.getString("saksopplysningnavn"),
