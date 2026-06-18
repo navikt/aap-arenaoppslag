@@ -28,7 +28,8 @@ from (SELECT sak_id,
           (vedtaktypekode IN ('O', 'E', 'G') AND
            (til_dato IS NULL OR til_dato >= DATE '2024-12-17')) -- vanlig tidsbuffer på 18 måneder
               OR
-          (vedtaktypekode = 'S' AND vedtakstatuskode != 'AVSLU' AND
+          (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where
+              vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S') AND
            (fra_dato IS NULL OR fra_dato >= DATE '2024-03-04')) -- ekstra tidsbuffer for Stans, som bare har fra_dato
           )
         AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND
@@ -53,7 +54,8 @@ from (SELECT sak_id,
           (vedtaktypekode IN ('O', 'E', 'G') AND
            (til_dato IS NULL OR til_dato >= DATE '2024-12-17')) -- vanlig tidsbuffer på 18 måneder
               OR
-          (vedtaktypekode = 'S' AND vedtakstatuskode != 'AVSLU' AND
+          (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where
+              vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S') AND
            (fra_dato IS NULL OR fra_dato >= DATE '2024-03-04')) -- ekstra tidsbuffer for Stans, som bare har fra_dato
           )
         AND NOT (utfallkode = 'NEI' AND til_dato IS NULL)                                 -- bruker fikk avslag
