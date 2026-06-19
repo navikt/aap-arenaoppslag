@@ -15,10 +15,6 @@ import org.slf4j.LoggerFactory
 private val logger = LoggerFactory.getLogger("App")
 private val teamLogs: Logger = LoggerFactory.getLogger("team-logs")
 
-data class FeilRespons(
-    val melding: String
-)
-
 fun Application.statusPages() {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
@@ -34,19 +30,24 @@ fun Application.statusPages() {
                 }
 
                 is JacksonException -> {
-                    logger.error("Uhåndtert deserialisingsfeil", cause)
+                    teamLogs.error("Uhåndtert feil ved deserialisering", cause)
+                    logger.error("Uhåndtert feil ved deserialisering. Se sikkerlogg for detaljer.")
 
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        FeilRespons("Feil i tjeneste: ${cause.message}"),
+                    call.respondWithError(
+                        ApiException(
+                            status = HttpStatusCode.InternalServerError,
+                            message = "Uhåndtert feil ved deserialisering",
+                        )
                     )
                 }
 
                 else -> {
                     logger.error("Uhåndtert feil", cause)
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        FeilRespons("Feil i tjeneste: ${cause.message}"),
+                    call.respondWithError(
+                        ApiException(
+                            status = HttpStatusCode.InternalServerError,
+                            message = "Feil i tjeneste: ${cause.message}"
+                        ),
                     )
                 }
             }
