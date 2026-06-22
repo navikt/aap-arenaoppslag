@@ -29,6 +29,7 @@ import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -111,7 +112,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
+fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, tilkjentYtelserService: TilkjentYtelserService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -137,10 +138,28 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
+        // Tilkjent ytelse (meldekort) er nullable — settes til null når saken ikke har noen tilkjente ytelser.
+        val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(SakId(sak.sakId.toInt()))
+            .takeIf { it.rader.isNotEmpty() }
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato)
+        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, tilkjentYtelse)
         call.respond(status = HttpStatusCode.OK, message = response)
+    }
+}
+
+fun Route.tilkjentYtelse(tilkjentYtelserService: TilkjentYtelserService) {
+    get("/sak/{sakid}/tilkjent-ytelse") {
+        // sakId er en ikke-personlig identifikator og kan derfor ligge i URL-en.
+        val sakId = call.parameters["sakid"]?.let { SakId.fromString(it) }
+        if (sakId == null) {
+            logger.info("Ugyldig eller manglende sakId")
+            return@get call.respond(HttpStatusCode.BadRequest)
+        }
+
+        logger.info("Henter tilkjente ytelser med meldekort for sak ${sakId.id}")
+        val response = tilkjentYtelserService.hentTilkjenteYtelserForSak(sakId)
+        call.respond(HttpStatusCode.OK, response)
     }
 }
 
