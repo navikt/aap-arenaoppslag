@@ -31,9 +31,9 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentSakerMedMaksDatoOgVedtak(personId: PersonId): List<Maksdatolinje> {
+    fun hentMaxdatoForSisteVedtak(personId: PersonId): Maksdatolinje? {
         return dataSource.connection.use { con ->
-            doHentSakerMedMaksDatoOgVedtak(personId, con)
+            doHentMaxdatoForSisteVedtak(personId, con)
         }
     }
 
@@ -44,12 +44,11 @@ class SakRepository(private val dataSource: DataSource) {
     }
 
     companion object {
-        private fun doHentSakerMedMaksDatoOgVedtak(personId: PersonId, connection: Connection): List<Maksdatolinje> {
+        private fun doHentMaxdatoForSisteVedtak(personId: PersonId, connection: Connection): Maksdatolinje? {
             connection.prepareStatement(selectVedtakMedNyesteMaxdatoForPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
-                // tom liste om ingen rader blir funnet
-                return resultSet.map { row -> mapperForMaksdatolinje(row) }
+                return if (resultSet.next()) mapperForMaksdatolinje(resultSet) else null
             }
         }
 
@@ -208,7 +207,6 @@ class SakRepository(private val dataSource: DataSource) {
                         AND v.person_id = ?
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
-                        AND v.vedtaktypekode != 'S'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
@@ -221,7 +219,8 @@ class SakRepository(private val dataSource: DataSource) {
             FROM nyeste_vedtak nv
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
                 JOIN sak s on s.sak_id = nv.sak_id
-            ORDER BY s.reg_dato DESC
+            ORDER BY nv.til_dato DESC
+            FETCH FIRST 1 ROW ONLY -- bare det siste vedtaket
         """.trimIndent()
     }
 

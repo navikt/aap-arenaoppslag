@@ -111,21 +111,8 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
 
     @Test
     fun `hent maksdato paa saker for person finner forventede data`() {
-        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(PersonId(100))
-        assertThat(saker).hasSize(2)
-        assertThat(saker).containsExactly(
-            // mappingen testes
-            Maksdatolinje(
-                1_10_3, 2022, 1_10_3, 1_10_3, "IKKE", "O",
-                LocalDate.of(2025, 12, 31),
-                LocalDate.of(2022, 8, 30),
-                LocalDate.of(2025, 12, 31),
-                LocalDate.of(2025, 6, 30),
-                LocalDate.of(2025, 6, 30),
-                sakRegistrert = LocalDate.of(2022, 2, 3),
-                sakAvsluttet = null,
-                sakStatus = "AKTIV",
-            ),
+        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(100))
+        assertThat(sak).isEqualTo(
             Maksdatolinje(
                 1_10_2, 2022, 1_10_2, 1_10_1, "IKKE", "O",
                 LocalDate.of(2026, 6, 30),
@@ -136,20 +123,20 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 sakRegistrert = LocalDate.of(2022, 2, 2),
                 sakAvsluttet = LocalDate.of(2024, 6, 15),
                 sakStatus = "AVSLU",
-            ),
+            )
         )
     }
 
     @Test
     fun `hent maksdato paa saker for person som mangler data`() {
-        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(PersonId(101))
-        assertThat(saker).isEmpty()
+        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(101))
+        assertThat(sak).isNull()
     }
 
     @Test
     fun `hent maksdato paa saker for person som ikke finnes`() {
-        val saker = sakRepository.hentSakerMedMaksDatoOgVedtak(PersonId(0xcafebabe.toInt()))
-        assertThat(saker).isEmpty()
+        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(0xcafebabe.toInt()))
+        assertThat(sak).isNull()
     }
 
 }
