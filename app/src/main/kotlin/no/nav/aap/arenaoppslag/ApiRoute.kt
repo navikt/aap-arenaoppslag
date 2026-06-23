@@ -8,6 +8,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
@@ -18,8 +19,6 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
@@ -32,16 +31,6 @@ import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
-    post("/person/signifikant-historikk") {
-        //TODO deprekert, skal fjernes
-        logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
-        val request: SignifikanteSakerRequest = call.receive()
-        val response: SignifikanteSakerResponse = historikkService.signifikanteSakerForPerson(
-            request.personidentifikatorer.toSet(), request.virkningstidspunkt
-        )
-
-        call.respond(response)
-    }
 
     post("/person/historikk/signifikant") {
         logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
@@ -97,6 +86,7 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
 }
 
 fun Route.maksdato(sakService: SakService, personService: PersonService) {
+    // TODO deprekert - fjern når kallere er oppdatert
     post("/maksdato") {
         logger.info("Henter maksdato-AAP for saksliste")
         val request: MaksdatoRequest = call.receive()
@@ -105,15 +95,33 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val saker = sakService.hentMaksdatoAapMedVedtakOgSak(personId)?.let {
-            listOf(it) // TODO midlertidig kode for å bevare kontrakt
+            listOf(it)
         } ?: emptyList()
 
         // dersom personen finnes i Arena men ikke har AAP-vedtak utenfor Stans blir listen tom
         call.respond(HttpStatusCode.OK, MaksdatoResponse(saker))
     }
+
+    post("/person/maksdato") {
+        logger.info("Henter maksdato-AAP for person")
+        val request: MaksdatoRequest = call.receive()
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+
+        val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSak(personId)
+
+        // dersom personen finnes i Arena men ikke har aktuelle AAP-vedtak blir ingen sak returnert
+        call.respond(HttpStatusCode.OK, MaksdatoMedVedtakResponse(sakMedSisteVedtakOgMaksdato))
+    }
 }
 
-fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService) {
+fun Route.sak(
+    sakService: SakService,
+    posteringService: PosteringService,
+    sakOgVedtakService: SakOgVedtakService,
+    telleverkService: TelleverkService
+) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
