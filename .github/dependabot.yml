@@ -18,9 +18,9 @@ updates:
     schedule:
       interval: daily
     ignore:
-      - dependency-name: "com.h2database:h2"
-      - dependency-name: "io.ktor.ktor-*"
-        versions: 3.5.0
+    - dependency-name: "com.h2database:h2"
+    - dependency-name: "io.ktor:ktor-*"
+      versions: ["3.5.0"]
     cooldown:
       default-days: 3
       exclude:
