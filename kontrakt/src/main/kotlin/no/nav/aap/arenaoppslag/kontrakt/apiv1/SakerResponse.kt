@@ -57,6 +57,7 @@ public data class VedtakMedMaksdato(
     val maxdatoAap: LocalDate?,
 )
 
+// TODO endre til singleton
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
 
 public data class SisteUtbetalingerRequest(

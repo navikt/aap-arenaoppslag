@@ -44,7 +44,7 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
             )
 
             assertThat(maksdatoForKjenteSaker.sakliste.map { it.sisteVedtak.vedtakId })
-                .containsExactly(1103, 1101)
+                .containsExactly(1101)
         }
     }
 
