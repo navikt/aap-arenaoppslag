@@ -3,12 +3,12 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("aap.conventions")
     id("com.gradleup.shadow") version "9.4.2"
-    id("io.ktor.plugin") version "3.5.0"
+    id("io.ktor.plugin") version "3.4.3"
     id("dev.detekt")
     application
 }
 
-val ktorVersion = "3.5.0"
+val ktorVersion = "3.4.3"
 
 application {
     mainClass.set("no.nav.aap.arenaoppslag.AppKt")
