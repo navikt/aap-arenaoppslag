@@ -111,10 +111,10 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
 
     @Test
     fun `hent maksdato paa saker for person finner forventede data`() {
-        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(100))
+        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(102))
         assertThat(sak).isEqualTo(
             Maksdatolinje(
-                1_10_2, 2022, 1_10_2, 1_10_1, "IKKE", "O",
+                1_12_0, 2022, 1_12_0, 1_12_1, "AU", "O",
                 LocalDate.of(2026, 6, 30),
                 LocalDate.of(2010, 8, 29),
                 LocalDate.of(2026, 6, 30),
@@ -129,7 +129,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
 
     @Test
     fun `hent maksdato paa saker for person som mangler data`() {
-        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(101))
+        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(103))
         assertThat(sak).isNull()
     }
 

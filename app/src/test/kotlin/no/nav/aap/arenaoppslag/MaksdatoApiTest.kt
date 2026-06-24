@@ -41,10 +41,10 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
         withTestServer(h2) { gateway ->
             // FakePdlGateway ekkoer fnr-en, slik at PersonService kan slå opp uten å gå mot PDL.
             val maksdatoForKjenteSaker: MaksdatoMedVedtakResponse = gateway.hentMaksdatoByPerson(
-                MaksdatoRequest("maksdato100")
+                MaksdatoRequest("maksdato102")
             )
 
-            assertThat(maksdatoForKjenteSaker.sak?.sisteVedtak?.vedtakId).isEqualTo(1101)
+            assertThat(maksdatoForKjenteSaker.sak?.sisteVedtak?.vedtakId).isEqualTo(1121)
         }
     }
 
