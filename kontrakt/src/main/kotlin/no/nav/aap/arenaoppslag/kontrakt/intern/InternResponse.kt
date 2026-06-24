@@ -7,7 +7,7 @@ public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
 
-@Deprecated("Bruk nytt endepunkt person/historikk/signifikant", level = DeprecationLevel.WARNING)
+@Deprecated("Bruk nytt endepunkt person/historikk/signifikant", level = DeprecationLevel.ERROR)
 public data class SignifikanteSakerResponse(
     val harSignifikantHistorikk: Boolean,
     val signifikanteSaker: List<String> // signifikante Arena-saker, sortert på dato, nyeste først

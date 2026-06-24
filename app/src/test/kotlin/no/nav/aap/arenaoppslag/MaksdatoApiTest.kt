@@ -4,6 +4,7 @@ import io.ktor.client.plugins.*
 import io.ktor.http.*
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import org.assertj.core.api.Assertions.assertThat
@@ -15,7 +16,7 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
     fun `Henter ut maksdato by fodselsnummer, ukjent person`() {
         withTestServer(h2) { gateway ->
             val result = runCatching {
-                gateway.hentMaksdatoBySakIdListe(
+                gateway.hentMaksdatoByPerson(
                     MaksdatoRequest("ukjent")
                 )
             }
@@ -28,10 +29,10 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
     @Test
     fun `Henter ut maksdato by fodselsnummer, person uten AAP-vedtak ikke i Stans`() {
         withTestServer(h2) { gateway ->
-            val maksdatoForUkjenteSaker: MaksdatoResponse = gateway.hentMaksdatoBySakIdListe(
+            val maksdatoForUkjenteSaker: MaksdatoMedVedtakResponse = gateway.hentMaksdatoByPerson(
                 MaksdatoRequest("annen101")
             )
-            assertThat(maksdatoForUkjenteSaker.sakliste).isEmpty()
+            assertThat(maksdatoForUkjenteSaker.sak).isNull()
         }
     }
 
@@ -39,12 +40,11 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
     fun `Henter ut maksdato by fodselsnummer, kjente saker`() {
         withTestServer(h2) { gateway ->
             // FakePdlGateway ekkoer fnr-en, slik at PersonService kan slå opp uten å gå mot PDL.
-            val maksdatoForKjenteSaker: MaksdatoResponse = gateway.hentMaksdatoBySakIdListe(
+            val maksdatoForKjenteSaker: MaksdatoMedVedtakResponse = gateway.hentMaksdatoByPerson(
                 MaksdatoRequest("maksdato100")
             )
 
-            assertThat(maksdatoForKjenteSaker.sakliste.map { it.sisteVedtak.vedtakId })
-                .containsExactly(1103, 1101)
+            assertThat(maksdatoForKjenteSaker.sak?.sisteVedtak?.vedtakId).isEqualTo(1101)
         }
     }
 

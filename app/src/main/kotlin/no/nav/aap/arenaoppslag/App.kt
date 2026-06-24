@@ -240,7 +240,6 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     telleverkService = telleverkService,
                     saksopplysningService = saksopplysningService
                 )
-                saksopplysningerForVedtak(saksopplysningService)
             }
         }
     }

@@ -57,7 +57,10 @@ public data class VedtakMedMaksdato(
     val maxdatoAap: LocalDate?,
 )
 
+@Deprecated("Bruk MaksdatoMedVedtakResponse")
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
+
+public data class MaksdatoMedVedtakResponse(val sak: SakMedSisteVedtakOgMaksdato?)
 
 public data class SisteUtbetalingerRequest(
     val personidentifikator: String

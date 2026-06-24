@@ -10,18 +10,16 @@ import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.SignifikanteSakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import java.time.LocalDate
 
 class HistorikkService(
-    private val personRepository: PersonRepository, // fixme fjernes
+    private val personRepository: PersonRepository,
     private val historikkRepository: HistorikkRepository,
 ) {
 
     // Lagrer mappingen fødselsnr -> arena-personId. Bare treff i databasen lagres.
-    // TODO deprekert, fjern
     @Suppress("MagicNumber")
     private val personIdCache = Caffeine.newBuilder()
         .maximumSize(30_000)
@@ -30,28 +28,6 @@ class HistorikkService(
 
     init {
         CaffeineCacheMetrics.monitor(prometheus, personIdCache, "arenaoppslag_person_id")
-    }
-
-    @Deprecated("Bruk signifikantHistorikk")
-    fun signifikanteSakerForPerson(
-        fodselsnummerene: Set<String>, virkningstidspunkt: LocalDate
-    ): SignifikanteSakerResponse {
-        val personId: Int? = hentPersonId(fodselsnummerene)
-        if (personId == null) {
-            // Personen finnes ikke i AAP-Arena i det hele tatt
-            return SignifikanteSakerResponse(harSignifikantHistorikk = false, signifikanteSaker = emptyList())
-        }
-
-        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
-            personId,
-            virkningstidspunkt
-        )
-        rapporterMetrikker(signifikanteVedtak)
-
-        val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
-        val arenaSakIdListe = sorterVedtak(signifikanteVedtak).map { it.sakId }.distinct()
-
-        return SignifikanteSakerResponse(harSignifikantHistorikk, arenaSakIdListe)
     }
 
     fun signifikantHistorikk(
@@ -100,7 +76,7 @@ class HistorikkService(
     }
 
     private fun hentPersonId(fodselsnummerene: Set<String>): Int? {
-        // TODO deprekert, fjern
+        // TODO deprekert, fjern når kallere er oppdatert
         return fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
             ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
                 ?.also { funnetPersonId ->
