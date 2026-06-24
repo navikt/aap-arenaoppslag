@@ -123,7 +123,7 @@ data class ArenaSakMedVedtak(
         telleverkForPerson = telleverkForPerson,
         kvoteHistorikk = kvoteHistorikk,
         maksdato = maksdato,
-        sisteUtbetalingDato = sisteUtbetalingDato
+        sisteUtbetalingDato = sisteUtbetalingDato,
     )
 }
 

@@ -27,6 +27,7 @@ import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
+import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
@@ -116,12 +117,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(
-    sakService: SakService,
-    posteringService: PosteringService,
-    sakOgVedtakService: SakOgVedtakService,
-    telleverkService: TelleverkService
-) {
+fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -147,9 +143,17 @@ fun Route.sak(
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
+        val saksopplysningerPerVedtak = saksopplysningService.hentForVedtakIder(sak.vedtak.map { it.vedtakId })
+        val alleSaksopplysninger = sak.vedtak.associate { vedtak ->
+            vedtak.vedtakId to (saksopplysningerPerVedtak[vedtak.vedtakId] ?: emptyList())
+        }
+        val samordningPerVedtak = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
+        val sakMedSamordning = sak.copy(
+            vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
+        )
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato)
+        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
