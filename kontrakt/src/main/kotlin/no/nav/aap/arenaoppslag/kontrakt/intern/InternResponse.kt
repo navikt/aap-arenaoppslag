@@ -7,6 +7,12 @@ public data class PersonEksistererIAAPArena(
     val eksisterer: Boolean
 )
 
+@Deprecated("Bruk nytt endepunkt person/historikk/signifikant", level = DeprecationLevel.ERROR)
+public data class SignifikanteSakerResponse(
+    val harSignifikantHistorikk: Boolean,
+    val signifikanteSaker: List<String> // signifikante Arena-saker, sortert på dato, nyeste først
+)
+
 public data class Person(val personIdentifikator: String, val fornavn: String, val etternavn: String)
 
 public data class PerioderResponse(
