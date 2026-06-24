@@ -31,29 +31,26 @@ class SakService(private val sakRepository: SakRepository) {
         }
     }
 
-    fun hentMaksdatoAapForVedtakISaker(personId: PersonId): List<SakMedSisteVedtakOgMaksdato> {
-        val sakerMedVedtak = sakRepository.hentSakerMedMaksDatoOgVedtak(personId)
-        return sakerMedVedtak.map { it.tilKontrakt() }
+    fun hentMaksdatoAapMedVedtakOgSak(personId: PersonId): SakMedSisteVedtakOgMaksdato? {
+        val sakMedVedtak = sakRepository.hentMaxdatoForSisteVedtak(personId)
+        return sakMedVedtak?.tilKontrakt()
     }
 
-
-    /** Maksdato er funner basert på reglen:
+    /** Maksdato er funnet basert på reglen:
      * Finner siste AAP-vedtak for denne brukeren
-     * Finner sak knytet til dette vedtaket
+     * Finner sak knyttet til dette vedtaket
      * Hvis løpende vedtak. Returner beregnet maksdato
      * Hvis sak som har gått til maks: Returner maksdato
-     * Hvis siste vedtak er stansvedtak: Returnere null
+     * Hvis siste vedtak er stansvedtak (S): Returnere null
      * Hvis vi ikke finner noen relevante saker: Returnere null
      */
     fun hentMaksdatoAapForPerson(personId: PersonId): LocalDate? {
-        val maksdatoene = hentMaksdatoAapForVedtakISaker(personId)
-        val sisteSak = maksdatoene
-            .filter { it.sisteVedtak.maxdatoAap != null }.maxByOrNull { it.sisteVedtak.maxdatoAap!! }
-        if (sisteSak == null) return null
+        val sisteVedtak = hentMaksdatoAapMedVedtakOgSak(personId)?.sisteVedtak
 
-        return sisteSak.sisteVedtak.maxdatoAap
+        return sisteVedtak
+            ?.takeUnless { it.vedtaktypeKode == "S" }
+            ?.maxdatoAap
     }
-
 
 
 }

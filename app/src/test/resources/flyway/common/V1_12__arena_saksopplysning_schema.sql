@@ -1,0 +1,97 @@
+--------------------------------------------------------------------------------
+-- SAKSOPPLYSNINGTYPE
+--------------------------------------------------------------------------------
+CREATE TABLE "SAKSOPPLYSNINGTYPE"
+(
+    "SAKSOPPLYSNINGKODE"   VARCHAR2(10)  NOT NULL,
+    "SAKSOPPLYSNINGNAVN"   VARCHAR2(30)  NOT NULL,
+    "SKJERMBILDETEKST"     VARCHAR2(255) NOT NULL,
+    "BESKRIVELSE"          VARCHAR2(255),
+    "STATUS_REPETERBAR"    VARCHAR2(1)   DEFAULT 'N' NOT NULL,
+    "STATUS_SOKEKNAPPNULL" VARCHAR2(1),
+    "SOKEKNAPPNAVN"        VARCHAR2(10),
+    "SOKEBILDE"            VARCHAR2(30),
+    "REG_DATO"             DATE,
+    "REG_USER"             VARCHAR2(8),
+    "MOD_DATO"             DATE,
+    "MOD_USER"             VARCHAR2(8),
+    CONSTRAINT "SAKSOPPLTYP_PK"  PRIMARY KEY ("SAKSOPPLYSNINGKODE"),
+    CONSTRAINT "SAKSOPPLTYP_UK"  UNIQUE ("SAKSOPPLYSNINGNAVN"),
+    CONSTRAINT "SAKSOPPLTYP_CK"  CHECK (STATUS_REPETERBAR    IN ('J', 'N')),
+    CONSTRAINT "SAKSOPPLTYP_CK2" CHECK (STATUS_SOKEKNAPPNULL IN ('J', 'N'))
+);
+
+--------------------------------------------------------------------------------
+-- SAKSOPPLYSNING
+-- Saksopplysninger tilhører en SAK. Koblingen til et konkret vedtak
+-- skjer via LOV_VEDTAK_SAKSOPPLYSNING.
+--------------------------------------------------------------------------------
+CREATE TABLE "SAKSOPPLYSNING"
+(
+    "SAKSOPPLYSNING_ID"  NUMBER        NOT NULL,
+    "SAK_ID"             NUMBER        NOT NULL,
+    "SAKSOPPLYSNINGKODE" VARCHAR2(10)  NOT NULL,
+    "VERDI"              VARCHAR2(2000),
+    "STATUS_FROSSET"     VARCHAR2(1)   DEFAULT 'N' NOT NULL,
+    "REG_DATO"           DATE,
+    "REG_USER"           VARCHAR2(8),
+    "MOD_DATO"           DATE,
+    "MOD_USER"           VARCHAR2(8),
+    "PARTISJON"          NUMBER(8, 0),
+    CONSTRAINT "SAKSOPPL_PK"      PRIMARY KEY ("SAKSOPPLYSNING_ID"),
+    CONSTRAINT "SAKSOPPL_SAK_FK"  FOREIGN KEY ("SAK_ID")
+        REFERENCES "SAK" ("SAK_ID"),
+    CONSTRAINT "SAKSOPPL_TYPE_FK" FOREIGN KEY ("SAKSOPPLYSNINGKODE")
+        REFERENCES "SAKSOPPLYSNINGTYPE" ("SAKSOPPLYSNINGKODE"),
+    CONSTRAINT "SAKSOPPL_FROS_CK" CHECK (STATUS_FROSSET IN ('J', 'N'))
+);
+
+CREATE INDEX "SOP_SAK_FKI"    ON "SAKSOPPLYSNING" ("SAK_ID", "SAKSOPPLYSNING_ID", "SAKSOPPLYSNINGKODE", "STATUS_FROSSET");
+CREATE INDEX "SOP_SOPTYP_FKI" ON "SAKSOPPLYSNING" ("SAKSOPPLYSNINGKODE", "SAKSOPPLYSNING_ID", "SAK_ID", "STATUS_FROSSET");
+
+--------------------------------------------------------------------------------
+-- ATTRIBUTTYPE
+--------------------------------------------------------------------------------
+CREATE TABLE "ATTRIBUTTYPE"
+(
+    "ATTRIBUTTYPE_ID"    NUMBER        NOT NULL,
+    "SAKSOPPLYSNINGKODE" VARCHAR2(10)  NOT NULL,
+    "ATTRIBUTTKODE"      VARCHAR2(20)  NOT NULL,
+    "SKJERMBILDETEKST"   VARCHAR2(255),
+    "FORMATNAVN"         VARCHAR2(255),
+    "POSISJON"           NUMBER(5, 0)  NOT NULL,
+    CONSTRAINT "ATTRTYP_PK"      PRIMARY KEY ("ATTRIBUTTYPE_ID"),
+    CONSTRAINT "ATTRTYP_TYPE_FK" FOREIGN KEY ("SAKSOPPLYSNINGKODE")
+        REFERENCES "SAKSOPPLYSNINGTYPE" ("SAKSOPPLYSNINGKODE")
+);
+
+--------------------------------------------------------------------------------
+-- ATTRIBUTT
+--------------------------------------------------------------------------------
+CREATE TABLE "ATTRIBUTT"
+(
+    "ATTRIBUTT_ID"           NUMBER      NOT NULL,
+    "SAKSOPPLYSNING_ID_EIER" NUMBER      NOT NULL,
+    "ATTRIBUTTYPE_ID"        NUMBER      NOT NULL,
+    "VERDI"                  VARCHAR2(2000),
+    "STATUS_SJEKKET_AV"      VARCHAR2(1),
+    CONSTRAINT "ATTR_PK"          PRIMARY KEY ("ATTRIBUTT_ID"),
+    CONSTRAINT "ATTR_SAKSOPPL_FK" FOREIGN KEY ("SAKSOPPLYSNING_ID_EIER")
+        REFERENCES "SAKSOPPLYSNING" ("SAKSOPPLYSNING_ID"),
+    CONSTRAINT "ATTR_ATTRTYP_FK"  FOREIGN KEY ("ATTRIBUTTYPE_ID")
+        REFERENCES "ATTRIBUTTYPE" ("ATTRIBUTTYPE_ID")
+);
+
+--------------------------------------------------------------------------------
+-- LOV_VEDTAK_SAKSOPPLYSNING
+--------------------------------------------------------------------------------
+CREATE TABLE "LOV_VEDTAK_SAKSOPPLYSNING"
+(
+    "VEDTAK_ID"          BIGINT NOT NULL,
+    "SAKSOPPLYSNING_ID"  NUMBER NOT NULL,
+    CONSTRAINT "LOVVS_PK"          PRIMARY KEY ("VEDTAK_ID", "SAKSOPPLYSNING_ID"),
+    CONSTRAINT "LOVVS_VEDTAK_FK"   FOREIGN KEY ("VEDTAK_ID")
+        REFERENCES "VEDTAK" ("VEDTAK_ID"),
+    CONSTRAINT "LOVVS_SAKSOPPL_FK" FOREIGN KEY ("SAKSOPPLYSNING_ID")
+        REFERENCES "SAKSOPPLYSNING" ("SAKSOPPLYSNING_ID")
+);

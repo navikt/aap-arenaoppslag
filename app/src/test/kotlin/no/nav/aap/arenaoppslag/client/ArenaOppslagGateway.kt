@@ -15,6 +15,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
@@ -63,6 +64,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): MaksdatoResponse =
         gjørArenaOppslag<MaksdatoResponse, MaksdatoRequest>(
             "/api/v1/maksdato", req
+        ).getOrThrow()
+
+    suspend fun hentMaksdatoByPerson(
+        req: MaksdatoRequest
+    ): MaksdatoMedVedtakResponse =
+        gjørArenaOppslag<MaksdatoMedVedtakResponse, MaksdatoRequest>(
+            "/api/v1/person/maksdato", req
         ).getOrThrow()
 
     suspend fun hentSisteUtbetalingISaker(

@@ -24,6 +24,7 @@ import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.PosteringRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.database.SaksopplysningRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
@@ -40,6 +41,7 @@ import no.nav.aap.arenaoppslag.service.InternService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
+import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import org.slf4j.LoggerFactory
@@ -201,6 +203,11 @@ private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): 
     return PersonService(personRepository, pdlGateway)
 }
 
+private fun skapSaksopplysningService(datasource: DataSource): SaksopplysningService {
+    val saksopplysningRepository = SaksopplysningRepository(datasource)
+    return SaksopplysningService(saksopplysningRepository)
+}
+
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
@@ -209,6 +216,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val historikkService = skapHistorikkService(datasource)
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
+    val saksopplysningService = skapSaksopplysningService(datasource)
     val tilkjentYtelserService = skapTilkjentYtelserService(datasource)
 
     routing {
@@ -239,6 +247,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     posteringService = utbetalingService,
                     sakOgVedtakService = sakOgVedtakService,
                     telleverkService = telleverkService,
+                    saksopplysningService = saksopplysningService,
                     tilkjentYtelserService = tilkjentYtelserService
                 )
                 tilkjentYtelse(tilkjentYtelserService)

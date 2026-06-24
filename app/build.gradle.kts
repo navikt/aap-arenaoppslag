@@ -26,8 +26,8 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
 dependencies {
     implementation(project(":kontrakt"))
     implementation("com.natpryce:konfig:1.6.10.0")
-    implementation("no.nav.aap.kelvin:server:2.0.61")
-    implementation("no.nav.aap.kelvin:infrastructure:2.0.61")
+    implementation("no.nav.aap.kelvin:server:2.0.73")
+    implementation("no.nav.aap.kelvin:infrastructure:2.0.73")
 
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
@@ -44,24 +44,24 @@ dependencies {
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.3")
-    implementation("io.micrometer:micrometer-registry-prometheus:1.16.5")
-    implementation("ch.qos.logback:logback-classic:1.5.33")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.0")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.17.0")
+    implementation("ch.qos.logback:logback-classic:1.5.34")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
 
     implementation("com.oracle.database.jdbc:ojdbc11:23.26.2.0.0")
-    implementation("com.zaxxer:HikariCP:7.0.2")
+    implementation("com.zaxxer:HikariCP:7.1.0")
 
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("com.nimbusds:nimbus-jose-jwt:10.9")
-    testImplementation("org.flywaydb:flyway-core:12.6.2")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:10.9.1")
+    testImplementation("org.flywaydb:flyway-core:12.9.0")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    testImplementation("com.h2database:h2:2.3.232") // nyeste versjon offisielt støttet av flyway 12.0.3
-    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("com.h2database:h2:2.3.232") // 2.3.232 er nyeste versjon offisielt støttet av flyway 12.9.0
+    testImplementation("io.mockk:mockk:1.14.11")
 }
 
 tasks {

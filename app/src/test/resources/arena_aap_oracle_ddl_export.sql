@@ -3048,3 +3048,173 @@ ALTER TABLE "SIAMO"."VILKAARSTATUS" ADD CONSTRAINT "VILKST_PK" PRIMARY KEY ("VIL
   TABLESPACE "DATA1L"  ENABLE;
 ALTER TABLE "SIAMO"."VILKAARSTATUS" MODIFY ("VILKAARSTATUSKODE" NOT NULL ENABLE);
 ALTER TABLE "SIAMO"."VILKAARSTATUS" MODIFY ("VILKAARSTATUSNAVN" NOT NULL ENABLE);
+
+
+--------------------------------------------------------
+--  DDL for Table FORMATVERDI
+--------------------------------------------------------
+
+CREATE TABLE "SIAMO"."FORMATVERDI"
+(	"FORMATNAVN" VARCHAR2(255 BYTE),
+     "VERDIKODE" VARCHAR2(100 BYTE),
+     "VERDINAVN" VARCHAR2(255 BYTE),
+     "DATO_FRA" DATE,
+     "DATO_TIL" DATE,
+     "REG_USER" VARCHAR2(8 BYTE),
+     "REG_DATO" DATE,
+     "MOD_USER" VARCHAR2(8 BYTE),
+     "MOD_DATO" DATE,
+     "INNTEKTKLASSEKODE" VARCHAR2(1 BYTE),
+     "TILLEGGSINFOTYPE" VARCHAR2(50 BYTE),
+     "TILLEGGSINFOVERDI" VARCHAR2(100 BYTE),
+     "GYLDIG_DATO_TIL" DATE,
+     "GYLDIG_DATO_FRA" DATE,
+     CONSTRAINT "FMTVERD_PK" PRIMARY KEY ("FORMATNAVN", "VERDIKODE") ENABLE
+) ;
+
+COMMENT ON COLUMN "SIAMO"."FORMATVERDI"."FORMATNAVN" IS 'Referanse til FORMAT, navn på verdiliste';
+   COMMENT ON COLUMN "SIAMO"."FORMATVERDI"."VERDIKODE" IS 'Selve verdien i brukt i verdilista';
+   COMMENT ON COLUMN "SIAMO"."FORMATVERDI"."VERDINAVN" IS 'Beskrivende navn på rad i verdilista';
+   COMMENT ON COLUMN "SIAMO"."FORMATVERDI"."DATO_FRA" IS 'Tidligste dato verdien skal kunne velges / vil vises i verdiliste (benytter dagens dato)';
+   COMMENT ON COLUMN "SIAMO"."FORMATVERDI"."DATO_TIL" IS 'Siste dato verdien skal kunne velges / vil vises i verdiliste (benytter dagens dato)';
+   COMMENT ON COLUMN "SIAMO"."FORMATVERDI"."INNTEKTKLASSEKODE" IS 'Intektsklasse, bare for formatnavn Inntektskode';
+   COMMENT ON COLUMN "SIAMO"."FORMATVERDI"."GYLDIG_DATO_TIL" IS 'Siste dato verdien skal kunne benyttes i et vedtak (vedtakets fra-dato)';
+   COMMENT ON COLUMN "SIAMO"."FORMATVERDI"."GYLDIG_DATO_FRA" IS 'Tidligste dato verdien skal kunne benyttes i et vedtak (vedtakets fra-dato)';
+   COMMENT ON TABLE "SIAMO"."FORMATVERDI"  IS 'Inneholder alle verdier i verdilister for saksopplysninger';
+--------------------------------------------------------
+--  DDL for Index FMTVERD_PK
+--------------------------------------------------------
+
+CREATE UNIQUE INDEX "SIAMO"."FMTVERD_PK" ON "SIAMO"."FORMATVERDI" ("FORMATNAVN", "VERDIKODE") ;
+--------------------------------------------------------
+--  DDL for Index FMTVERD_INTKL_FKI
+--------------------------------------------------------
+
+CREATE INDEX "SIAMO"."FMTVERD_INTKL_FKI" ON "SIAMO"."FORMATVERDI" ("INNTEKTKLASSEKODE") ;
+--------------------------------------------------------
+--  Constraints for Table FORMATVERDI
+--------------------------------------------------------
+
+ALTER TABLE "SIAMO"."FORMATVERDI" MODIFY ("FORMATNAVN" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."FORMATVERDI" MODIFY ("VERDIKODE" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."FORMATVERDI" MODIFY ("VERDINAVN" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."FORMATVERDI" ADD CONSTRAINT "FMTVERD_PK" PRIMARY KEY ("FORMATNAVN", "VERDIKODE");
+--------------------------------------------------------
+--  Ref Constraints for Table FORMATVERDI
+--------------------------------------------------------
+
+ALTER TABLE "SIAMO"."FORMATVERDI" ADD CONSTRAINT "FMTVERD_FMT_FK" FOREIGN KEY ("FORMATNAVN")
+    REFERENCES "SIAMO"."FORMAT" ("FORMATNAVN") ENABLE;
+ALTER TABLE "SIAMO"."FORMATVERDI" ADD CONSTRAINT "FMTVERD_INTKL_FK" FOREIGN KEY ("INNTEKTKLASSEKODE")
+    REFERENCES "SIAMO"."INNTEKTKLASSE" ("INNTEKTKLASSEKODE") ENABLE;
+
+--------------------------------------------------------
+--  DDL for Table SAKSOPPLYSNINGTYPE
+--------------------------------------------------------
+
+CREATE TABLE "SIAMO"."SAKSOPPLYSNINGTYPE"
+(	"SAKSOPPLYSNINGKODE" VARCHAR2(10 BYTE),
+     "SAKSOPPLYSNINGNAVN" VARCHAR2(30 BYTE),
+     "SKJERMBILDETEKST" VARCHAR2(255 BYTE),
+     "BESKRIVELSE" VARCHAR2(255 BYTE),
+     "STATUS_REPETERBAR" VARCHAR2(1 BYTE) DEFAULT 'N',
+     "STATUS_SOKEKNAPPNULL" VARCHAR2(1 BYTE),
+     "SOKEKNAPPNAVN" VARCHAR2(10 BYTE),
+     "SOKEBILDE" VARCHAR2(30 BYTE),
+     "REG_DATO" DATE,
+     "REG_USER" VARCHAR2(8 BYTE),
+     "MOD_DATO" DATE,
+     "MOD_USER" VARCHAR2(8 BYTE),
+     CONSTRAINT "SOPTYP_PK" PRIMARY KEY ("SAKSOPPLYSNINGKODE") ENABLE
+) ;
+
+COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNINGTYPE"."SAKSOPPLYSNINGKODE" IS 'Kode som entydig identifiserer en typeverdi';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNINGTYPE"."SAKSOPPLYSNINGNAVN" IS 'Saksopplysningnavn';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNINGTYPE"."SKJERMBILDETEKST" IS 'Tekststreng for visning i skjermbilde';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNINGTYPE"."BESKRIVELSE" IS 'Generell beskrivelse';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNINGTYPE"."STATUS_REPETERBAR" IS 'Referanse til STATUS_JN, J = repeterbar, N = ikke repeterbar';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNINGTYPE"."STATUS_SOKEKNAPPNULL" IS 'Referanse til STATUS_JN';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNINGTYPE"."SOKEKNAPPNAVN" IS 'Søkeknappnavn';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNINGTYPE"."SOKEBILDE" IS 'Søkebilde, angir skjermbildet som skal brukes til søk';
+   COMMENT ON TABLE "SIAMO"."SAKSOPPLYSNINGTYPE"  IS 'Angir typer av saksopplysninger';
+--------------------------------------------------------
+--  DDL for Index SOPTYP_PK
+--------------------------------------------------------
+
+CREATE UNIQUE INDEX "SIAMO"."SOPTYP_PK" ON "SIAMO"."SAKSOPPLYSNINGTYPE" ("SAKSOPPLYSNINGKODE") ;
+--------------------------------------------------------
+--  DDL for Index SOPTYP_UK
+--------------------------------------------------------
+
+CREATE UNIQUE INDEX "SIAMO"."SOPTYP_UK" ON "SIAMO"."SAKSOPPLYSNINGTYPE" ("SAKSOPPLYSNINGNAVN") ;
+--------------------------------------------------------
+--  Constraints for Table SAKSOPPLYSNINGTYPE
+--------------------------------------------------------
+
+ALTER TABLE "SIAMO"."SAKSOPPLYSNINGTYPE" ADD CONSTRAINT "SOPTYP_UK" UNIQUE ("SAKSOPPLYSNINGNAVN")
+    USING INDEX "SIAMO"."SOPTYP_UK"  ENABLE;
+ALTER TABLE "SIAMO"."SAKSOPPLYSNINGTYPE" ADD CONSTRAINT "SOPTYP_STATJN_CK" CHECK (status_repeterbar in ('J','N')) ENABLE;
+ALTER TABLE "SIAMO"."SAKSOPPLYSNINGTYPE" ADD CONSTRAINT "SOPTYP_STATJN_CK2" CHECK (status_sokeknappnull in ('J','N')) ENABLE;
+ALTER TABLE "SIAMO"."SAKSOPPLYSNINGTYPE" MODIFY ("SAKSOPPLYSNINGKODE" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."SAKSOPPLYSNINGTYPE" MODIFY ("SAKSOPPLYSNINGNAVN" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."SAKSOPPLYSNINGTYPE" MODIFY ("SKJERMBILDETEKST" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."SAKSOPPLYSNINGTYPE" MODIFY ("STATUS_REPETERBAR" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."SAKSOPPLYSNINGTYPE" ADD CONSTRAINT "SOPTYP_PK" PRIMARY KEY ;
+--------------------------------------------------------
+--  DDL for Table SAKSOPPLYSNING
+--------------------------------------------------------
+
+CREATE TABLE "SIAMO"."SAKSOPPLYSNING"
+(	"SAKSOPPLYSNING_ID" NUMBER,
+     "SAK_ID" NUMBER,
+     "SAKSOPPLYSNINGKODE" VARCHAR2(10 BYTE),
+     "VERDI" VARCHAR2(2000 BYTE),
+     "REG_DATO" DATE,
+     "REG_USER" VARCHAR2(8 BYTE),
+     "MOD_DATO" DATE,
+     "MOD_USER" VARCHAR2(8 BYTE),
+     "STATUS_FROSSET" VARCHAR2(1 BYTE) DEFAULT 'N',
+     "PARTISJON" NUMBER(8,0)
+) ;
+
+COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNING"."SAKSOPPLYSNING_ID" IS 'Generert Oracle-sekvens som entydig identifiserer posten';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNING"."SAK_ID" IS 'Referanse til SAK';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNING"."SAKSOPPLYSNINGKODE" IS 'Referanse til SAKSOPPLYSNINGTYPE';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNING"."VERDI" IS 'Verdi, innhold i saksopplysningen';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNING"."STATUS_FROSSET" IS 'Status frosset. J = kan ikke endres. N = kan endres.';
+   COMMENT ON COLUMN "SIAMO"."SAKSOPPLYSNING"."PARTISJON" IS 'Partisjonsnøkkel';
+   COMMENT ON TABLE "SIAMO"."SAKSOPPLYSNING"  IS 'Saksopplysning i en aktuell sak';
+--------------------------------------------------------
+--  DDL for Index SOP_SAK_FKI
+--------------------------------------------------------
+
+CREATE INDEX "SIAMO"."SOP_SAK_FKI" ON "SIAMO"."SAKSOPPLYSNING" ("SAK_ID", "SAKSOPPLYSNING_ID", "SAKSOPPLYSNINGKODE", "STATUS_FROSSET") ;
+--------------------------------------------------------
+--  DDL for Index SOP_SOPTYP_FKI
+--------------------------------------------------------
+
+CREATE INDEX "SIAMO"."SOP_SOPTYP_FKI" ON "SIAMO"."SAKSOPPLYSNING" ("SAKSOPPLYSNINGKODE", "SAKSOPPLYSNING_ID", "SAK_ID", "STATUS_FROSSET") ;
+--------------------------------------------------------
+--  DDL for Index SOP_PK
+--------------------------------------------------------
+
+CREATE UNIQUE INDEX "SIAMO"."SOP_PK" ON "SIAMO"."SAKSOPPLYSNING" ("SAKSOPPLYSNING_ID") ;
+--------------------------------------------------------
+--  Constraints for Table SAKSOPPLYSNING
+--------------------------------------------------------
+
+ALTER TABLE "SIAMO"."SAKSOPPLYSNING" ADD CONSTRAINT "SOP_PK" PRIMARY KEY ("SAKSOPPLYSNING_ID")
+    USING INDEX "SIAMO"."SOP_PK"  ENABLE;
+ALTER TABLE "SIAMO"."SAKSOPPLYSNING" ADD CONSTRAINT "SOP_STATJN_CK" CHECK (status_frosset in ('J','N')) ENABLE;
+ALTER TABLE "SIAMO"."SAKSOPPLYSNING" MODIFY ("SAKSOPPLYSNING_ID" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."SAKSOPPLYSNING" MODIFY ("SAK_ID" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."SAKSOPPLYSNING" MODIFY ("SAKSOPPLYSNINGKODE" NOT NULL ENABLE);
+ALTER TABLE "SIAMO"."SAKSOPPLYSNING" MODIFY ("STATUS_FROSSET" NOT NULL ENABLE);
+--------------------------------------------------------
+--  Ref Constraints for Table SAKSOPPLYSNING
+--------------------------------------------------------
+
+ALTER TABLE "SIAMO"."SAKSOPPLYSNING" ADD CONSTRAINT "SOP_SAK_FK" FOREIGN KEY ("SAK_ID")
+    REFERENCES "SIAMO"."SAK" ("SAK_ID") ENABLE;
+ALTER TABLE "SIAMO"."SAKSOPPLYSNING" ADD CONSTRAINT "SOP_SOPTYP_FK" FOREIGN KEY ("SAKSOPPLYSNINGKODE")
+    REFERENCES "SIAMO"."SAKSOPPLYSNINGTYPE" ("SAKSOPPLYSNINGKODE") ENABLE;
