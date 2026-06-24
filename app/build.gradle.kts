@@ -60,7 +60,7 @@ dependencies {
     testImplementation("org.flywaydb:flyway-core:12.9.0")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    testImplementation("com.h2database:h2:2.3.240") // 2.3.232 er nyeste versjon offisielt støttet av flyway 12.9.0
+    testImplementation("com.h2database:h2:2.3.232") // 2.3.232 er nyeste versjon offisielt støttet av flyway 12.9.0
     testImplementation("io.mockk:mockk:1.14.11")
 }
 
