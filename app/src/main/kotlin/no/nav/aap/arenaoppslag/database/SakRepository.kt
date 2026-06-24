@@ -205,6 +205,7 @@ class SakRepository(private val dataSource: DataSource) {
                         JOIN VEDTAKFAKTA vf ON v.vedtak_id = vf.vedtak_id
                     WHERE vf.vedtakfaktakode = 'AAPVILKUNN'
                         AND v.person_id = ?
+                        AND aktfasekode IN ('UA', 'AU') 
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
