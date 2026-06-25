@@ -10,6 +10,7 @@ plugins {
 
 val ktorVersion = "3.4.3"
 val jacksonVersion = "2.22.0"
+val jackson3Version = "3.2.0"
 val nettyVersion = "4.2.15.Final"
 
 application {
@@ -30,6 +31,8 @@ dependencies {
     // Overstyr versjoner ktor setter, for å få sikkerhetsfikser
     implementation(platform("io.netty:netty-bom:$nettyVersion"))
     implementation(platform("com.fasterxml.jackson:jackson-bom:$jacksonVersion"))
+    // Overstyr versjoner logstash setter, for å få sikkerhetsfikser
+    implementation(platform("tools.jackson:jackson-bom:$jackson3Version"))
 
     implementation(project(":kontrakt"))
     implementation("com.natpryce:konfig:1.6.10.0")
