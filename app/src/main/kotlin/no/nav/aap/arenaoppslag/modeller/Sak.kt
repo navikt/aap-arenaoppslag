@@ -1,6 +1,8 @@
 package no.nav.aap.arenaoppslag.modeller
 
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakOppsummeringKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakPersonKontrakt
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -125,6 +127,18 @@ data class ArenaSakMedVedtak(
         maksdato = maksdato,
         sisteUtbetalingDato = sisteUtbetalingDato,
     )
+
+    fun tilKontrakt() = ArenaSakMedVedtakResponse(
+        sakId = sakId,
+        opprettetAar = opprettetAar,
+        lopenr = lopenr,
+        person = person.tilKontrakt(),
+        statuskode = statuskode,
+        statusnavn = statusnavn,
+        registrertDato = registrertDato,
+        avsluttetDato = avsluttetDato,
+        vedtak = vedtak.map { it.tilKontrakt() },
+    )
 }
 
 data class ArenaSakPerson(
@@ -132,7 +146,14 @@ data class ArenaSakPerson(
     val fodselsnummer: String,
     val fornavn: String,
     val etternavn: String,
-)
+) {
+    fun tilKontrakt() = ArenaSakPersonKontrakt(
+        personId = personId,
+        fodselsnummer = fodselsnummer,
+        fornavn = fornavn,
+        etternavn = etternavn,
+    )
+}
 
 fun ArenaSak.toArenaSakMedVedtak(vedtak: List<ArenaVedtakMedDetaljer>) =
     ArenaSakMedVedtak(

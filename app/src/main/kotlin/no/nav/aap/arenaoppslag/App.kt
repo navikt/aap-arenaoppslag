@@ -229,11 +229,12 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 maksdato(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
+                sak(sakOgVedtakService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
                 // Kontrakten på disse endepunktene kan endre seg helt uten forvarsel
-                sak(
+                sakDetaljert(
                     sakService = sakListeService,
                     posteringService = utbetalingService,
                     sakOgVedtakService = sakOgVedtakService,

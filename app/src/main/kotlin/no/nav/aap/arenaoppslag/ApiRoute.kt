@@ -117,7 +117,33 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService) {
+fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
+    get("/sak/{sakid}") {
+        val sakid = call.parameters["sakid"]
+
+        if (sakid == null) {
+            logger.info("Sakid kan ikke være NULL")
+            return@get call.respond(HttpStatusCode.BadRequest)
+        }
+
+        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
+        val sak = when (sakidentifikator) {
+            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId = sakidentifikator)
+            is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
+            else -> null
+        }
+
+        if (sak == null) {
+            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        logger.info("Henter sak med vedtak")
+        call.respond(status = HttpStatusCode.OK, message = sak.tilKontrakt())
+    }
+}
+
+fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
