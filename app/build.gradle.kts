@@ -29,6 +29,9 @@ dependencies {
     implementation("no.nav.aap.kelvin:server:2.0.73")
     implementation("no.nav.aap.kelvin:infrastructure:2.0.73")
 
+    // Import Netty BOM with desired version, overriding the version ktor declares
+    implementation(platform("io.netty:netty-bom:4.2.15.Final"))
+
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
