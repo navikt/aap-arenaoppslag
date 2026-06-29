@@ -2,7 +2,7 @@ package no.nav.aap.arenaoppslag.modeller
 
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakOppsummeringKontrakt
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakPersonKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakPerson as ArenaSakPersonKontrakt
 import java.time.LocalDate
 import java.time.LocalDateTime
 
