@@ -77,3 +77,39 @@ values
     (1108, DATE '2024-12-31', DATE '2025-12-31'),
     -- person 101
     (1111, DATE '2030-01-01', DATE '2031-01-01');
+
+insert into PERSON (PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
+values (102, 'maksdato102', 'Aktfase', 'Treff'),
+       (103, 'annen103', 'Aktfase', 'Filtrert');
+
+Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
+                 DATO_AVSLUTTET, SAKSTATUSKODE, AETATENHET_ANSVARLIG, ER_UTLAND)
+values (1120, 'AA', DATE '2022-02-02', DATE '2022-02-02', 'TEST', 'PERS', 102, 2022, 1120,
+        DATE '2024-06-15', 'AVSLU', '0826', 'N'),
+       (1130, 'AA', DATE '2022-02-10', DATE '2022-02-10', 'TEST', 'PERS', 103, 2022, 1130,
+        null, 'AKTIV', '0826', 'N');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, PERSON_ID,
+                    FRA_DATO, TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK, AKTFASEKODE, DATO_MOTTATT)
+values
+    -- gyldig rad som skal returneres
+    (1121, 1120, 'IVERK', 'O', 'JA', 'AAP', 102, DATE '2010-08-29', DATE '2026-06-30',
+     '4402', 1120, 2022, 1, 'AU', DATE '2010-08-29'),
+    -- støy for samme person, filtreres bort pga aktfasekode
+    (1122, 1120, 'IVERK', 'O', 'JA', 'AAP', 102, DATE '2011-01-01', DATE '2027-01-01',
+     '4402', 1120, 2022, 2, 'IKKE', DATE '2011-01-01'),
+    -- person uten treff, kun ikke-godkjent aktfasekode
+    (1131, 1130, 'IVERK', 'O', 'JA', 'AAP', 103, DATE '2020-01-01', DATE '2030-01-01',
+     '4402', 1130, 2022, 1, 'IKKE', DATE '2020-01-01');
+
+insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI)
+values
+    (1121, 'AAPVILKUNN', '30-06-2025'),
+    (1122, 'AAPVILKUNN', '30-06-2026'),
+    (1131, 'AAPVILKUNN', '30-06-2025');
+
+insert into V_VEDTAK_MAXDATO (VEDTAK_ID, MAX_DATO, MAX_UNNTAK_DATO)
+values
+    (1121, DATE '2025-06-30', DATE '2026-06-30'),
+    (1122, DATE '2026-06-30', DATE '2027-01-01'),
+    (1131, DATE '2030-01-01', DATE '2031-01-01');

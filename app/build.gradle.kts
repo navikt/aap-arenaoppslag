@@ -9,6 +9,9 @@ plugins {
 }
 
 val ktorVersion = "3.4.3"
+val jacksonVersion = "2.22.0"
+val jackson3Version = "3.2.0"
+val nettyVersion = "4.2.15.Final"
 
 application {
     mainClass.set("no.nav.aap.arenaoppslag.AppKt")
@@ -24,10 +27,17 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
 }
 
 dependencies {
+
+    // Overstyr versjoner ktor setter, for å få sikkerhetsfikser
+    implementation(platform("io.netty:netty-bom:$nettyVersion"))
+    implementation(platform("com.fasterxml.jackson:jackson-bom:$jacksonVersion"))
+    // Overstyr versjoner logstash setter, for å få sikkerhetsfikser
+    implementation(platform("tools.jackson:jackson-bom:$jackson3Version"))
+
     implementation(project(":kontrakt"))
     implementation("com.natpryce:konfig:1.6.10.0")
-    implementation("no.nav.aap.kelvin:server:2.0.73")
-    implementation("no.nav.aap.kelvin:infrastructure:2.0.73")
+    implementation("no.nav.aap.kelvin:server:2.0.79")
+    implementation("no.nav.aap.kelvin:infrastructure:2.0.79")
 
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
@@ -43,8 +53,8 @@ dependencies {
     implementation("io.ktor:ktor-server-call-id:$ktorVersion")
 
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.0")
     implementation("io.micrometer:micrometer-registry-prometheus:1.17.0")
     implementation("ch.qos.logback:logback-classic:1.5.34")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")

@@ -13,6 +13,7 @@ import no.nav.aap.arenaoppslag.TestConfig
 import no.nav.aap.arenaoppslag.TestConfig.jsonHttpClient
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
@@ -153,6 +154,15 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
                 else -> log.error("Parsefeil for '$endepunkt'", e)
             }
         }
+    }
+
+    suspend fun hentSak(sakId: String): ArenaSakMedVedtakResponse {
+        val token = tokenProvider.generate()
+        val arenaResponse = httpClient.get("/api/v1/sak/$sakId") {
+            accept(ContentType.Application.Json)
+            bearerAuth(token)
+        }
+        return objectMapper.readValue(arenaResponse.bodyAsText())
     }
 
     private suspend inline fun <reified T, reified V> gjørArenaOppslag(

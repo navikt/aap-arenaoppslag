@@ -30,6 +30,7 @@ import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
+import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -118,7 +119,33 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService, tilkjentYtelserService: TilkjentYtelserService) {
+fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
+    get("/sak/{sakid}") {
+        val sakid = call.parameters["sakid"]
+
+        if (sakid == null) {
+            logger.info("Sakid kan ikke være NULL")
+            return@get call.respond(HttpStatusCode.BadRequest)
+        }
+
+        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
+        val sak = when (sakidentifikator) {
+            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId = sakidentifikator)
+            is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
+            else -> null
+        }
+
+        if (sak == null) {
+            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        logger.info("Henter sak med vedtak")
+        call.respond(status = HttpStatusCode.OK, message = sak.tilKontrakt())
+    }
+}
+
+fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService, tilkjentYtelserService: TilkjentYtelserService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -162,21 +189,6 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         logger.info("Henter saksdetaljer")
         val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, tilkjentYtelse)
         call.respond(status = HttpStatusCode.OK, message = response)
-    }
-}
-
-fun Route.tilkjentYtelse(tilkjentYtelserService: TilkjentYtelserService) {
-    get("/sak/{sakid}/tilkjent-ytelse") {
-        // sakId er en ikke-personlig identifikator og kan derfor ligge i URL-en.
-        val sakId = call.parameters["sakid"]?.let { SakId.fromString(it) }
-        if (sakId == null) {
-            logger.info("Ugyldig eller manglende sakId")
-            return@get call.respond(HttpStatusCode.BadRequest)
-        }
-
-        logger.info("Henter tilkjente ytelser med meldekort for sak ${sakId.id}")
-        val response = tilkjentYtelserService.hentTilkjenteYtelserForSak(sakId)
-        call.respond(HttpStatusCode.OK, response)
     }
 }
 
