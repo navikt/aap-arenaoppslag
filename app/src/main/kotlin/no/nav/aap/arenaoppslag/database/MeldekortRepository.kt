@@ -42,6 +42,7 @@ class MeldekortRepository(
                     ),
                     belop = row.getInt("belop"),
                     dagsatsMedBarnetillegg = row.getString("dagsats_med_barnetillegg")?.toIntOrNull(),
+                    dagsats = row.getString("dagsats")?.toIntOrNull(),
                 )
             }
         }
@@ -157,7 +158,11 @@ class MeldekortRepository(
                (SELECT MAX(vf.vedtakverdi)
                   FROM vedtakfakta vf
                  WHERE vf.vedtak_id = p.vedtak_id
-                   AND vf.vedtakfaktakode = 'DAGSMBT') AS dagsats_med_barnetillegg
+                   AND vf.vedtakfaktakode = 'DAGSMBT') AS dagsats_med_barnetillegg,
+               (SELECT MAX(vf.vedtakverdi)
+                  FROM vedtakfakta vf
+                 WHERE vf.vedtak_id = p.vedtak_id
+                   AND vf.vedtakfaktakode = 'DAGS') AS dagsats
           FROM postering p
           JOIN vedtak v ON v.vedtak_id = p.vedtak_id
          WHERE v.sak_id = ?

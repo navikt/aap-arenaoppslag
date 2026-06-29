@@ -35,6 +35,7 @@ class TilkjentYtelserService(
                 uke = meldekort?.let { "${it.ukenrUke1}-${it.ukenrUke2}" },
                 kilde = if (postering.meldekortId != null) KILDE_MELDEKORT else KILDE_SPESIALUTBETALING,
                 dagsatsMedBarnetillegg = postering.dagsatsMedBarnetillegg,
+                dagsats = postering.dagsats,
                 beregnetBrutto = postering.belop,
                 timerArbeidet = meldekort?.dager?.sumOf { it.timerArbeidet },
                 reduksjon = meldekort?.reduksjon?.tilReduksjonRespons(),

@@ -32,6 +32,7 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.vedtakId).isEqualTo(90010)
         assertThat(første.periode.tilOgMedDato).isEqualTo(LocalDate.of(2023, 1, 15))
         assertThat(første.dagsatsMedBarnetillegg).isEqualTo(550)
+        assertThat(første.dagsats).isEqualTo(520)
     }
 
     @Test

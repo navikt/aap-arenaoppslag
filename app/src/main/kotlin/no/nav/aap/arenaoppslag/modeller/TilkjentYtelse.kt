@@ -18,6 +18,7 @@ data class TilkjentYtelseRad(
     val uke: String?,
     val kilde: String,
     val dagsatsMedBarnetillegg: Int?,
+    val dagsats: Int?,
     val beregnetBrutto: Int,
     val timerArbeidet: Double?,
     val reduksjon: ReduksjonRespons?,

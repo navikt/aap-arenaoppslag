@@ -12,6 +12,8 @@ data class MeldekortPostering(
     val belop: Int,
     // Dagsats med barnetillegg (vedtakfakta DAGSMBT) — null hvis ikke registrert på vedtaket
     val dagsatsMedBarnetillegg: Int?,
+    // Dagsats uten barnetillegg (vedtakfakta DAGS) — null hvis ikke registrert på vedtaket
+    val dagsats: Int?,
 )
 
 // Domeneobjekt: ett meldekort med tilhørende dager og anmerkninger.

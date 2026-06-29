@@ -152,7 +152,10 @@ fun Route.sak(sakService: SakService, posteringService: PosteringService, sakOgV
         val sakMedSamordning = sak.copy(
             vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
         )
+
         // Tilkjent ytelse (meldekort) er nullable — settes til null når saken ikke har noen tilkjente ytelser.
+        // nå så finner hentTilkjenteYtelserForSak dagsatser igjen, når den allerede i i vedtagsfakta i saken,
+        // og hentet overfor ( se sakMedSamordning.vedtak.first().fakta.first() )
         val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(SakId(sak.sakId.toInt()))
             .takeIf { it.rader.isNotEmpty() }
 

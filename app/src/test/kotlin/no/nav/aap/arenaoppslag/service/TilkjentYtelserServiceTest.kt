@@ -44,8 +44,8 @@ class TilkjentYtelserServiceTest {
 
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
             posteringer = listOf(
-                MeldekortPostering(90010, 100, 5001, periode, 4970, 1812),
-                MeldekortPostering(90010, 100, null, periode, 3459, null),
+                MeldekortPostering(90010, 100, 5001, periode, 4970, 1812, 1500),
+                MeldekortPostering(90010, 100, null, periode, 3459, null, null),
             ),
             meldekort = listOf(meldekort),
         )
@@ -64,6 +64,7 @@ class TilkjentYtelserServiceTest {
         val meldekortRad = response.rader.first { it.kilde == "Meldekort" }
         assertThat(meldekortRad.uke).isEqualTo("10-11")
         assertThat(meldekortRad.dagsatsMedBarnetillegg).isEqualTo(1812)
+        assertThat(meldekortRad.dagsats).isEqualTo(1500)
         assertThat(meldekortRad.beregnetBrutto).isEqualTo(4970)
         assertThat(meldekortRad.timerArbeidet).isEqualTo(7.5)
         assertThat(meldekortRad.reduksjon?.levertForSent).isTrue()
