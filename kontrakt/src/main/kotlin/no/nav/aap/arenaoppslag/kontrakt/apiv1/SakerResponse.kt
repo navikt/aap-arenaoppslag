@@ -58,7 +58,7 @@ public data class SakMedSisteVedtakOgMaksdato(
         return sisteVedtak.vedtaktypeKode in listOf("O", "E", "G") && sakStatus == "AKTIV"
     }
 
-    public fun utredesForUfor():Boolean = sisteVedtak.aktfaseKode == "UVUP"
+    public fun utredesForUfor(): Boolean = sisteVedtak.aktfaseKode == "UVUP"
     public fun erFerdigAvklart(): Boolean = sisteVedtak.aktfaseKode == "FA"
     public fun erSykepengeErstatning(): Boolean = sisteVedtak.aktfaseKode == "SPE"
     public fun harInnvilget11_12(): Boolean = unntaksvilkaarInnvilget != null
