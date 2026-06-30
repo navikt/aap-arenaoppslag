@@ -138,9 +138,9 @@ data class ArenaVedtakfakta(
     val registrertDato: LocalDate,
 ) {
     companion object {
-        val DATO_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+        private val DATO_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
-        fun parseDato(verdi: String?): LocalDate? =
+        private fun parseDato(verdi: String?): LocalDate? =
             verdi?.takeIf { it.isNotBlank() }?.let { LocalDate.parse(it, DATO_FORMAT) }
     }
 
@@ -154,8 +154,8 @@ data class ArenaVedtakfakta(
     fun somDatoVerdi() = verdi?.let { parseDato(it) }
 
     fun somBooleanVerdi() = when (verdi) {
-        "NEI" -> false
-        "JA" -> true
+        "N" -> false
+        "J" -> true
         else -> null
     }
 }
