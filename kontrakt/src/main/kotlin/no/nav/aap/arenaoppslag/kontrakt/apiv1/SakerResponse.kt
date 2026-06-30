@@ -58,10 +58,11 @@ public data class SakMedSisteVedtakOgMaksdato(
         return sisteVedtak.vedtaktypeKode in listOf("O", "E", "G") && sakStatus == "AKTIV"
     }
 
-    public fun utredesForUfor(): Boolean = sisteVedtak.aktfaseKode == "UVUP"
-    public fun erFerdigAvklart(): Boolean = sisteVedtak.aktfaseKode == "FA"
-    public fun erSykepengeErstatning(): Boolean = sisteVedtak.aktfaseKode == "SPE"
-    public fun harInnvilget11_12(): Boolean = unntaksvilkaarInnvilget != null
+    public fun utredesForUfor(): Boolean = sisteVedtak.aktfaseKode == "UVUP" // 11-18
+    public fun erFerdigAvklart(): Boolean = sisteVedtak.aktfaseKode == "FA" // 11-17
+    public fun erSykepengeErstatning(): Boolean = sisteVedtak.aktfaseKode == "SPE" // 11-13
+    public fun harInnvilget11_12(): Boolean = unntaksvilkaarGjelderFra != null // er innvilget fra en gitt dato
+    public fun unntaksvilkaarIkkeOppfylt(): Boolean = unntaksvilkaarInnvilget == false // eksplisitt Nei til 11-12
 }
 
 public data class VedtakMedMaksdato(
