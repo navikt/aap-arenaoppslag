@@ -154,8 +154,8 @@ data class ArenaVedtakfakta(
     fun somDatoVerdi() = verdi?.let { parseDato(it) }
 
     fun somBooleanVerdi() = when (verdi) {
-        "N" -> false
         "J" -> true
+        "N" -> false
         else -> null
     }
 }
