@@ -53,7 +53,6 @@ data class Maksdatolinje(
     val fra: LocalDate?,
     val maxdatoUnntak: LocalDate?,
     val maxdatoOrdinaer: LocalDate?,
-    val unntaksvilkaarGjelderFra: LocalDate?,
     val sakRegistrert: LocalDate,
     val sakAvsluttet: LocalDate?,
     val sakStatus: String,
@@ -62,11 +61,12 @@ data class Maksdatolinje(
         no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato(
             sakId, "${opprettetAar}-${lopenr}",
             sakStatus, sakRegistrert, sakAvsluttet,
-            unntaksvilkaarGjelderFra,
-            harInnvilget11_12(),
-            utredesForUfor(),
-            erFerdigAvklart(),
-            erLopende(),
+            null,
+            null,
+            false,
+            false,
+            false,
+            false,
             no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato(
                 vedtakId,
                 aktfaseKode,
@@ -79,15 +79,6 @@ data class Maksdatolinje(
             )
         )
 
-    fun erLopende(): Boolean {
-        // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
-        // Vi filtrer også ut vedtak med sjeldne typer som K (kontroll) for nå.
-        return vedtaktypeKode in listOf("O", "E", "G") && sakStatus == "AKTIV"
-    }
-
-    fun utredesForUfor() = aktfaseKode == "UVUP"
-    fun erFerdigAvklart() = aktfaseKode == "FA"
-    fun harInnvilget11_12() = unntaksvilkaarGjelderFra != null
 }
 
 data class ArenaSakMedVedtak(
