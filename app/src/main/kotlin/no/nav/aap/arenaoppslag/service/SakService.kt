@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
@@ -11,7 +12,7 @@ import no.nav.aap.arenaoppslag.modeller.PersonId
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
-class SakService(private val sakRepository: SakRepository) {
+class SakService(private val sakRepository: SakRepository, private val vedtakfaktaRepository: VedtakfaktaRepository) {
 
     @Suppress("MagicNumber")
     private val sakerCache = Caffeine.newBuilder()
@@ -33,7 +34,17 @@ class SakService(private val sakRepository: SakRepository) {
 
     fun hentMaksdatoAapMedVedtakOgSak(personId: PersonId): SakMedSisteVedtakOgMaksdato? {
         val sakMedVedtak = sakRepository.hentMaxdatoForSisteVedtak(personId)
-        return sakMedVedtak?.tilKontrakt()
+
+        val vedtakfakta = sakMedVedtak?.vedtakId?.let { vedtakId ->
+            vedtakfaktaRepository.hentForVedtakIder(listOf(vedtakId))[vedtakId]
+        }
+        val unntakInnvilget = vedtakfakta?.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
+        val unntaksdato = vedtakfakta?.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
+
+        return sakMedVedtak?.tilKontrakt()?.copy(
+            unntaksvilkaarGjelderFra = unntaksdato,
+            unntaksvilkaarInnvilget = unntakInnvilget
+        )
     }
 
     /** Maksdato er funnet basert på reglen:

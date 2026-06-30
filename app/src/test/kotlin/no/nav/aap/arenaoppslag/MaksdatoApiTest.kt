@@ -6,7 +6,6 @@ import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServ
 import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -44,7 +43,7 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
                 MaksdatoRequest("maksdato102")
             )
 
-            assertThat(maksdatoForKjenteSaker.sak?.sisteVedtak?.vedtakId).isEqualTo(1121)
+            assertThat(maksdatoForKjenteSaker.sak?.sisteVedtak?.vedtakId).isEqualTo(1122)
         }
     }
 

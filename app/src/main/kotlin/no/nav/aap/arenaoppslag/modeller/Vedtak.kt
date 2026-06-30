@@ -3,10 +3,11 @@ package no.nav.aap.arenaoppslag.modeller
 import no.nav.aap.arenaoppslag.kontrakt.intern.Kilde
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak as ArenaVedtakKontrakt
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer as ArenaVedtakMedDetaljerKontrakt
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakfakta as ArenaVedtakfaktaKontrakt
-import java.time.LocalDate
 
 data class VedtakStatus(
     val sakId: String,
@@ -136,12 +137,27 @@ data class ArenaVedtakfakta(
     val verdi: String?,
     val registrertDato: LocalDate,
 ) {
+    companion object {
+        val DATO_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+
+        fun parseDato(verdi: String?): LocalDate? =
+            verdi?.takeIf { it.isNotBlank() }?.let { LocalDate.parse(it, DATO_FORMAT) }
+    }
+
     fun tilKontrakt() = ArenaVedtakfaktaKontrakt(
         kode = kode,
         navn = navn,
         verdi = verdi,
         registrertDato = registrertDato,
     )
+
+    fun somDatoVerdi() = verdi?.let { parseDato(it) }
+
+    fun somBooleanVerdi() = when (verdi) {
+        "NEI" -> false
+        "JA" -> true
+        else -> null
+    }
 }
 
 data class ArenaVilkårsvurdering(

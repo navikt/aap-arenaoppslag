@@ -54,6 +54,7 @@ data class Maksdatolinje(
     val maxdatoUnntak: LocalDate?,
     val maxdatoOrdinaer: LocalDate?,
     val unntaksvilkaarGjelderFra: LocalDate?,
+    val unntaksvilkaarInnvilget: Boolean?,
     val sakRegistrert: LocalDate,
     val sakAvsluttet: LocalDate?,
     val sakStatus: String,
@@ -62,6 +63,7 @@ data class Maksdatolinje(
         no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato(
             sakId, "${opprettetAar}-${lopenr}",
             sakStatus, sakRegistrert, sakAvsluttet,
+            unntaksvilkaarInnvilget,
             unntaksvilkaarGjelderFra,
             harInnvilget11_12(),
             utredesForUfor(),
@@ -87,6 +89,7 @@ data class Maksdatolinje(
 
     fun utredesForUfor() = aktfaseKode == "UVUP"
     fun erFerdigAvklart() = aktfaseKode == "FA"
+    fun erSykepengeErstatning() = aktfaseKode == "SPE"
     fun harInnvilget11_12() = unntaksvilkaarGjelderFra != null
 }
 

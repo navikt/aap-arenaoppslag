@@ -4,6 +4,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import no.nav.aap.arenaoppslag.database.SakRepository
+import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.PersonId
@@ -18,12 +19,13 @@ class SakServiceTest {
     @Test
     fun `hentSakerForPerson mapper saker til kontrakt og cacher per person`() {
         val sakRepository = mockk<SakRepository>()
+        val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
         every { sakRepository.hentSakerForPerson(personId) } returns listOf(
             arenaSakOppsummering(sakId = "1"),
             arenaSakOppsummering(sakId = "2"),
         )
 
-        val service = SakService(sakRepository)
+        val service = SakService(sakRepository, vedtakfaktaRepository)
 
         val foersteKall = service.hentSakerForPerson(personId)
         val andreKall = service.hentSakerForPerson(personId)
@@ -36,11 +38,14 @@ class SakServiceTest {
     @Test
     fun `hentMaksdatoAapMedVedtakOgSak mapper maksdatolinjer til kontrakt`() {
         val sakRepository = mockk<SakRepository>()
+        val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+
         val maxdato = LocalDate.of(2026, 5, 1)
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = maxdato)
+        every { vedtakfaktaRepository.hentForVedtakIder(any()) } returns emptyMap()
 
-        val resultat = SakService(sakRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
 
         assertThat(resultat).isNotNull
         assertThat(resultat?.sakId).isEqualTo(1)
@@ -51,11 +56,14 @@ class SakServiceTest {
     @Test
     fun `hentMaksdatoAapForPerson returnerer maksdato for lopende vedtak`() {
         val sakRepository = mockk<SakRepository>()
+        val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+
         val senest = LocalDate.of(2027, 6, 30)
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 3, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = senest)
+        every { vedtakfaktaRepository.hentForVedtakIder(any()) } returns emptyMap()
 
-        val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapForPerson(personId)
 
         assertThat(resultat).isEqualTo(senest)
     }
@@ -66,10 +74,12 @@ class SakServiceTest {
     @Test
     fun `hentMaksdatoAapForPerson returnerer null naar lopende vedtak mangler maksdato`() {
         val sakRepository = mockk<SakRepository>()
+        val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = null)
+        every { vedtakfaktaRepository.hentForVedtakIder(any()) } returns emptyMap()
 
-        val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapForPerson(personId)
 
         assertThat(resultat).isNull()
     }
@@ -77,9 +87,11 @@ class SakServiceTest {
     @Test
     fun `hentMaksdatoAapForPerson returnerer null naar det ikke finnes noen saker`() {
         val sakRepository = mockk<SakRepository>()
+        val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns null
 
-        val resultat = SakService(sakRepository).hentMaksdatoAapForPerson(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapForPerson(personId)
 
         assertThat(resultat).isNull()
     }
@@ -113,6 +125,7 @@ class SakServiceTest {
         maxdatoUnntak = null,
         maxdatoOrdinaer = maxdato,
         unntaksvilkaarGjelderFra = null,
+        unntaksvilkaarInnvilget = true,
         sakRegistrert = LocalDate.of(2025, 1, 1),
         sakAvsluttet = null,
         sakStatus = sakStatus,

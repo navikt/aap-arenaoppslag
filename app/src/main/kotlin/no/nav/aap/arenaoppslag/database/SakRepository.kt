@@ -64,7 +64,8 @@ class SakRepository(private val dataSource: DataSource) {
                 fra = row.getDate("fra_dato")?.toLocalDate(),
                 maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
                 maxdatoOrdinaer = row.getDate("max_dato")?.toLocalDate(),
-                unntaksvilkaarGjelderFra = row.getDate("unntaksdato")?.toLocalDate(),
+                unntaksvilkaarGjelderFra = null,
+                unntaksvilkaarInnvilget = null,
                 sakRegistrert = row.getDate("sak_registrert_dato").toLocalDate(),
                 sakAvsluttet = row.getDate("sak_avsluttet_dato")?.toLocalDate(),
                 sakStatus = row.getString("sak_statuskode")
@@ -192,20 +193,16 @@ class SakRepository(private val dataSource: DataSource) {
         internal val selectVedtakMedNyesteMaxdatoForPerson = """
             -- Hent først nyeste vedtak for hver av sakene 
             WITH nyeste_vedtak AS (
-                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, unntaksdato, fra_dato, til_dato FROM (
+                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, fra_dato, til_dato FROM (
                     SELECT v.sak_id,
                         v.vedtak_id,
                         v.vedtaktypekode,
                         v.aktfasekode,
                         v.fra_dato,
                         v.til_dato,
-                        CASE WHEN vf.vedtakverdi IS NOT NULL THEN TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') END as unntaksdato, -- er bare satt dersom 11-12 unntak er innvilget                        
                         ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY v.til_dato DESC NULLS LAST, v.vedtak_id DESC) as rn
                     FROM vedtak v
-                        JOIN VEDTAKFAKTA vf ON v.vedtak_id = vf.vedtak_id
-                    WHERE vf.vedtakfaktakode = 'AAPVILKUNN'
-                        AND v.person_id = ?
-                        AND aktfasekode IN ('UA', 'AU') 
+                    WHERE v.person_id = ?
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
@@ -215,7 +212,7 @@ class SakRepository(private val dataSource: DataSource) {
                 ) WHERE rn = 1
             )
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
-                s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.unntaksdato, nv.fra_dato, nv.til_dato,  
+                s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, nv.til_dato,  
                 vmd.max_dato, vmd.max_unntak_dato
             FROM nyeste_vedtak nv
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id

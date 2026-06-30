@@ -32,6 +32,7 @@ public data class SakMedSisteVedtakOgMaksdato(
     val sakStatus: String,
     val sakRegistrert: LocalDate,
     val sakAvsluttet: LocalDate?,
+    val unntaksvilkaarInnvilget: Boolean?,
     val unntaksvilkaarGjelderFra: LocalDate?,
     val har_11_12_forlengelse: Boolean,
     val utredesForUfor: Boolean,
