@@ -50,7 +50,7 @@ class SakServiceTest {
 
         assertThat(resultat).isNotNull
         assertThat(resultat?.sakId).isEqualTo(1)
-        assertThat(resultat?.lopendeVedtak).isTrue()
+        assertThat(resultat?.erLopende()).isTrue()
         assertThat(resultat?.sisteVedtak?.maxdatoAap).isEqualTo(maxdato)
     }
 
@@ -203,8 +203,6 @@ class SakServiceTest {
         til = LocalDate.of(2026, 1, 1),
         maxdatoUnntak = null,
         maxdatoOrdinaer = maxdato,
-        unntaksvilkaarGjelderFra = null,
-        unntaksvilkaarInnvilget = true,
         sakRegistrert = LocalDate.of(2025, 1, 1),
         sakAvsluttet = null,
         sakStatus = sakStatus,
