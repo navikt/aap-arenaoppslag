@@ -114,12 +114,11 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
         val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(102))
         assertThat(sak).isEqualTo(
             Maksdatolinje(
-                1_12_0, 2022, 1_12_0, 1_12_1, "AU", "O",
+                1_12_0, 2022, 1_12_0, 1_12_2, "IKKE", "O",
+                LocalDate.of(2027, 1, 1),
+                LocalDate.of(2011, 1, 1),
+                LocalDate.of(2027, 1, 1),
                 LocalDate.of(2026, 6, 30),
-                LocalDate.of(2010, 8, 29),
-                LocalDate.of(2026, 6, 30),
-                LocalDate.of(2025, 6, 30),
-                LocalDate.of(2025, 6, 30),
                 sakRegistrert = LocalDate.of(2022, 2, 2),
                 sakAvsluttet = LocalDate.of(2024, 6, 15),
                 sakStatus = "AVSLU",
@@ -128,9 +127,20 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
     }
 
     @Test
-    fun `hent maksdato paa saker for person som mangler data`() {
+    fun `hent maksdato paa saker for person med vedtak som har annen aktfasekode`() {
         val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(103))
-        assertThat(sak).isNull()
+        assertThat(sak).isEqualTo(
+            Maksdatolinje(
+                1_13_0, 2022, 1_13_0, 1_13_1, "IKKE", "O",
+                LocalDate.of(2030, 1, 1),
+                LocalDate.of(2020, 1, 1),
+                LocalDate.of(2031, 1, 1),
+                LocalDate.of(2030, 1, 1),
+                sakRegistrert = LocalDate.of(2022, 2, 10),
+                sakAvsluttet = null,
+                sakStatus = "AKTIV",
+            )
+        )
     }
 
     @Test

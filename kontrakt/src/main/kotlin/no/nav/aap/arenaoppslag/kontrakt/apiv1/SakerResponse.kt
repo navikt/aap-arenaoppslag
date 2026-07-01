@@ -32,11 +32,18 @@ public data class SakMedSisteVedtakOgMaksdato(
     val sakStatus: String,
     val sakRegistrert: LocalDate,
     val sakAvsluttet: LocalDate?,
+    val unntaksvilkaarInnvilget: Boolean?,
     val unntaksvilkaarGjelderFra: LocalDate?,
-    val har_11_12_forlengelse: Boolean,
-    val utredesForUfor: Boolean,
-    val ferdigAvklart: Boolean,
-    val lopendeVedtak: Boolean,
+
+    @Deprecated("kall metoden med samme navn")
+    val har_11_12_forlengelse: Boolean = false,
+    @Deprecated("kall metoden med samme navn")
+    val utredesForUfor: Boolean = false,
+    @Deprecated("kall metoden med samme navn")
+    val ferdigAvklart: Boolean = false,
+    @Deprecated("kall metoden med samme navn")
+    val lopendeVedtak: Boolean = false,
+
     val sisteVedtak: VedtakMedMaksdato,
 ) {
     public fun medUdefinertMaxsdato(): SakMedSisteVedtakOgMaksdato {
@@ -44,6 +51,18 @@ public data class SakMedSisteVedtakOgMaksdato(
 
         return this.copy(sisteVedtak = sisteVedtakKopi)
     }
+
+    public fun erLopende(): Boolean {
+        // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
+        // Vi filtrer også ut vedtak med sjeldne typer som K (kontroll) for nå.
+        return sisteVedtak.vedtaktypeKode in listOf("O", "E", "G") && sakStatus == "AKTIV"
+    }
+
+    public fun utredesForUfor(): Boolean = sisteVedtak.aktfaseKode == "UVUP" // 11-18
+    public fun erFerdigAvklart(): Boolean = sisteVedtak.aktfaseKode == "FA" // 11-17
+    public fun erSykepengeErstatning(): Boolean = sisteVedtak.aktfaseKode == "SPE" // 11-13
+    public fun harInnvilget11_12(): Boolean = unntaksvilkaarGjelderFra != null // er innvilget fra en gitt dato
+    public fun unntaksvilkaarIkkeOppfylt(): Boolean = unntaksvilkaarInnvilget == false // eksplisitt Nei til 11-12
 }
 
 public data class VedtakMedMaksdato(
