@@ -189,20 +189,6 @@ fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringServic
     }
 }
 
-fun Route.tilkjentYtelse(tilkjentYtelserService: TilkjentYtelserService) {
-    get("/sak/{sakid}/tilkjent-ytelse") {
-        val sakid = call.parameters["sakid"]
-            ?: return@get call.respond(HttpStatusCode.BadRequest)
-
-        // sakId identifiserer en sak, ikke en person, så den kan trygt stå i URL-en.
-        val sakId = SakId.fromString(sakid)
-            ?: return@get call.respond(HttpStatusCode.BadRequest)
-
-        logger.info("Henter tilkjent ytelse for sak $sakid")
-        val response = tilkjentYtelserService.hentTilkjenteYtelserForSak(sakId)
-        call.respond(status = HttpStatusCode.OK, message = response)
-    }
-}
 
 fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
     post("/person/vedtak") {

@@ -251,7 +251,6 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     saksopplysningService = saksopplysningService,
                     tilkjentYtelserService = tilkjentYtelserService
                 )
-                tilkjentYtelse(tilkjentYtelserService)
             }
         }
     }
