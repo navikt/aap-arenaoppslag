@@ -29,7 +29,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
-import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
+import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
@@ -115,9 +115,9 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/api/v1/person/historikk/signifikant", req
         ).getOrThrow()
 
-    suspend fun hentTilkjenteYtelserForSak(sakId: Int): TilkjentYtelseResponse =
-        gjørArenaOppslagGet<TilkjentYtelseResponse>(
-            "/api/intern/sak/$sakId/tilkjent-ytelse"
+    suspend fun hentSakDetaljert(sakId: Int): ArenaSakDetaljert =
+        gjørArenaOppslagGet<ArenaSakDetaljert>(
+            "/api/intern/sak/$sakId/detaljert"
         ).getOrThrow()
 
     private suspend inline fun <reified T> gjørArenaOppslagGet(
