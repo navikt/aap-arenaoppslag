@@ -27,7 +27,7 @@ class MeldekortRepository(
     }
 
     private fun selectPosteringer(sakId: SakId, connection: Connection): List<MeldekortPostering> =
-        connection.prepareStatement(posteringerForSakSql).use { preparedStatement ->
+        connection.createParameterizedQuery(posteringerForSakSql).use { preparedStatement ->
             preparedStatement.setInt(1, sakId.id)
             preparedStatement.executeQuery().map { row ->
                 // wasNull() må sjekkes rett etter getLong, før vi leser andre kolonner.
@@ -49,7 +49,7 @@ class MeldekortRepository(
         }
 
     private fun selectMeldekort(sakId: SakId, connection: Connection): List<Meldekort> {
-        val metadata = connection.prepareStatement(meldekortMetadataForSakSql).use { preparedStatement ->
+        val metadata = connection.createParameterizedQuery(meldekortMetadataForSakSql).use { preparedStatement ->
             preparedStatement.setInt(1, sakId.id)
             preparedStatement.executeQuery().map { row -> mapMeldekortMetadata(row) }
         }
@@ -83,8 +83,8 @@ class MeldekortRepository(
         if (metadataPerId.isEmpty()) return emptyMap()
         return metadataPerId.keys.chunked(chunkStørrelse).flatMap { chunk ->
             val sql = meldekortdagerSql(chunk)
-            connection.createStatement().use { statement ->
-                statement.executeQuery(sql).map { row ->
+            connection.createParameterizedQuery(sql).use { preparedStatement ->
+                preparedStatement.executeQuery().map { row ->
                     val meldekortId = row.getLong("meldekort_id")
                     val ukenr = row.getInt("ukenr")
                     val dagnr = row.getInt("dagnr")
@@ -109,8 +109,8 @@ class MeldekortRepository(
         if (meldekortIder.isEmpty()) return emptyMap()
         return meldekortIder.chunked(chunkStørrelse).flatMap { chunk ->
             val sql = anmerkningerForMeldekortlisteSql(chunk)
-            connection.createStatement().use { statement ->
-                statement.executeQuery(sql).map { row ->
+            connection.createParameterizedQuery(sql).use { preparedStatement ->
+                preparedStatement.executeQuery().map { row ->
                     row.getLong("objekt_id") to MeldekortReduksjon(
                         dagerForSent = row.getFloat("for_sent").toInt(),
                         fravar = row.getFloat("fravar"),
