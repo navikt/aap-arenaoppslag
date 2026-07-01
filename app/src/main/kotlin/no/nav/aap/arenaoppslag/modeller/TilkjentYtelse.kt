@@ -31,7 +31,7 @@ data class ReduksjonRespons(
     val timerArbeidetProsent: Int,
     // Reduksjon i prosent som følge av samordning (DAGSFSAM mot DAGS)
     val samordningsProsent: Int,
-    // Total reduksjon: timerArbeidetProsent + samordningsProsent
+    // Total reduksjon: timerArbeidetProsent + samordningsProsent + institusjonsProsent
     val totalReduksjonProsent: Int,
     // Antall dager med annet fravær (anmerkningkode FXNN)
     val fravar: Float,

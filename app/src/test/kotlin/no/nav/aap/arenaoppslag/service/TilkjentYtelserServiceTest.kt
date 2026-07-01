@@ -173,10 +173,10 @@ class TilkjentYtelserServiceTest {
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
 
-        // (1000 - 800) / 1000 = 20 %. Ingen arbeid → total = 20 %.
+        // (1000 - 800) / 1000 = 20 %. Ingen arbeid. insGrad = 50 → total = 0 + 20 + 50 = 70 %.
         assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(0)
         assertThat(rad.reduksjon?.samordningsProsent).isEqualTo(20)
-        assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(20)
+        assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(70)
         assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
         assertThat(rad.reduksjon?.sykedager).isEqualTo(0.0f)
         assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(50)

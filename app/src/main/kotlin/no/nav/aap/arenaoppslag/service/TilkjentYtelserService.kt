@@ -89,7 +89,7 @@ class TilkjentYtelserService(
             levertForSentDager = dagerForSent,
             timerArbeidetProsent = timerArbeidetProsent,
             samordningsProsent = samordningsProsent,
-            totalReduksjonProsent = timerArbeidetProsent + samordningsProsent,
+            totalReduksjonProsent = timerArbeidetProsent + samordningsProsent + (insGrad ?: 0),
             fravar = meldekort.reduksjon.fravar,
             sykedager = meldekort.reduksjon.sykedager,
             institusjonsProsent = insGrad,
@@ -97,6 +97,7 @@ class TilkjentYtelserService(
     }
 
     // Samordningsprosent = hvor mye dagsatsen er redusert fra før-samordning (DAGSFSAM) til etter (DAGS).
+    // Kan mulig heller bruke sammingingeen som hentes på vedtaket?
     private fun beregnSamordningsProsent(dagsats: Int?, dagsatsForSamordning: Int?): Int {
         if (dagsats == null || dagsatsForSamordning == null || dagsatsForSamordning == 0) return 0
         return ((dagsatsForSamordning - dagsats).toDouble() / dagsatsForSamordning * 100).roundToInt()
