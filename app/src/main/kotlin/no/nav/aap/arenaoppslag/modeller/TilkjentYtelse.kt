@@ -26,9 +26,14 @@ data class TilkjentYtelseRad(
 )
 
 data class ReduksjonRespons(
-    val sykedager: Float,
-    val levertForSent: Boolean,
-    val fravaer: Float,
+    // Antall dager forrige meldekort ble levert for sent — disse dagene trekkes fra beregningsgrunnlaget
+    val levertForSentDager: Int,
+    // Arbeidede timer som prosent av aktiv periode (14 dager minus dager levert for sent, à 7,5 timer)
+    val timerArbeidetProsent: Int,
+    // Reduksjon i prosent som følge av samordning (DAGSFSAM mot DAGS)
+    val samordningsProsent: Int,
+    // Total reduksjon: timerArbeidetProsent + samordningsProsent
+    val totalReduksjonProsent: Int,
 )
 
 data class MeldekortRespons(
@@ -73,9 +78,4 @@ fun MeldekortDag.tilRespons(): MeldekortDagRespons = MeldekortDagRespons(
     annetFravaer = annetFravaer,
 )
 
-fun AnnenReduksjon.tilReduksjonRespons(): ReduksjonRespons = ReduksjonRespons(
-    sykedager = sykedager,
-    levertForSent = sentMeldekort,
-    fravaer = fraver,
-)
 

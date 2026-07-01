@@ -1,10 +1,10 @@
 package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.modeller.AnnenReduksjon
 import no.nav.aap.arenaoppslag.modeller.Meldekort
 import no.nav.aap.arenaoppslag.modeller.MeldekortDag
 import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
+import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.SakId
 import org.intellij.lang.annotations.Language
@@ -43,6 +43,7 @@ class MeldekortRepository(
                     belop = row.getInt("belop"),
                     dagsatsMedBarnetillegg = row.getString("dagsats_med_barnetillegg")?.toIntOrNull(),
                     dagsats = row.getString("dagsats")?.toIntOrNull(),
+                    dagsatsForSamordning = row.getString("dagsats_for_samordning")?.toIntOrNull(),
                 )
             }
         }
@@ -70,7 +71,7 @@ class MeldekortRepository(
                 fortsattRegistrertArbeidssoker = meta.fortsattArbeidssoker,
                 kommentar = meta.kommentar,
                 dager = dagerPerMeldekort[meta.meldekortId].orEmpty(),
-                reduksjon = reduksjonPerMeldekort[meta.meldekortId] ?: AnnenReduksjon(0.0f, false, 0.0f),
+                reduksjon = reduksjonPerMeldekort[meta.meldekortId] ?: MeldekortReduksjon(0, 0.0f),
             )
         }
     }
@@ -104,16 +105,15 @@ class MeldekortRepository(
     private fun selectAnmerkninger(
         meldekortIder: List<Long>,
         connection: Connection,
-    ): Map<Long, AnnenReduksjon> {
+    ): Map<Long, MeldekortReduksjon> {
         if (meldekortIder.isEmpty()) return emptyMap()
         return meldekortIder.chunked(chunkStørrelse).flatMap { chunk ->
             val sql = anmerkningerForMeldekortlisteSql(chunk)
             connection.createStatement().use { statement ->
                 statement.executeQuery(sql).map { row ->
-                    row.getLong("objekt_id") to AnnenReduksjon(
-                        sykedager = row.getFloat("sykedager"),
-                        sentMeldekort = row.getFloat("for_sent") > 0,
-                        fraver = row.getFloat("fravar"),
+                    row.getLong("objekt_id") to MeldekortReduksjon(
+                        dagerForSent = row.getFloat("for_sent").toInt(),
+                        fravar = row.getFloat("fravar"),
                     )
                 }
             }
@@ -162,7 +162,11 @@ class MeldekortRepository(
                (SELECT MAX(vf.vedtakverdi)
                   FROM vedtakfakta vf
                  WHERE vf.vedtak_id = p.vedtak_id
-                   AND vf.vedtakfaktakode = 'DAGS') AS dagsats
+                   AND vf.vedtakfaktakode = 'DAGS') AS dagsats,
+               (SELECT MAX(vf.vedtakverdi)
+                  FROM vedtakfakta vf
+                 WHERE vf.vedtak_id = p.vedtak_id
+                   AND vf.vedtakfaktakode = 'DAGSFSAM') AS dagsats_for_samordning
           FROM postering p
           JOIN vedtak v ON v.vedtak_id = p.vedtak_id
          WHERE v.sak_id = ?
@@ -198,13 +202,12 @@ class MeldekortRepository(
         val idListe = meldekortIder.joinToString(",")
         return """
             SELECT objekt_id,
-                   sum(CASE WHEN anmerkningkode = 'FSNN' THEN verdi ELSE 0 END) AS sykedager,
                    sum(CASE WHEN anmerkningkode = 'SENN' THEN verdi ELSE 0 END) AS for_sent,
                    sum(CASE WHEN anmerkningkode = 'FXNN' THEN verdi ELSE 0 END) AS fravar
               FROM anmerkning
              WHERE tabellnavnalias = 'MKORT'
                AND objekt_id IN ($idListe)
-               AND anmerkningkode IN ('FSNN', 'SENN', 'FXNN')
+               AND anmerkningkode IN ('SENN', 'FXNN')
              GROUP BY objekt_id
         """.trimIndent()
     }

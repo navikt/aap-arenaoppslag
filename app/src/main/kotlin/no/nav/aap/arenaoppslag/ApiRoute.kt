@@ -30,7 +30,6 @@ import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
-import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -180,14 +179,27 @@ fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringServic
             vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
         )
 
-        // Tilkjent ytelse (meldekort) er nullable — settes til null når saken ikke har noen tilkjente ytelser.
-        // nå så finner hentTilkjenteYtelserForSak dagsatser igjen, når den allerede i i vedtagsfakta i saken,
-        // og hentet overfor ( se sakMedSamordning.vedtak.first().fakta.first() )
+
         val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(SakId(sak.sakId.toInt()))
             .takeIf { it.rader.isNotEmpty() }
 
         logger.info("Henter saksdetaljer")
         val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, tilkjentYtelse)
+        call.respond(status = HttpStatusCode.OK, message = response)
+    }
+}
+
+fun Route.tilkjentYtelse(tilkjentYtelserService: TilkjentYtelserService) {
+    get("/sak/{sakid}/tilkjent-ytelse") {
+        val sakid = call.parameters["sakid"]
+            ?: return@get call.respond(HttpStatusCode.BadRequest)
+
+        // sakId identifiserer en sak, ikke en person, så den kan trygt stå i URL-en.
+        val sakId = SakId.fromString(sakid)
+            ?: return@get call.respond(HttpStatusCode.BadRequest)
+
+        logger.info("Henter tilkjent ytelse for sak $sakid")
+        val response = tilkjentYtelserService.hentTilkjenteYtelserForSak(sakId)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }

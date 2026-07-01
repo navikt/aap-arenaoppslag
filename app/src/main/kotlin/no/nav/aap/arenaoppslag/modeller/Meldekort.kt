@@ -14,6 +14,16 @@ data class MeldekortPostering(
     val dagsatsMedBarnetillegg: Int?,
     // Dagsats uten barnetillegg (vedtakfakta DAGS) — null hvis ikke registrert på vedtaket
     val dagsats: Int?,
+    // Dagsats uten barnetillegg FØR samordning (vedtakfakta DAGSFSAM) — brukes til å beregne samordningsprosent
+    val dagsatsForSamordning: Int?,
+)
+
+// Domeneobjekt: anmerkningsdata fra Arena-beregning for ett meldekort.
+data class MeldekortReduksjon(
+    // Antall dager trukket pga. for sen innlevering av forrige meldekort (anmerkningkode SENN)
+    val dagerForSent: Int,
+    // Antall dager med annet fravær (anmerkningkode FXNN)
+    val fravar: Float,
 )
 
 // Domeneobjekt: ett meldekort med tilhørende dager og anmerkninger.
@@ -29,7 +39,7 @@ data class Meldekort(
     val fortsattRegistrertArbeidssoker: Boolean?,
     val kommentar: String?,
     val dager: List<MeldekortDag>,
-    val reduksjon: AnnenReduksjon,
+    val reduksjon: MeldekortReduksjon,
 )
 
 data class MeldekortDag(
@@ -45,5 +55,4 @@ data class MeldekortForSak(
     val posteringer: List<MeldekortPostering>,
     val meldekort: List<Meldekort>,
 )
-
 
