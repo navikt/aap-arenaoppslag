@@ -2,8 +2,7 @@ package no.nav.aap.arenaoppslag.modeller
 
 import java.time.LocalDate
 
-// Responsobjekter for GET /api/intern/sak/{sakid}/tilkjent-ytelse.
-// /api/intern er backend-for-frontend, så formen følger frontend-visningen (se designskisse), ikke REST-konvensjoner.
+
 data class TilkjentYtelseResponse(
     val sakId: Int,
     val gjenstaaendeOrdinaerDager: Int?,

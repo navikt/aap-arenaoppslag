@@ -184,7 +184,7 @@ fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringServic
             .takeIf { it.rader.isNotEmpty() }
 
         logger.info("Henter saksdetaljer")
-        val response = sak.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, tilkjentYtelse)
+        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, tilkjentYtelse)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
