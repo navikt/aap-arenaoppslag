@@ -16,6 +16,8 @@ data class MeldekortPostering(
     val dagsats: Int?,
     // Dagsats uten barnetillegg FØR samordning (vedtakfakta DAGSFSAM) — brukes til å beregne samordningsprosent
     val dagsatsForSamordning: Int?,
+    // Graderingsprosent for reduksjon pga. institusjonsopphold (vedtakfakta INSGRAD) — null hvis ikke registrert
+    val insGrad: Int?,
 )
 
 // Domeneobjekt: anmerkningsdata fra Arena-beregning for ett meldekort.
@@ -24,6 +26,8 @@ data class MeldekortReduksjon(
     val dagerForSent: Int,
     // Antall dager med annet fravær (anmerkningkode FXNN)
     val fravar: Float,
+    // Antall sykedager (anmerkningkode FSNN)
+    val sykedager: Float,
 )
 
 // Domeneobjekt: ett meldekort med tilhørende dager og anmerkninger.

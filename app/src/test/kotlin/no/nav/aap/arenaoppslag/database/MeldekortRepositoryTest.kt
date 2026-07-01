@@ -34,6 +34,7 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.dagsatsMedBarnetillegg).isEqualTo(550)
         assertThat(første.dagsats).isEqualTo(520)
         assertThat(første.dagsatsForSamordning).isEqualTo(520)
+        assertThat(første.insGrad).isEqualTo(33)
     }
 
     @Test
@@ -70,10 +71,12 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         val meldekort5001 = resultat.meldekort.first { it.meldekortId == 5001L }
         assertThat(meldekort5001.reduksjon.dagerForSent).isEqualTo(0)
         assertThat(meldekort5001.reduksjon.fravar).isEqualTo(0.0f)
+        assertThat(meldekort5001.reduksjon.sykedager).isEqualTo(1.0f)
 
         val meldekort5002 = resultat.meldekort.first { it.meldekortId == 5002L }
         assertThat(meldekort5002.reduksjon.dagerForSent).isEqualTo(1)
         assertThat(meldekort5002.reduksjon.fravar).isEqualTo(2.0f)
+        assertThat(meldekort5002.reduksjon.sykedager).isEqualTo(0.0f)
     }
 }
 

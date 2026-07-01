@@ -44,6 +44,7 @@ class MeldekortRepository(
                     dagsatsMedBarnetillegg = row.getString("dagsats_med_barnetillegg")?.toIntOrNull(),
                     dagsats = row.getString("dagsats")?.toIntOrNull(),
                     dagsatsForSamordning = row.getString("dagsats_for_samordning")?.toIntOrNull(),
+                    insGrad = row.getString("ins_grad")?.toIntOrNull(),
                 )
             }
         }
@@ -71,7 +72,7 @@ class MeldekortRepository(
                 fortsattRegistrertArbeidssoker = meta.fortsattArbeidssoker,
                 kommentar = meta.kommentar,
                 dager = dagerPerMeldekort[meta.meldekortId].orEmpty(),
-                reduksjon = reduksjonPerMeldekort[meta.meldekortId] ?: MeldekortReduksjon(0, 0.0f),
+                reduksjon = reduksjonPerMeldekort[meta.meldekortId] ?: MeldekortReduksjon(0, 0.0f, 0.0f),
             )
         }
     }
@@ -114,6 +115,7 @@ class MeldekortRepository(
                     row.getLong("objekt_id") to MeldekortReduksjon(
                         dagerForSent = row.getFloat("for_sent").toInt(),
                         fravar = row.getFloat("fravar"),
+                        sykedager = row.getFloat("sykedager"),
                     )
                 }
             }
@@ -166,7 +168,11 @@ class MeldekortRepository(
                (SELECT MAX(vf.vedtakverdi)
                   FROM vedtakfakta vf
                  WHERE vf.vedtak_id = p.vedtak_id
-                   AND vf.vedtakfaktakode = 'DAGSFSAM') AS dagsats_for_samordning
+                   AND vf.vedtakfaktakode = 'DAGSFSAM') AS dagsats_for_samordning,
+               (SELECT MAX(vf.vedtakverdi)
+                  FROM vedtakfakta vf
+                 WHERE vf.vedtak_id = p.vedtak_id
+                   AND vf.vedtakfaktakode = 'INSGRAD') AS ins_grad
           FROM postering p
           JOIN vedtak v ON v.vedtak_id = p.vedtak_id
          WHERE v.sak_id = ?
@@ -203,11 +209,12 @@ class MeldekortRepository(
         return """
             SELECT objekt_id,
                    sum(CASE WHEN anmerkningkode = 'SENN' THEN verdi ELSE 0 END) AS for_sent,
-                   sum(CASE WHEN anmerkningkode = 'FXNN' THEN verdi ELSE 0 END) AS fravar
+                   sum(CASE WHEN anmerkningkode = 'FXNN' THEN verdi ELSE 0 END) AS fravar,
+                   sum(CASE WHEN anmerkningkode = 'FSNN' THEN verdi ELSE 0 END) AS sykedager
               FROM anmerkning
              WHERE tabellnavnalias = 'MKORT'
                AND objekt_id IN ($idListe)
-               AND anmerkningkode IN ('SENN', 'FXNN')
+               AND anmerkningkode IN ('SENN', 'FXNN', 'FSNN')
              GROUP BY objekt_id
         """.trimIndent()
     }

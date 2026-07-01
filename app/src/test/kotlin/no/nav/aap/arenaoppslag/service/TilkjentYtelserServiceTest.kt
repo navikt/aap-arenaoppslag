@@ -39,7 +39,7 @@ class TilkjentYtelserServiceTest {
             fortsattRegistrertArbeidssoker = true,
             kommentar = null,
             dager = listOf(MeldekortDag(10, 1, LocalDate.of(2023, 1, 2), 7.5, false)),
-            reduksjon = MeldekortReduksjon(dagerForSent = 0, fravar = 0.0f),
+            reduksjon = MeldekortReduksjon(dagerForSent = 0, fravar = 0.0f, sykedager = 0.0f),
         )
 
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
@@ -47,10 +47,12 @@ class TilkjentYtelserServiceTest {
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
                     belop = 4970, dagsatsMedBarnetillegg = 1812, dagsats = 1500, dagsatsForSamordning = 1500,
+                    insGrad = null,
                 ),
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = null, periode = periode,
                     belop = 3459, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null,
                 ),
             ),
             meldekort = listOf(meldekort),
@@ -78,6 +80,9 @@ class TilkjentYtelserServiceTest {
         assertThat(meldekortRad.reduksjon?.timerArbeidetProsent).isEqualTo(7)
         assertThat(meldekortRad.reduksjon?.samordningsProsent).isEqualTo(0)
         assertThat(meldekortRad.reduksjon?.totalReduksjonProsent).isEqualTo(7)
+        assertThat(meldekortRad.reduksjon?.fravar).isEqualTo(0.0f)
+        assertThat(meldekortRad.reduksjon?.sykedager).isEqualTo(0.0f)
+        assertThat(meldekortRad.reduksjon?.institusjonsProsent).isNull()
         assertThat(meldekortRad.meldekort?.uker).hasSize(1)
         assertThat(meldekortRad.meldekort?.fortsattRegistrertArbeidssoker).isTrue()
 
@@ -107,7 +112,7 @@ class TilkjentYtelserServiceTest {
                 // Dag 2 er aktiv og teller med.
                 MeldekortDag(10, 2, LocalDate.of(2023, 1, 3), 7.5, false),
             ),
-            reduksjon = MeldekortReduksjon(dagerForSent = 1, fravar = 0.0f),
+            reduksjon = MeldekortReduksjon(dagerForSent = 1, fravar = 0.0f, sykedager = 0.0f),
         )
 
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
@@ -115,6 +120,7 @@ class TilkjentYtelserServiceTest {
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
                     belop = 4970, dagsatsMedBarnetillegg = 1812, dagsats = 1500, dagsatsForSamordning = 1500,
+                    insGrad = null,
                 ),
             ),
             meldekort = listOf(meldekort),
@@ -130,6 +136,9 @@ class TilkjentYtelserServiceTest {
         assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(8)
         assertThat(rad.reduksjon?.samordningsProsent).isEqualTo(0)
         assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(8)
+        assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
+        assertThat(rad.reduksjon?.sykedager).isEqualTo(0.0f)
+        assertThat(rad.reduksjon?.institusjonsProsent).isNull()
     }
 
     @Test
@@ -147,7 +156,7 @@ class TilkjentYtelserServiceTest {
             fortsattRegistrertArbeidssoker = true,
             kommentar = null,
             dager = emptyList(),
-            reduksjon = MeldekortReduksjon(dagerForSent = 0, fravar = 0.0f),
+            reduksjon = MeldekortReduksjon(dagerForSent = 0, fravar = 0.0f, sykedager = 0.0f),
         )
 
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
@@ -155,6 +164,7 @@ class TilkjentYtelserServiceTest {
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
                     belop = 4970, dagsatsMedBarnetillegg = 1200, dagsats = 800, dagsatsForSamordning = 1000,
+                    insGrad = 50,
                 ),
             ),
             meldekort = listOf(meldekort),
@@ -167,6 +177,9 @@ class TilkjentYtelserServiceTest {
         assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(0)
         assertThat(rad.reduksjon?.samordningsProsent).isEqualTo(20)
         assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(20)
+        assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
+        assertThat(rad.reduksjon?.sykedager).isEqualTo(0.0f)
+        assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(50)
     }
 
     @Test
@@ -181,5 +194,3 @@ class TilkjentYtelserServiceTest {
         assertThat(response.gjenstaaendeUnntakDager).isNull()
     }
 }
-
-

@@ -32,6 +32,9 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(5)
             assertThat(rad.reduksjon?.samordningsProsent).isEqualTo(0)
             assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(5)
+            assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
+            assertThat(rad.reduksjon?.sykedager).isEqualTo(1.0f)
+            assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(33)
         }
     }
 }

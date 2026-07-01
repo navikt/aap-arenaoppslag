@@ -35,7 +35,7 @@ class TilkjentYtelserService(
             // Timer og reduksjon beregnes kun for meldekortlinjer — spesialutbetalinger har ingen meldekort.
             val timerArbeidetEtterStraff = meldekort?.let { timerArbeidetEtterStraffedager(it) }
             val reduksjon = meldekort?.let {
-                byggReduksjon(it, timerArbeidetEtterStraff ?: 0.0, postering.dagsats, postering.dagsatsForSamordning)
+                byggReduksjon(it, timerArbeidetEtterStraff ?: 0.0, postering.dagsats, postering.dagsatsForSamordning, postering.insGrad)
             }
 
             TilkjentYtelseRad(
@@ -74,6 +74,7 @@ class TilkjentYtelserService(
         timerArbeidet: Double,
         dagsats: Int?,
         dagsatsForSamordning: Int?,
+        insGrad: Int?,
     ): ReduksjonRespons {
         val dagerForSent = meldekort.reduksjon.dagerForSent
         // Straffedagene reduserer antall dager som inngår i fulltidsgrunnlaget.
@@ -89,6 +90,9 @@ class TilkjentYtelserService(
             timerArbeidetProsent = timerArbeidetProsent,
             samordningsProsent = samordningsProsent,
             totalReduksjonProsent = timerArbeidetProsent + samordningsProsent,
+            fravar = meldekort.reduksjon.fravar,
+            sykedager = meldekort.reduksjon.sykedager,
+            institusjonsProsent = insGrad,
         )
     }
 

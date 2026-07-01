@@ -33,6 +33,12 @@ data class ReduksjonRespons(
     val samordningsProsent: Int,
     // Total reduksjon: timerArbeidetProsent + samordningsProsent
     val totalReduksjonProsent: Int,
+    // Antall dager med annet fravær (anmerkningkode FXNN)
+    val fravar: Float,
+    // Antall sykedager (anmerkningkode FSNN)
+    val sykedager: Float,
+    // Graderingsprosent for reduksjon pga. institusjonsopphold (vedtakfakta INSGRAD) — null hvis ikke registrert
+    val institusjonsProsent: Int?,
 )
 
 data class MeldekortRespons(
