@@ -189,7 +189,7 @@ class SakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         internal val selectVedtakMedNyesteMaxdatoForPerson = """
-            -- Hent først nyeste vedtak for hver av sakene 
+            -- Hent først siste vedtak
             WITH nyeste_vedtak AS (
                 SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, fra_dato, til_dato FROM (
                     SELECT v.sak_id,
@@ -198,7 +198,7 @@ class SakRepository(private val dataSource: DataSource) {
                         v.aktfasekode,
                         v.fra_dato,
                         v.til_dato,
-                        ROW_NUMBER() OVER (PARTITION BY v.sak_id ORDER BY v.til_dato DESC NULLS LAST, v.vedtak_id DESC) as rn
+                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS LAST, v.vedtak_id DESC) as rn
                     FROM vedtak v
                     WHERE v.person_id = ?
                         AND v.rettighetkode = 'AAP'
@@ -209,6 +209,7 @@ class SakRepository(private val dataSource: DataSource) {
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato) 
                 ) WHERE rn = 1
             )
+            -- legg på informasjon om saken
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
                 s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, nv.til_dato,  
                 vmd.max_dato, vmd.max_unntak_dato
