@@ -34,16 +34,6 @@ public data class SakMedSisteVedtakOgMaksdato(
     val sakAvsluttet: LocalDate?,
     val unntaksvilkaarInnvilget: Boolean?,
     val unntaksvilkaarGjelderFra: LocalDate?,
-
-    @Deprecated("kall metoden med samme navn")
-    val har_11_12_forlengelse: Boolean = false,
-    @Deprecated("kall metoden med samme navn")
-    val utredesForUfor: Boolean = false,
-    @Deprecated("kall metoden med samme navn")
-    val ferdigAvklart: Boolean = false,
-    @Deprecated("kall metoden med samme navn")
-    val lopendeVedtak: Boolean = false,
-
     val sisteVedtak: VedtakMedMaksdato,
 ) {
     public fun medUdefinertMaxsdato(): SakMedSisteVedtakOgMaksdato {
@@ -54,7 +44,7 @@ public data class SakMedSisteVedtakOgMaksdato(
 
     public fun erLopende(): Boolean {
         // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
-        // Vi filtrer også ut vedtak med sjeldne typer som K (kontroll) for nå.
+        // Vi filtrer også ut vedtak med sjeldne vedtaktypeKode som K (kontroll) for nå.
         return sisteVedtak.vedtaktypeKode in listOf("O", "E", "G") && sakStatus == "AKTIV"
     }
 

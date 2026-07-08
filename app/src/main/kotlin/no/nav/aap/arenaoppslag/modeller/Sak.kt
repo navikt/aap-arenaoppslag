@@ -63,10 +63,6 @@ data class Maksdatolinje(
             sakStatus, sakRegistrert, sakAvsluttet,
             null,
             null,
-            false,
-            false,
-            false,
-            false,
             no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato(
                 vedtakId,
                 aktfaseKode,
