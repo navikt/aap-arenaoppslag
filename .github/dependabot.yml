@@ -19,23 +19,24 @@ updates:
       interval: daily
     ignore:
     - dependency-name: "com.h2database:h2"
-    - dependency-name: "io.ktor:ktor-*"
-      versions: ["3.5.0"]
     cooldown:
       default-days: 3
       exclude:
         - "no.nav.aap*"
-    groups:
-      minor:
-        applies-to: version-updates
-        exclude-patterns:
-          - "no.nav.aap*"
-        update-types:
-          - "minor"
-          - "patch"
-      aap:
-        patterns:
-          - "no.nav.aap*"
+      groups:
+        minor:
+          applies-to: version-updates
+          exclude-patterns:
+            - "no.nav.aap*"
+          update-types:
+            - "minor"
+            - "patch"
+        aap:
+          patterns:
+            - "no.nav.aap*"
+        ktor:
+          patterns:
+            - "*ktor*"
 
     registries:
       - maven-github
