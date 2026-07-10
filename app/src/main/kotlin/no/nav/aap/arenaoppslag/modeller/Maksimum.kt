@@ -30,6 +30,8 @@ data class Vedtak(
     val justertG: String?,
     val barnetillegg: Int,
     val barnetilleggsats: Int,
+    val lopenrvedtak: Int,
+    val relatertVedtak: Int?,
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak {
         return no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak(
@@ -48,6 +50,8 @@ data class Vedtak(
             vedtaksTypeKode = vedtaksTypeKode,
             vedtaksTypeNavn = vedtaksTypeNavn,
             justertG = justertG,
+            lopenrvedtak = lopenrvedtak,
+            relatertVedtak = relatertVedtak,
         )
     }
 }
