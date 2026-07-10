@@ -81,6 +81,8 @@ class MaksimumRepository(
                     vedtaksTypeKode = vedtaktypekode,
                     vedtaksTypeNavn = VedtaksType.entries.find { it.kode == vedtaktypekode }?.navn
                         ?: error("Ukjent verdi vedtaktypekode=$vedtaktypekode"),
+                    lopenrvedtak = row.getInt("lopenrvedtak"),
+                    relatertVedtak = row.getIntOrNull("vedtak_id_relatert"),
                 )
             }.toList()
             Maksimum(vedtak)
@@ -208,7 +210,7 @@ class MaksimumRepository(
 
     @Language("OracleSql")
     private val selectMaksimumMedTidsbegrensning = """
-        SELECT vedtak_id, til_dato, fra_dato, vedtaktypekode, vedtakstatuskode, sak_id, aktfasekode 
+        SELECT vedtak_id, til_dato, fra_dato, vedtaktypekode, vedtakstatuskode, sak_id, aktfasekode, lopenrvedtak, vedtak_id_relatert
           FROM vedtak 
          WHERE person_id = 
                (SELECT person_id 

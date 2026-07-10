@@ -20,6 +20,8 @@ public data class Vedtak(
     val barnetillegg: Int,
     val barnetilleggsats: Int,
     val justertG: String?,
+    val lopenrvedtak: Int? = null,
+    val relatertVedtak: Int? = null,
 )
 
 /**

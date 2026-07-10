@@ -50,6 +50,8 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(vedtak.vedtaksTypeKode).isEqualTo("O")
         assertThat(vedtak.periode).isEqualTo(Periode(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31)))
         assertThat(vedtak.justertG).isEqualTo("NyG2024")
+        assertThat(vedtak.lopenrvedtak).isEqualTo(1)
+        assertThat(vedtak.relatertVedtak).isNull()
     }
 
     @Test
