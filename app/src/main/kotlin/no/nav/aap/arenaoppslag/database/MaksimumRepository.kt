@@ -76,7 +76,6 @@ class MaksimumRepository(
                     beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
                     barnetillegg = vedtakFakta.barntill,
                     barnMedStonad = vedtakFakta.barnmston,
-                    barnetilleggsats = vedtakFakta.satsbarntg,
                     justertG = vedtakFakta.justertg,
                     vedtaksTypeKode = vedtaktypekode,
                     vedtaksTypeNavn = VedtaksType.entries.find { it.kode == vedtaktypekode }?.navn
@@ -162,7 +161,6 @@ class MaksimumRepository(
                 barntill = 0,
                 dags = 0,
                 barnmston = 0,
-                satsbarntg = 0,
                 dagsfsam = 0,
                 justertg = null
             )
@@ -172,7 +170,6 @@ class MaksimumRepository(
                     "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
                     "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
                     "BARNMSTON" -> vedtakfakta.barnmston = row.getInt("vedtakverdi")
-                    "SATSBARNTG" -> vedtakfakta.satsbarntg = row.getInt("vedtakverdi")
                     "DAGSFSAM" -> vedtakfakta.dagsfsam = row.getInt("vedtakverdi")
                     "JUSTERTG" -> vedtakfakta.justertg = row.getString("vedtakverdi")
                 }

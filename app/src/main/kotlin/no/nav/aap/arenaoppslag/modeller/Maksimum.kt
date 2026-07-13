@@ -29,7 +29,6 @@ data class Vedtak(
     val barnMedStonad: Int,
     val justertG: String?,
     val barnetillegg: Int,
-    val barnetilleggsats: Int,
     val lopenrvedtak: Int,
     val relatertVedtak: Int?,
 ) {
@@ -46,7 +45,6 @@ data class Vedtak(
             beregningsgrunnlag = beregningsgrunnlag,
             barnMedStonad = barnMedStonad,
             barnetillegg = barnetillegg,
-            barnetilleggsats = barnetilleggsats,
             vedtaksTypeKode = vedtaksTypeKode,
             vedtaksTypeNavn = vedtaksTypeNavn,
             justertG = justertG,
