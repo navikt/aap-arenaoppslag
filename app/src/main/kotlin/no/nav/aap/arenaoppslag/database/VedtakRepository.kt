@@ -2,9 +2,9 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
-import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
@@ -112,7 +112,7 @@ class VedtakRepository(private val dataSource: DataSource) {
             row.getString("sak_id"),
             Status.fraStrengverdi(row.getString("vedtakstatuskode")),
             Periode(
-                fraOgMedDato = fraDato(row.getDate("fra_dato")),
+                fraOgMedDato = requireNotNull(fraDato(row.getDate("fra_dato"))),
                 tilOgMedDato = fraDato(row.getDate("til_dato"))
             )
         )
