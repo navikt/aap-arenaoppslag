@@ -29,6 +29,7 @@ import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -143,7 +144,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     }
 }
 
-fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService) {
+fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService, tilkjentYtelserService: TilkjentYtelserService) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -178,11 +179,16 @@ fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringServic
             vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
         )
 
+
+        val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(SakId(sak.sakId.toInt()))
+            .takeIf { it.rader.isNotEmpty() }
+
         logger.info("Henter saksdetaljer")
-        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato)
+        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, tilkjentYtelse)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
+
 
 fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
     post("/person/vedtak") {

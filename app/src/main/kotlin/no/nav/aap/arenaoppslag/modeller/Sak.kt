@@ -93,6 +93,7 @@ data class ArenaSakMedVedtak(
         kvoteHistorikk: Set<KvotebrukHendelse>,
         sisteUtbetalingDato: LocalDate?,
         maksdato: LocalDate?,
+        tilkjentYtelse: TilkjentYtelseResponse? = null,
     ) = ArenaSakDetaljert(
         sakId = sakId,
         opprettetAar = opprettetAar,
@@ -107,6 +108,7 @@ data class ArenaSakMedVedtak(
         kvoteHistorikk = kvoteHistorikk,
         maksdato = maksdato,
         sisteUtbetalingDato = sisteUtbetalingDato,
+        tilkjentYtelse = tilkjentYtelse,
     )
 
     fun tilKontrakt() = ArenaSakMedVedtakResponse(

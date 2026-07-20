@@ -19,14 +19,15 @@ values (90010, 9001, 'IVERK', 'O', 'JA', 'AAP', 100,
         DATE '2023-01-01', DATE '2023-12-31', '4402', 9001, 2023, 1, 'IKKE', DATE '2023-01-01');
 
 -- VedtakFakta for vedtak 90010
-insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI)
-values (90010, 'DAGSMBT', '550'),
-       (90010, 'BARNTILL', '30'),
-       (90010, 'DAGS', '520'),
-       (90010, 'BARNMSTON', '2'),
-       (90010, 'DAGSFSAM', '520'),
-       (90010, 'GRUNN', '450000'),
-       (90010, 'JUSTERTG', 'NyG2024');
+insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI, REG_DATO)
+values (90010, 'DAGSMBT', '550', DATE '2023-01-01'),
+       (90010, 'BARNTILL', '30', DATE '2023-01-01'),
+       (90010, 'DAGS', '520', DATE '2023-01-01'),
+       (90010, 'BARNMSTON', '2', DATE '2023-01-01'),
+       (90010, 'DAGSFSAM', '520', DATE '2023-01-01'),
+       (90010, 'GRUNN', '450000', DATE '2023-01-01'),
+       (90010, 'JUSTERTG', 'NyG2024', DATE '2023-01-01'),
+       (90010, 'INSGRAD', '33', DATE '2023-01-01');
 
 -- Meldekortperioder
 insert into MELDEKORTPERIODE (AAR, PERIODEKODE, UKENR_UKE1, UKENR_UKE2, DATO_FRA, DATO_TIL)
@@ -122,14 +123,14 @@ insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLK
 values (90030, 9003, 'IVERK', 'O', 'JA', 'AAP', 103,
         DATE '2023-01-01', NULL, '4402', 9003, 2023, 1, 'IKKE', DATE '2023-01-01');
 
-insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI)
-values (90030, 'DAGSMBT', '500'),
-       (90030, 'BARNTILL', '0'),
-       (90030, 'DAGS', '500'),
-       (90030, 'BARNMSTON', '0'),
-       (90030, 'DAGSFSAM', '500'),
-       (90030, 'GRUNN', '400000'),
-       (90030, 'JUSTERTG', 'NyG2024');
+insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI, REG_DATO)
+values (90030, 'DAGSMBT', '500', DATE '2023-01-01'),
+       (90030, 'BARNTILL', '0', DATE '2023-01-01'),
+       (90030, 'DAGS', '500', DATE '2023-01-01'),
+       (90030, 'BARNMSTON', '0', DATE '2023-01-01'),
+       (90030, 'DAGSFSAM', '500', DATE '2023-01-01'),
+       (90030, 'GRUNN', '400000', DATE '2023-01-01'),
+       (90030, 'JUSTERTG', 'NyG2024', DATE '2023-01-01');
 
 -- Meldekortperiode for 2023, periode 10 — finnes også for 2024 (samme periodekode, forskjellig år)
 -- Dette er det som trigger duplikater: JOIN uten AAR-betingelse treffer begge radene

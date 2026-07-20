@@ -29,6 +29,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
@@ -113,6 +114,39 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         gjørArenaOppslag<SignifikantHistorikkResponse, SignifikantHistorikkRequest>(
             "/api/v1/person/historikk/signifikant", req
         ).getOrThrow()
+
+    suspend fun hentSakDetaljert(sakId: Int): ArenaSakDetaljert =
+        gjørArenaOppslagGet<ArenaSakDetaljert>(
+            "/api/intern/sak/$sakId/detaljert"
+        ).getOrThrow()
+
+    private suspend inline fun <reified T> gjørArenaOppslagGet(
+        endepunkt: String
+    ): Result<T> {
+        var fikkToken = false
+        var fikkArenaData = false
+
+        return runCatching {
+            val token = tokenProvider.generate().also { fikkToken = true }
+
+            val arenaResponse = httpClient.get(endepunkt) {
+                accept(ContentType.Application.Json)
+                bearerAuth(token)
+            }.also {
+                if (it.status.isSuccess()) {
+                    fikkArenaData = true
+                }
+            }
+
+            objectMapper.readValue<T>(arenaResponse.bodyAsText())
+        }.onFailure { e ->
+            when {
+                !fikkToken -> log.error("Fetch av token for Arena-oppslag feilet", e)
+                !fikkArenaData -> log.error("Fetch av Arena-data feilet for '$endepunkt'", e)
+                else -> log.error("Parsefeil for '$endepunkt'", e)
+            }
+        }
+    }
 
     suspend fun hentSak(sakId: String): ArenaSakMedVedtakResponse {
         val token = tokenProvider.generate()
