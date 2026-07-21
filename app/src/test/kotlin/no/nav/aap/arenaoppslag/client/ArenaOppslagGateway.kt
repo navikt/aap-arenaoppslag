@@ -23,6 +23,8 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VurderingsgrunnlagRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VurderingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
@@ -70,6 +72,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): SisteUtbetalingerResponse =
         gjørArenaOppslag<SisteUtbetalingerResponse, SisteUtbetalingerRequest>(
             "/api/v1/utbetalinger/siste", req
+        ).getOrThrow()
+
+    suspend fun hentVurderingsgrunnlag(
+        req: VurderingsgrunnlagRequest
+    ): VurderingsgrunnlagResponse =
+        gjørArenaOppslag<VurderingsgrunnlagResponse, VurderingsgrunnlagRequest>(
+            "/api/v1/person/vurderingsgrunnlag", req
         ).getOrThrow()
 
     suspend fun hentVedtakForPerson(

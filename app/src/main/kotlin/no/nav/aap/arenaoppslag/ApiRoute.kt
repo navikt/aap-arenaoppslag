@@ -29,6 +29,8 @@ import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.service.VurderingsgrunnlagService
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VurderingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -114,6 +116,21 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
 
         // dersom personen finnes i Arena men ikke har aktuelle AAP-vedtak blir ingen sak returnert
         call.respond(HttpStatusCode.OK, MaksdatoMedVedtakResponse(sakMedSisteVedtakOgMaksdato))
+    }
+}
+
+fun Route.vurderingsgrunnlag(
+    vurderingsgrunnlagService: VurderingsgrunnlagService,
+    personService: PersonService,
+) {
+    post("/person/vurderingsgrunnlag") {
+        logger.info("Henter AAP-vurderingsgrunnlag for person")
+        val request: VurderingsgrunnlagRequest = call.receive()
+        val personId = personService.hentPersonId(request.personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+
+        val respons = vurderingsgrunnlagService.hentVurderingsgrunnlag(personId)
+        call.respond(HttpStatusCode.OK, respons)
     }
 }
 

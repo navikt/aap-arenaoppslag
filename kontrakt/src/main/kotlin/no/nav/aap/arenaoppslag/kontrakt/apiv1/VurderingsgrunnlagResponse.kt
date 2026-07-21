@@ -1,0 +1,26 @@
+package no.nav.aap.arenaoppslag.kontrakt.apiv1
+
+import java.time.LocalDate
+
+public data class VurderingsgrunnlagRequest(
+    val personidentifikator: String,
+)
+
+/**
+ * Sammensatt AAP-grunnlag for manuell vurdering av søknad i postmottak/Kelvin.
+ *
+ * Alle felter er nullable fordi personen kan finnes i Arena uten aktuelle AAP-vedtak.
+ * Felter for andre ytelser og oppgaver i Arena kommer senere.
+ */
+public data class VurderingsgrunnlagResponse(
+    val saksnummer: String?,
+    val erAktiv: Boolean,
+    // Om det er mindre enn 52 uker siden siste AAP-utbetaling. Null når det ikke finnes utbetaling.
+    val under52Uker: Boolean?,
+    val gjenstaaendeOrdinaerDager: Int?,
+    // Samlet gjenstående unntaksperiode §11-12 (andre og tredje ledd slås sammen).
+    val gjenstaaendeUnntakDager: Int?,
+    val sisteVedtak: VedtakMedMaksdato?,
+    val sisteUtbetaling: LocalDate?,
+)
+
