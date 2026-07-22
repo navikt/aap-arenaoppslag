@@ -15,7 +15,6 @@ public data class VurderingsgrunnlagRequest(
 public data class VurderingsgrunnlagResponse(
     val saksnummer: String?,
     val erAktiv: Boolean,
-    // Om det er mindre enn 52 uker siden siste AAP-utbetaling. Null når det ikke finnes utbetaling.
     val under52Uker: Boolean?,
     val gjenstaaendeOrdinaerDager: Int?,
     // Samlet gjenstående unntaksperiode §11-12 (andre og tredje ledd slås sammen).
