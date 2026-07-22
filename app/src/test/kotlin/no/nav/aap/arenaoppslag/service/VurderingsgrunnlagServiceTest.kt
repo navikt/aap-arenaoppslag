@@ -54,23 +54,23 @@ class VurderingsgrunnlagServiceTest {
         every { telleverkService.hentTelleverkForPerson(personId) } returns
             TelleverkForPerson(ordineerAAPKvote = 67, utvidetAAPKvote = 10)
 
-        val grunnlag = service.hentVurderingsgrunnlag(personId, iDag)
+        val grunnlag = requireNotNull(service.hentVurderingsgrunnlag(personId, iDag))
 
         assertThat(grunnlag.saksnummer).isEqualTo("2024-23456")
         assertThat(grunnlag.erAktiv).isTrue()
-        assertThat(grunnlag.gjenstaaendeOrdinaerDager).isEqualTo(67)
-        assertThat(grunnlag.gjenstaaendeUnntakDager).isEqualTo(10)
+        assertThat(grunnlag.gjenståendeOrdinæreDager).isEqualTo(67)
+        assertThat(grunnlag.gjenståendeUnntaksDager).isEqualTo(10)
         assertThat(grunnlag.under52Uker).isTrue()
         assertThat(grunnlag.sisteUtbetaling).isEqualTo(iDag.minusWeeks(10))
     }
 
     @Test
-    fun `loepende vedtak uten til-dato regnes som under 52 uker`() {
+    fun `løpende vedtak uten til-dato regnes som under 52 uker`() {
         every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns sak(til = null)
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
 
-        val grunnlag = service.hentVurderingsgrunnlag(personId, iDag)
+        val grunnlag = requireNotNull(service.hentVurderingsgrunnlag(personId, iDag))
 
         assertThat(grunnlag.under52Uker).isTrue()
     }
@@ -82,10 +82,10 @@ class VurderingsgrunnlagServiceTest {
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
 
-        val grunnlag = service.hentVurderingsgrunnlag(personId, iDag)
+        val grunnlag = requireNotNull(service.hentVurderingsgrunnlag(personId, iDag))
 
-        assertThat(grunnlag.gjenstaaendeOrdinaerDager).isNull()
-        assertThat(grunnlag.gjenstaaendeUnntakDager).isNull()
+        assertThat(grunnlag.gjenståendeOrdinæreDager).isNull()
+        assertThat(grunnlag.gjenståendeUnntaksDager).isNull()
     }
 
     @Test
@@ -94,7 +94,7 @@ class VurderingsgrunnlagServiceTest {
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
 
-        val grunnlag = service.hentVurderingsgrunnlag(personId, iDag)
+        val grunnlag = requireNotNull(service.hentVurderingsgrunnlag(personId, iDag))
 
         assertThat(grunnlag.under52Uker).isFalse()
     }
@@ -106,22 +106,18 @@ class VurderingsgrunnlagServiceTest {
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
 
-        val grunnlag = service.hentVurderingsgrunnlag(personId, iDag)
+        val grunnlag = requireNotNull(service.hentVurderingsgrunnlag(personId, iDag))
 
         assertThat(grunnlag.erAktiv).isFalse()
     }
 
     @Test
-    fun `person uten AAP-sak gir tomt grunnlag`() {
+    fun `person uten AAP-sak gir null grunnlag`() {
         every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns null
-        every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
-        every { telleverkService.hentTelleverkForPerson(personId) } returns null
 
         val grunnlag = service.hentVurderingsgrunnlag(personId, iDag)
 
-        assertThat(grunnlag.saksnummer).isNull()
-        assertThat(grunnlag.erAktiv).isFalse()
-        assertThat(grunnlag.sisteVedtak).isNull()
+        assertThat(grunnlag).isNull()
     }
 }
 

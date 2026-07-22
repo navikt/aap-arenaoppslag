@@ -16,9 +16,9 @@ public data class VurderingsgrunnlagResponse(
     val saksnummer: String?,
     val erAktiv: Boolean,
     val under52Uker: Boolean?,
-    val gjenstaaendeOrdinaerDager: Int?,
+    val gjenståendeOrdinæreDager: Int?,
     // Samlet gjenstående unntaksperiode §11-12 (andre og tredje ledd slås sammen).
-    val gjenstaaendeUnntakDager: Int?,
+    val gjenståendeUnntaksDager: Int?,
     val sisteVedtak: VedtakMedMaksdato?,
     val sisteUtbetaling: LocalDate?,
 )

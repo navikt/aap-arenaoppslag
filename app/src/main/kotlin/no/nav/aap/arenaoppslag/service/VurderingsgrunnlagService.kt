@@ -17,21 +17,25 @@ class VurderingsgrunnlagService(
     fun hentVurderingsgrunnlag(
         personId: PersonId,
         iDag: LocalDate = LocalDate.now(),
-    ): VurderingsgrunnlagResponse {
-        val sak = sakService.hentMaksdatoAapMedVedtakOgSak(personId)
+    ): VurderingsgrunnlagResponse? {
+        // Uten en AAP-sak har grunnlaget ingen mening for vurderingen (Arena vs. Kelvin),
+        // og telleverkstallene alene sier ingenting. Da returnerer vi null slik at ruten
+        // kan svare 404 i stedet for et tomt 200-objekt.
+        val sak = sakService.hentMaksdatoAapMedVedtakOgSak(personId) ?: return null
+
         val sisteUtbetaling = posteringService.hentSisteAapUtbetalingForPerson(personId)
         // Telleverket holder faktisk gjenstående kvote i dager, og er en mer presis kilde
         // enn å regne differansen mot maksdato.
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
 
         return VurderingsgrunnlagResponse(
-            saksnummer = sak?.saknummer,
-            erAktiv = sak?.erLopende() ?: false,
-            under52Uker = sak?.let { under52Uker(it.sisteVedtak.til, iDag) },
-            gjenstaaendeOrdinaerDager = telleverk?.ordineerAAPKvote,
+            saksnummer = sak.saknummer,
+            erAktiv = sak.erLopende(),
+            under52Uker = under52Uker(sak.sisteVedtak.til, iDag),
+            gjenståendeOrdinæreDager = telleverk?.ordineerAAPKvote,
             // Samlet gjenstående unntaksperiode §11-12 (andre og tredje ledd).
-            gjenstaaendeUnntakDager = telleverk?.utvidetAAPKvote,
-            sisteVedtak = sak?.sisteVedtak,
+            gjenståendeUnntaksDager = telleverk?.utvidetAAPKvote,
+            sisteVedtak = sak.sisteVedtak,
             sisteUtbetaling = sisteUtbetaling,
         )
     }

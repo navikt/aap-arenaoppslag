@@ -124,12 +124,12 @@ fun Route.vurderingsgrunnlag(
     personService: PersonService,
 ) {
     post("/person/vurderingsgrunnlag") {
-        logger.info("Henter AAP-vurderingsgrunnlag for person")
         val request: VurderingsgrunnlagRequest = call.receive()
         val personId = personService.hentPersonId(request.personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val respons = vurderingsgrunnlagService.hentVurderingsgrunnlag(personId)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ingen AAP-sak for personen i Arena")
         call.respond(HttpStatusCode.OK, respons)
     }
 }
