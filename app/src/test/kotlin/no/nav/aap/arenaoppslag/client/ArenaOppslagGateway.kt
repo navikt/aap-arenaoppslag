@@ -78,7 +78,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         req: VurderingsgrunnlagRequest
     ): VurderingsgrunnlagResponse =
         gjørArenaOppslag<VurderingsgrunnlagResponse, VurderingsgrunnlagRequest>(
-            "/api/v1/person/vurderingsgrunnlag", req
+            "/intern/person/vurderingsgrunnlag", req
         ).getOrThrow()
 
     suspend fun hentVedtakForPerson(

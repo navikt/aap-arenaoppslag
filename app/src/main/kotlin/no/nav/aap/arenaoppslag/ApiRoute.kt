@@ -29,8 +29,6 @@ import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
-import no.nav.aap.arenaoppslag.service.VurderingsgrunnlagService
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VurderingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -119,20 +117,6 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.vurderingsgrunnlag(
-    vurderingsgrunnlagService: VurderingsgrunnlagService,
-    personService: PersonService,
-) {
-    post("/person/vurderingsgrunnlag") {
-        val request: VurderingsgrunnlagRequest = call.receive()
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
-
-        val respons = vurderingsgrunnlagService.hentVurderingsgrunnlag(personId)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ingen AAP-sak for personen i Arena")
-        call.respond(HttpStatusCode.OK, respons)
-    }
-}
 
 fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     get("/sak/{sakid}") {

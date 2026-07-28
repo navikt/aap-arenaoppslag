@@ -231,6 +231,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
+                vurderingsgrunnlag(vurderingsgrunnlagService, personService)
             }
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres.
@@ -241,7 +242,6 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
                 sak(sakOgVedtakService)
-                vurderingsgrunnlag(vurderingsgrunnlagService, personService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
