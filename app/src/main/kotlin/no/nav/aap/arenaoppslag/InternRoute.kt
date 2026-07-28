@@ -4,7 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VurderingsgrunnlagRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ManuellFordelingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
@@ -13,7 +13,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.service.InternService
 import no.nav.aap.arenaoppslag.service.PersonService
-import no.nav.aap.arenaoppslag.service.VurderingsgrunnlagService
+import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
 
 fun Route.perioder(internService: InternService) {
     route("/perioder") {
@@ -65,16 +65,16 @@ fun Route.saker(internService: InternService) {
     }
 }
 
-fun Route.vurderingsgrunnlag(
-    vurderingsgrunnlagService: VurderingsgrunnlagService,
+fun Route.manuellFordelingsgrunnlag(
+    manuellFordelingsgrunnlagService: ManuellFordelingsgrunnlagService,
     personService: PersonService,
 ) {
-    post("/person/vurderingsgrunnlag") {
-        val request: VurderingsgrunnlagRequest = call.receive()
+    post("/person/manuell-fordelingsgrunnlag") {
+        val request: ManuellFordelingsgrunnlagRequest = call.receive()
         val personId = personService.hentPersonId(request.personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val respons = vurderingsgrunnlagService.hentVurderingsgrunnlag(personId)
+        val respons = manuellFordelingsgrunnlagService.hentManuellFordelingsgrunnlag(personId)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ingen AAP-sak for personen i Arena")
         call.respond(HttpStatusCode.OK, respons)
     }

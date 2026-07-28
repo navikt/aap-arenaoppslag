@@ -42,7 +42,7 @@ import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
-import no.nav.aap.arenaoppslag.service.VurderingsgrunnlagService
+import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.util.*
@@ -192,8 +192,8 @@ private fun skapUtbetalingService(datasource: DataSource): PosteringService {
     return PosteringService(posteringRepository)
 }
 
-private fun skapVurderingsgrunnlagService(datasource: DataSource): VurderingsgrunnlagService {
-    return VurderingsgrunnlagService(
+private fun skapManuellFordelingsgrunnlagService(datasource: DataSource): ManuellFordelingsgrunnlagService {
+    return ManuellFordelingsgrunnlagService(
         skapSakListeService(datasource),
         skapUtbetalingService(datasource),
         skapTelleverkService(datasource),
@@ -219,7 +219,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
     val saksopplysningService = skapSaksopplysningService(datasource)
-    val vurderingsgrunnlagService = skapVurderingsgrunnlagService(datasource)
+    val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource)
 
     routing {
         actuator(prometheus)
@@ -231,7 +231,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
-                vurderingsgrunnlag(vurderingsgrunnlagService, personService)
+                manuellFordelingsgrunnlag(manuellFordelingsgrunnlagService, personService)
             }
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres.

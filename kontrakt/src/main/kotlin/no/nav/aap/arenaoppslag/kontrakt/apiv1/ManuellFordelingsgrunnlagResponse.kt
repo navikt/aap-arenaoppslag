@@ -2,7 +2,7 @@ package no.nav.aap.arenaoppslag.kontrakt.apiv1
 
 import java.time.LocalDate
 
-public data class VurderingsgrunnlagRequest(
+public data class ManuellFordelingsgrunnlagRequest(
     val personidentifikator: String,
 )
 
@@ -12,7 +12,7 @@ public data class VurderingsgrunnlagRequest(
  * Alle felter er nullable fordi personen kan finnes i Arena uten aktuelle AAP-vedtak.
  * Felter for andre ytelser og oppgaver i Arena kommer senere.
  */
-public data class VurderingsgrunnlagResponse(
+public data class ManuellFordelingsgrunnlagResponse(
     val saksnummer: String?,
     val erAktiv: Boolean,
     val under52Uker: Boolean?,

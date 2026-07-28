@@ -23,8 +23,8 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VurderingsgrunnlagRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VurderingsgrunnlagResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ManuellFordelingsgrunnlagRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
@@ -74,11 +74,11 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/api/v1/utbetalinger/siste", req
         ).getOrThrow()
 
-    suspend fun hentVurderingsgrunnlag(
-        req: VurderingsgrunnlagRequest
-    ): VurderingsgrunnlagResponse =
-        gjørArenaOppslag<VurderingsgrunnlagResponse, VurderingsgrunnlagRequest>(
-            "/intern/person/vurderingsgrunnlag", req
+    suspend fun hentManuellFordelingsgrunnlag(
+        req: ManuellFordelingsgrunnlagRequest
+    ): ManuellFordelingsgrunnlagResponse =
+        gjørArenaOppslag<ManuellFordelingsgrunnlagResponse, ManuellFordelingsgrunnlagRequest>(
+            "/intern/person/manuell-fordelingsgrunnlag", req
         ).getOrThrow()
 
     suspend fun hentVedtakForPerson(
