@@ -1,14 +1,11 @@
 package no.nav.aap.arenaoppslag
 
-import io.ktor.client.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.http.*
-import io.ktor.serialization.jackson.*
-import io.ktor.server.testing.*
-import no.nav.aap.arenaoppslag.util.Fakes
-import no.nav.aap.arenaoppslag.util.port
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.ContentType
+import io.ktor.serialization.jackson.JacksonConverter
+import io.ktor.server.testing.ApplicationTestBuilder
 import java.io.File
-import java.net.URI
 
 internal object TestConfig {
 
@@ -28,16 +25,11 @@ internal object TestConfig {
         driver = "org.h2.Driver"
     )
 
-    fun default(fakes: Fakes): AppConfig {
+    fun default(): AppConfig {
         return AppConfig(
             proxyUrl = "http://localhost",
             enableProxy = false,
             database = oracleH2,
-            azure = AzureConfig(
-                jwksUri = URI.create("http://localhost:${fakes.azure.port()}/jwks").toString(),
-                issuer = "azure",
-                clientId = "no/nav/aap/arenaoppslag"
-            )
         )
     }
 
