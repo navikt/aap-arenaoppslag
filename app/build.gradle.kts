@@ -2,16 +2,16 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("aap.conventions")
-    id("com.gradleup.shadow") version "9.4.2"
-    id("io.ktor.plugin") version "3.4.3"
+    id("com.gradleup.shadow") version "9.6.1"
+    id("io.ktor.plugin") version "3.5.1"
     id("dev.detekt")
     application
 }
 
-val ktorVersion = "3.4.3"
-val jacksonVersion = "2.22.0"
-val jackson3Version = "3.2.0"
-val nettyVersion = "4.2.15.Final"
+val ktorVersion = "3.5.1"
+val jacksonVersion = "2.22.1"
+val jackson3Version = "3.2.1"
+val nettyVersion = "4.2.16.Final"
 
 application {
     mainClass.set("no.nav.aap.arenaoppslag.AppKt")
@@ -56,7 +56,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     implementation("io.micrometer:micrometer-registry-prometheus:1.17.0")
-    implementation("ch.qos.logback:logback-classic:1.5.34")
+    implementation("ch.qos.logback:logback-classic:1.6.0")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
