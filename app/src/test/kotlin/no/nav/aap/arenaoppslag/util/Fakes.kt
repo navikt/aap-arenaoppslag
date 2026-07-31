@@ -1,28 +1,46 @@
 package no.nav.aap.arenaoppslag.util
 
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.serialization.jackson.jackson
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.engine.ConnectorType
+import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.response.respond
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
 
 class Fakes : AutoCloseable {
-    val azure = embeddedServer(Netty, port = 0, module = Application::azure).apply { start() }
+    internal val texas = embeddedServer(Netty, port = 0, module = Application::texas).apply { start() }
+
+    init {
+        // Texas
+        System.setProperty("nais.token.endpoint", "http://localhost:${texas.port()}/token")
+        System.setProperty("nais.token.exchange.endpoint", "http://localhost:${texas.port()}/token/exchange")
+        System.setProperty("nais.token.introspection.endpoint", "http://localhost:${texas.port()}/introspect")
+    }
 
     override fun close() {
-        azure.stop(0L, 0L)
+        texas.stop(0L, 0L)
     }
 }
 
-fun Application.azure() {
+fun Application.texas() {
+    install(ContentNegotiation) {
+        jackson()
+    }
+
     routing {
         post("/token") {
             val token = AzureTokenGen("azure", "no/nav/aap/arenaoppslag").generate()
             call.respond(TestToken(access_token = token))
         }
-        get("/jwks") {
-            call.respond(AZURE_JWKS)
+
+        post("/introspect") {
+            call.respond(mapOf("active" to true))
         }
     }
 }

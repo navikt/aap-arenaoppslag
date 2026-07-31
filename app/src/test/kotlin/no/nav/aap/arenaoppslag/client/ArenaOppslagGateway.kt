@@ -162,9 +162,9 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     companion object {
         fun withTestServer(dataSource: DataSource, testBody: suspend (ArenaOppslagGateway) -> Unit) {
-            Fakes().use { fakes ->
-                val config = TestConfig.default(fakes)
-                val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
+            Fakes().use {
+                val config = TestConfig.default()
+                val tokenProvider = AzureTokenGen("issuer", "arenaoppslag")
                 testApplication {
                     application { server(config, dataSource, FakePdlGateway()) }
                     val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)

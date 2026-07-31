@@ -207,7 +207,7 @@ Available Flyway migration sets (all automatically include `flyway/common`):
 
 ### Integration tests
 
-Use `Fakes` for a lightweight embedded Azure JWKS/token server. Use `TestConfig.default(fakes)` for `AppConfig`.
+Use `Fakes` for a lightweight embedded Texas JWKS/token server. Use `TestConfig.default(fakes)` for `AppConfig`.
 Wire `AzureTokenGen` to produce tokens with the correct issuer and client ID.
 
 ```kotlin
