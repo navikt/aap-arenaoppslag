@@ -66,7 +66,7 @@ class InternService(
         return fodselsnummerene.flatMap { fnr ->
             sakerCache.get(fnr) {
                 vedtakRepository.hentVedtakStatuser(fnr)
-                    .map { SakStatus(it.sakId, it.statusKode, it.periode, it.kilde) }
+                    .map { SakStatus(it.sakId, it.statusKode, it.periode.tilKontrakt(), it.kilde) }
             }
         }
     }

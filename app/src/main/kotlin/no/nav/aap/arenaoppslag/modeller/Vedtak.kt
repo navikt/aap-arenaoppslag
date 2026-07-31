@@ -2,7 +2,6 @@ package no.nav.aap.arenaoppslag.modeller
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Kilde
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
-import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak as ArenaVedtakKontrakt
