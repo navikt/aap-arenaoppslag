@@ -112,7 +112,7 @@ class VedtakRepository(private val dataSource: DataSource) {
             row.getString("sak_id"),
             Status.fraStrengverdi(row.getString("vedtakstatuskode")),
             Periode(
-                fraOgMedDato = requireNotNull(fraDato(row.getDate("fra_dato"))),
+                fraOgMedDato = fraDato(row.getDate("fra_dato")),
                 tilOgMedDato = fraDato(row.getDate("til_dato"))
             )
         )
