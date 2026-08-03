@@ -29,6 +29,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
@@ -117,6 +118,15 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     suspend fun hentSak(sakId: String): ArenaSakMedVedtakResponse {
         val token = tokenProvider.generate()
         val arenaResponse = httpClient.get("/api/v1/sak/$sakId") {
+            accept(ContentType.Application.Json)
+            bearerAuth(token)
+        }
+        return objectMapper.readValue(arenaResponse.bodyAsText())
+    }
+
+    suspend fun hentSakDetaljert(sakId: String): ArenaSakDetaljert {
+        val token = tokenProvider.generate()
+        val arenaResponse = httpClient.get("/api/intern/sak/$sakId/detaljert") {
             accept(ContentType.Application.Json)
             bearerAuth(token)
         }

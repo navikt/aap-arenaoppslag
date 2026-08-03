@@ -32,6 +32,7 @@ import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
+import no.nav.aap.arenaoppslag.database.OppgaveRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.PosteringRepository
@@ -49,6 +50,7 @@ import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -212,6 +214,11 @@ private fun skapSaksopplysningService(datasource: DataSource): SaksopplysningSer
     return SaksopplysningService(saksopplysningRepository)
 }
 
+private fun skapOppgaveService(datasource: DataSource): OppgaveService {
+    val oppgaveRepository = OppgaveRepository(datasource)
+    return OppgaveService(oppgaveRepository)
+}
+
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
@@ -221,6 +228,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
     val saksopplysningService = skapSaksopplysningService(datasource)
+    val oppgaveService = skapOppgaveService(datasource)
 
     routing {
         actuator(prometheus)
@@ -251,7 +259,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     posteringService = utbetalingService,
                     sakOgVedtakService = sakOgVedtakService,
                     telleverkService = telleverkService,
-                    saksopplysningService = saksopplysningService
+                    saksopplysningService = saksopplysningService,
+                    oppgaveService = oppgaveService
                 )
             }
         }
