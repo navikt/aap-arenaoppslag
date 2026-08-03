@@ -5,16 +5,16 @@
 --------------------------------------------------------------------------------
 CREATE TABLE "V_OPPGAVE"
 (
-    "PERSON_ID"     NUMBER,
+    "PERSON_ID"     NUMBER       NOT NULL,
     "FODSELSNR"     VARCHAR2(11),
-    "TASK_ID"       VARCHAR2(50),
-    "DESCRIPTION"   VARCHAR2(2000),
-    "CASECONTEXT"   VARCHAR2(255),
-    "DISPLAYNAME"   VARCHAR2(255),
+    "TASK_ID"       NUMBER       NOT NULL,
+    "DESCRIPTION"   VARCHAR2(100),
+    "CASECONTEXT"   VARCHAR2(80),
+    "DISPLAYNAME"   VARCHAR2(100),
     "DUEDATE"       DATE,
-    "ARBEIDSBENK"   VARCHAR2(255),
-    "OPPGAVE_ENHET" VARCHAR2(10),
-    "NAV_ENHET"     VARCHAR2(10),
+    "ARBEIDSBENK"   VARCHAR2(20),
+    "OPPGAVE_ENHET" VARCHAR2(8),
+    "NAV_ENHET"     VARCHAR2(8),
     "NOTE"          VARCHAR2(2000)
 );
 
