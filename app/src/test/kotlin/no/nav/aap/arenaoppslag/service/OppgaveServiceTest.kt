@@ -17,6 +17,7 @@ class OppgaveServiceTest {
     @Test
     fun `hentOppgaverForPerson returnerer oppgavene fra repository`() {
         val oppgave = ArenaOppgave(
+            oppgaveId = "TASK-1",
             beskrivelse = "Vurder rett til AAP",
             sakskontekst = "AA",
             visningsnavn = "Vurder rettighet",

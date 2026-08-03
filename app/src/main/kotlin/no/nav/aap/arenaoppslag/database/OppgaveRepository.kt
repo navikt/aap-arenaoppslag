@@ -13,6 +13,7 @@ class OppgaveRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(1, personId.id)
                 preparedStatement.executeQuery().map { row ->
                     ArenaOppgave(
+                        oppgaveId = row.getString("task_id"),
                         beskrivelse = row.getString("description"),
                         sakskontekst = row.getString("casecontext"),
                         visningsnavn = row.getString("displayname"),
@@ -30,7 +31,8 @@ class OppgaveRepository(private val dataSource: DataSource) {
     companion object {
         @Language("OracleSql")
         private val selectOppgaverForPerson = """
-            SELECT o.description,
+            SELECT o.task_id,
+                   o.description,
                    o.casecontext,
                    o.displayname,
                    o.duedate,
