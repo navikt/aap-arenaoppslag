@@ -5,7 +5,7 @@ import java.time.LocalDate
 
 
 data class Periode(
-    val fraOgMedDato: LocalDate,
+    val fraOgMedDato: LocalDate?,
     val tilOgMedDato: LocalDate?
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Periode {

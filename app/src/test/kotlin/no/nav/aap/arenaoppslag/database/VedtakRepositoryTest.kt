@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
@@ -10,7 +11,6 @@ import org.assertj.core.groups.Tuple.tuple
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode as KontraktPeriode
 
 class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
 
@@ -19,7 +19,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
         val forventetVedtaksperioder = listOf(
             VedtakStatus(
                 sakId = "4", Status.IVERK,
-                KontraktPeriode(
+                Periode(
                     LocalDate.of(2022, 8, 30),
                     null
                 )
