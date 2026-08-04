@@ -26,7 +26,7 @@ class OppgaveRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/oppgave")
             .single { it.fristDato == LocalDate.of(2024, 5, 1) }
 
         assertThat(oppgave.beskrivelse).isEqualTo("Vurder rett til AAP")
-        assertThat(oppgave.oppgaveId).isEqualTo("1001")
+        assertThat(oppgave.oppgaveId).isEqualTo(1001L)
         assertThat(oppgave.sakskontekst).isEqualTo("AA")
         assertThat(oppgave.visningsnavn).isEqualTo("Vurder rettighet")
         assertThat(oppgave.arbeidsbenk).isEqualTo("Min benk")
@@ -42,7 +42,7 @@ class OppgaveRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/oppgave")
         val oppgave = oppgaveRepository.hentOppgaverForPerson(PersonId(1)).last()
 
         assertThat(oppgave.beskrivelse).isEqualTo("Oppgave uten frist")
-        assertThat(oppgave.oppgaveId).isEqualTo("1003")
+        assertThat(oppgave.oppgaveId).isEqualTo(1003L)
         assertThat(oppgave.sakskontekst).isNull()
         assertThat(oppgave.visningsnavn).isNull()
         assertThat(oppgave.fristDato).isNull()
