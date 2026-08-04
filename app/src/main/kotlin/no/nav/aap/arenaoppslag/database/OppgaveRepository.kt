@@ -13,7 +13,7 @@ class OppgaveRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(1, personId.id)
                 preparedStatement.executeQuery().map { row ->
                     ArenaOppgave(
-                        oppgaveId = row.getString("task_id"),
+                        oppgaveId = row.getLong("task_id"),
                         beskrivelse = row.getString("description"),
                         sakskontekst = row.getString("casecontext"),
                         visningsnavn = row.getString("displayname"),
