@@ -17,4 +17,5 @@ data class ArenaSakDetaljert(
     val kvoteHistorikk: Set<KvotebrukHendelse>,
     val maksdato: LocalDate?,
     val sisteUtbetalingDato: LocalDate?,
+    val oppgaver: List<ArenaOppgave>,
 )

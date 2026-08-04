@@ -24,6 +24,7 @@ import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.HistorikkService
+import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -143,7 +144,14 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     }
 }
 
-fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringService, sakOgVedtakService: SakOgVedtakService, telleverkService: TelleverkService, saksopplysningService: SaksopplysningService) {
+fun Route.sakDetaljert(
+    sakService: SakService,
+    posteringService: PosteringService,
+    sakOgVedtakService: SakOgVedtakService,
+    telleverkService: TelleverkService,
+    saksopplysningService: SaksopplysningService,
+    oppgaveService: OppgaveService,
+) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
 
@@ -169,6 +177,7 @@ fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringServic
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
+        val oppgaver = oppgaveService.hentOppgaverForPerson(personId)
         val saksopplysningerPerVedtak = saksopplysningService.hentForVedtakIder(sak.vedtak.map { it.vedtakId })
         val alleSaksopplysninger = sak.vedtak.associate { vedtak ->
             vedtak.vedtakId to (saksopplysningerPerVedtak[vedtak.vedtakId] ?: emptyList())
@@ -179,7 +188,7 @@ fun Route.sakDetaljert(sakService: SakService, posteringService: PosteringServic
         )
 
         logger.info("Henter saksdetaljer")
-        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato)
+        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, oppgaver)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
