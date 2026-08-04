@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- V_OPPGAVE
--- Arena eksponerer oppgaver gjennom denne viewet. I H2 lages den som tabell,
+-- Arena eksponerer oppgaver gjennom dette viewet. I H2 lages den som tabell,
 -- siden vi ikke har de underliggende Arena-tabellene tilgjengelig i tester.
 --------------------------------------------------------------------------------
 CREATE TABLE "V_OPPGAVE"
