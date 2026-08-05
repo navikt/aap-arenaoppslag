@@ -4,11 +4,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import java.time.LocalDate
 
-/**
- * Komposisjonstjeneste som setter sammen AAP-grunnlaget en saksbehandler trenger for å
- * vurdere om en søknad skal behandles i Arena eller Kelvin. Bruker eksisterende tjenester
- * som byggeklosser i stedet for å samle all logikk i én "god class".
- */
+
 class ManuellFordelingsgrunnlagService(
     private val sakService: SakService,
     private val posteringService: PosteringService,
