@@ -24,6 +24,8 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
@@ -71,6 +73,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): SisteUtbetalingerResponse =
         gjørArenaOppslag<SisteUtbetalingerResponse, SisteUtbetalingerRequest>(
             "/api/v1/utbetalinger/siste", req
+        ).getOrThrow()
+
+    suspend fun hentManuellFordelingsgrunnlag(
+        req: ManuellFordelingsgrunnlagRequest
+    ): ManuellFordelingsgrunnlagResponse =
+        gjørArenaOppslag<ManuellFordelingsgrunnlagResponse, ManuellFordelingsgrunnlagRequest>(
+            "/intern/person/manuell-fordelingsgrunnlag", req
         ).getOrThrow()
 
     suspend fun hentVedtakForPerson(

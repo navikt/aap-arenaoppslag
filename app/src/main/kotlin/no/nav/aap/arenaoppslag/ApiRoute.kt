@@ -118,6 +118,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
     }
 }
 
+
 fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     get("/sak/{sakid}") {
         val sakid = call.parameters["sakid"]
