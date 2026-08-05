@@ -1,11 +1,10 @@
 package no.nav.aap.arenaoppslag
-
 import io.ktor.client.plugins.*
 import io.ktor.http.*
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ManuellFordelingsgrunnlagRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ManuellFordelingsgrunnlagResponse
+import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
