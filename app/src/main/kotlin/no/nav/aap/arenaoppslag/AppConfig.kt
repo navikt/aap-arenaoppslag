@@ -8,7 +8,6 @@ data class AppConfig(
     val proxyUrl: String = getEnvVar("HTTP_PROXY"),
     val enableProxy: Boolean = true,
     val database: DbConfig = DbConfig(),
-    val azure: AzureConfig = AzureConfig(),
 ) {
     companion object {
         // Vi endrer ktor sin default-verdi som er "antall CPUer" synlige for JVM-en, som normalt er antall
@@ -42,12 +41,6 @@ data class DbConfig(
         "password"
     },
     val driver: String = "oracle.jdbc.OracleDriver"
-)
-
-data class AzureConfig(
-    val jwksUri: String = getEnvVar("AZURE_OPENID_CONFIG_JWKS_URI"),
-    val issuer: String = getEnvVar("AZURE_OPENID_CONFIG_ISSUER"),
-    val clientId: String = getEnvVar("AZURE_APP_CLIENT_ID")
 )
 
 private fun getEnvVar(envar: String) = System.getenv(envar) ?: error("missing envvar $envar")
