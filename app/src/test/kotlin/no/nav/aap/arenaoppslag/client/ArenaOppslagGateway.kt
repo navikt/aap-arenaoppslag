@@ -79,7 +79,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         req: ManuellFordelingsgrunnlagRequest
     ): ManuellFordelingsgrunnlagResponse =
         gjørArenaOppslag<ManuellFordelingsgrunnlagResponse, ManuellFordelingsgrunnlagRequest>(
-            "/intern/person/manuell-fordelingsgrunnlag", req
+            "/intern/manuell-fordelingsgrunnlag", req
         ).getOrThrow()
 
     suspend fun hentVedtakForPerson(

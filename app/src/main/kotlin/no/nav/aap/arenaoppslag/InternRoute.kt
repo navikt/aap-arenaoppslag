@@ -69,7 +69,7 @@ fun Route.manuellFordelingsgrunnlag(
     manuellFordelingsgrunnlagService: ManuellFordelingsgrunnlagService,
     personService: PersonService,
 ) {
-    post("/person/manuell-fordelingsgrunnlag") {
+    post("/manuell-fordelingsgrunnlag") {
         val request: ManuellFordelingsgrunnlagRequest = call.receive()
 
         val personId = personService.hentPersonId(request.personidentifikator)
