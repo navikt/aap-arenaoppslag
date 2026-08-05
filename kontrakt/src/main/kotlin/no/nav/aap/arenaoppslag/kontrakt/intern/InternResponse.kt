@@ -41,7 +41,7 @@ public data class SakStatus(
 
 
 public data class ManuellFordelingsgrunnlagResponse(
-    val saksnummer: String?,
+    val saksnummer: String,
     val erAktiv: Boolean,
     val under52Uker: Boolean?,
     val gjenståendeOrdinæreDager: Int?,
