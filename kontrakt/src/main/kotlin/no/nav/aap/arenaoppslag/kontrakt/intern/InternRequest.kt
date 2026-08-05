@@ -21,3 +21,8 @@ public data class SignifikanteSakerRequest(
     val personidentifikatorer: List<String>,
     val virkningstidspunkt: LocalDate, // datoen søknaden ble mottatt, feks. per post
 )
+
+public data class ManuellFordelingsgrunnlagRequest(
+    val personidentifikator: String,
+)
+

@@ -210,6 +210,7 @@ private fun skapManuellFordelingsgrunnlagService(datasource: DataSource): Manuel
         skapSakListeService(datasource),
         skapUtbetalingService(datasource),
         skapTelleverkService(datasource),
+        skapOppgaveService(datasource),
     )
 }
 

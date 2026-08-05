@@ -4,6 +4,7 @@ import io.mockk.every
 import io.mockk.mockk
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato
+import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
 import org.assertj.core.api.Assertions.assertThat
@@ -15,10 +16,23 @@ class ManuellFordelingsgrunnlagServiceTest {
     private val sakService: SakService = mockk()
     private val posteringService: PosteringService = mockk()
     private val telleverkService: TelleverkService = mockk()
-    private val service = ManuellFordelingsgrunnlagService(sakService, posteringService, telleverkService)
+    private val oppgaveService: OppgaveService = mockk()
+    private val service = ManuellFordelingsgrunnlagService(sakService, posteringService, telleverkService, oppgaveService)
 
     private val personId = PersonId(1)
     private val iDag = LocalDate.of(2026, 1, 1)
+
+    private fun oppgave(oppgaveId: Long = 1L) = ArenaOppgave(
+        oppgaveId = oppgaveId,
+        beskrivelse = "Vurder rett til AAP",
+        sakskontekst = "AA",
+        visningsnavn = "Vurder rettighet",
+        fristDato = LocalDate.of(2024, 5, 1),
+        arbeidsbenk = "Min benk",
+        oppgaveEnhet = "0826",
+        navEnhet = "4402",
+        notat = null,
+    )
 
     private fun sak(
         maxdatoOrdinaer: LocalDate? = null,
@@ -53,6 +67,7 @@ class ManuellFordelingsgrunnlagServiceTest {
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns iDag.minusWeeks(10)
         every { telleverkService.hentTelleverkForPerson(personId) } returns
             TelleverkForPerson(ordineerAAPKvote = 67, utvidetAAPKvote = 10)
+        every { oppgaveService.hentOppgaverForPerson(personId) } returns listOf(oppgave())
 
         val grunnlag = requireNotNull(service.hentManuellFordelingsgrunnlag(personId, iDag))
 
@@ -62,6 +77,8 @@ class ManuellFordelingsgrunnlagServiceTest {
         assertThat(grunnlag.gjenståendeUnntaksDager).isEqualTo(10)
         assertThat(grunnlag.under52Uker).isTrue()
         assertThat(grunnlag.sisteUtbetaling).isEqualTo(iDag.minusWeeks(10))
+        assertThat(grunnlag.oppgaver).hasSize(1)
+        assertThat(grunnlag.oppgaver.single().oppgaveId).isEqualTo(1L)
     }
 
     @Test
@@ -69,6 +86,7 @@ class ManuellFordelingsgrunnlagServiceTest {
         every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns sak(til = null)
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
+        every { oppgaveService.hentOppgaverForPerson(personId) } returns emptyList()
 
         val grunnlag = requireNotNull(service.hentManuellFordelingsgrunnlag(personId, iDag))
 
@@ -81,6 +99,7 @@ class ManuellFordelingsgrunnlagServiceTest {
             sak(maxdatoOrdinaer = iDag.minusDays(5))
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
+        every { oppgaveService.hentOppgaverForPerson(personId) } returns emptyList()
 
         val grunnlag = requireNotNull(service.hentManuellFordelingsgrunnlag(personId, iDag))
 
@@ -93,6 +112,7 @@ class ManuellFordelingsgrunnlagServiceTest {
         every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns sak(til = iDag.minusWeeks(53))
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
+        every { oppgaveService.hentOppgaverForPerson(personId) } returns emptyList()
 
         val grunnlag = requireNotNull(service.hentManuellFordelingsgrunnlag(personId, iDag))
 
@@ -105,6 +125,7 @@ class ManuellFordelingsgrunnlagServiceTest {
             sak(vedtaktypeKode = "S")
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
+        every { oppgaveService.hentOppgaverForPerson(personId) } returns emptyList()
 
         val grunnlag = requireNotNull(service.hentManuellFordelingsgrunnlag(personId, iDag))
 
