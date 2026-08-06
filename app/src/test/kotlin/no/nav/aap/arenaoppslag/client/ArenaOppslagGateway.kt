@@ -24,11 +24,14 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
@@ -70,6 +73,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): SisteUtbetalingerResponse =
         gjørArenaOppslag<SisteUtbetalingerResponse, SisteUtbetalingerRequest>(
             "/api/v1/utbetalinger/siste", req
+        ).getOrThrow()
+
+    suspend fun hentManuellFordelingsgrunnlag(
+        req: ManuellFordelingsgrunnlagRequest
+    ): ManuellFordelingsgrunnlagResponse =
+        gjørArenaOppslag<ManuellFordelingsgrunnlagResponse, ManuellFordelingsgrunnlagRequest>(
+            "/intern/manuell-fordelingsgrunnlag", req
         ).getOrThrow()
 
     suspend fun hentVedtakForPerson(
@@ -117,6 +127,15 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     suspend fun hentSak(sakId: String): ArenaSakMedVedtakResponse {
         val token = tokenProvider.generate()
         val arenaResponse = httpClient.get("/api/v1/sak/$sakId") {
+            accept(ContentType.Application.Json)
+            bearerAuth(token)
+        }
+        return objectMapper.readValue(arenaResponse.bodyAsText())
+    }
+
+    suspend fun hentSakDetaljert(sakId: String): ArenaSakDetaljert {
+        val token = tokenProvider.generate()
+        val arenaResponse = httpClient.get("/api/intern/sak/$sakId/detaljert") {
             accept(ContentType.Application.Json)
             bearerAuth(token)
         }

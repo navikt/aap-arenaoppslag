@@ -204,6 +204,7 @@ Available Flyway migration sets (all automatically include `flyway/common`):
 | `flyway/dsop` | DSOP-specific schema |
 | `flyway/saklistetest` | Sak-list test data (multiple saker for person lookups) |
 | `flyway/maksimum` | Maksimum/utbetaling test data |
+| `flyway/oppgave` | Oppgave test data (`V_OPPGAVE`) |
 
 ### Integration tests
 

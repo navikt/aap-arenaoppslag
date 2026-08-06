@@ -32,6 +32,7 @@ import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
+import no.nav.aap.arenaoppslag.database.OppgaveRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.PosteringRepository
@@ -49,6 +50,7 @@ import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -56,6 +58,7 @@ import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
+import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
 import org.slf4j.LoggerFactory
 
 val logger = LoggerFactory.getLogger("App")
@@ -202,6 +205,15 @@ private fun skapUtbetalingService(datasource: DataSource): PosteringService {
     return PosteringService(posteringRepository)
 }
 
+private fun skapManuellFordelingsgrunnlagService(datasource: DataSource): ManuellFordelingsgrunnlagService {
+    return ManuellFordelingsgrunnlagService(
+        skapSakListeService(datasource),
+        skapUtbetalingService(datasource),
+        skapTelleverkService(datasource),
+        skapOppgaveService(datasource),
+    )
+}
+
 private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): PersonService {
     val personRepository = PersonRepository(datasource)
     return PersonService(personRepository, pdlGateway)
@@ -210,6 +222,11 @@ private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): 
 private fun skapSaksopplysningService(datasource: DataSource): SaksopplysningService {
     val saksopplysningRepository = SaksopplysningRepository(datasource)
     return SaksopplysningService(saksopplysningRepository)
+}
+
+private fun skapOppgaveService(datasource: DataSource): OppgaveService {
+    val oppgaveRepository = OppgaveRepository(datasource)
+    return OppgaveService(oppgaveRepository)
 }
 
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
@@ -221,6 +238,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
     val saksopplysningService = skapSaksopplysningService(datasource)
+    val oppgaveService = skapOppgaveService(datasource)
+    val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource)
 
     routing {
         actuator(prometheus)
@@ -232,6 +251,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
+                manuellFordelingsgrunnlag(manuellFordelingsgrunnlagService, personService)
             }
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres.
@@ -251,7 +271,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     posteringService = utbetalingService,
                     sakOgVedtakService = sakOgVedtakService,
                     telleverkService = telleverkService,
-                    saksopplysningService = saksopplysningService
+                    saksopplysningService = saksopplysningService,
+                    oppgaveService = oppgaveService
                 )
             }
         }
