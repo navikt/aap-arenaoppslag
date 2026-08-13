@@ -198,7 +198,7 @@ class SakRepository(private val dataSource: DataSource) {
                         v.aktfasekode,
                         v.fra_dato,
                         v.til_dato,
-                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS LAST, v.vedtak_id DESC) as rn
+                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS FIRST, v.aar DESC, v.lopenrvedtak DESC) as rn
                     FROM vedtak v
                     WHERE v.person_id = ?
                         AND v.rettighetkode = 'AAP'
@@ -206,6 +206,8 @@ class SakRepository(private val dataSource: DataSource) {
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
+                        -- stansvedtak kan ha null til_dato:
+                        AND (v.til_dato IS NOT NULL OR (v.vedtaktypekode='S' AND v.vedtak_id_relatert is NULL)) 
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato) 
                 ) WHERE rn = 1
             )
