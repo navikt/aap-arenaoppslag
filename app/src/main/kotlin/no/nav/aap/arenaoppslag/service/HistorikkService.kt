@@ -3,8 +3,7 @@ package no.nav.aap.arenaoppslag.service
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
-import no.nav.aap.arenaoppslag.Metrics.registrerAntallSignifikanteVedtak
-import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantEnkeltVedtak
+import no.nav.aap.arenaoppslag.Metrics.registrerNyesteSignifikanteVedtakMedAntall
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -49,17 +48,13 @@ class HistorikkService(
     }
 
     private fun rapporterMetrikker(vedtakene: List<ArenaVedtak>) {
+        if (vedtakene.isEmpty()) return
+
         vedtakene.forEach {
             prometheus.registrerSignifikantVedtak(it)
         }
 
-        if (vedtakene.size == 1) {
-            // Bare ett vedtak hindret oss fra å ta inn personen inn i Kelvin
-            prometheus.registrerSignifikantEnkeltVedtak(vedtakene.first())
-        }
-
-        // Mål antall vedtak som hindret oss fra å ta personen inn i Kelvin, om noen
-        prometheus.registrerAntallSignifikanteVedtak(vedtakene.size)
+        prometheus.registrerNyesteSignifikanteVedtakMedAntall(vedtakene.first(), vedtakene.size)
     }
 
     internal fun sorterVedtak(vedtak: List<ArenaVedtak>): List<ArenaVedtak> {
