@@ -204,14 +204,14 @@ class SakRepository(private val dataSource: DataSource) {
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
+                        -- krev til_dato, utenom for stansede vedtak som ikke er erstattet av et nytt vedtak
+                        AND (v.til_dato IS NOT NULL OR (v.vedtaktypekode='S' AND v.vedtak_id_relatert is NULL)) 
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
-                        -- stansvedtak kan ha null til_dato:
-                        AND (v.til_dato IS NOT NULL OR (v.vedtaktypekode='S' AND v.vedtak_id_relatert is NULL)) 
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato) 
                 ) WHERE rn = 1
             )
-            -- legg på informasjon om saken
+            -- Legg på informasjon om saken
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
                 s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, nv.til_dato,  
                 vmd.max_dato, vmd.max_unntak_dato
@@ -219,7 +219,8 @@ class SakRepository(private val dataSource: DataSource) {
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
                 JOIN sak s on s.sak_id = nv.sak_id
             ORDER BY nv.til_dato DESC
-            FETCH FIRST 1 ROW ONLY -- bare det siste vedtaket
+            -- Returner kun det siste vedtaket for denne personen
+            FETCH FIRST 1 ROW ONLY
         """.trimIndent()
     }
 
