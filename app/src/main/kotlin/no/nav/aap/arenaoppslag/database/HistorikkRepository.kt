@@ -20,12 +20,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentAlleSignifikanteVedtakForPerson(
-        arenaPersonId: Int, søknadMottattPå: LocalDate
-    ): List<ArenaVedtak> {
-        return hentAlleSignifikanteVedtakForPerson(PersonId(arenaPersonId), søknadMottattPå)
-    }
-
     companion object {
 
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
