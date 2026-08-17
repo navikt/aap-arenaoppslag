@@ -21,7 +21,8 @@ object Metrics {
         Tag.of("type", ettVedtak.vedtaktypeKode ?: "null"),
         Tag.of("rettighet", ettVedtak.rettighetkode),
         Tag.of("status", ettVedtak.statusKode),
-        Tag.of("utfall", ettVedtak.utfallkode ?: "null")
+        Tag.of("utfall", ettVedtak.utfallkode ?: "null"),
+        Tag.of("aktfase", ettVedtak.aktivitetsfaseKode)
     )
 
 

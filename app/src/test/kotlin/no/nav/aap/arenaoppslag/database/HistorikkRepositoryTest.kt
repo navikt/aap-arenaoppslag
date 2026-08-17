@@ -53,6 +53,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
                 "AAP"
             )
         )
+        assertThat(signifikanteVedtak).allMatch { it.aktivitetsfaseKode == "IKKE" }
     }
 
     @Test

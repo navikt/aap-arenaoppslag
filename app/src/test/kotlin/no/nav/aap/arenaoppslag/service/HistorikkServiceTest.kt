@@ -70,7 +70,8 @@ class HistorikkServiceTest {
         LocalDate.now().minusYears(5).minusDays(10),
         tilDato,
         "AAP",
-        "Ja"
+        "Ja",
+        "IKKE"
     )
 
     @Test
