@@ -3,6 +3,7 @@ package no.nav.aap.arenaoppslag.database
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.groups.Tuple.tuple
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -54,6 +55,11 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
             )
         )
         assertThat(signifikanteVedtak).allMatch { it.aktivitetsfaseKode == "IKKE" }
+        assertThat(signifikanteVedtak).extracting("rettighetkode", "aar", "lopenrvedtak")
+            .containsExactlyInAnyOrder(
+                tuple("AAP", 2021, 30),
+                tuple("AA115", 2021, 31),
+            )
     }
 
     @Test

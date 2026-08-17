@@ -39,6 +39,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevanteAapVedtak = """
         SELECT 
             sak_id, 
+            aar,
+            lopenrvedtak,
             vedtakstatuskode, 
             vedtaktypekode, 
             fra_dato, 
@@ -70,6 +72,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevante11_5Vedtak = """
         SELECT 
             sak_id, 
+            aar,
+            lopenrvedtak,
             vedtakstatuskode, 
             vedtaktypekode, 
             fra_dato, 
@@ -103,6 +107,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         -- Dersom den er null, er klagen fortsatt under behandling.
         SELECT
             v.sak_id,
+            v.aar,
+            v.lopenrvedtak,
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
@@ -131,6 +137,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevanteAnker = """
         SELECT
             v.sak_id,
+            v.aar,
+            v.lopenrvedtak,
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
@@ -167,7 +175,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n")
+                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrvedtak DESC"
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
@@ -198,6 +206,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         fun mapperForArenaVedtak(row: ResultSet) = ArenaVedtak(
             sakId = row.getString("sak_id"),
+            aar = row.getInt("aar"),
+            lopenrvedtak = row.getInt("lopenrvedtak"),
             statusKode = row.getString("vedtakstatuskode"),
             vedtaktypeKode = row.getString("vedtaktypekode"),
             fraOgMed = fraDato(row.getDate("fra_dato")),
