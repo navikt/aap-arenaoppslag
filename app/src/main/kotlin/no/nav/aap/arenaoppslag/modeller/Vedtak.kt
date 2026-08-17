@@ -22,7 +22,8 @@ data class ArenaVedtak(
     val fraOgMed: LocalDate?,
     val tilDato: LocalDate?,
     val rettighetkode: String,
-    val utfallkode: String?
+    val utfallkode: String?,
+    val aktivitetsfaseKode: String
 ) {
     fun tilKontrakt() = ArenaVedtakKontrakt(
         sakId = sakId.toInt(),

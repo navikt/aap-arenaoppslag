@@ -44,6 +44,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             fra_dato, 
             til_dato, 
             rettighetkode, 
+            aktfasekode,
             utfallkode
         FROM 
               vedtak v 
@@ -74,6 +75,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             fra_dato, 
             til_dato, 
             rettighetkode, 
+            aktfasekode,
             utfallkode
         FROM 
               vedtak v 
@@ -106,6 +108,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode,
+            v.aktfasekode,
             v.utfallkode
         FROM
             vedtak v
@@ -133,6 +136,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS fra_dato,
             CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode,
+            v.aktfasekode,
             v.utfallkode
         FROM
             vedtak v
@@ -200,6 +204,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
+            aktivitetsfaseKode = row.getString("aktfasekode"),
         )
 
     }

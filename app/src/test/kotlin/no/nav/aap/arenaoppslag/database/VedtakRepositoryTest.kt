@@ -91,6 +91,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
         assertThat(enesteVedtak.tilDato).isEqualTo(LocalDate.of(2023, 8, 30))
         assertThat(enesteVedtak.rettighetkode).isEqualTo("AAP")
         assertThat(enesteVedtak.utfallkode).isEqualTo("JA")
+        assertThat(enesteVedtak.aktivitetsfaseKode).isEqualTo("IKKE")
     }
 
     @Test
@@ -123,4 +124,3 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
         )
     }
 }
-
