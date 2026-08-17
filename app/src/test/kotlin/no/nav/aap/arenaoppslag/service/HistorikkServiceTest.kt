@@ -32,49 +32,6 @@ class HistorikkServiceTest {
     }
 
     @Test
-    fun `Sortering av signifikante vedtak tar tom liste`() {
-        val nyeste = underTest.sorterVedtak(emptyList())
-        Assertions.assertThat(nyeste).isEmpty()
-    }
-
-    @Test
-    fun `Sortering av signifikante vedtak tar liste med datoer`() {
-        var teller = 1
-        val nyeste = underTest.sorterVedtak(
-            listOf(
-                testVedtak(teller++, LocalDate.now().plusYears(1)),
-                testVedtak(teller++, LocalDate.now().plusYears(3)),
-                testVedtak(teller, LocalDate.now().plusYears(2)),
-            )
-        )
-        Assertions.assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "3", "1"))
-    }
-
-    @Test
-    fun `Sortering av signifikante vedtak prioriterer null`() {
-        var teller = 1
-        val nyeste = underTest.sorterVedtak(
-            listOf(
-                testVedtak(teller++, LocalDate.now().plusYears(1)),
-                testVedtak(teller++, null),
-                testVedtak(teller, LocalDate.now().plusYears(2)),
-            )
-        )
-        Assertions.assertThat(nyeste.map { it.sakId }).isEqualTo(listOf("2", "3", "1"))
-    }
-
-    private fun testVedtak(sakId: Int, tilDato: LocalDate?) = ArenaVedtak(
-        sakId.toString(),
-        "O",
-        "AKTIV",
-        LocalDate.now().minusYears(5).minusDays(10),
-        tilDato,
-        "AAP",
-        "Ja",
-        "IKKE"
-    )
-
-    @Test
     fun `personEksistererIAapArena finner person når den skal`() {
         val finnes = setOf("12345678901")
         val finnesIkke = setOf("007")

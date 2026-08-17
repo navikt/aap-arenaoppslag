@@ -40,9 +40,8 @@ class HistorikkService(
         rapporterMetrikker(signifikanteVedtak)
 
         val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
-        val arenaSakIdListe = sorterVedtak(signifikanteVedtak)
 
-        return SignifikantHistorikkResponse(harSignifikantHistorikk, arenaSakIdListe.map {
+        return SignifikantHistorikkResponse(harSignifikantHistorikk, signifikanteVedtak.map {
             it.tilKontrakt()
         })
     }
@@ -57,21 +56,13 @@ class HistorikkService(
         prometheus.registrerNyesteSignifikanteVedtakMedAntall(vedtakene.first(), vedtakene.size)
     }
 
-    internal fun sorterVedtak(vedtak: List<ArenaVedtak>): List<ArenaVedtak> {
-        // Hvis saker uten tilDato finnes, sorter disse basert på db-order
-        val utenSluttdato = vedtak.filter { it.tilDato == null }.reversed() // i reversed db-order (=nyeste først)
-        // Hvis saker med tilDato finnes, sorter disse synkende på dato (=nyeste først)
-        val medSluttdato = vedtak.filter { it.tilDato != null }.sortedByDescending { it.tilDato }
-        return utenSluttdato + medSluttdato
-    }
-
     fun personEksistererIAapArena(fodselsnummerene: Set<String>): PersonEksistererIAAPArena {
+        // TODO deprekert, fjern når kallere er oppdatert
         val personId: Int? = hentPersonId(fodselsnummerene)
         return PersonEksistererIAAPArena(personId != null)
     }
 
     private fun hentPersonId(fodselsnummerene: Set<String>): Int? {
-        // TODO deprekert, fjern når kallere er oppdatert
         return fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
             ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
                 ?.also { funnetPersonId ->
