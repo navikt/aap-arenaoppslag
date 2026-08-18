@@ -58,8 +58,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     NOT EXISTS(
                          SELECT vedtak_id from vedtak vv where
                             vv.lopenrvedtak > v.lopenrvedtak -- et nyere vedtak
-                            and vv.vedtak_id=v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
-                            and vv.vedtaktypekode !='S' -- og ikke er stans selv
+                            and vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
+                            and vv.vedtaktypekode != 'S' -- og ikke er stans selv
                          )
                 AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
