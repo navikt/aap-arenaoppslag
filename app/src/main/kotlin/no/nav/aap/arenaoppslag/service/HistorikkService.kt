@@ -3,7 +3,9 @@ package no.nav.aap.arenaoppslag.service
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
-import no.nav.aap.arenaoppslag.Metrics.registrerNyesteSignifikanteVedtakMedAntall
+import no.nav.aap.arenaoppslag.Metrics.registrerAntallSignifikanteVedtak
+import no.nav.aap.arenaoppslag.Metrics.registrerEnsligSignifikantVedtak
+import no.nav.aap.arenaoppslag.Metrics.registrerNyesteSignifikanteVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -53,7 +55,13 @@ class HistorikkService(
             prometheus.registrerSignifikantVedtak(it)
         }
 
-        prometheus.registrerNyesteSignifikanteVedtakMedAntall(vedtakene.first(), vedtakene.size)
+        prometheus.registrerNyesteSignifikanteVedtak(vedtakene.first())
+
+        prometheus.registrerAntallSignifikanteVedtak(vedtakene.size)
+
+        if (vedtakene.size == 1) {
+            prometheus.registrerEnsligSignifikantVedtak(vedtakene.first())
+        }
     }
 
     fun personEksistererIAapArena(fodselsnummerene: Set<String>): PersonEksistererIAAPArena {
