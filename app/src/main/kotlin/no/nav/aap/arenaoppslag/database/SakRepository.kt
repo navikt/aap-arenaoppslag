@@ -198,7 +198,7 @@ class SakRepository(private val dataSource: DataSource) {
                         v.aktfasekode,
                         v.fra_dato,
                         v.til_dato,
-                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS FIRST, v.aar DESC, v.lopenrvedtak DESC) as rn
+                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS FIRST, v.aar DESC, v.lopenrsak DESC, v.lopenrvedtak DESC) as rn
                     FROM vedtak v
                     WHERE v.person_id = ?
                         AND v.rettighetkode = 'AAP'
