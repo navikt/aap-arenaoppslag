@@ -40,6 +40,7 @@ data class Vedtak(
             utbetaling = utbetaling.map { it.tilKontrakt() },
             dagsats = dagsats,
             status = status,
+            utfallkode = utfallkode,
             saksnummer = saksnummer,
             vedtaksdato = vedtaksdato,
             periode = periode.tilKontrakt(),

@@ -9,6 +9,7 @@ public data class Vedtak(
     val utbetaling: List<UtbetalingMedMer>,
     val dagsats: Int,
     val status: String,
+    val utfallkode: String?,
     val saksnummer: String,
     val vedtaksdato: String,
     val vedtaksTypeKode: String,
