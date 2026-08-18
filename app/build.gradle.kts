@@ -36,8 +36,8 @@ dependencies {
 
     implementation(project(":kontrakt"))
     implementation("com.natpryce:konfig:1.6.10.0")
-    implementation("no.nav.aap.kelvin:server:2.0.132")
-    implementation("no.nav.aap.kelvin:infrastructure:2.0.132")
+    implementation("no.nav.aap.kelvin:server:2.0.135")
+    implementation("no.nav.aap.kelvin:infrastructure:2.0.135")
 
     implementation("io.ktor:ktor-server-auth:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
