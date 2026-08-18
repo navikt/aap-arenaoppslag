@@ -53,8 +53,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND ( 
                 (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
-                     vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
+                (vedtaktypekode = 'S' AND
+                     -- det skal ikke finnes et gjenopptak etter stansen 
+                    NOT EXISTS(
+                         SELECT vedtak_id from vedtak vv where
+                            vv.lopenrvedtak > v.lopenrvedtak -- et nyere vedtak
+                            and vv.vedtak_id=v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
+                            and vv.vedtaktypekode !='S' -- og ikke er stans selv
+                         )
                 AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
