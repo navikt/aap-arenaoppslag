@@ -46,7 +46,7 @@ object Metrics {
     fun MeterRegistry.registrerAntallSignifikanteVedtak(
         antall: Int
     ) {
-        val bucket = if (antall >= 10) "10+" else antall.toString()
+        val bucket = if (antall >= 9) "9+" else antall.toString()
         this.counter(
             "arenaoppslag_signifikante_vedtak_antall",
             listOf(Tag.of("antall", bucket))
