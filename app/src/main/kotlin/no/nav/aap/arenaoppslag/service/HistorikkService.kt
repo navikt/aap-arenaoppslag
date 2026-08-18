@@ -3,8 +3,7 @@ package no.nav.aap.arenaoppslag.service
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
-import no.nav.aap.arenaoppslag.Metrics.registrerAntallSignifikanteVedtak
-import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantEnkeltVedtak
+import no.nav.aap.arenaoppslag.Metrics.registrerNyesteSignifikanteVedtakMedAntall
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -41,42 +40,29 @@ class HistorikkService(
         rapporterMetrikker(signifikanteVedtak)
 
         val harSignifikantHistorikk = signifikanteVedtak.isNotEmpty()
-        val arenaSakIdListe = sorterVedtak(signifikanteVedtak)
 
-        return SignifikantHistorikkResponse(harSignifikantHistorikk, arenaSakIdListe.map {
+        return SignifikantHistorikkResponse(harSignifikantHistorikk, signifikanteVedtak.map {
             it.tilKontrakt()
         })
     }
 
     private fun rapporterMetrikker(vedtakene: List<ArenaVedtak>) {
+        if (vedtakene.isEmpty()) return
+
         vedtakene.forEach {
             prometheus.registrerSignifikantVedtak(it)
         }
 
-        if (vedtakene.size == 1) {
-            // Bare ett vedtak hindret oss fra å ta inn personen inn i Kelvin
-            prometheus.registrerSignifikantEnkeltVedtak(vedtakene.first())
-        }
-
-        // Mål antall vedtak som hindret oss fra å ta personen inn i Kelvin, om noen
-        prometheus.registrerAntallSignifikanteVedtak(vedtakene.size)
-    }
-
-    internal fun sorterVedtak(vedtak: List<ArenaVedtak>): List<ArenaVedtak> {
-        // Hvis saker uten tilDato finnes, sorter disse basert på db-order
-        val utenSluttdato = vedtak.filter { it.tilDato == null }.reversed() // i reversed db-order (=nyeste først)
-        // Hvis saker med tilDato finnes, sorter disse synkende på dato (=nyeste først)
-        val medSluttdato = vedtak.filter { it.tilDato != null }.sortedByDescending { it.tilDato }
-        return utenSluttdato + medSluttdato
+        prometheus.registrerNyesteSignifikanteVedtakMedAntall(vedtakene.first(), vedtakene.size)
     }
 
     fun personEksistererIAapArena(fodselsnummerene: Set<String>): PersonEksistererIAAPArena {
+        // TODO deprekert, fjern når kallere er oppdatert
         val personId: Int? = hentPersonId(fodselsnummerene)
         return PersonEksistererIAAPArena(personId != null)
     }
 
     private fun hentPersonId(fodselsnummerene: Set<String>): Int? {
-        // TODO deprekert, fjern når kallere er oppdatert
         return fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
             ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
                 ?.also { funnetPersonId ->

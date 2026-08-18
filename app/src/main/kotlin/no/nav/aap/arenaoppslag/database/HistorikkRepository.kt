@@ -20,12 +20,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentAlleSignifikanteVedtakForPerson(
-        arenaPersonId: Int, søknadMottattPå: LocalDate
-    ): List<ArenaVedtak> {
-        return hentAlleSignifikanteVedtakForPerson(PersonId(arenaPersonId), søknadMottattPå)
-    }
-
     companion object {
 
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
@@ -39,11 +33,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevanteAapVedtak = """
         SELECT 
             sak_id, 
+            aar,
+            lopenrvedtak,
             vedtakstatuskode, 
             vedtaktypekode, 
             fra_dato, 
             til_dato, 
             rettighetkode, 
+            aktfasekode,
             utfallkode
         FROM 
               vedtak v 
@@ -69,11 +66,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevante11_5Vedtak = """
         SELECT 
             sak_id, 
+            aar,
+            lopenrvedtak,
             vedtakstatuskode, 
             vedtaktypekode, 
             fra_dato, 
             til_dato, 
             rettighetkode, 
+            aktfasekode,
             utfallkode
         FROM 
               vedtak v 
@@ -101,11 +101,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
         -- Dersom den er null, er klagen fortsatt under behandling.
         SELECT
             v.sak_id,
+            v.aar,
+            v.lopenrvedtak,
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode,
+            v.aktfasekode,
             v.utfallkode
         FROM
             vedtak v
@@ -128,11 +131,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevanteAnker = """
         SELECT
             v.sak_id,
+            v.aar,
+            v.lopenrvedtak,
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
             CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode,
+            v.aktfasekode,
             v.utfallkode
         FROM
             vedtak v
@@ -163,7 +169,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n")
+                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrvedtak DESC"
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
@@ -194,12 +200,15 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         fun mapperForArenaVedtak(row: ResultSet) = ArenaVedtak(
             sakId = row.getString("sak_id"),
+            aar = row.getInt("aar"),
+            lopenrvedtak = row.getInt("lopenrvedtak"),
             statusKode = row.getString("vedtakstatuskode"),
             vedtaktypeKode = row.getString("vedtaktypekode"),
             fraOgMed = fraDato(row.getDate("fra_dato")),
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
+            aktivitetsfaseKode = row.getString("aktfasekode"),
         )
 
     }
