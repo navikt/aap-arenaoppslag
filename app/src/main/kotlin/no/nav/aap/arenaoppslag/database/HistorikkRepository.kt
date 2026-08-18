@@ -57,9 +57,12 @@ class HistorikkRepository(private val dataSource: DataSource) {
                      -- Det skal ikke finnes et gjenopptak etter stansen 
                     NOT EXISTS(
                          SELECT vedtak_id from vedtak vv where
-                            vv.reg_dato > v.reg_dato -- et nyere vedtak
-                            and vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
-                            and vv.vedtaktypekode != 'S' -- og ikke er stans selv
+                            vv.sak_id = v.sak_id -- innad i samme sak, for raskere spørring
+                            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+                            AND v.rettighetkode = 'AAP'
+                            AND vv.reg_dato > v.reg_dato -- et nyere vedtak
+                            AND vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
+                            AND vv.vedtaktypekode != 'S' -- og ikke er stans selv
                     )
                 AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
@@ -96,9 +99,12 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     -- Det skal ikke finnes et gjenopptak etter stansen 
                     NOT EXISTS(
                          SELECT vedtak_id from vedtak vv where
-                            vv.reg_dato > v.reg_dato -- et nyere vedtak
-                            and vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
-                            and vv.vedtaktypekode != 'S' -- og ikke er stans selv
+                            vv.sak_id = v.sak_id -- innad i samme sak, for raskere spørring
+                            AND v.rettighetkode = 'AA115'
+                            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+                            AND vv.reg_dato > v.reg_dato -- et nyere vedtak
+                            AND vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
+                            AND vv.vedtaktypekode != 'S' -- og ikke er stans selv
                     )
                 AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
@@ -182,7 +188,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrvedtak DESC"
+                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC"
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
