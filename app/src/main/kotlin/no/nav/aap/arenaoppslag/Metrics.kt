@@ -25,16 +25,32 @@ object Metrics {
         Tag.of("aktfase", ettVedtak.aktivitetsfaseKode)
     )
 
-
-    fun MeterRegistry.registrerNyesteSignifikanteVedtakMedAntall(
-        siste: ArenaVedtak,
-        antall: Int
+    fun MeterRegistry.registrerEnsligSignifikantVedtak(
+        eneste: ArenaVedtak
     ) {
         this.counter(
-            "arenaoppslag_signifikante_vedtak_med_antall",
-            taggListeForVedtak(siste) + listOf(Tag.of("antall", antall.toString()))
+            "arenaoppslag_eneste_signifikante_vedtak",
+            taggListeForVedtak(eneste)
         ).also { counter -> counter.increment() }
+    }
 
+    fun MeterRegistry.registrerNyesteSignifikanteVedtak(
+        siste: ArenaVedtak
+    ) {
+        this.counter(
+            "arenaoppslag_nyeste_signifikante_vedtak",
+            taggListeForVedtak(siste)
+        ).also { counter -> counter.increment() }
+    }
+
+    fun MeterRegistry.registrerAntallSignifikanteVedtak(
+        antall: Int
+    ) {
+        val bucket = if (antall >= 10) "10+" else antall.toString()
+        this.counter(
+            "arenaoppslag_signifikante_vedtak_antall",
+            listOf(Tag.of("antall", bucket))
+        ).also { counter -> counter.increment() }
     }
 
 }
