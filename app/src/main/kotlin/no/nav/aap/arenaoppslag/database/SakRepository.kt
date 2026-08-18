@@ -198,14 +198,29 @@ class SakRepository(private val dataSource: DataSource) {
                         v.aktfasekode,
                         v.fra_dato,
                         v.til_dato,
-                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS FIRST, v.aar DESC, v.lopenrsak DESC, v.lopenrvedtak DESC) as rn
+                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS FIRST, v.vedtak_id DESC) as rn
                     FROM vedtak v
                     WHERE v.person_id = ?
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
                         -- krev til_dato, utenom for stansede vedtak som ikke er erstattet av et nytt vedtak
-                        AND (v.til_dato IS NOT NULL OR (v.vedtaktypekode='S' AND v.vedtak_id_relatert is NULL)) 
+                        AND (v.til_dato IS NOT NULL OR (v.vedtaktypekode = 'S'
+                            -- Det skal ikke finnes et gjenopptak etter stansen                          
+                            AND NOT EXISTS(
+                                 SELECT vedtak_id FROM vedtak vv WHERE
+                                    vv.lopenrvedtak > v.lopenrvedtak -- et nyere vedtak
+                                    and vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
+                                    and vv.vedtaktypekode != 'S' -- og ikke er stans selv
+                            )
+                            -- Det skal heller ikke finnes vedtak med en nyere fra_dato enn stans-vedtaket
+                            AND NOT EXISTS(
+                                 SELECT vedtak_id FROM vedtak vv WHERE
+                                    vv.lopenrvedtak > v.lopenrvedtak -- et nyere vedtak
+                                    and (vv.fra_dato IS NOT NULL and v.fra_dato IS NOT NULL and vv.fra_dato > v.fra_dato) -- med nyere fra_dato
+                                    and vv.vedtaktypekode != 'S' -- og ikke er stans selv
+                            )
+                            )) 
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato) 
