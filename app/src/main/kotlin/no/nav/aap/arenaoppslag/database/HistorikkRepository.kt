@@ -47,11 +47,11 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode = 'AAP'
-          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
-                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
+                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
                 (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
                      vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
@@ -80,11 +80,11 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode = 'AA115'
-          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
-                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
+                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
                 (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
                      vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
@@ -117,7 +117,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
@@ -147,19 +147,19 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
-        const val tidsBufferUkerGenerell = 78L // 52 uker + 6 måneder tilbakejustering
-        const val tidsBufferUkerStans = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
+        const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
+        const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val modnedGrenseVedtak = 72L
         const val modnedGrenseKlageInnvilget = 6L
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
-            val tidsBufferGenerell = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerGenerell))
-            val nyesteTillateStans = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerStans))
+            val vanligTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(vanligTidsbufferUker))
+            val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(stansTidsbufferUker))
             val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
             val klageInnvilgetGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseKlageInnvilget))
 
@@ -176,18 +176,18 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 // S1: AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, tidsBufferGenerell)
-                preparedStatement.setDate(p++, nyesteTillateStans)
-                preparedStatement.setDate(p++, tidsBufferGenerell)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, stansTidsbuffer)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
                 // S2: 11-5-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, tidsBufferGenerell)
-                preparedStatement.setDate(p++, nyesteTillateStans)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, stansTidsbuffer)
                 // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, tidsBufferGenerell)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, klageInnvilgetGrense)
                 // S4: anker
                 preparedStatement.setInt(p++, arenaPersonId)
