@@ -209,14 +209,14 @@ class SakRepository(private val dataSource: DataSource) {
                             -- Det skal ikke finnes et gjenopptak etter stansen                          
                             AND NOT EXISTS(
                                  SELECT vedtak_id FROM vedtak vv WHERE
-                                    vv.lopenrvedtak > v.lopenrvedtak -- et nyere vedtak
+                                    vv.reg_dato > v.reg_dato -- et nyere vedtak
                                     and vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
                                     and vv.vedtaktypekode != 'S' -- og ikke er stans selv
                             )
                             -- Det skal heller ikke finnes vedtak med en nyere fra_dato enn stans-vedtaket
                             AND NOT EXISTS(
                                  SELECT vedtak_id FROM vedtak vv WHERE
-                                    vv.lopenrvedtak > v.lopenrvedtak -- et nyere vedtak
+                                    vv.reg_dato > v.reg_dato -- et nyere vedtak
                                     and (vv.fra_dato IS NOT NULL and v.fra_dato IS NOT NULL and vv.fra_dato > v.fra_dato) -- med nyere fra_dato
                                     and vv.vedtaktypekode != 'S' -- og ikke er stans selv
                             )

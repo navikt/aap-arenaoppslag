@@ -57,7 +57,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                      -- det skal ikke finnes et gjenopptak etter stansen 
                     NOT EXISTS(
                          SELECT vedtak_id from vedtak vv where
-                            vv.lopenrvedtak > v.lopenrvedtak -- et nyere vedtak
+                            vv.reg_dato > v.reg_dato -- et nyere vedtak
                             and vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
                             and vv.vedtaktypekode != 'S' -- og ikke er stans selv
                          )
@@ -93,7 +93,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
                   OR
                 (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
-                     vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
+                     vv.reg_dato > v.reg_dato and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
                      AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
