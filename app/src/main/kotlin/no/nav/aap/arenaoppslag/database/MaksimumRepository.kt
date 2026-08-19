@@ -68,7 +68,9 @@ class MaksimumRepository(
                 )
 
                 val utbetalinger = meldekortrader.filter {
-                    it.vedtakId == vedtakId && it.datoFra >= periode.fraOgMedDato && it.datoTil <= periode.tilOgMedDato
+                    it.vedtakId == vedtakId && (periode.fraOgMedDato == null
+                            || it.datoFra >= periode.fraOgMedDato) && (periode.tilOgMedDato == null
+                            || it.datoTil <= periode.tilOgMedDato)
                 }.map { rad ->
                     mapTilUtbetaling(
                         rad,
