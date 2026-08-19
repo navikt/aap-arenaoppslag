@@ -32,6 +32,7 @@ class MaksimumRepository(
             selectVedtakMaksimum(fodselsnr, fraOgMedDato, tilOgMedDato, con)
         }
 
+
     private fun selectVedtakMaksimum(
         fodselsnr: String,
         fraOgMedDato: LocalDate,
@@ -52,13 +53,23 @@ class MaksimumRepository(
                 val vedtakFakta = selectVedtakFakta(vedtakId, connection)
                 val utbetalinger = selectUtbetalingVedVedtakId(
                     connection = connection,
-                    barneTillegg = vedtakFakta.barntill,
-                    dagsats = vedtakFakta.dagsmbt,
                     fodselsnr = fodselsnr,
                     vedtakId = vedtakId,
                     fraDato = row.getDate("fra_dato").toLocalDate(),
                     tilDato = fraDato(row.getDate("til_dato")) ?: tilOgMedDato,
-                )
+                ).let {
+                    val anmerkningerPerMeldekort =
+                        selectAlleMeldekortAnmerkninger(it.map { rad -> rad.meldekortId }, connection)
+
+                    it.map { rad ->
+                        mapTilUtbetaling(
+                            rad,
+                            anmerkningerPerMeldekort,
+                            vedtakFakta.dagsmbt,
+                            vedtakFakta.barntill
+                        )
+                    }
+                }
                 val vedtaktypekode = row.getString("vedtaktypekode")
                 c++
                 Vedtak(
@@ -92,12 +103,10 @@ class MaksimumRepository(
     private fun selectUtbetalingVedVedtakId(
         vedtakId: Int,
         connection: Connection,
-        barneTillegg: Int,
-        dagsats: Int,
         fodselsnr: String,
         fraDato: LocalDate,
         tilDato: LocalDate,
-    ): List<UtbetalingMedMer> {
+    ): List<MeldekortRad> {
         return connection.prepareStatement(selectTimerArbeidetIMeldekortPeriode).use { preparedStatement ->
             preparedStatement.setInt(1, vedtakId)
             preparedStatement.setString(2, fodselsnr)
@@ -114,8 +123,7 @@ class MaksimumRepository(
                 )
             }.toList()
 
-            val anmerkningerPerMeldekort = selectAlleMeldekortAnmerkninger(rader.map { it.meldekortId }, connection)
-            rader.map { rad -> mapTilUtbetaling(rad, anmerkningerPerMeldekort[rad.meldekortId], dagsats, barneTillegg) }
+            rader
         }
     }
 
@@ -189,13 +197,13 @@ class MaksimumRepository(
 
     private fun mapTilUtbetaling(
         rad: MeldekortRad,
-        anmerkninger: AnnenReduksjon?,
+        anmerkninger: Map<Long, AnnenReduksjon>,
         dagsats: Int,
         barnetillegg: Int,
     ): UtbetalingMedMer = UtbetalingMedMer(
         reduksjon = Reduksjon(
             timerArbeidet = rad.timerArbeidet,
-            annenReduksjon = anmerkninger ?: AnnenReduksjon(0.0f, false, 0.0f),
+            annenReduksjon = anmerkninger[rad.meldekortId] ?: AnnenReduksjon(0.0f, false, 0.0f),
         ),
         periode = Periode(
             fraOgMedDato = rad.datoFra,
@@ -213,8 +221,8 @@ class MaksimumRepository(
          WHERE person_id = 
                (SELECT person_id 
                   FROM person 
-                 WHERE fodselsnr = ?) 
-           AND utfallkode = 'JA' 
+                 WHERE fodselsnr = ?)
+           AND utfallkode = 'JA'
            AND rettighetkode = 'AAP'
            AND vedtaktypekode IN ('O', 'E', 'G', 'S')
            AND vedtakstatuskode IN ('IVERK', 'AVSLU')
