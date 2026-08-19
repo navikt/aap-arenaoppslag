@@ -56,7 +56,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     implementation("io.micrometer:micrometer-registry-prometheus:1.17.0")
-    implementation("ch.qos.logback:logback-classic:1.6.1")
+    implementation("ch.qos.logback:logback-classic:1.6.2")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
@@ -70,7 +70,7 @@ dependencies {
     testImplementation("org.flywaydb:flyway-core:12.9.0")
     testImplementation("org.assertj:assertj-core:3.27.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    testImplementation("com.h2database:h2:2.3.232") // 2.3.232 er nyeste versjon offisielt støttet av flyway 12.9.0
+    testImplementation("com.h2database:h2:2.4.240") // 2.4.240 er nyeste versjon offisielt støttet av flyway 12.9.0
     testImplementation("io.mockk:mockk:1.14.11")
 }
 
