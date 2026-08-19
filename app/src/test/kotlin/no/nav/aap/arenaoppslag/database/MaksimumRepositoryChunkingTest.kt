@@ -29,6 +29,6 @@ class MaksimumRepositoryChunkingTest : H2TestBase("flyway/maksimum") {
         // meldekort 5002: SENN=1 (for sent) og FXNN=2 (fravær)
         val utbetaling2 = utbetalinger.find { it.periode.fraOgMedDato == LocalDate.of(2023, 1, 16) }!!
         assertThat(utbetaling2.reduksjon!!.annenReduksjon.sentMeldekort).isTrue()
-        assertThat(utbetaling2.reduksjon!!.annenReduksjon.fraver).isEqualTo(2.0f)
+        assertThat(utbetaling2.reduksjon!!.annenReduksjon.fravær).isEqualTo(2.0f)
     }
 }

@@ -47,29 +47,37 @@ class MaksimumRepository(
 
             val resultSet = preparedStatement.executeQuery()
             var c = 0
+            val meldekortrader = selectUtbetalingVedVedtakId(
+                connection = connection,
+                fodselsnr = fodselsnr,
+            )
+
+            val anmerkningerPerMeldekort =
+                selectAlleMeldekortAnmerkninger(meldekortrader.map { rad -> rad.meldekortId }, connection)
+
+            log.info("Fant ${anmerkningerPerMeldekort.size} meldekort. Fra-dato: $fraOgMedDato, til-dato: $tilOgMedDato.")
+
             val vedtak = resultSet.map { row ->
                 val vedtakId = row.getInt("vedtak_id")
                 log.info("Henter utbetalinger for vedtak $vedtakId. Iterasjon nr $c.")
                 val vedtakFakta = selectVedtakFakta(vedtakId, connection)
-                val utbetalinger = selectUtbetalingVedVedtakId(
-                    connection = connection,
-                    fodselsnr = fodselsnr,
-                    vedtakId = vedtakId,
-                    fraDato = row.getDate("fra_dato").toLocalDate(),
-                    tilDato = fraDato(row.getDate("til_dato")) ?: tilOgMedDato,
-                ).let {
-                    val anmerkningerPerMeldekort =
-                        selectAlleMeldekortAnmerkninger(it.map { rad -> rad.meldekortId }, connection)
 
-                    it.map { rad ->
-                        mapTilUtbetaling(
-                            rad,
-                            anmerkningerPerMeldekort,
-                            vedtakFakta.dagsmbt,
-                            vedtakFakta.barntill
-                        )
-                    }
+                val periode = Periode(
+                    fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                    tilOgMedDato = fraDato(row.getDate("til_dato")),
+                )
+
+                val utbetalinger = meldekortrader.filter {
+                    it.vedtakId == vedtakId && it.datoFra >= periode.fraOgMedDato && it.datoTil <= periode.tilOgMedDato
+                }.map { rad ->
+                    mapTilUtbetaling(
+                        rad,
+                        anmerkningerPerMeldekort,
+                        vedtakFakta.dagsmbt,
+                        vedtakFakta.barntill
+                    )
                 }
+
                 val vedtaktypekode = row.getString("vedtaktypekode")
                 c++
                 Vedtak(
@@ -80,10 +88,7 @@ class MaksimumRepository(
                     saksnummer = row.getString("sak_id"),
                     vedtaksdato = row.getString("fra_dato"),
                     rettighetsType = row.getString("aktfasekode"),
-                    periode = Periode(
-                        fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                        tilOgMedDato = fraDato(row.getDate("til_dato")),
-                    ),
+                    periode = periode,
                     beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
                     barnetillegg = vedtakFakta.barntill,
                     barnMedStonad = vedtakFakta.barnmston,
@@ -101,29 +106,22 @@ class MaksimumRepository(
     }
 
     private fun selectUtbetalingVedVedtakId(
-        vedtakId: Int,
         connection: Connection,
         fodselsnr: String,
-        fraDato: LocalDate,
-        tilDato: LocalDate,
     ): List<MeldekortRad> {
         return connection.prepareStatement(selectTimerArbeidetIMeldekortPeriode).use { preparedStatement ->
-            preparedStatement.setInt(1, vedtakId)
-            preparedStatement.setString(2, fodselsnr)
-            preparedStatement.setDate(3, Date.valueOf(fraDato))
-            preparedStatement.setDate(4, Date.valueOf(tilDato))
+            preparedStatement.setString(1, fodselsnr)
 
-            val rader = preparedStatement.executeQuery().map { row ->
+            preparedStatement.executeQuery().map { row ->
                 MeldekortRad(
                     meldekortId = row.getLong("meldekort_id"),
+                    vedtakId = row.getInt("vedtak_id"),
                     timerArbeidet = row.getFloat("timer_arbeidet").toDouble(),
                     datoFra = row.getDate("DATO_FRA").toLocalDate(),
                     datoTil = row.getDate("DATO_TIL").toLocalDate(),
                     belop = row.getInt("belop"),
                 )
             }.toList()
-
-            rader
         }
     }
 
@@ -139,7 +137,7 @@ class MaksimumRepository(
                     row.getLong("objekt_id") to AnnenReduksjon(
                         sykedager = row.getFloat("sykedager"),
                         sentMeldekort = row.getFloat("for_sent") > 0,
-                        fraver = row.getFloat("fravar"),
+                        fravær = row.getFloat("fravar"),
                     )
                 }
             }
@@ -189,6 +187,7 @@ class MaksimumRepository(
 
     private data class MeldekortRad(
         val meldekortId: Long,
+        val vedtakId: Int,
         val timerArbeidet: Double,
         val datoFra: LocalDate,
         val datoTil: LocalDate,
@@ -269,22 +268,20 @@ class MaksimumRepository(
             mkp.DATO_FRA,
             mkp.DATO_TIL,
             m.meldekort_id,
-            p.belop
+            p.belop,
+            p.vedtak_id
         FROM 
             meldekort m
         JOIN 
             meldekortdag mkd ON mkd.meldekort_id = m.meldekort_id
         LEFT JOIN 
-            (SELECT dato_periode_fra, dato_periode_til, belop, meldekort_id
-             FROM postering
-             WHERE vedtak_id = ?) p
+            (SELECT dato_periode_fra, dato_periode_til, belop, meldekort_id, vedtak_id
+             FROM postering) p
             ON m.meldekort_id = p.meldekort_id
         JOIN
             MELDEKORTPERIODE mkp ON mkp.periodekode = m.periodekode AND mkp.aar = m.aar
         WHERE 
             m.person_id = (SELECT person_id FROM person WHERE fodselsnr = ?)
-        AND 
-            mkp.DATO_TIL >= ? AND mkp.DATO_FRA <= ?
         GROUP BY
             mkp.DATO_FRA,
             mkp.DATO_TIL,

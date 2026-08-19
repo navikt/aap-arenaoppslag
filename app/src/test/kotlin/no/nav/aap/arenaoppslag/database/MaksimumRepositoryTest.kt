@@ -103,12 +103,12 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         val meldekortdata1 = utbetaling1.reduksjon!!.annenReduksjon
         assertThat(meldekortdata1.sykedager).isEqualTo(1.0f)
         assertThat(meldekortdata1.sentMeldekort).isFalse()
-        assertThat(meldekortdata1.fraver).isEqualTo(0.0f)
+        assertThat(meldekortdata1.fravær).isEqualTo(0.0f)
 
         // meldekort 5002: SENN=1, FXNN=2, ingen FSNN
         val meldekortdata2 = utbetaling2.reduksjon!!.annenReduksjon
         assertThat(meldekortdata2.sykedager).isEqualTo(0.0f)
         assertThat(meldekortdata2.sentMeldekort).isTrue()
-        assertThat(meldekortdata2.fraver).isEqualTo(2.0f)
+        assertThat(meldekortdata2.fravær).isEqualTo(2.0f)
     }
 }
