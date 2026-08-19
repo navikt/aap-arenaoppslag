@@ -288,6 +288,7 @@ class MaksimumRepository(
             mkp.DATO_FRA,
             mkp.DATO_TIL,
             m.meldekort_id,
+            p.vedtak_id,
             p.belop
     """.trimIndent()
 }
