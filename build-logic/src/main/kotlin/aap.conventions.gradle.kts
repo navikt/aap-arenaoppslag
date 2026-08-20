@@ -7,12 +7,6 @@ plugins {
 group = "no.nav.aap.arenaoppslag"
 version = project.findProperty("version")?.toString() ?: "0.0.0"
 
-repositories {
-    mavenCentral()
-    maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
-    mavenLocal()
-}
-
 // https://docs.gradle.org/9.2.1/userguide/jvm_test_suite_plugin.html
 testing {
     suites {

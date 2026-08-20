@@ -13,11 +13,10 @@ include("app", "kontrakt")
 dependencyResolutionManagement {
     // Felles for alle gradle prosjekter i repoet
     @Suppress("UnstableApiUsage")
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    @Suppress("UnstableApiUsage")
     repositories {
-        maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release") {
-            // Speiler kun no.nav-artefakter, så vi slipper å slå opp tredjeparts-avhengigheter her
-            content { includeGroupByRegex("no\\.nav.*") }
-        }
+        maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
         mavenCentral()
         maven("https://packages.confluent.io/maven/") {
             // Kun Confluent/Avro-avhengigheter hentes herfra
