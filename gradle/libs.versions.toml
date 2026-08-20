@@ -1,0 +1,72 @@
+[versions]
+kotlin = "2.4.10"
+detekt = "2.0.0-alpha.6"
+shadow = "9.6.1"
+ktor = "3.5.2"
+jackson = "2.22.1"
+jackson3 = "3.2.1"
+netty = "4.2.17.Final"
+konfig = "1.6.10.0"
+kelvin = "2.0.135"
+micrometer = "1.17.0"
+logback = "1.6.1"
+logstash-encoder = "9.0"
+caffeine = "3.2.4"
+oracle-jdbc = "23.26.3.0.0"
+hikaricp = "7.1.0"
+nimbus-jose-jwt = "10.9.1"
+flyway = "12.9.0"
+assertj = "3.27.7"
+h2 = "2.3.232" # 2.3.232 er nyeste versjon offisielt støttet av flyway 12.9.0
+mockk = "1.14.11"
+foojay-resolver = "1.0.0"
+
+[libraries]
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+
+netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
+jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
+jackson3-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson3" }
+
+konfig = { module = "com.natpryce:konfig", version.ref = "konfig" }
+kelvin-server = { module = "no.nav.aap.kelvin:server", version.ref = "kelvin" }
+kelvin-infrastructure = { module = "no.nav.aap.kelvin:infrastructure", version.ref = "kelvin" }
+
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
+ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = "ktor" }
+ktor-server-auth-jvm = { module = "io.ktor:ktor-server-auth-jvm", version.ref = "ktor" }
+ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
+ktor-server-call-logging-jvm = { module = "io.ktor:ktor-server-call-logging-jvm", version.ref = "ktor" }
+ktor-server-call-id = { module = "io.ktor:ktor-server-call-id", version.ref = "ktor" }
+ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson", version.ref = "ktor" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-encoder" }
+
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+oracle-ojdbc11 = { module = "com.oracle.database.jdbc:ojdbc11", version.ref = "oracle-jdbc" }
+hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+
+nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-jose-jwt" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+foojay-resolver = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojay-resolver" }
