@@ -17,8 +17,6 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
-import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
@@ -61,15 +59,6 @@ fun Route.historikk(historikkService: HistorikkService, personService: PersonSer
         call.respond(response)
     }
 
-    post("/person/eksisterer") {
-        //TODO deprekert, skal fjernes
-        logger.info("Sjekker om person eksisterer i AAP-Arena")
-        val request: SakerRequest = call.receive()
-        val response: PersonEksistererIAAPArena =
-            historikkService.personEksistererIAapArena(request.personidentifikatorer.toSet())
-
-        call.respond(response)
-    }
 }
 
 fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {

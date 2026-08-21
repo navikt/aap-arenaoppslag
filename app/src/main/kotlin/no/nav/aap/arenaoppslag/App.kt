@@ -175,10 +175,9 @@ private fun skapInternService(datasource: DataSource): InternService {
 }
 
 private fun skapHistorikkService(datasource: DataSource): HistorikkService {
-    val personRepository = PersonRepository(datasource)
     val historikkRepository = HistorikkRepository(datasource)
 
-    return HistorikkService(personRepository, historikkRepository)
+    return HistorikkService(historikkRepository)
 }
 
 private fun skapSakOgVedtakService(datasource: DataSource): SakOgVedtakService {
