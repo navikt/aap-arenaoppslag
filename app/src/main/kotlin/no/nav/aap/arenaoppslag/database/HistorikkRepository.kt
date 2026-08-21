@@ -53,8 +53,17 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND ( 
                 (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
-                     vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
+                (vedtaktypekode = 'S' AND
+                     -- Det skal ikke finnes et gjenopptak etter stansen 
+                    NOT EXISTS(
+                         SELECT vedtak_id from vedtak vv where
+                            vv.sak_id = v.sak_id -- innad i samme sak, for raskere spørring
+                            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+                            AND v.rettighetkode = 'AAP'
+                            AND vv.reg_dato > v.reg_dato -- et nyere vedtak
+                            AND vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
+                            AND vv.vedtaktypekode != 'S' -- og ikke er stans selv
+                    )
                 AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
@@ -86,10 +95,20 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND ( 
                 (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
-                     vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
-                     AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                (vedtaktypekode = 'S' AND 
+                    -- Det skal ikke finnes et gjenopptak etter stansen 
+                    NOT EXISTS(
+                         SELECT vedtak_id from vedtak vv where
+                            vv.sak_id = v.sak_id -- innad i samme sak, for raskere spørring
+                            AND v.rettighetkode = 'AA115'
+                            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+                            AND vv.reg_dato > v.reg_dato -- et nyere vedtak
+                            AND vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
+                            AND vv.vedtaktypekode != 'S' -- og ikke er stans selv
+                    )
+                AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
+              
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
         """.trimIndent()
 
@@ -169,7 +188,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrvedtak DESC"
+                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC"
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
