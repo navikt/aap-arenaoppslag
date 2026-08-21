@@ -131,7 +131,6 @@ class VedtakRepository(private val dataSource: DataSource) {
           LEFT JOIN aktivitetfase a ON a.aktfasekode = v.aktfasekode
           LEFT JOIN rettighettype rt ON rt.rettighetkode = v.rettighetkode
          WHERE sak_id = ?
-           AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
         private fun selectVedtakForSak(sakId: SakId, connection: Connection): List<ArenaVedtakRad> {
