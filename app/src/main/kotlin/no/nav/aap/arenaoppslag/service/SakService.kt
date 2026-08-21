@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
+import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
@@ -12,7 +13,11 @@ import no.nav.aap.arenaoppslag.modeller.PersonId
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
-class SakService(private val sakRepository: SakRepository, private val vedtakfaktaRepository: VedtakfaktaRepository) {
+class SakService(
+    private val sakRepository: SakRepository,
+    private val vedtakfaktaRepository: VedtakfaktaRepository,
+    val vilkårsvurderingRepository: VilkårsvurderingRepository
+) {
 
     @Suppress("MagicNumber")
     private val sakerCache = Caffeine.newBuilder()
@@ -38,12 +43,26 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
         val vedtakfakta = sakMedVedtak?.vedtakId?.let { vedtakId ->
             vedtakfaktaRepository.hentForVedtakIder(listOf(vedtakId))[vedtakId]
         }
-        val unntakInnvilget = vedtakfakta?.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
-        val unntaksdato = vedtakfakta?.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
+        val vilkårsvurderingerForVedtaket = sakMedVedtak?.vedtakId?.let { vedtakId ->
+            vilkårsvurderingRepository.hentForVedtakIder(listOf(vedtakId))[vedtakId]
+        }
+
+        val unntaksdatoFraFakta = vedtakfakta?.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
+
+        // Korreksjon av Arena-data ved å bruke vilkårsvurderinger for å overstyre vedtakfakta
+        val unntaksVilkår = setOf("AAARBEID1", "AAARBEID2", "AAARBEID3").map { kode ->
+            vilkårsvurderingerForVedtaket?.firstOrNull { it.vilkårkode == kode }?.somBooleanVerdi()
+        }
+        val ingenVilkårOppfylt = unntaksVilkår.all { it == false }
+        val minstEttVilkårOppfylt = unntaksVilkår.any { it == true }
+        val (unntakInnvilget, unntaksdato) = when {
+            ingenVilkårOppfylt -> false to null // dato er ugyldig når ingen av vilkårene er oppfylt
+            minstEttVilkårOppfylt -> true to unntaksdatoFraFakta // bevarer dato, status er kjent
+            else -> null to null // feil data, vi vet ikke status
+        }
 
         return sakMedVedtak?.tilKontrakt()?.copy(
-            unntaksvilkaarGjelderFra = unntaksdato,
-            unntaksvilkaarInnvilget = unntakInnvilget
+            unntaksvilkaarGjelderFra = unntaksdato, unntaksvilkaarInnvilget = unntakInnvilget
         )
     }
 
@@ -58,9 +77,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
     fun hentMaksdatoAapForPerson(personId: PersonId): LocalDate? {
         val sisteVedtak = hentMaksdatoAapMedVedtakOgSak(personId)?.sisteVedtak
 
-        return sisteVedtak
-            ?.takeUnless { it.vedtaktypeKode == "S" }
-            ?.maxdatoAap
+        return sisteVedtak?.takeUnless { it.vedtaktypeKode == "S" }?.maxdatoAap
     }
 
 
