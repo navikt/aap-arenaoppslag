@@ -9,8 +9,8 @@ plugins {
 }
 
 val ktorVersion = "3.5.2"
-val jacksonVersion = "2.22.1"
-val jackson3Version = "3.2.1"
+val jacksonVersion = "2.22.2"
+val jackson3Version = "3.2.2"
 val nettyVersion = "4.2.17.Final"
 
 application {
@@ -56,7 +56,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     implementation("io.micrometer:micrometer-registry-prometheus:1.17.0")
-    implementation("ch.qos.logback:logback-classic:1.6.2")
+    implementation("ch.qos.logback:logback-classic:1.6.3")
     runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
