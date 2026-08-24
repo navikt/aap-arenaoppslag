@@ -203,28 +203,18 @@ class SakRepository(private val dataSource: DataSource) {
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
-                        -- krev til_dato, utenom for stansede vedtak som ikke er erstattet av et nytt vedtak
-                        AND (v.til_dato IS NOT NULL OR (v.vedtaktypekode = 'S'
-                            -- Det skal ikke finnes et gjenopptak etter stansen                          
+                        -- Krev til_dato, utenom for stansede vedtak som ikke er erstattet av et nytt vedtak
+                        AND (v.til_dato IS NOT NULL OR (v.vedtaktypekode = 'S' AND v.til_dato IS NULL 
+                            -- Gjenopptak fører til at stansede vedtak får satt til_dato.                          
+                            -- En gammel sak kan ha endt med et stans-vedtak, men personen har en løpende ny sak. 
+                            -- Ekskluder slike gamle stans-vedtak: 
                             AND NOT EXISTS(
                                  SELECT vedtak_id FROM vedtak vv WHERE
-                                    vv.sak_id = v.sak_id -- innad i samme sak, for raskere spørring
-                                    AND v.rettighetkode = 'AAP'
-                                    AND v.utfallkode = 'JA'
-                                    AND v.vedtakstatuskode IN ('IVERK','AVSLU')
-                                    AND vv.reg_dato > v.reg_dato -- et nyere vedtak
-                                    AND vv.vedtak_id = v.vedtak_id_relatert -- som er relatert til dette stans-vedtaket
-                                    AND vv.vedtaktypekode != 'S' -- og ikke er stans selv
-                            )
-                            -- Det skal heller ikke finnes vedtak med en nyere fra_dato enn stans-vedtaket
-                            AND NOT EXISTS(
-                                 SELECT vedtak_id FROM vedtak vv WHERE
-                                    -- Vi inkluderer vedtak i nyere saker, ettersom stans kan henge igjen i gammel sak
                                     v.person_id = vv.person_id -- for samme person
                                     AND v.rettighetkode = 'AAP'
                                     AND v.utfallkode = 'JA'
                                     AND v.vedtakstatuskode IN ('IVERK','AVSLU')
-                                    AND vv.reg_dato > v.reg_dato -- et nyere vedtak
+                                    AND vv.vedtak_id > v.vedtak_id -- et nyere vedtak
                                     AND (vv.fra_dato IS NOT NULL AND v.fra_dato IS NOT NULL AND vv.fra_dato > v.fra_dato) -- med nyere fra_dato
                                     AND vv.vedtaktypekode != 'S' -- og ikke er stans selv
                             )
