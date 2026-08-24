@@ -27,6 +27,7 @@ class ArenaSakMedVedtakTest {
             kvoteHistorikk = emptySet(),
             sisteUtbetalingDato = null,
             maksdato = null,
+            oppgaver = emptyList(),
             tilkjentYtelse = tilkjentYtelse,
         )
 
@@ -40,7 +41,8 @@ class ArenaSakMedVedtakTest {
             kvoteHistorikk = emptySet(),
             sisteUtbetalingDato = null,
             maksdato = null,
-        )
+            oppgaver = emptyList(),
+            )
 
         assertThat(detaljert.tilkjentYtelse).isNull()
     }

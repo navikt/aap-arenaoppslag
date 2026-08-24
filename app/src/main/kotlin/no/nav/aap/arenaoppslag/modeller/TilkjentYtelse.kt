@@ -11,7 +11,7 @@ data class TilkjentYtelseResponse(
 )
 
 data class TilkjentYtelseRad(
-    val fraOgMedDato: LocalDate,
+    val fraOgMedDato: LocalDate?,
     val tilOgMedDato: LocalDate?,
     // Ukenummer for meldekortperioden, f.eks. "10-11". Null for utbetalinger uten meldekort.
     val uke: String?,

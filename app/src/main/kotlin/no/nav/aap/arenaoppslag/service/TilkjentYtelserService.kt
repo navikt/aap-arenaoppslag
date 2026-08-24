@@ -19,17 +19,17 @@ class TilkjentYtelserService(
 ) {
 
     fun hentTilkjenteYtelserForSak(sakId: SakId): TilkjentYtelseResponse {
-        val data = meldekortRepository.hentForSak(sakId)
-        val meldekortPerId = data.meldekort.associateBy { it.meldekortId }
+        val meldekortForSak = meldekortRepository.hentForSak(sakId)
+        val meldekortPerId = meldekortForSak.meldekort.associateBy { it.meldekortId }
 
-        val personId = data.posteringer.firstOrNull()?.personId ?: data.meldekort.firstOrNull()?.personId
+        val personId = meldekortForSak.posteringer.firstOrNull()?.personId ?: meldekortForSak.meldekort.firstOrNull()?.personId
         val kvoter = if (personId != null) {
             telleverkRepository.hentTelleverkForPerson(PersonId(personId))
         } else {
             emptySet()
         }
 
-        val rader = data.posteringer.map { postering ->
+        val rader = meldekortForSak.posteringer.map { postering ->
             val meldekort = postering.meldekortId?.let { meldekortPerId[it] }
 
             // Timer og reduksjon beregnes kun for meldekortlinjer — spesialutbetalinger har ingen meldekort.
@@ -37,7 +37,6 @@ class TilkjentYtelserService(
             val reduksjon = meldekort?.let {
                 byggReduksjon(it, timerArbeidetEtterStraff ?: 0.0, postering.dagsats, postering.dagsatsForSamordning, postering.insGrad)
             }
-
             TilkjentYtelseRad(
                 fraOgMedDato = postering.periode.fraOgMedDato,
                 tilOgMedDato = postering.periode.tilOgMedDato,
@@ -63,7 +62,7 @@ class TilkjentYtelserService(
     // Dager der forrige meldekort ble levert for sent ekskluderes fra grunnlaget: vi hopper over de
     // første `dagerForSent` dagene i perioden, og ignorerer timer arbeidet (og fravær) på disse dagene.
     private fun timerArbeidetEtterStraffedager(meldekort: Meldekort): Double {
-        val aktivFraOgMed = meldekort.periode.fraOgMedDato.plusDays(meldekort.reduksjon.dagerForSent.toLong())
+        val aktivFraOgMed = meldekort.periode.fraOgMedDato?.plusDays(meldekort.reduksjon.dagerForSent.toLong())
         return meldekort.dager
             .filter { !it.dato.isBefore(aktivFraOgMed) }
             .sumOf { it.timerArbeidet }
