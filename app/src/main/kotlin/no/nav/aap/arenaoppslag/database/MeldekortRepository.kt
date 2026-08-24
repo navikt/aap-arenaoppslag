@@ -93,7 +93,6 @@ class MeldekortRepository(
                     meldekortId to MeldekortDag(
                         ukenr = ukenr,
                         dagnr = dagnr,
-                        // Meldekortdag har ikke dato — den utledes fra periodens startdato (mandag i uke 1).
                         dato = meta.datoFra.plusDays(((ukenr - meta.ukenrUke1) * DAGER_PER_UKE + (dagnr - 1)).toLong()),
                         timerArbeidet = row.getDouble("timer_arbeidet"),
                         annetFravaer = row.getString("status_annetfravaer") == "J",

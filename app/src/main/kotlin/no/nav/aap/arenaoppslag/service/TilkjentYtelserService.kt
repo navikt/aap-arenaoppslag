@@ -11,8 +11,7 @@ import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.modeller.tilRespons
 import kotlin.math.roundToInt
 
-// Komposittjeneste som bygger den rike tilkjent-ytelse-visningen for en sak ved å bruke
-// MeldekortRepository som byggekloss sammen med telleverk (gjenstående kvoter).
+
 class TilkjentYtelserService(
     private val meldekortRepository: MeldekortRepository,
     private val telleverkRepository: TelleverkRepository,
@@ -32,7 +31,6 @@ class TilkjentYtelserService(
         val rader = meldekortForSak.posteringer.map { postering ->
             val meldekort = postering.meldekortId?.let { meldekortPerId[it] }
 
-            // Timer og reduksjon beregnes kun for meldekortlinjer — spesialutbetalinger har ingen meldekort.
             val timerArbeidetEtterStraff = meldekort?.let { timerArbeidetEtterStraffedager(it) }
             val reduksjon = meldekort?.let {
                 byggReduksjon(it, timerArbeidetEtterStraff ?: 0.0, postering.dagsats, postering.dagsatsForSamordning, postering.insGrad)
@@ -59,8 +57,7 @@ class TilkjentYtelserService(
         )
     }
 
-    // Dager der forrige meldekort ble levert for sent ekskluderes fra grunnlaget: vi hopper over de
-    // første `dagerForSent` dagene i perioden, og ignorerer timer arbeidet (og fravær) på disse dagene.
+
     private fun timerArbeidetEtterStraffedager(meldekort: Meldekort): Double {
         val aktivFraOgMed = meldekort.periode.fraOgMedDato?.plusDays(meldekort.reduksjon.dagerForSent.toLong())
         return meldekort.dager
@@ -95,8 +92,7 @@ class TilkjentYtelserService(
         )
     }
 
-    // Samordningsprosent = hvor mye dagsatsen er redusert fra før-samordning (DAGSFSAM) til etter (DAGS).
-    // Kan mulig heller bruke sammingingeen som hentes på vedtaket?
+
     private fun beregnSamordningsProsent(dagsats: Int?, dagsatsForSamordning: Int?): Int {
         if (dagsats == null || dagsatsForSamordning == null || dagsatsForSamordning == 0) return 0
         return ((dagsatsForSamordning - dagsats).toDouble() / dagsatsForSamordning * 100).roundToInt()
@@ -108,7 +104,6 @@ class TilkjentYtelserService(
         // BEREGNINGSLEDD-koder for gjenstående kvote: AAP = ordinær periode, MAAPU = unntak §11-12.
         private const val KVOTE_ORDINAER = "AAP"
         private const val KVOTE_UNNTAK = "MAAPU"
-        // Et meldekort dekker 14 dager, og en full arbeidsdag er 7,5 timer.
         private const val DAGER_I_MELDEKORTPERIODE = 14
         private const val TIMER_PER_DAG = 7.5
     }
