@@ -10,21 +10,28 @@ registries:
 updates:
   - package-ecosystem: github-actions
     directory: /
+    commit-message:
+      prefix: "AAP-2194"
+    groups:
+        codeql:
+          patterns:
+            - "github/codeql-action*"
     schedule:
       interval: daily
 
   - package-ecosystem: gradle
     directory: /
+    commit-message:
+      prefix: "AAP-2194"
     schedule:
-      interval: daily
-    ignore:
-    - dependency-name: "com.h2database:h2"
-    - dependency-name: "io.ktor:ktor-*"
-      versions: ["3.5.0"]
+      interval: "cron"
+      cronjob: "0 6 1-7,15-21 * 1" # første og tredje mandag i måneden kl 06:00
+      timezone: "Europe/Oslo"
     cooldown:
-      default-days: 3
+      default-days: 7
       exclude:
         - "no.nav.aap*"
+    open-pull-requests-limit: 10
     groups:
       minor:
         applies-to: version-updates
@@ -36,10 +43,14 @@ updates:
       aap:
         patterns:
           - "no.nav.aap*"
-
     registries:
       - maven-github
+
   - package-ecosystem: docker
     directory: /
+    commit-message:
+      prefix: "AAP-2194"
     schedule:
-      interval: daily
+      interval: "cron"
+      cronjob: "0 6 1-7,15-21 * 1" # første og tredje mandag i måneden kl 06:00
+      timezone: "Europe/Oslo"

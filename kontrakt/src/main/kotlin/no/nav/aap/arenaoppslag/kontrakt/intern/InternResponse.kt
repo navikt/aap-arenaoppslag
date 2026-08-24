@@ -1,6 +1,9 @@
 package no.nav.aap.arenaoppslag.kontrakt.intern
 
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.Oppgave
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
+import java.time.LocalDate
 
 @Deprecated("Bruk nytt endepunkt person/historikk", level = DeprecationLevel.WARNING)
 public data class PersonEksistererIAAPArena(
@@ -34,6 +37,18 @@ public data class SakStatus(
     val statusKode: Status,
     val periode: Periode,
     val kilde: Kilde = Kilde.ARENA
+)
+
+
+public data class ManuellFordelingsgrunnlagResponse(
+    val saksnummer: String,
+    val erAktiv: Boolean,
+    val under52Uker: Boolean?,
+    val gjenståendeOrdinæreDager: Int?,
+    val gjenståendeUnntaksDager: Int?,
+    val sisteVedtak: VedtakMedMaksdato?,
+    val sisteUtbetaling: LocalDate?,
+    val oppgaver: List<Oppgave>,
 )
 
 public enum class Kilde {

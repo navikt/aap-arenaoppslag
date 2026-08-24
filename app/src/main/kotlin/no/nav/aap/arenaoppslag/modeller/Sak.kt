@@ -63,10 +63,6 @@ data class Maksdatolinje(
             sakStatus, sakRegistrert, sakAvsluttet,
             null,
             null,
-            false,
-            false,
-            false,
-            false,
             no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato(
                 vedtakId,
                 aktfaseKode,
@@ -98,6 +94,7 @@ data class ArenaSakMedVedtak(
         sisteUtbetalingDato: LocalDate?,
         maksdato: LocalDate?,
         tilkjentYtelse: TilkjentYtelseResponse? = null,
+        oppgaver: List<ArenaOppgave>,
     ) = ArenaSakDetaljert(
         sakId = sakId,
         opprettetAar = opprettetAar,
@@ -112,6 +109,7 @@ data class ArenaSakMedVedtak(
         kvoteHistorikk = kvoteHistorikk,
         maksdato = maksdato,
         sisteUtbetalingDato = sisteUtbetalingDato,
+        oppgaver = oppgaver,
         tilkjentYtelse = tilkjentYtelse,
     )
 

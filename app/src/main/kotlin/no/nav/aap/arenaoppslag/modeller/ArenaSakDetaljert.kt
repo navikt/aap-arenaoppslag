@@ -18,5 +18,5 @@ data class ArenaSakDetaljert(
     val maksdato: LocalDate?,
     val sisteUtbetalingDato: LocalDate?,
     val tilkjentYtelse: TilkjentYtelseResponse? = null,
+    val oppgaver: List<ArenaOppgave>,
 )
-

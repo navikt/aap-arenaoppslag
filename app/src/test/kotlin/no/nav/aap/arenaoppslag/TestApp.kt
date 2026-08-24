@@ -7,7 +7,7 @@ import io.ktor.server.netty.*
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
 import no.nav.aap.arenaoppslag.util.Fakes
-import no.nav.aap.arenaoppslag.util.azure
+import no.nav.aap.arenaoppslag.util.texas
 import no.nav.aap.arenaoppslag.util.port
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
@@ -24,12 +24,12 @@ fun main() {
             logger.info("Testdatabase klar, url=${dataSource.jdbcUrl}")
         }
 
-    val config = TestConfig.default(fakes)
-    logger.info("Azure port: ${fakes.azure.port()}")
+    val config = TestConfig.default()
+    logger.info("Texas port: ${fakes.texas.port()}")
 
     embeddedServer(Netty, port = 8087) {
         server(config = config, pdlGateway = FakePdlGateway())
-        azure()
+        texas()
         module(dataSource)
     }.start(wait = true)
 }

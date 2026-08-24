@@ -20,12 +20,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentAlleSignifikanteVedtakForPerson(
-        arenaPersonId: Int, søknadMottattPå: LocalDate
-    ): List<ArenaVedtak> {
-        return hentAlleSignifikanteVedtakForPerson(PersonId(arenaPersonId), søknadMottattPå)
-    }
-
     companion object {
 
         // S1: Hent alle AAP-vedtak med relevant historikk for personen
@@ -39,24 +33,29 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevanteAapVedtak = """
         SELECT 
             sak_id, 
+            aar,
+            lopenrvedtak,
             vedtakstatuskode, 
             vedtaktypekode, 
             fra_dato, 
             til_dato, 
             rettighetkode, 
+            aktfasekode,
             utfallkode
         FROM 
               vedtak v 
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode = 'AAP'
-          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
-                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
+                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
+                     vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
+                AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
         """.trimIndent()
@@ -67,24 +66,29 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevante11_5Vedtak = """
         SELECT 
             sak_id, 
+            aar,
+            lopenrvedtak,
             vedtakstatuskode, 
             vedtaktypekode, 
             fra_dato, 
             til_dato, 
             rettighetkode, 
+            aktfasekode,
             utfallkode
         FROM 
               vedtak v 
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode = 'AA115'
-          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
-                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer på 18 måneder
+                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
+                     vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
+                     AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
         """.trimIndent()
@@ -97,11 +101,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
         -- Dersom den er null, er klagen fortsatt under behandling.
         SELECT
             v.sak_id,
+            v.aar,
+            v.lopenrvedtak,
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode,
+            v.aktfasekode,
             v.utfallkode
         FROM
             vedtak v
@@ -110,7 +117,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
@@ -124,11 +131,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevanteAnker = """
         SELECT
             v.sak_id,
+            v.aar,
+            v.lopenrvedtak,
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
             CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode,
+            v.aktfasekode,
             v.utfallkode
         FROM
             vedtak v
@@ -137,19 +147,19 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.person_id = ?
             AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak (72 mnd)
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
-        const val tidsBufferUkerGenerell = 78L // 52 uker + 6 måneder tilbakejustering
-        const val tidsBufferUkerStans = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
+        const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
+        const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val modnedGrenseVedtak = 72L
         const val modnedGrenseKlageInnvilget = 6L
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
-            val tidsBufferGenerell = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerGenerell))
-            val nyesteTillateStans = Date.valueOf(søknadMottattPå.minusWeeks(tidsBufferUkerStans))
+            val vanligTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(vanligTidsbufferUker))
+            val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(stansTidsbufferUker))
             val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
             val klageInnvilgetGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseKlageInnvilget))
 
@@ -159,25 +169,25 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n")
+                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrvedtak DESC"
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
                 // S1: AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, tidsBufferGenerell)
-                preparedStatement.setDate(p++, nyesteTillateStans)
-                preparedStatement.setDate(p++, tidsBufferGenerell)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, stansTidsbuffer)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
                 // S2: 11-5-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, tidsBufferGenerell)
-                preparedStatement.setDate(p++, nyesteTillateStans)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, stansTidsbuffer)
                 // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, tidsBufferGenerell)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, klageInnvilgetGrense)
                 // S4: anker
                 preparedStatement.setInt(p++, arenaPersonId)
@@ -190,12 +200,15 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         fun mapperForArenaVedtak(row: ResultSet) = ArenaVedtak(
             sakId = row.getString("sak_id"),
+            aar = row.getInt("aar"),
+            lopenrvedtak = row.getInt("lopenrvedtak"),
             statusKode = row.getString("vedtakstatuskode"),
             vedtaktypeKode = row.getString("vedtaktypekode"),
             fraOgMed = fraDato(row.getDate("fra_dato")),
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
+            aktivitetsfaseKode = row.getString("aktfasekode"),
         )
 
     }

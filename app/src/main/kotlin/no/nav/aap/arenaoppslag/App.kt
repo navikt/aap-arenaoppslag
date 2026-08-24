@@ -1,25 +1,39 @@
 package no.nav.aap.arenaoppslag
 
 import com.zaxxer.hikari.HikariDataSource
-import io.ktor.http.*
-import io.ktor.serialization.jackson.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.engine.*
-import io.ktor.server.metrics.micrometer.*
-import io.ktor.server.netty.*
-import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.calllogging.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
-import io.ktor.utils.io.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.serialization.jackson.JacksonConverter
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopPreparing
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ApplicationStopping
+import io.ktor.server.application.install
+import io.ktor.server.application.log
+import io.ktor.server.auth.authenticate
+import io.ktor.server.engine.connector
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.metrics.micrometer.MicrometerMetrics
+import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
+import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.request.path
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
+import io.ktor.utils.io.CancellationException
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
+import java.time.LocalDate
+import java.util.UUID
+import javax.sql.DataSource
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
+import no.nav.aap.arenaoppslag.database.OppgaveRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.PosteringRepository
@@ -33,21 +47,21 @@ import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.pdl.IPdlGateway
 import no.nav.aap.arenaoppslag.pdl.PdlGateway
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
-import no.nav.aap.arenaoppslag.plugins.authentication
 import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.komponenter.server.auth.IdentityProvider
+import no.nav.aap.komponenter.server.authentication
+import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import org.slf4j.LoggerFactory
-import java.time.LocalDate
-import java.util.*
-import javax.sql.DataSource
 
 val logger = LoggerFactory.getLogger("App")
 
@@ -99,7 +113,7 @@ fun Application.server(
         generate { UUID.randomUUID().toString() }
     }
 
-    authentication(config)
+    authentication(listOf(IdentityProvider.ENTRA_ID))
 
     routes(datasource, pdlGateway)
 
@@ -199,6 +213,15 @@ private fun skapTilkjentYtelserService(datasource: DataSource): TilkjentYtelserS
     return TilkjentYtelserService(meldekortRepository, telleverkRepository)
 }
 
+private fun skapManuellFordelingsgrunnlagService(datasource: DataSource): ManuellFordelingsgrunnlagService {
+    return ManuellFordelingsgrunnlagService(
+        skapSakListeService(datasource),
+        skapUtbetalingService(datasource),
+        skapTelleverkService(datasource),
+        skapOppgaveService(datasource),
+    )
+}
+
 private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): PersonService {
     val personRepository = PersonRepository(datasource)
     return PersonService(personRepository, pdlGateway)
@@ -207,6 +230,11 @@ private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): 
 private fun skapSaksopplysningService(datasource: DataSource): SaksopplysningService {
     val saksopplysningRepository = SaksopplysningRepository(datasource)
     return SaksopplysningService(saksopplysningRepository)
+}
+
+private fun skapOppgaveService(datasource: DataSource): OppgaveService {
+    val oppgaveRepository = OppgaveRepository(datasource)
+    return OppgaveService(oppgaveRepository)
 }
 
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
@@ -219,17 +247,20 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val utbetalingService = skapUtbetalingService(datasource)
     val saksopplysningService = skapSaksopplysningService(datasource)
     val tilkjentYtelserService = skapTilkjentYtelserService(datasource)
+    val oppgaveService = skapOppgaveService(datasource)
+    val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource)
 
     routing {
         actuator(prometheus)
 
-        authenticate {
+        authenticate(IdentityProvider.ENTRA_ID.value) {
             route("/intern") {
                 // Eksterne APIer i hovedsak brukt av aap-api-intern
                 // Gammelt endepunkt, ikke legg til nye routes her!
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
+                manuellFordelingsgrunnlag(manuellFordelingsgrunnlagService, personService)
             }
             route("/api/v1") {
                 // Eksterne APIer som kan brukes av andre. Brekkende endringer vil enten varsles eller versjoneres.
@@ -250,7 +281,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     sakOgVedtakService = sakOgVedtakService,
                     telleverkService = telleverkService,
                     saksopplysningService = saksopplysningService,
-                    tilkjentYtelserService = tilkjentYtelserService
+                    tilkjentYtelserService = tilkjentYtelserService,
+                    oppgaveService = oppgaveService
                 )
             }
         }

@@ -32,6 +32,7 @@ class MaksimumRepository(
             selectVedtakMaksimum(fodselsnr, fraOgMedDato, tilOgMedDato, con)
         }
 
+
     private fun selectVedtakMaksimum(
         fodselsnr: String,
         fraOgMedDato: LocalDate,
@@ -46,19 +47,39 @@ class MaksimumRepository(
 
             val resultSet = preparedStatement.executeQuery()
             var c = 0
+            val meldekortrader = selectUtbetalingVedVedtakId(
+                connection = connection,
+                fodselsnr = fodselsnr,
+            )
+
+            val anmerkningerPerMeldekort =
+                selectAlleMeldekortAnmerkninger(meldekortrader.map { rad -> rad.meldekortId }, connection)
+
+            log.info("Fant ${anmerkningerPerMeldekort.size} meldekort. Fra-dato: $fraOgMedDato, til-dato: $tilOgMedDato.")
+
             val vedtak = resultSet.map { row ->
                 val vedtakId = row.getInt("vedtak_id")
                 log.info("Henter utbetalinger for vedtak $vedtakId. Iterasjon nr $c.")
                 val vedtakFakta = selectVedtakFakta(vedtakId, connection)
-                val utbetalinger = selectUtbetalingVedVedtakId(
-                    connection = connection,
-                    barneTillegg = vedtakFakta.barntill,
-                    dagsats = vedtakFakta.dagsmbt,
-                    fodselsnr = fodselsnr,
-                    vedtakId = vedtakId,
-                    fraDato = row.getDate("fra_dato").toLocalDate(),
-                    tilDato = fraDato(row.getDate("til_dato")) ?: tilOgMedDato,
+
+                val periode = Periode(
+                    fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
+                    tilOgMedDato = fraDato(row.getDate("til_dato")),
                 )
+
+                val utbetalinger = meldekortrader.filter {
+                    it.vedtakId == vedtakId && (periode.fraOgMedDato == null
+                            || it.datoFra >= periode.fraOgMedDato) && (periode.tilOgMedDato == null
+                            || it.datoTil <= periode.tilOgMedDato)
+                }.map { rad ->
+                    mapTilUtbetaling(
+                        rad,
+                        anmerkningerPerMeldekort,
+                        vedtakFakta.dagsmbt,
+                        vedtakFakta.barntill
+                    )
+                }
+
                 val vedtaktypekode = row.getString("vedtaktypekode")
                 c++
                 Vedtak(
@@ -69,51 +90,40 @@ class MaksimumRepository(
                     saksnummer = row.getString("sak_id"),
                     vedtaksdato = row.getString("fra_dato"),
                     rettighetsType = row.getString("aktfasekode"),
-                    periode = Periode(
-                        fraOgMedDato = row.getDate("fra_dato").toLocalDate(),
-                        tilOgMedDato = fraDato(row.getDate("til_dato")),
-                    ),
+                    periode = periode,
                     beregningsgrunnlag = selectBeregningsgrunnlag(vedtakId, connection),
                     barnetillegg = vedtakFakta.barntill,
                     barnMedStonad = vedtakFakta.barnmston,
-                    barnetilleggsats = vedtakFakta.satsbarntg,
                     justertG = vedtakFakta.justertg,
                     vedtaksTypeKode = vedtaktypekode,
                     vedtaksTypeNavn = VedtaksType.entries.find { it.kode == vedtaktypekode }?.navn
                         ?: error("Ukjent verdi vedtaktypekode=$vedtaktypekode"),
+                    lopenrvedtak = row.getInt("lopenrvedtak"),
+                    relatertVedtak = row.getIntOrNull("vedtak_id_relatert"),
+                    utfallkode = row.getString("utfallkode")
                 )
-            }.toList()
+            }
             Maksimum(vedtak)
         }
     }
 
     private fun selectUtbetalingVedVedtakId(
-        vedtakId: Int,
         connection: Connection,
-        barneTillegg: Int,
-        dagsats: Int,
         fodselsnr: String,
-        fraDato: LocalDate,
-        tilDato: LocalDate,
-    ): List<UtbetalingMedMer> {
+    ): List<MeldekortRad> {
         return connection.prepareStatement(selectTimerArbeidetIMeldekortPeriode).use { preparedStatement ->
-            preparedStatement.setInt(1, vedtakId)
-            preparedStatement.setString(2, fodselsnr)
-            preparedStatement.setDate(3, Date.valueOf(fraDato))
-            preparedStatement.setDate(4, Date.valueOf(tilDato))
+            preparedStatement.setString(1, fodselsnr)
 
-            val rader = preparedStatement.executeQuery().map { row ->
+            preparedStatement.executeQuery().map { row ->
                 MeldekortRad(
                     meldekortId = row.getLong("meldekort_id"),
+                    vedtakId = row.getInt("vedtak_id"),
                     timerArbeidet = row.getFloat("timer_arbeidet").toDouble(),
                     datoFra = row.getDate("DATO_FRA").toLocalDate(),
                     datoTil = row.getDate("DATO_TIL").toLocalDate(),
                     belop = row.getInt("belop"),
                 )
             }.toList()
-
-            val anmerkningerPerMeldekort = selectAlleMeldekortAnmerkninger(rader.map { it.meldekortId }, connection)
-            rader.map { rad -> mapTilUtbetaling(rad, anmerkningerPerMeldekort[rad.meldekortId], dagsats, barneTillegg) }
         }
     }
 
@@ -129,7 +139,7 @@ class MaksimumRepository(
                     row.getLong("objekt_id") to AnnenReduksjon(
                         sykedager = row.getFloat("sykedager"),
                         sentMeldekort = row.getFloat("for_sent") > 0,
-                        fraver = row.getFloat("fravar"),
+                        fravær = row.getFloat("fravar"),
                     )
                 }
             }
@@ -160,7 +170,6 @@ class MaksimumRepository(
                 barntill = 0,
                 dags = 0,
                 barnmston = 0,
-                satsbarntg = 0,
                 dagsfsam = 0,
                 justertg = null
             )
@@ -170,7 +179,6 @@ class MaksimumRepository(
                     "DAGS" -> vedtakfakta.dags = row.getInt("vedtakverdi")
                     "BARNTILL" -> vedtakfakta.barntill = row.getInt("vedtakverdi")
                     "BARNMSTON" -> vedtakfakta.barnmston = row.getInt("vedtakverdi")
-                    "SATSBARNTG" -> vedtakfakta.satsbarntg = row.getInt("vedtakverdi")
                     "DAGSFSAM" -> vedtakfakta.dagsfsam = row.getInt("vedtakverdi")
                     "JUSTERTG" -> vedtakfakta.justertg = row.getString("vedtakverdi")
                 }
@@ -181,6 +189,7 @@ class MaksimumRepository(
 
     private data class MeldekortRad(
         val meldekortId: Long,
+        val vedtakId: Int,
         val timerArbeidet: Double,
         val datoFra: LocalDate,
         val datoTil: LocalDate,
@@ -189,13 +198,13 @@ class MaksimumRepository(
 
     private fun mapTilUtbetaling(
         rad: MeldekortRad,
-        anmerkninger: AnnenReduksjon?,
+        anmerkninger: Map<Long, AnnenReduksjon>,
         dagsats: Int,
         barnetillegg: Int,
     ): UtbetalingMedMer = UtbetalingMedMer(
         reduksjon = Reduksjon(
             timerArbeidet = rad.timerArbeidet,
-            annenReduksjon = anmerkninger ?: AnnenReduksjon(0.0f, false, 0.0f),
+            annenReduksjon = anmerkninger[rad.meldekortId] ?: AnnenReduksjon(0.0f, false, 0.0f),
         ),
         periode = Periode(
             fraOgMedDato = rad.datoFra,
@@ -208,13 +217,13 @@ class MaksimumRepository(
 
     @Language("OracleSql")
     private val selectMaksimumMedTidsbegrensning = """
-        SELECT vedtak_id, til_dato, fra_dato, vedtaktypekode, vedtakstatuskode, sak_id, aktfasekode 
+        SELECT vedtak_id, til_dato, fra_dato, vedtaktypekode, vedtakstatuskode, sak_id, aktfasekode, lopenrvedtak, vedtak_id_relatert, utfallkode
           FROM vedtak 
          WHERE person_id = 
                (SELECT person_id 
                   FROM person 
-                 WHERE fodselsnr = ?) 
-           AND utfallkode = 'JA' 
+                 WHERE fodselsnr = ?)
+           AND utfallkode = 'JA'
            AND rettighetkode = 'AAP'
            AND vedtaktypekode IN ('O', 'E', 'G', 'S')
            AND vedtakstatuskode IN ('IVERK', 'AVSLU')
@@ -261,26 +270,25 @@ class MaksimumRepository(
             mkp.DATO_FRA,
             mkp.DATO_TIL,
             m.meldekort_id,
-            p.belop
+            p.belop,
+            p.vedtak_id
         FROM 
             meldekort m
         JOIN 
             meldekortdag mkd ON mkd.meldekort_id = m.meldekort_id
         LEFT JOIN 
-            (SELECT dato_periode_fra, dato_periode_til, belop, meldekort_id
-             FROM postering
-             WHERE vedtak_id = ?) p
+            (SELECT dato_periode_fra, dato_periode_til, belop, meldekort_id, vedtak_id
+             FROM postering) p
             ON m.meldekort_id = p.meldekort_id
         JOIN
             MELDEKORTPERIODE mkp ON mkp.periodekode = m.periodekode AND mkp.aar = m.aar
         WHERE 
             m.person_id = (SELECT person_id FROM person WHERE fodselsnr = ?)
-        AND 
-            mkp.DATO_TIL >= ? AND mkp.DATO_FRA <= ?
         GROUP BY
             mkp.DATO_FRA,
             mkp.DATO_TIL,
             m.meldekort_id,
+            p.vedtak_id,
             p.belop
     """.trimIndent()
 }

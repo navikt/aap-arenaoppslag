@@ -51,7 +51,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
      * Finner siste AAP-vedtak for denne brukeren
      * Finner sak knyttet til dette vedtaket
      * Hvis løpende vedtak. Returner beregnet maksdato
-     * Hvis sak som har gått til maks: Returner maksdato
+     * Hvis sak som har gått til maksdato: Returner maksdato
      * Hvis siste vedtak er stansvedtak (S): Returnere null
      * Hvis vi ikke finner noen relevante saker: Returnere null
      */

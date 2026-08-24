@@ -18,7 +18,9 @@ data class Vedtak(
     val vedtaksId: String,
     val utbetaling: List<UtbetalingMedMer>,
     val dagsats: Int,
-    val status: String, //Hypotese, vedtaksstatuskode
+    // vedtakstatuskode
+    val status: String,
+    val utfallkode: String?,
     val saksnummer: String, //hypotese sak_id
     val vedtaksdato: String, //reg_dato
     val vedtaksTypeKode: String,
@@ -29,7 +31,8 @@ data class Vedtak(
     val barnMedStonad: Int,
     val justertG: String?,
     val barnetillegg: Int,
-    val barnetilleggsats: Int,
+    val lopenrvedtak: Int,
+    val relatertVedtak: Int?,
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak {
         return no.nav.aap.arenaoppslag.kontrakt.modeller.Vedtak(
@@ -37,6 +40,7 @@ data class Vedtak(
             utbetaling = utbetaling.map { it.tilKontrakt() },
             dagsats = dagsats,
             status = status,
+            utfallkode = utfallkode,
             saksnummer = saksnummer,
             vedtaksdato = vedtaksdato,
             periode = periode.tilKontrakt(),
@@ -44,10 +48,11 @@ data class Vedtak(
             beregningsgrunnlag = beregningsgrunnlag,
             barnMedStonad = barnMedStonad,
             barnetillegg = barnetillegg,
-            barnetilleggsats = barnetilleggsats,
             vedtaksTypeKode = vedtaksTypeKode,
             vedtaksTypeNavn = vedtaksTypeNavn,
             justertG = justertG,
+            lopenrvedtak = lopenrvedtak,
+            relatertVedtak = relatertVedtak,
         )
     }
 }
@@ -102,13 +107,13 @@ data class Reduksjon(
 data class AnnenReduksjon(
     val sykedager: Float,
     val sentMeldekort: Boolean,
-    val fraver: Float
+    val fravær: Float
 ) {
     fun tilKontrakt(): no.nav.aap.arenaoppslag.kontrakt.modeller.AnnenReduksjon {
         return no.nav.aap.arenaoppslag.kontrakt.modeller.AnnenReduksjon(
             sykedager = sykedager,
             sentMeldekort = sentMeldekort,
-            fraver = fraver
+            fraver = fravær
         )
     }
 }

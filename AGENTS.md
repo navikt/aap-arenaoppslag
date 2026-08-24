@@ -204,10 +204,11 @@ Available Flyway migration sets (all automatically include `flyway/common`):
 | `flyway/dsop` | DSOP-specific schema |
 | `flyway/saklistetest` | Sak-list test data (multiple saker for person lookups) |
 | `flyway/maksimum` | Maksimum/utbetaling test data |
+| `flyway/oppgave` | Oppgave test data (`V_OPPGAVE`) |
 
 ### Integration tests
 
-Use `Fakes` for a lightweight embedded Azure JWKS/token server. Use `TestConfig.default(fakes)` for `AppConfig`.
+Use `Fakes` for a lightweight embedded Texas JWKS/token server. Use `TestConfig.default(fakes)` for `AppConfig`.
 Wire `AzureTokenGen` to produce tokens with the correct issuer and client ID.
 
 ```kotlin

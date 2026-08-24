@@ -24,6 +24,8 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
@@ -71,6 +73,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): SisteUtbetalingerResponse =
         gjørArenaOppslag<SisteUtbetalingerResponse, SisteUtbetalingerRequest>(
             "/api/v1/utbetalinger/siste", req
+        ).getOrThrow()
+
+    suspend fun hentManuellFordelingsgrunnlag(
+        req: ManuellFordelingsgrunnlagRequest
+    ): ManuellFordelingsgrunnlagResponse =
+        gjørArenaOppslag<ManuellFordelingsgrunnlagResponse, ManuellFordelingsgrunnlagRequest>(
+            "/intern/manuell-fordelingsgrunnlag", req
         ).getOrThrow()
 
     suspend fun hentVedtakForPerson(
@@ -157,6 +166,15 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         return objectMapper.readValue(arenaResponse.bodyAsText())
     }
 
+    suspend fun hentSakDetaljert(sakId: String): ArenaSakDetaljert {
+        val token = tokenProvider.generate()
+        val arenaResponse = httpClient.get("/api/intern/sak/$sakId/detaljert") {
+            accept(ContentType.Application.Json)
+            bearerAuth(token)
+        }
+        return objectMapper.readValue(arenaResponse.bodyAsText())
+    }
+
     private suspend inline fun <reified T, reified V> gjørArenaOppslag(
         endepunkt: String, req: V
     ): Result<T> {
@@ -196,9 +214,9 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     companion object {
         fun withTestServer(dataSource: DataSource, testBody: suspend (ArenaOppslagGateway) -> Unit) {
-            Fakes().use { fakes ->
-                val config = TestConfig.default(fakes)
-                val tokenProvider = AzureTokenGen(config.azure.issuer, config.azure.clientId)
+            Fakes().use {
+                val config = TestConfig.default()
+                val tokenProvider = AzureTokenGen("issuer", "arenaoppslag")
                 testApplication {
                     application { server(config, dataSource, FakePdlGateway()) }
                     val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)

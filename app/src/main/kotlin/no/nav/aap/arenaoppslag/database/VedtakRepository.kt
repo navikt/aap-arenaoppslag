@@ -2,9 +2,9 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
-import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
@@ -68,11 +68,12 @@ class VedtakRepository(private val dataSource: DataSource) {
             tilDato = fraDato(row.getDate("til_dato")),
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
+            aktivitetsfaseKode = row.getString("aktfasekode"),
         )
 
         @Language("OracleSql")
         internal val selectAlleVedtakForFnr = """
-        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, utfallkode
+        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, aktfasekode, utfallkode
           FROM vedtak
          WHERE person_id = 
                (SELECT person_id 
@@ -82,7 +83,7 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         internal val selectAlleVedtakForPerson = """
-        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, utfallkode
+        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, aktfasekode, utfallkode
           FROM vedtak
          WHERE person_id = ? 
         """.trimIndent()
@@ -130,7 +131,6 @@ class VedtakRepository(private val dataSource: DataSource) {
           LEFT JOIN aktivitetfase a ON a.aktfasekode = v.aktfasekode
           LEFT JOIN rettighettype rt ON rt.rettighetkode = v.rettighetkode
          WHERE sak_id = ?
-           AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
         private fun selectVedtakForSak(sakId: SakId, connection: Connection): List<ArenaVedtakRad> {

@@ -9,6 +9,7 @@ public data class Vedtak(
     val utbetaling: List<UtbetalingMedMer>,
     val dagsats: Int,
     val status: String,
+    val utfallkode: String?,
     val saksnummer: String,
     val vedtaksdato: String,
     val vedtaksTypeKode: String,
@@ -18,8 +19,11 @@ public data class Vedtak(
     val beregningsgrunnlag: Int,
     val barnMedStonad: Int,
     val barnetillegg: Int,
-    val barnetilleggsats: Int,
+    @Deprecated("Alltid null. Vil fjernes.")
+    val barnetilleggsats: Int = 0,
     val justertG: String?,
+    val lopenrvedtak: Int? = null,
+    val relatertVedtak: Int? = null,
 )
 
 /**

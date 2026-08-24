@@ -50,6 +50,8 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(vedtak.vedtaksTypeKode).isEqualTo("O")
         assertThat(vedtak.periode).isEqualTo(Periode(LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31)))
         assertThat(vedtak.justertG).isEqualTo("NyG2024")
+        assertThat(vedtak.lopenrvedtak).isEqualTo(1)
+        assertThat(vedtak.relatertVedtak).isNull()
     }
 
     @Test
@@ -83,7 +85,11 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         // En test som reproduserer en bug vi opplevde. Vi fikk duplikater av utbetalinger når vi hentet
         // ut vedtak over flere år (f.eks. tilDato = NULL). Årsaken til dette er at MELDEKORTPERIODE har
         // Primary key (periodekode, aar), men vi joinet kun på periodekode.
-        val resultat = repo.hentMaksimumsløsning("22222222222", LocalDate.of(2023, 1, 1), LocalDate.of(2024, 12, 31))
+        val resultat = repo.hentMaksimumsløsning(
+            "22222222222",
+            LocalDate.of(2023, 1, 1),
+            LocalDate.of(2024, 12, 31)
+        )
 
         val vedtak = resultat.vedtak.single()
         assertThat(vedtak.utbetaling).hasSize(1)
@@ -101,12 +107,12 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         val meldekortdata1 = utbetaling1.reduksjon!!.annenReduksjon
         assertThat(meldekortdata1.sykedager).isEqualTo(1.0f)
         assertThat(meldekortdata1.sentMeldekort).isFalse()
-        assertThat(meldekortdata1.fraver).isEqualTo(0.0f)
+        assertThat(meldekortdata1.fravær).isEqualTo(0.0f)
 
         // meldekort 5002: SENN=1, FXNN=2, ingen FSNN
         val meldekortdata2 = utbetaling2.reduksjon!!.annenReduksjon
         assertThat(meldekortdata2.sykedager).isEqualTo(0.0f)
         assertThat(meldekortdata2.sentMeldekort).isTrue()
-        assertThat(meldekortdata2.fraver).isEqualTo(2.0f)
+        assertThat(meldekortdata2.fravær).isEqualTo(2.0f)
     }
 }
