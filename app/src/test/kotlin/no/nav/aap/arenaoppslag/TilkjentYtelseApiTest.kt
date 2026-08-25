@@ -35,6 +35,18 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
             assertThat(rad.reduksjon?.sykedager).isEqualTo(1.0f)
             assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(33)
+
+            // Meldekort 5001 trekker kun ordinær kvote (20 - 10), unntakskvoten videreføres fra INIT.
+            assertThat(rad.gjenstaaendeOrdinaerDager).isEqualTo(10)
+            assertThat(rad.gjenstaaendeUnntakDager).isEqualTo(30)
+
+            val radMeldekortTo = tilkjentYtelse.rader.first { it.meldekort?.meldekortId == 5002L }
+            assertThat(radMeldekortTo.gjenstaaendeOrdinaerDager).isEqualTo(4)
+            assertThat(radMeldekortTo.gjenstaaendeUnntakDager).isEqualTo(25)
+
+            // Saldoen på responsnivå kommer fra BEREGNINGSLEDD og speiler siste bevegelse.
+            assertThat(tilkjentYtelse.gjenstaaendeOrdinaerDager).isEqualTo(4)
+            assertThat(tilkjentYtelse.gjenstaaendeUnntakDager).isEqualTo(25)
         }
     }
 }

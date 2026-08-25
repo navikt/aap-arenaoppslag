@@ -8,6 +8,8 @@ data class KvotebrukHendelse(
     val id: Int,
     val kvoteTypeKode: String,
     val endringsGrunnlag: String,
+    // Peker på objektet som utløste bevegelsen. Når endringsGrunnlag er "MKORT" er dette meldekort_id.
+    val objektIdGrunnlag: Long,
     val antallBevegelse: Int,
     val posteringTypeKode: String,
     val datoHendelse: LocalDate,

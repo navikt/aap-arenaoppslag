@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag.service
 
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
-import no.nav.aap.arenaoppslag.database.TelleverkRepository
+import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Meldekort
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.ReduksjonRespons
@@ -14,7 +14,7 @@ import kotlin.math.roundToInt
 
 class TilkjentYtelserService(
     private val meldekortRepository: MeldekortRepository,
-    private val telleverkRepository: TelleverkRepository,
+    private val telleverkService: TelleverkService,
 ) {
 
     fun hentTilkjenteYtelserForSak(sakId: SakId): TilkjentYtelseResponse {
@@ -22,11 +22,10 @@ class TilkjentYtelserService(
         val meldekortPerId = meldekortForSak.meldekort.associateBy { it.meldekortId }
 
         val personId = meldekortForSak.posteringer.firstOrNull()?.personId ?: meldekortForSak.meldekort.firstOrNull()?.personId
-        val kvoter = if (personId != null) {
-            telleverkRepository.hentTelleverkForPerson(PersonId(personId))
-        } else {
-            emptySet()
-        }
+        val telleverk = personId?.let { telleverkService.hentTelleverkForPerson(PersonId(it)) }
+        val kvoteSaldo = KvoteSaldo(
+            personId?.let { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(it)) }.orEmpty()
+        )
 
         val rader = meldekortForSak.posteringer.map { postering ->
             val meldekort = postering.meldekortId?.let { meldekortPerId[it] }
@@ -46,13 +45,16 @@ class TilkjentYtelserService(
                 timerArbeidet = timerArbeidetEtterStraff,
                 reduksjon = reduksjon,
                 meldekort = meldekort?.tilRespons(),
+                // Kvotetrekk registreres kun per meldekort, så spesialutbetalinger får ingen saldo.
+                gjenstaaendeOrdinaerDager = postering.meldekortId?.let { kvoteSaldo.gjenstaaende(it, KVOTE_ORDINAER) },
+                gjenstaaendeUnntakDager = postering.meldekortId?.let { kvoteSaldo.gjenstaaende(it, KVOTE_UNNTAK) },
             )
         }
 
         return TilkjentYtelseResponse(
             sakId = sakId.id,
-            gjenstaaendeOrdinaerDager = kvoter.find { it.kode == KVOTE_ORDINAER }?.verdi,
-            gjenstaaendeUnntakDager = kvoter.find { it.kode == KVOTE_UNNTAK }?.verdi,
+            gjenstaaendeOrdinaerDager = telleverk?.ordineerAAPKvote,
+            gjenstaaendeUnntakDager = telleverk?.utvidetAAPKvote,
             rader = rader,
         )
     }
@@ -98,10 +100,38 @@ class TilkjentYtelserService(
         return ((dagsatsForSamordning - dagsats).toDouble() / dagsatsForSamordning * 100).roundToInt()
     }
 
+    /**
+     * Slår opp gjenstående kvotesaldo på det tidspunktet et gitt meldekort ble beregnet.
+     * KVOTEBRUK er en løpende hovedbok per person, der `resterende` allerede er akkumulert
+     * saldo til og med hver enkelt bevegelse. Rekkefølgen følger kvotebruk_id, ikke dato_hendelse,
+     * fordi det er den samme rekkefølgen den akkumulerte summen beregnes med.
+     */
+    private class KvoteSaldo(hendelser: Collection<KvotebrukHendelse>) {
+        private val hendelserSortert = hendelser.sortedBy { it.id }
+
+        private val sisteHendelseIdPerMeldekort: Map<Long, Int> = hendelserSortert
+            .filter { it.endringsGrunnlag == GRUNNLAG_MELDEKORT }
+            .groupBy { it.objektIdGrunnlag }
+            .mapValues { (_, hendelserForMeldekort) -> hendelserForMeldekort.maxOf { it.id } }
+
+        fun gjenstaaende(meldekortId: Long, kvoteTypeKode: String): Int? {
+            val sisteHendelseId = sisteHendelseIdPerMeldekort[meldekortId] ?: return null
+            // Trekkes det ikke på denne kvotetypen for meldekortet, videreføres siste kjente saldo.
+            return hendelserSortert
+                .lastOrNull { it.kvoteTypeKode == kvoteTypeKode && it.id <= sisteHendelseId }
+                ?.resterende
+        }
+
+        private companion object {
+            // KVOTEBRUK.TABELLNAVNALIAS_GRUNNLAG for bevegelser som stammer fra et meldekort.
+            private const val GRUNNLAG_MELDEKORT = "MKORT"
+        }
+    }
+
     private companion object {
         private const val KILDE_MELDEKORT = "Meldekort"
         private const val KILDE_SPESIALUTBETALING = "Spesialutbetaling"
-        // BEREGNINGSLEDD-koder for gjenstående kvote: AAP = ordinær periode, MAAPU = unntak §11-12.
+        // Kvotekoder: AAP = ordinær periode, MAAPU = unntak §11-12.
         private const val KVOTE_ORDINAER = "AAP"
         private const val KVOTE_UNNTAK = "MAAPU"
         private const val DAGER_I_MELDEKORTPERIODE = 14

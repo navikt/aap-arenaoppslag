@@ -22,6 +22,11 @@ data class TilkjentYtelseRad(
     val timerArbeidet: Double?,
     val reduksjon: ReduksjonRespons?,
     val meldekort: MeldekortRespons?,
+    // Gjenstående dager på ordinær kvote (KVOTEBRUK 'AAP') etter at dette meldekortet ble beregnet.
+    // Null for rader uten meldekort, siden kvotetrekk kun skjer per meldekort.
+    val gjenstaaendeOrdinaerDager: Int? = null,
+    // Gjenstående dager på unntakskvote (KVOTEBRUK 'MAAPU') etter at dette meldekortet ble beregnet.
+    val gjenstaaendeUnntakDager: Int? = null,
 )
 
 data class ReduksjonRespons(

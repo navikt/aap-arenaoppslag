@@ -209,8 +209,7 @@ private fun skapUtbetalingService(datasource: DataSource): PosteringService {
 
 private fun skapTilkjentYtelserService(datasource: DataSource): TilkjentYtelserService {
     val meldekortRepository = MeldekortRepository(datasource)
-    val telleverkRepository = TelleverkRepository(datasource)
-    return TilkjentYtelserService(meldekortRepository, telleverkRepository)
+    return TilkjentYtelserService(meldekortRepository, skapTelleverkService(datasource))
 }
 
 private fun skapManuellFordelingsgrunnlagService(datasource: DataSource): ManuellFordelingsgrunnlagService {

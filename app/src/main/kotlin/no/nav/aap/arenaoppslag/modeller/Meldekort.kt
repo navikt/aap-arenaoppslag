@@ -20,13 +20,9 @@ data class MeldekortPostering(
     val insGrad: Int?,
 )
 
-// Domeneobjekt: anmerkningsdata fra Arena-beregning for ett meldekort.
 data class MeldekortReduksjon(
-    // Antall dager trukket pga. for sen innlevering av forrige meldekort (anmerkningkode SENN)
     val dagerForSent: Int,
-    // Antall dager med annet fravær (anmerkningkode FXNN)
     val fravar: Float,
-    // Antall sykedager (anmerkningkode FSNN)
     val sykedager: Float,
 )
 

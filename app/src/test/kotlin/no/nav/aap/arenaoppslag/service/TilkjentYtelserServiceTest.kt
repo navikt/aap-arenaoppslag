@@ -3,8 +3,7 @@ package no.nav.aap.arenaoppslag.service
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
-import no.nav.aap.arenaoppslag.database.TelleverkRepository
-import no.nav.aap.arenaoppslag.modeller.KvoteVerdi
+import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Meldekort
 import no.nav.aap.arenaoppslag.modeller.MeldekortDag
 import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
@@ -13,6 +12,7 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -20,9 +20,9 @@ import java.time.LocalDate
 class TilkjentYtelserServiceTest {
 
     private val meldekortRepository = mockk<MeldekortRepository>()
-    private val telleverkRepository = mockk<TelleverkRepository>()
+    private val telleverkService = mockk<TelleverkService>()
 
-    private val service = TilkjentYtelserService(meldekortRepository, telleverkRepository)
+    private val service = TilkjentYtelserService(meldekortRepository, telleverkService)
 
     @Test
     fun `komponerer rader med kilde, uke, dagsats og gjenstaaende kvoter`() {
@@ -57,9 +57,14 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkRepository.hentTelleverkForPerson(PersonId(100)) } returns setOf(
-            KvoteVerdi("AAP", 2),
-            KvoteVerdi("MAAPU", 704),
+        every { telleverkService.hentTelleverkForPerson(PersonId(100)) } returns TelleverkForPerson(
+            ordineerAAPKvote = 2,
+            utvidetAAPKvote = 704,
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
+            kvotebrukHendelse(id = 1, kvoteTypeKode = "AAP", grunnlag = "VEDTAK", objektId = 90010, resterende = 20),
+            kvotebrukHendelse(id = 2, kvoteTypeKode = "MAAPU", grunnlag = "VEDTAK", objektId = 90010, resterende = 30),
+            kvotebrukHendelse(id = 3, kvoteTypeKode = "AAP", grunnlag = "MKORT", objektId = 5001, resterende = 10),
         )
 
         val response = service.hentTilkjenteYtelserForSak(sakId)
@@ -85,11 +90,16 @@ class TilkjentYtelserServiceTest {
         assertThat(meldekortRad.reduksjon?.institusjonsProsent).isNull()
         assertThat(meldekortRad.meldekort?.uker).hasSize(1)
         assertThat(meldekortRad.meldekort?.fortsattRegistrertArbeidssoker).isTrue()
+        // Meldekortet trekker kun ordinær kvote, så unntakskvoten videreføres fra forrige bevegelse.
+        assertThat(meldekortRad.gjenstaaendeOrdinaerDager).isEqualTo(10)
+        assertThat(meldekortRad.gjenstaaendeUnntakDager).isEqualTo(30)
 
         val spesialRad = response.rader.first { it.kilde == "Spesialutbetaling" }
         assertThat(spesialRad.uke).isNull()
         assertThat(spesialRad.meldekort).isNull()
         assertThat(spesialRad.beregnetBrutto).isEqualTo(3459)
+        assertThat(spesialRad.gjenstaaendeOrdinaerDager).isNull()
+        assertThat(spesialRad.gjenstaaendeUnntakDager).isNull()
     }
 
     @Test
@@ -125,7 +135,8 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkRepository.hentTelleverkForPerson(PersonId(100)) } returns emptySet()
+        every { telleverkService.hentTelleverkForPerson(PersonId(100)) } returns null
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
 
@@ -169,7 +180,8 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkRepository.hentTelleverkForPerson(PersonId(100)) } returns emptySet()
+        every { telleverkService.hentTelleverkForPerson(PersonId(100)) } returns null
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
 
@@ -183,6 +195,47 @@ class TilkjentYtelserServiceTest {
     }
 
     @Test
+    fun `gjenstaaende kvote videreføres for meldekort uten egen bevegelse paa kvotetypen`() {
+        val sakId = SakId(9001)
+        val periodeEn = Periode(LocalDate.of(2023, 1, 2), LocalDate.of(2023, 1, 15))
+        val periodeTo = Periode(LocalDate.of(2023, 1, 16), LocalDate.of(2023, 1, 29))
+
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periodeEn,
+                    belop = 7700, dagsatsMedBarnetillegg = 550, dagsats = 520, dagsatsForSamordning = 520,
+                    insGrad = null,
+                ),
+                MeldekortPostering(
+                    vedtakId = 90010, personId = 100, meldekortId = 5002, periode = periodeTo,
+                    belop = 6600, dagsatsMedBarnetillegg = 550, dagsats = 520, dagsatsForSamordning = 520,
+                    insGrad = null,
+                ),
+            ),
+            meldekort = emptyList(),
+        )
+        every { telleverkService.hentTelleverkForPerson(PersonId(100)) } returns TelleverkForPerson(4, 25)
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
+            kvotebrukHendelse(id = 200, kvoteTypeKode = "AAP", grunnlag = "VEDTAK", objektId = 90010, resterende = 20),
+            kvotebrukHendelse(id = 201, kvoteTypeKode = "MAAPU", grunnlag = "VEDTAK", objektId = 90010, resterende = 30),
+            kvotebrukHendelse(id = 202, kvoteTypeKode = "AAP", grunnlag = "MKORT", objektId = 5001, resterende = 10),
+            kvotebrukHendelse(id = 203, kvoteTypeKode = "AAP", grunnlag = "MKORT", objektId = 5002, resterende = 4),
+            kvotebrukHendelse(id = 204, kvoteTypeKode = "MAAPU", grunnlag = "MKORT", objektId = 5002, resterende = 25),
+        )
+
+        val rader = service.hentTilkjenteYtelserForSak(sakId).rader
+
+        val førsteRad = rader.first { it.fraOgMedDato == periodeEn.fraOgMedDato }
+        assertThat(førsteRad.gjenstaaendeOrdinaerDager).isEqualTo(10)
+        assertThat(førsteRad.gjenstaaendeUnntakDager).isEqualTo(30)
+
+        val andreRad = rader.first { it.fraOgMedDato == periodeTo.fraOgMedDato }
+        assertThat(andreRad.gjenstaaendeOrdinaerDager).isEqualTo(4)
+        assertThat(andreRad.gjenstaaendeUnntakDager).isEqualTo(25)
+    }
+
+    @Test
     fun `returnerer tom respons uten kvoter for sak uten posteringer`() {
         val sakId = SakId(123)
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(emptyList(), emptyList())
@@ -193,4 +246,23 @@ class TilkjentYtelserServiceTest {
         assertThat(response.gjenstaaendeOrdinaerDager).isNull()
         assertThat(response.gjenstaaendeUnntakDager).isNull()
     }
+
+    private fun kvotebrukHendelse(
+        id: Int,
+        kvoteTypeKode: String,
+        grunnlag: String,
+        objektId: Long,
+        resterende: Int,
+    ) = KvotebrukHendelse(
+        id = id,
+        kvoteTypeKode = kvoteTypeKode,
+        endringsGrunnlag = grunnlag,
+        objektIdGrunnlag = objektId,
+        antallBevegelse = 0,
+        posteringTypeKode = "OPPD",
+        datoHendelse = LocalDate.of(2023, 1, 1),
+        resterende = resterende,
+        modUser = null,
+        begrunnelse = null,
+    )
 }
