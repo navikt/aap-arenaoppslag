@@ -210,13 +210,14 @@ class SakRepository(private val dataSource: DataSource) {
                             -- Ekskluder slike gamle stans-vedtak: 
                             AND NOT EXISTS(
                                  SELECT vedtak_id FROM vedtak vv WHERE
-                                    v.person_id = vv.person_id -- for samme person
-                                    AND v.rettighetkode = 'AAP'
-                                    AND v.utfallkode = 'JA'
-                                    AND v.vedtakstatuskode IN ('IVERK','AVSLU')
+                                    vv.person_id = v.person_id -- for samme person
+                                    -- Samme begrensning som hovedspørringen:
+                                    AND vv.rettighetkode = 'AAP'
+                                    AND vv.utfallkode = 'JA'
+                                    AND vv.vedtakstatuskode IN ('IVERK','AVSLU')
+                                    -- Et nyere vedtak erstatter denne stansen:
                                     AND vv.vedtak_id > v.vedtak_id -- et nyere vedtak
                                     AND (vv.fra_dato IS NOT NULL AND v.fra_dato IS NOT NULL AND vv.fra_dato > v.fra_dato) -- med nyere fra_dato
-                                    AND vv.vedtaktypekode != 'S' -- og ikke er stans selv
                             )
                             )) 
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
