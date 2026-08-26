@@ -12,7 +12,6 @@ import no.nav.aap.arenaoppslag.modeller.VedtaksType
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.sql.Connection
-import java.sql.Date
 import java.time.LocalDate
 import javax.sql.DataSource
 
@@ -25,25 +24,19 @@ class MaksimumRepository(
 
     fun hentMaksimumsløsning(
         fodselsnr: String,
-        fraOgMedDato: LocalDate,
-        tilOgMedDato: LocalDate,
     ): Maksimum =
         dataSource.connection.use { con ->
-            selectVedtakMaksimum(fodselsnr, fraOgMedDato, tilOgMedDato, con)
+            selectVedtakMaksimum(fodselsnr, con)
         }
 
 
     private fun selectVedtakMaksimum(
         fodselsnr: String,
-        fraOgMedDato: LocalDate,
-        tilOgMedDato: LocalDate,
         connection: Connection,
     ): Maksimum {
-        log.info("Henter maksimumvedtak for periode $fraOgMedDato - $tilOgMedDato.")
+        log.info("Henter maksimumvedtak.")
         return connection.prepareStatement(selectMaksimumMedTidsbegrensning).use { preparedStatement ->
             preparedStatement.setString(1, fodselsnr)
-            preparedStatement.setDate(2, Date.valueOf(fraOgMedDato))
-            preparedStatement.setDate(3, Date.valueOf(tilOgMedDato))
 
             val resultSet = preparedStatement.executeQuery()
             var c = 0
@@ -55,7 +48,7 @@ class MaksimumRepository(
             val anmerkningerPerMeldekort =
                 selectAlleMeldekortAnmerkninger(meldekortrader.map { rad -> rad.meldekortId }, connection)
 
-            log.info("Fant ${anmerkningerPerMeldekort.size} meldekort. Fra-dato: $fraOgMedDato, til-dato: $tilOgMedDato.")
+            log.info("Fant ${anmerkningerPerMeldekort.size} meldekort.")
 
             val vedtak = resultSet.map { row ->
                 val vedtakId = row.getInt("vedtak_id")
@@ -79,6 +72,7 @@ class MaksimumRepository(
                         vedtakFakta.barntill
                     )
                 }
+
 
                 val vedtaktypekode = row.getString("vedtaktypekode")
                 c++
@@ -223,13 +217,7 @@ class MaksimumRepository(
                (SELECT person_id 
                   FROM person 
                  WHERE fodselsnr = ?)
-           AND utfallkode = 'JA'
            AND rettighetkode = 'AAP'
-           AND vedtaktypekode IN ('O', 'E', 'G', 'S')
-           AND vedtakstatuskode IN ('IVERK', 'AVSLU')
-           AND (fra_dato <= til_dato OR til_dato IS NULL)
-           AND (til_dato >= ? OR til_dato IS NULL) 
-           AND fra_dato <= ?
     """.trimIndent()
 
     @Language("OracleSql")

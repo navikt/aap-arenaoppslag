@@ -8,6 +8,10 @@ public data class InternVedtakRequest(
     val tilOgMedDato: LocalDate = LocalDate.MAX
 )
 
+public data class MaksimumRequest(
+    val personidentifikator: String
+)
+
 public data class SakerRequest(
     val personidentifikatorer: List<String>
 )

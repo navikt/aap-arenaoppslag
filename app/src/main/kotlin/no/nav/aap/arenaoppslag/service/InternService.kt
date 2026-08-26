@@ -71,11 +71,9 @@ class InternService(
         }
     }
 
-    fun hentMaksimum(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum =
-        maksimumCache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
-            maksimumRepository.hentMaksimumsløsning(
-                fodselsnr, fraOgMedDato, tilOgMedDato
-            ).tilKontrakt()
+    fun hentMaksimum(fodselsnr: String): Maksimum =
+        maksimumCache.get(fodselsnr) {
+            maksimumRepository.hentMaksimumsløsning(fodselsnr).tilKontrakt()
         }
 
 }
