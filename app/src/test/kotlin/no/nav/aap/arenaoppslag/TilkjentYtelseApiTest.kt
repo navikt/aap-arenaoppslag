@@ -50,9 +50,10 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(radMeldekortTo.gjenstaaendeOrdinaerDager).isEqualTo(4)
             assertThat(radMeldekortTo.gjenstaaendeUnntakDager).isEqualTo(25)
 
-            // Saldoen på responsnivå kommer fra BEREGNINGSLEDD og speiler siste bevegelse.
-            assertThat(tilkjentYtelse.gjenstaaendeOrdinaerDager).isEqualTo(4)
-            assertThat(tilkjentYtelse.gjenstaaendeUnntakDager).isEqualTo(25)
+            // Saldoen for personen som helhet kommer fra BEREGNINGSLEDD og ligger på telleverkForPerson,
+            // ikke på tilkjent ytelse.
+            assertThat(response.telleverkForPerson?.ordineerAAPKvote).isEqualTo(4)
+            assertThat(response.telleverkForPerson?.utvidetAAPKvote).isEqualTo(25)
         }
     }
 }

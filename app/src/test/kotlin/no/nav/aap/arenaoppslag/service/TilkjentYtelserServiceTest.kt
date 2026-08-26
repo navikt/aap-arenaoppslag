@@ -13,7 +13,6 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
-import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -67,10 +66,6 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkService.hentTelleverkForPerson(PersonId(100)) } returns TelleverkForPerson(
-            ordineerAAPKvote = 2,
-            utvidetAAPKvote = 704,
-        )
         every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
             kvotebrukHendelse(id = 1, kvoteTypeKode = "AAP", grunnlag = "VEDTAK", objektId = 90010, resterende = 20),
             kvotebrukHendelse(id = 2, kvoteTypeKode = "MAAPU", grunnlag = "VEDTAK", objektId = 90010, resterende = 30),
@@ -80,8 +75,6 @@ class TilkjentYtelserServiceTest {
         val response = service.hentTilkjenteYtelserForSak(sakId)
 
         assertThat(response.sakId).isEqualTo(9001)
-        assertThat(response.gjenstaaendeOrdinaerDager).isEqualTo(2)
-        assertThat(response.gjenstaaendeUnntakDager).isEqualTo(704)
         assertThat(response.rader).hasSize(2)
 
         val meldekortRad = response.rader.first { it.kilde == "Meldekort" }
@@ -151,7 +144,6 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkService.hentTelleverkForPerson(PersonId(100)) } returns null
         every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
@@ -196,7 +188,6 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkService.hentTelleverkForPerson(PersonId(100)) } returns null
         every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
@@ -231,7 +222,6 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = emptyList(),
         )
-        every { telleverkService.hentTelleverkForPerson(PersonId(100)) } returns TelleverkForPerson(4, 25)
         every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
             kvotebrukHendelse(id = 200, kvoteTypeKode = "AAP", grunnlag = "VEDTAK", objektId = 90010, resterende = 20),
             kvotebrukHendelse(id = 201, kvoteTypeKode = "MAAPU", grunnlag = "VEDTAK", objektId = 90010, resterende = 30),
@@ -252,15 +242,13 @@ class TilkjentYtelserServiceTest {
     }
 
     @Test
-    fun `returnerer tom respons uten kvoter for sak uten posteringer`() {
+    fun `returnerer tom respons for sak uten posteringer`() {
         val sakId = SakId(123)
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(emptyList(), emptyList())
 
         val response = service.hentTilkjenteYtelserForSak(sakId)
 
         assertThat(response.rader).isEmpty()
-        assertThat(response.gjenstaaendeOrdinaerDager).isNull()
-        assertThat(response.gjenstaaendeUnntakDager).isNull()
     }
 
     private fun kvotebrukHendelse(

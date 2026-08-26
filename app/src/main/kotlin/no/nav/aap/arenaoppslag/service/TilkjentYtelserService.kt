@@ -22,7 +22,6 @@ class TilkjentYtelserService(
         val meldekortPerId = meldekortForSak.meldekort.associateBy { it.meldekortId }
 
         val personId = meldekortForSak.posteringer.firstOrNull()?.personId ?: meldekortForSak.meldekort.firstOrNull()?.personId
-        val telleverk = personId?.let { telleverkService.hentTelleverkForPerson(PersonId(it)) }
         val kvoteSaldo = KvoteSaldo(
             personId?.let { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(it)) }.orEmpty()
         )
@@ -53,8 +52,6 @@ class TilkjentYtelserService(
 
         return TilkjentYtelseResponse(
             sakId = sakId.id,
-            gjenstaaendeOrdinaerDager = telleverk?.ordineerAAPKvote,
-            gjenstaaendeUnntakDager = telleverk?.utvidetAAPKvote,
             rader = rader,
         )
     }

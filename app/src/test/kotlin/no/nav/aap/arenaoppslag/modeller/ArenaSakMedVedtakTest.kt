@@ -20,7 +20,7 @@ class ArenaSakMedVedtakTest {
 
     @Test
     fun `tilKontrakt inkluderer tilkjent ytelse naar den er satt`() {
-        val tilkjentYtelse = TilkjentYtelseResponse(9001, null, null, emptyList())
+        val tilkjentYtelse = TilkjentYtelseResponse(9001, emptyList())
 
         val detaljert = sak().tilKontrakt(
             telleverkForPerson = null,

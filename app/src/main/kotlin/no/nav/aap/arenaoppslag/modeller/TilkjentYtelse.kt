@@ -5,8 +5,6 @@ import java.time.LocalDate
 
 data class TilkjentYtelseResponse(
     val sakId: Int,
-    val gjenstaaendeOrdinaerDager: Int?,
-    val gjenstaaendeUnntakDager: Int?,
     val rader: List<TilkjentYtelseRad>,
 )
 
@@ -21,8 +19,8 @@ data class TilkjentYtelseRad(
     val timerArbeidet: Double?,
     val reduksjon: ReduksjonRespons?,
     val meldekort: MeldekortRespons?,
-    val gjenstaaendeOrdinaerDager: Int? = null,
-    val gjenstaaendeUnntakDager: Int? = null,
+    val gjenstaaendeOrdinaerDager: Int?,
+    val gjenstaaendeUnntakDager: Int?,
 )
 
 data class ReduksjonRespons(
