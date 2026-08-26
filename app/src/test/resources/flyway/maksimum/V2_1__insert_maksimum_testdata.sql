@@ -81,6 +81,11 @@ values (8001, 7700, 'AAP', DATE '2023-01-02', DATE '2023-01-15', DATE '2023-01-2
 insert into ANMERKNING (ANMERKNING_ID, ANMERKNINGKODE, TABELLNAVNALIAS, OBJEKT_ID, VEDTAK_ID, VERDI)
 values (7001, 'FSNN', 'MKORT', 5001, 90010, 1);
 
+-- Anmerkning uten reduksjonseffekt på meldekort 5001 — skal komme med i anmerkningslista,
+-- men ikke påvirke reduksjonstallene
+insert into ANMERKNING (ANMERKNING_ID, ANMERKNINGKODE, TABELLNAVNALIAS, OBJEKT_ID, VEDTAK_ID, VERDI)
+values (7004, 'MAXAA', 'MKORT', 5001, 90010, null);
+
 -- Meldekortdata for meldekort 5002: for sent (SENN=1) og fravær (FXNN=2)
 insert into ANMERKNING (ANMERKNING_ID, ANMERKNINGKODE, TABELLNAVNALIAS, OBJEKT_ID, VEDTAK_ID, VERDI)
 values (7002, 'SENN', 'MKORT', 5002, 90010, 1),

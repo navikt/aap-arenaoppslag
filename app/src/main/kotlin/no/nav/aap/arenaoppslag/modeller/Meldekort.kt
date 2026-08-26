@@ -26,6 +26,17 @@ data class MeldekortReduksjon(
     val sykedager: Float,
 )
 
+// Domeneobjekt: én anmerkning registrert på et meldekort (ANMERKNING joinet med ANMERKNINGTYPE).
+data class MeldekortAnmerkning(
+    val kode: String,
+    // Navn og beskrivelse kommer fra kodetabellen ANMERKNINGTYPE og kan mangle for ukjente koder.
+    val navn: String?,
+    val beskrivelse: String?,
+    // Substitusjonsparameter 1 og 2 som flettes inn i beskrivelsen (&1 og &2)
+    val verdi: Int?,
+    val verdi2: Int?,
+)
+
 // Domeneobjekt: ett meldekort med tilhørende dager og anmerkninger.
 data class Meldekort(
     val meldekortId: Long,
@@ -40,6 +51,7 @@ data class Meldekort(
     val kommentar: String?,
     val dager: List<MeldekortDag>,
     val reduksjon: MeldekortReduksjon,
+    val anmerkninger: List<MeldekortAnmerkning> = emptyList(),
 )
 
 data class MeldekortDag(

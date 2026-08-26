@@ -36,6 +36,12 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rad.reduksjon?.sykedager).isEqualTo(1.0f)
             assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(33)
 
+            // Anmerkningene ligger på meldekortet, også de som ikke gir reduksjon (MAXAA).
+            assertThat(rad.meldekort?.anmerkninger?.map { it.kode }).containsExactly("FSNN", "MAXAA")
+            val sykdom = rad.meldekort?.anmerkninger?.first { it.kode == "FSNN" }
+            assertThat(sykdom?.navn).isEqualTo("Fravær av type S")
+            assertThat(sykdom?.beskrivelseFlettet).isEqualTo("Utbetalingen er redusert pga sykdom 1 dager")
+
             // Meldekort 5001 trekker kun ordinær kvote (20 - 10), unntakskvoten videreføres fra INIT.
             assertThat(rad.gjenstaaendeOrdinaerDager).isEqualTo(10)
             assertThat(rad.gjenstaaendeUnntakDager).isEqualTo(30)

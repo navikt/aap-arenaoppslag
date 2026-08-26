@@ -78,6 +78,28 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(meldekort5002.reduksjon.fravar).isEqualTo(2.0f)
         assertThat(meldekort5002.reduksjon.sykedager).isEqualTo(0.0f)
     }
+
+    @Test
+    fun `meldekort henter alle anmerkninger med navn og beskrivelse fra kodetabellen`() {
+        val resultat = repo.hentForSak(sakMedMeldekort)
+
+        val meldekort5001 = resultat.meldekort.first { it.meldekortId == 5001L }
+        // MAXAA påvirker ikke reduksjonen, men skal fortsatt eksponeres.
+        assertThat(meldekort5001.anmerkninger.map { it.kode }).containsExactly("FSNN", "MAXAA")
+
+        val sykdom = meldekort5001.anmerkninger.first { it.kode == "FSNN" }
+        assertThat(sykdom.navn).isEqualTo("Fravær av type S")
+        assertThat(sykdom.beskrivelse).isEqualTo("Utbetalingen er redusert pga sykdom &1 dager")
+        assertThat(sykdom.verdi).isEqualTo(1)
+        assertThat(sykdom.verdi2).isNull()
+
+        val maksperiode = meldekort5001.anmerkninger.first { it.kode == "MAXAA" }
+        assertThat(maksperiode.navn).isEqualTo("Maks periode AAP")
+        assertThat(maksperiode.verdi).isNull()
+
+        val meldekort5002 = resultat.meldekort.first { it.meldekortId == 5002L }
+        assertThat(meldekort5002.anmerkninger.map { it.kode }).containsExactly("SENN", "FXNN")
+    }
 }
 
 

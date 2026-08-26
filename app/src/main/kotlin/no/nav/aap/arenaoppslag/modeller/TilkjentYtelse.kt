@@ -53,6 +53,18 @@ data class MeldekortRespons(
     val fortsattRegistrertArbeidssoker: Boolean?,
     val kommentar: String?,
     val uker: List<MeldekortUkeRespons>,
+    val anmerkninger: List<AnmerkningRespons>,
+)
+
+data class AnmerkningRespons(
+    val kode: String,
+    val navn: String?,
+    // Rå tekst fra ANMERKNINGTYPE, der &1 og &2 er substitusjonsparametere
+    val beskrivelse: String?,
+    // Beskrivelsen med &1/&2 erstattet av verdi/verdi2, klar til visning
+    val beskrivelseFlettet: String?,
+    val verdi: Int?,
+    val verdi2: Int?,
 )
 
 data class MeldekortUkeRespons(
@@ -80,7 +92,22 @@ fun Meldekort.tilRespons(): MeldekortRespons = MeldekortRespons(
                 dager = dagerForUke.sortedBy { it.dagnr }.map { it.tilRespons() },
             )
         },
+    anmerkninger = anmerkninger.map { it.tilRespons() },
 )
+
+fun MeldekortAnmerkning.tilRespons(): AnmerkningRespons = AnmerkningRespons(
+    kode = kode,
+    navn = navn,
+    beskrivelse = beskrivelse,
+    beskrivelseFlettet = beskrivelse?.flett(verdi, verdi2),
+    verdi = verdi,
+    verdi2 = verdi2,
+)
+
+// Arena lagrer beskrivelsen med substitusjonsparameterne &1 og &2, som må flettes med
+// verdiene fra selve anmerkningen for å gi en lesbar tekst.
+private fun String.flett(verdi: Int?, verdi2: Int?): String =
+    replace("&1", verdi?.toString() ?: "").replace("&2", verdi2?.toString() ?: "")
 
 fun MeldekortDag.tilRespons(): MeldekortDagRespons = MeldekortDagRespons(
     dato = dato,

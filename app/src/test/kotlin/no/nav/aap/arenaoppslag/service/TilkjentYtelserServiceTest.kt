@@ -5,6 +5,7 @@ import io.mockk.mockk
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Meldekort
+import no.nav.aap.arenaoppslag.modeller.MeldekortAnmerkning
 import no.nav.aap.arenaoppslag.modeller.MeldekortDag
 import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
@@ -40,6 +41,15 @@ class TilkjentYtelserServiceTest {
             kommentar = null,
             dager = listOf(MeldekortDag(10, 1, LocalDate.of(2023, 1, 2), 7.5, false)),
             reduksjon = MeldekortReduksjon(dagerForSent = 0, fravar = 0.0f, sykedager = 0.0f),
+            anmerkninger = listOf(
+                MeldekortAnmerkning(
+                    kode = "FSNN",
+                    navn = "Fravær av type S",
+                    beskrivelse = "Utbetalingen er redusert pga sykdom &1 dager",
+                    verdi = 3,
+                    verdi2 = null,
+                ),
+            ),
         )
 
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
@@ -90,6 +100,12 @@ class TilkjentYtelserServiceTest {
         assertThat(meldekortRad.reduksjon?.institusjonsProsent).isNull()
         assertThat(meldekortRad.meldekort?.uker).hasSize(1)
         assertThat(meldekortRad.meldekort?.fortsattRegistrertArbeidssoker).isTrue()
+        // Anmerkningene følger meldekortet, og beskrivelsen flettes med verdien fra anmerkningen.
+        assertThat(meldekortRad.meldekort?.anmerkninger).hasSize(1)
+        val anmerkning = meldekortRad.meldekort?.anmerkninger?.single()
+        assertThat(anmerkning?.kode).isEqualTo("FSNN")
+        assertThat(anmerkning?.verdi).isEqualTo(3)
+        assertThat(anmerkning?.beskrivelseFlettet).isEqualTo("Utbetalingen er redusert pga sykdom 3 dager")
         // Meldekortet trekker kun ordinær kvote, så unntakskvoten videreføres fra forrige bevegelse.
         assertThat(meldekortRad.gjenstaaendeOrdinaerDager).isEqualTo(10)
         assertThat(meldekortRad.gjenstaaendeUnntakDager).isEqualTo(30)
