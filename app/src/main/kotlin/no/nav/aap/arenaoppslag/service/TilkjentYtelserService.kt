@@ -118,14 +118,12 @@ class TilkjentYtelserService(
 
         fun gjenstaaende(meldekortId: Long, kvoteTypeKode: String): Int? {
             val sisteHendelseId = sisteHendelseIdPerMeldekort[meldekortId] ?: return null
-            // Trekkes det ikke på denne kvotetypen for meldekortet, videreføres siste kjente saldo.
             return hendelserSortert
                 .lastOrNull { it.kvoteTypeKode == kvoteTypeKode && it.id <= sisteHendelseId }
                 ?.resterende
         }
 
         private companion object {
-            // KVOTEBRUK.TABELLNAVNALIAS_GRUNNLAG for bevegelser som stammer fra et meldekort.
             private const val GRUNNLAG_MELDEKORT = "MKORT"
         }
     }
@@ -136,7 +134,6 @@ class TilkjentYtelserService(
         // Kvotekoder: AAP = ordinær periode, MAAPU = unntak §11-12.
         private const val KVOTE_ORDINAER = "AAP"
         private const val KVOTE_UNNTAK = "MAAPU"
-        // Meldekortperioden er 14 kalenderdager, men AAP beregnes mot 5 arbeidsdager per uke.
         private const val ARBEIDSDAGER_I_MELDEKORTPERIODE = 10
         private const val TIMER_PER_DAG = 7.5
     }
