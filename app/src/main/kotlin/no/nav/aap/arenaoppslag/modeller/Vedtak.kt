@@ -158,6 +158,7 @@ data class ArenaVedtakfakta(
     fun somBooleanVerdi() = when (verdi) {
         "J" -> true
         "N" -> false
+        "V" -> null // betyr "ikke angitt" i Arena
         else -> null
     }
 }
@@ -174,4 +175,12 @@ data class ArenaVilkårsvurdering(
     val rundskrivUrl: String?,
     val statuskode: String,
     val statusnavn: String,
-)
+) {
+    fun somBooleanVerdi() = when (statuskode) {
+        "J" -> true
+        "N" -> false
+        "V" -> null // betyr "ikke angitt" i Arena
+        else -> null
+    }
+
+}

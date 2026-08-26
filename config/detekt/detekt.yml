@@ -390,8 +390,8 @@ naming:
   VariableNaming:
     active: true
     aliases: ['PropertyName']
-    variablePattern: '[a-zæøå][A-ZÆØÅæøåa-z0-9_]*'
-    privateVariablePattern: '(_)?[a-zæøå][A-ZÆØÅæøåa-z0-9_]*'
+    variablePattern: '[a-z][A-Za-z0-9]*'
+    privateVariablePattern: '(_)?[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
 
 performance:

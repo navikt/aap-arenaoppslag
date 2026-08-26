@@ -192,7 +192,8 @@ private fun skapSakOgVedtakService(datasource: DataSource): SakOgVedtakService {
 private fun skapSakListeService(datasource: DataSource): SakService {
     val sakRepository = SakRepository(datasource)
     val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
-    return SakService(sakRepository, vedtakfaktaRepository)
+    val vilkårsvurderingRepository = VilkårsvurderingRepository(datasource)
+    return SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository)
 }
 
 private fun skapTelleverkService(datasource: DataSource): TelleverkService {
