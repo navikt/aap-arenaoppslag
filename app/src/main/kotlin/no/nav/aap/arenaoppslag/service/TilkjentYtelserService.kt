@@ -75,8 +75,10 @@ class TilkjentYtelserService(
         insGrad: Int?,
     ): ReduksjonRespons {
         val dagerForSent = meldekort.reduksjon.dagerForSent
-        // Straffedagene reduserer antall dager som inngår i fulltidsgrunnlaget.
-        val aktiveDager = DAGER_I_MELDEKORTPERIODE - dagerForSent
+        // Fulltid i en meldekortperiode er 75 timer (10 arbeidsdager à 7,5 t), jf. anmerkningkode TE75T
+        // "Arbeidet 75 timer eller mer i perioden sett under ett". Straffedagene reduserer antall
+        // dager som inngår i fulltidsgrunnlaget.
+        val aktiveDager = ARBEIDSDAGER_I_MELDEKORTPERIODE - dagerForSent
         val timerArbeidetProsent = if (aktiveDager > 0) {
             (timerArbeidet / (aktiveDager * TIMER_PER_DAG) * 100).roundToInt()
         } else {
@@ -134,7 +136,8 @@ class TilkjentYtelserService(
         // Kvotekoder: AAP = ordinær periode, MAAPU = unntak §11-12.
         private const val KVOTE_ORDINAER = "AAP"
         private const val KVOTE_UNNTAK = "MAAPU"
-        private const val DAGER_I_MELDEKORTPERIODE = 14
+        // Meldekortperioden er 14 kalenderdager, men AAP beregnes mot 5 arbeidsdager per uke.
+        private const val ARBEIDSDAGER_I_MELDEKORTPERIODE = 10
         private const val TIMER_PER_DAG = 7.5
     }
 }

@@ -27,11 +27,11 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rad.fraOgMedDato).isEqualTo(LocalDate.of(2023, 1, 2))
             assertThat(rad.meldekort?.uker).isNotEmpty()
 
-            // 5 timer arbeidet av 14 dager à 7,5 timer = 5 %. Ingen samordning (DAGS == DAGSFSAM). insGrad = 33 → total = 5 + 0 + 33 = 38 %.
+            // 5 timer arbeidet av 10 arbeidsdager à 7,5 timer = 75 timer → 7 %. Ingen samordning (DAGS == DAGSFSAM). insGrad = 33 → total = 7 + 0 + 33 = 40 %.
             assertThat(rad.reduksjon?.levertForSentDager).isEqualTo(0)
-            assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(5)
+            assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(7)
             assertThat(rad.reduksjon?.samordningsProsent).isEqualTo(0)
-            assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(38)
+            assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(40)
             assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
             assertThat(rad.reduksjon?.sykedager).isEqualTo(1.0f)
             assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(33)

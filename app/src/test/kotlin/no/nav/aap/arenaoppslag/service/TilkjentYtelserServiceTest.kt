@@ -90,11 +90,11 @@ class TilkjentYtelserServiceTest {
         assertThat(meldekortRad.dagsats).isEqualTo(1500)
         assertThat(meldekortRad.beregnetBrutto).isEqualTo(4970)
         assertThat(meldekortRad.timerArbeidet).isEqualTo(7.5)
-        // 7,5 timer av 14 dager à 7,5 timer = 7,5 / 105 = 7 %. Ingen samordning (DAGS == DAGSFSAM).
+        // 7,5 timer av 10 arbeidsdager à 7,5 timer = 7,5 / 75 = 10 %. Ingen samordning (DAGS == DAGSFSAM).
         assertThat(meldekortRad.reduksjon?.levertForSentDager).isEqualTo(0)
-        assertThat(meldekortRad.reduksjon?.timerArbeidetProsent).isEqualTo(7)
+        assertThat(meldekortRad.reduksjon?.timerArbeidetProsent).isEqualTo(10)
         assertThat(meldekortRad.reduksjon?.samordningsProsent).isEqualTo(0)
-        assertThat(meldekortRad.reduksjon?.totalReduksjonProsent).isEqualTo(7)
+        assertThat(meldekortRad.reduksjon?.totalReduksjonProsent).isEqualTo(10)
         assertThat(meldekortRad.reduksjon?.fravar).isEqualTo(0.0f)
         assertThat(meldekortRad.reduksjon?.sykedager).isEqualTo(0.0f)
         assertThat(meldekortRad.reduksjon?.institusjonsProsent).isNull()
@@ -156,13 +156,13 @@ class TilkjentYtelserServiceTest {
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
 
-        // Kun dag 2 (7,5 timer) teller. Grunnlag = (14 - 1) dager à 7,5 timer = 97,5 timer.
-        // 7,5 / 97,5 = 7,69 % → 8 %.
+        // Kun dag 2 (7,5 timer) teller. Grunnlag = (10 - 1) arbeidsdager à 7,5 timer = 67,5 timer.
+        // 7,5 / 67,5 = 11,1 % → 11 %.
         assertThat(rad.timerArbeidet).isEqualTo(7.5)
         assertThat(rad.reduksjon?.levertForSentDager).isEqualTo(1)
-        assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(8)
+        assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(11)
         assertThat(rad.reduksjon?.samordningsProsent).isEqualTo(0)
-        assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(8)
+        assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(11)
         assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
         assertThat(rad.reduksjon?.sykedager).isEqualTo(0.0f)
         assertThat(rad.reduksjon?.institusjonsProsent).isNull()
