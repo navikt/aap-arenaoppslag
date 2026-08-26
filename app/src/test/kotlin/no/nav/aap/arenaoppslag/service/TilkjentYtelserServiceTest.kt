@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.service
 
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Meldekort
@@ -249,6 +250,44 @@ class TilkjentYtelserServiceTest {
         val response = service.hentTilkjenteYtelserForSak(sakId)
 
         assertThat(response.rader).isEmpty()
+    }
+
+    @Test
+    fun `andre kall for samme sak besvares fra cache`() {
+        val sakId = SakId(456)
+        val periode = Periode(LocalDate.of(2023, 1, 2), LocalDate.of(2023, 1, 15))
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
+                    belop = 7700, dagsatsMedBarnetillegg = 550, dagsats = 520, dagsatsForSamordning = 520,
+                    insGrad = null,
+                ),
+            ),
+            meldekort = emptyList(),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+
+        val forste = service.hentTilkjenteYtelserForSak(sakId)
+        val andre = service.hentTilkjenteYtelserForSak(sakId)
+
+        assertThat(andre).isEqualTo(forste)
+        verify(exactly = 1) { meldekortRepository.hentForSak(sakId) }
+        verify(exactly = 1) { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) }
+    }
+
+    @Test
+    fun `cacher uavhengig per sak`() {
+        val sakEn = SakId(457)
+        val sakTo = SakId(458)
+        every { meldekortRepository.hentForSak(sakEn) } returns MeldekortForSak(emptyList(), emptyList())
+        every { meldekortRepository.hentForSak(sakTo) } returns MeldekortForSak(emptyList(), emptyList())
+
+        assertThat(service.hentTilkjenteYtelserForSak(sakEn).sakId).isEqualTo(457)
+        assertThat(service.hentTilkjenteYtelserForSak(sakTo).sakId).isEqualTo(458)
+
+        verify(exactly = 1) { meldekortRepository.hentForSak(sakEn) }
+        verify(exactly = 1) { meldekortRepository.hentForSak(sakTo) }
     }
 
     private fun kvotebrukHendelse(

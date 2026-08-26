@@ -1,5 +1,8 @@
 package no.nav.aap.arenaoppslag.service
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
+import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Meldekort
@@ -9,15 +12,29 @@ import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseRad
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.modeller.tilRespons
+import java.time.Duration
 import kotlin.math.roundToInt
 
 
+@Suppress("MagicNumber")
 class TilkjentYtelserService(
     private val meldekortRepository: MeldekortRepository,
     private val telleverkService: TelleverkService,
 ) {
 
-    fun hentTilkjenteYtelserForSak(sakId: SakId): TilkjentYtelseResponse {
+    private val tilkjentYtelseCache = Caffeine.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterWrite(Duration.ofMinutes(15))
+        .build<Int, TilkjentYtelseResponse>()
+
+    init {
+        CaffeineCacheMetrics.monitor(prometheus, tilkjentYtelseCache, "arenaoppslag_tilkjent_ytelse_per_sak")
+    }
+
+    fun hentTilkjenteYtelserForSak(sakId: SakId): TilkjentYtelseResponse =
+        tilkjentYtelseCache.get(sakId.id) { byggTilkjenteYtelserForSak(sakId) }
+
+    private fun byggTilkjenteYtelserForSak(sakId: SakId): TilkjentYtelseResponse {
         val meldekortForSak = meldekortRepository.hentForSak(sakId)
         val meldekortPerId = meldekortForSak.meldekort.associateBy { it.meldekortId }
 

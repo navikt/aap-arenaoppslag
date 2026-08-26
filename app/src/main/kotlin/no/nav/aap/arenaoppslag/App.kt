@@ -207,16 +207,22 @@ private fun skapUtbetalingService(datasource: DataSource): PosteringService {
     return PosteringService(posteringRepository)
 }
 
-private fun skapTilkjentYtelserService(datasource: DataSource): TilkjentYtelserService {
+private fun skapTilkjentYtelserService(
+    datasource: DataSource,
+    telleverkService: TelleverkService,
+): TilkjentYtelserService {
     val meldekortRepository = MeldekortRepository(datasource)
-    return TilkjentYtelserService(meldekortRepository, skapTelleverkService(datasource))
+    return TilkjentYtelserService(meldekortRepository, telleverkService)
 }
 
-private fun skapManuellFordelingsgrunnlagService(datasource: DataSource): ManuellFordelingsgrunnlagService {
+private fun skapManuellFordelingsgrunnlagService(
+    datasource: DataSource,
+    telleverkService: TelleverkService,
+): ManuellFordelingsgrunnlagService {
     return ManuellFordelingsgrunnlagService(
         skapSakListeService(datasource),
         skapUtbetalingService(datasource),
-        skapTelleverkService(datasource),
+        telleverkService,
         skapOppgaveService(datasource),
     )
 }
@@ -245,9 +251,9 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
     val saksopplysningService = skapSaksopplysningService(datasource)
-    val tilkjentYtelserService = skapTilkjentYtelserService(datasource)
+    val tilkjentYtelserService = skapTilkjentYtelserService(datasource, telleverkService)
     val oppgaveService = skapOppgaveService(datasource)
-    val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource)
+    val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
 
     routing {
         actuator(prometheus)
