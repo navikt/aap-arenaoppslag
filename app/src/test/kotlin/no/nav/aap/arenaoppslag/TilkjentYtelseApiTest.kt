@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag
 
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
+import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -21,7 +22,7 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(tilkjentYtelse.rader).hasSize(2)
 
             val rad = tilkjentYtelse.rader.first { it.meldekort?.meldekortId == 5001L }
-            assertThat(rad.kilde).isEqualTo("Meldekort")
+            assertThat(rad.kilde).isEqualTo(PosteringKilde.MELDEKORT)
             assertThat(rad.uke).isEqualTo("1-2")
             assertThat(rad.beregnetBrutto).isEqualTo(7700)
             assertThat(rad.fraOgMedDato).isEqualTo(LocalDate.of(2023, 1, 2))
@@ -54,6 +55,23 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             // ikke på tilkjent ytelse.
             assertThat(response.telleverkForPerson?.ordineerAAPKvote).isEqualTo(4)
             assertThat(response.telleverkForPerson?.utvidetAAPKvote).isEqualTo(25)
+        }
+    }
+
+    @Test
+    fun `kilde utledes per postering og alle kildetyper er med i responsen`() {
+        withTestServer(h2) { gateway ->
+            val rader = gateway.hentSakDetaljert(9004).tilkjentYtelse!!.rader
+
+            assertThat(rader.map { it.kilde }).containsExactly(
+                PosteringKilde.MELDEKORT,
+                PosteringKilde.SPESIALUTBETALING,
+                PosteringKilde.BETALINGSPLAN,
+                // Postering uten kildealias skal ikke gjettes til spesialutbetaling.
+                PosteringKilde.UKJENT,
+            )
+            assertThat(rader.first { it.kilde == PosteringKilde.SPESIALUTBETALING }.meldekort).isNull()
+            assertThat(rader.first { it.kilde == PosteringKilde.BETALINGSPLAN }.beregnetBrutto).isEqualTo(2500)
         }
     }
 }

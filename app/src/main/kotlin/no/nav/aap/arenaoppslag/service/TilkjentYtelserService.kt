@@ -1,12 +1,15 @@
 package no.nav.aap.arenaoppslag.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Meldekort
+import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.ReduksjonRespons
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseRad
@@ -45,6 +48,7 @@ class TilkjentYtelserService(
 
         val rader = meldekortForSak.posteringer.map { postering ->
             val meldekort = postering.meldekortId?.let { meldekortPerId[it] }
+            registrerUkjentKilde(postering)
 
             val timerArbeidetEtterStraff = meldekort?.let { timerArbeidetEtterStraffedager(it) }
             val reduksjon = meldekort?.let {
@@ -54,7 +58,7 @@ class TilkjentYtelserService(
                 fraOgMedDato = postering.periode.fraOgMedDato,
                 tilOgMedDato = postering.periode.tilOgMedDato,
                 uke = meldekort?.let { "${it.ukenrUke1}-${it.ukenrUke2}" },
-                kilde = if (postering.meldekortId != null) KILDE_MELDEKORT else KILDE_SPESIALUTBETALING,
+                kilde = postering.kilde,
                 dagsatsMedBarnetillegg = postering.dagsatsMedBarnetillegg,
                 dagsats = postering.dagsats,
                 beregnetBrutto = postering.belop,
@@ -73,6 +77,16 @@ class TilkjentYtelserService(
         )
     }
 
+
+    // Ukjente kildealiaser telles slik at vi oppdager nye verdier i TABELLNAVNALIAS_KILDE
+    // uten å måtte lete i loggene. Aliaset er en kodetabellverdi, så kardinaliteten er lav.
+    private fun registrerUkjentKilde(postering: MeldekortPostering) {
+        if (postering.kilde != PosteringKilde.UKJENT) return
+        prometheus.counter(
+            "arenaoppslag_postering_ukjent_kilde",
+            listOf(Tag.of("alias", postering.kildeAlias ?: "null")),
+        ).increment()
+    }
 
     private fun timerArbeidetEtterStraffedager(meldekort: Meldekort): Double {
         val aktivFraOgMed = meldekort.periode.fraOgMedDato?.plusDays(meldekort.reduksjon.dagerForSent.toLong())
@@ -143,8 +157,6 @@ class TilkjentYtelserService(
     }
 
     private companion object {
-        private const val KILDE_MELDEKORT = "Meldekort"
-        private const val KILDE_SPESIALUTBETALING = "Spesialutbetaling"
         // Kvotekoder: AAP = ordinær periode, MAAPU = unntak §11-12.
         private const val KVOTE_ORDINAER = "AAP"
         private const val KVOTE_UNNTAK = "MAAPU"

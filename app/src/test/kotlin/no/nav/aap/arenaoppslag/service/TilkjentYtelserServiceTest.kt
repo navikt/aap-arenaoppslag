@@ -13,6 +13,7 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
 import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -57,12 +58,13 @@ class TilkjentYtelserServiceTest {
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
                     belop = 4970, dagsatsMedBarnetillegg = 1812, dagsats = 1500, dagsatsForSamordning = 1500,
-                    insGrad = null,
+                    insGrad = null, kilde = PosteringKilde.MELDEKORT, kildeAlias = "MKORT", kildeObjektId = 5001,
                 ),
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = null, periode = periode,
                     belop = 3459, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
-                    insGrad = null,
+                    insGrad = null, kilde = PosteringKilde.SPESIALUTBETALING, kildeAlias = "SPESUTB",
+                    kildeObjektId = 7700004,
                 ),
             ),
             meldekort = listOf(meldekort),
@@ -78,7 +80,7 @@ class TilkjentYtelserServiceTest {
         assertThat(response.sakId).isEqualTo(9001)
         assertThat(response.rader).hasSize(2)
 
-        val meldekortRad = response.rader.first { it.kilde == "Meldekort" }
+        val meldekortRad = response.rader.first { it.kilde == PosteringKilde.MELDEKORT }
         assertThat(meldekortRad.uke).isEqualTo("10-11")
         assertThat(meldekortRad.dagsatsMedBarnetillegg).isEqualTo(1812)
         assertThat(meldekortRad.dagsats).isEqualTo(1500)
@@ -104,7 +106,7 @@ class TilkjentYtelserServiceTest {
         assertThat(meldekortRad.gjenstaaendeOrdinaerDager).isEqualTo(10)
         assertThat(meldekortRad.gjenstaaendeUnntakDager).isEqualTo(30)
 
-        val spesialRad = response.rader.first { it.kilde == "Spesialutbetaling" }
+        val spesialRad = response.rader.first { it.kilde == PosteringKilde.SPESIALUTBETALING }
         assertThat(spesialRad.uke).isNull()
         assertThat(spesialRad.meldekort).isNull()
         assertThat(spesialRad.beregnetBrutto).isEqualTo(3459)
@@ -240,6 +242,39 @@ class TilkjentYtelserServiceTest {
         val andreRad = rader.first { it.fraOgMedDato == periodeTo.fraOgMedDato }
         assertThat(andreRad.gjenstaaendeOrdinaerDager).isEqualTo(4)
         assertThat(andreRad.gjenstaaendeUnntakDager).isEqualTo(25)
+    }
+
+    @Test
+    fun `betalingsplan og ukjent kilde tas med som egne rader`() {
+        val sakId = SakId(9004)
+        val periodeEn = Periode(LocalDate.of(2023, 2, 27), LocalDate.of(2023, 3, 12))
+        val periodeTo = Periode(LocalDate.of(2023, 3, 13), LocalDate.of(2023, 3, 26))
+
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    vedtakId = 90040, personId = 104, meldekortId = null, periode = periodeEn,
+                    belop = 2500, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null, kilde = PosteringKilde.BETALINGSPLAN, kildeAlias = "BETPLAN",
+                    kildeObjektId = 6600004,
+                ),
+                // Ukjent alias skal ikke tolkes som spesialutbetaling — den blir UKJENT.
+                MeldekortPostering(
+                    vedtakId = 90040, personId = 104, meldekortId = null, periode = periodeTo,
+                    belop = 1200, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null, kilde = PosteringKilde.UKJENT, kildeAlias = null, kildeObjektId = null,
+                ),
+            ),
+            meldekort = emptyList(),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(104)) } returns emptySet()
+
+        val rader = service.hentTilkjenteYtelserForSak(sakId).rader
+
+        assertThat(rader.map { it.kilde })
+            .containsExactly(PosteringKilde.BETALINGSPLAN, PosteringKilde.UKJENT)
+        assertThat(rader.map { it.beregnetBrutto }).containsExactly(2500, 1200)
+        assertThat(rader.all { it.meldekort == null && it.uke == null }).isTrue()
     }
 
     @Test

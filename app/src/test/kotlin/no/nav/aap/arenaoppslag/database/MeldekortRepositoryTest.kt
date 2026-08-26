@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.database
 
+import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -11,6 +12,9 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
 
     // Sak 9001 har vedtak 90010 med to posteringer og to meldekort (5001, 5002).
     private val sakMedMeldekort = SakId(9001)
+
+    // Sak 9004 har én postering per kildevariant (MKORT, SPESUTB, BETPLAN og manglende alias).
+    private val sakMedKildevarianter = SakId(9004)
     private val ukjentSak = SakId(99999)
 
     @Test
@@ -35,6 +39,30 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.dagsats).isEqualTo(520)
         assertThat(første.dagsatsForSamordning).isEqualTo(520)
         assertThat(første.insGrad).isEqualTo(33)
+        assertThat(første.kilde).isEqualTo(PosteringKilde.MELDEKORT)
+        assertThat(første.kildeObjektId).isEqualTo(5001)
+    }
+
+    @Test
+    fun `utleder kilde fra tabellnavnalias_kilde`() {
+        val posteringer = repo.hentForSak(sakMedKildevarianter).posteringer
+
+        assertThat(posteringer).hasSize(4)
+        val kildePerBelop = posteringer.associate { it.belop to it.kilde }
+        assertThat(kildePerBelop[7700]).isEqualTo(PosteringKilde.MELDEKORT)
+        assertThat(kildePerBelop[3459]).isEqualTo(PosteringKilde.SPESIALUTBETALING)
+        assertThat(kildePerBelop[2500]).isEqualTo(PosteringKilde.BETALINGSPLAN)
+        // Uten alias vet vi ikke kilden — den skal ikke gjettes til spesialutbetaling.
+        assertThat(kildePerBelop[1200]).isEqualTo(PosteringKilde.UKJENT)
+
+        val spesialutbetaling = posteringer.first { it.belop == 3459 }
+        assertThat(spesialutbetaling.meldekortId).isNull()
+        assertThat(spesialutbetaling.kildeAlias).isEqualTo("SPESUTB")
+        assertThat(spesialutbetaling.kildeObjektId).isEqualTo(7700004)
+
+        val utenAlias = posteringer.first { it.belop == 1200 }
+        assertThat(utenAlias.kildeAlias).isNull()
+        assertThat(utenAlias.kildeObjektId).isNull()
     }
 
     @Test

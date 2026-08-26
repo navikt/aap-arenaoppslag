@@ -18,6 +18,12 @@ data class MeldekortPostering(
     val dagsatsForSamordning: Int?,
     // Graderingsprosent for reduksjon pga. institusjonsopphold (vedtakfakta INSGRAD) — null hvis ikke registrert
     val insGrad: Int?,
+    // Utledet av POSTERING.TABELLNAVNALIAS_KILDE. UKJENT når aliaset mangler eller ikke er kjent for oss.
+    val kilde: PosteringKilde = PosteringKilde.UKJENT,
+    // Rå aliasverdi, beholdt for å kunne tagge metrikken når vi møter ukjente kilder
+    val kildeAlias: String? = null,
+    // POSTERING.OBJEKT_ID_KILDE — peker på forekomsten i kildetabellen. Brukes internt, eksponeres ikke.
+    val kildeObjektId: Long? = null,
 )
 
 data class MeldekortReduksjon(

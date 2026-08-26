@@ -8,11 +8,26 @@ data class TilkjentYtelseResponse(
     val rader: List<TilkjentYtelseRad>,
 )
 
+// Kilden til en postering leses av POSTERING.TABELLNAVNALIAS_KILDE, som peker på tabellen
+// utbetalingen stammer fra. MELDEKORT_ID sier bare om posteringen er knyttet til et meldekort,
+// og kan være NULL også for ordinære posteringer — derfor kan den ikke brukes til å utlede kilde.
+enum class PosteringKilde(val kode: String) {
+    MELDEKORT("MKORT"),
+    SPESIALUTBETALING("SPESUTB"),
+    BETALINGSPLAN("BETPLAN"),
+    UKJENT("");
+
+    companion object {
+        fun fraKode(kode: String?): PosteringKilde =
+            entries.firstOrNull { it.kode == kode } ?: UKJENT
+    }
+}
+
 data class TilkjentYtelseRad(
     val fraOgMedDato: LocalDate?,
     val tilOgMedDato: LocalDate?,
     val uke: String?,
-    val kilde: String,
+    val kilde: PosteringKilde,
     val dagsatsMedBarnetillegg: Int?,
     val dagsats: Int?,
     val beregnetBrutto: Int,

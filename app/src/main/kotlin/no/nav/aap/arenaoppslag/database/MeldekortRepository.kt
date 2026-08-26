@@ -7,6 +7,7 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
 import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
+import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
@@ -33,6 +34,8 @@ class MeldekortRepository(
             preparedStatement.executeQuery().map { row ->
                 // wasNull() må sjekkes rett etter getLong, før vi leser andre kolonner.
                 val meldekortId = row.getLong("meldekort_id").let { if (row.wasNull()) null else it }
+                val kildeObjektId = row.getLong("objekt_id_kilde").let { if (row.wasNull()) null else it }
+                val kildeAlias = row.getString("tabellnavnalias_kilde")
                 MeldekortPostering(
                     vedtakId = row.getInt("vedtak_id"),
                     personId = row.getInt("person_id"),
@@ -46,6 +49,9 @@ class MeldekortRepository(
                     dagsats = row.getString("dagsats")?.toIntOrNull(),
                     dagsatsForSamordning = row.getString("dagsats_for_samordning")?.toIntOrNull(),
                     insGrad = row.getString("ins_grad")?.toIntOrNull(),
+                    kilde = PosteringKilde.fraKode(kildeAlias),
+                    kildeAlias = kildeAlias,
+                    kildeObjektId = kildeObjektId,
                 )
             }
         }
@@ -171,6 +177,7 @@ class MeldekortRepository(
     @Language("OracleSql")
     private val posteringerForSakSql = """
         SELECT p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
+               p.tabellnavnalias_kilde, p.objekt_id_kilde,
                (SELECT MAX(vf.vedtakverdi)
                   FROM vedtakfakta vf
                  WHERE vf.vedtak_id = p.vedtak_id
