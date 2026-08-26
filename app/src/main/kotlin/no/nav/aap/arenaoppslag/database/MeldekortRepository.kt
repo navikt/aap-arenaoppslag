@@ -102,13 +102,23 @@ class MeldekortRepository(
                     meldekortId to MeldekortDag(
                         ukenr = ukenr,
                         dagnr = dagnr,
-                        dato = meta.datoFra.plusDays(((ukenr - meta.ukenrUke1) * DAGER_PER_UKE + (dagnr - 1)).toLong()),
+                        dato = meta.datoFra.plusDays((ukeforskyvningIDager(ukenr, meta) + (dagnr - 1)).toLong()),
                         timerArbeidet = row.getDouble("timer_arbeidet"),
                         annetFravaer = row.getString("status_annetfravaer") == "J",
                     )
                 }
             }
         }.groupBy({ it.first }, { it.second })
+    }
+
+    // Ukenumrene er kalenderuker, så subtraksjon av ukenummer feiler over årsskiftet
+    // (uke 52 etterfulgt av uke 1 ville gitt en negativ forskyvning på nesten et år).
+    // Vi utleder derfor forskyvningen av om raden hører til første eller andre uke i meldekortperioden.
+    private fun ukeforskyvningIDager(ukenr: Int, meta: MeldekortMetadata): Int = when (ukenr) {
+        meta.ukenrUke1 -> 0
+        meta.ukenrUke2 -> DAGER_PER_UKE
+        // Ukjente ukenummer behandles som første uke — meldekortperioden er alltid nøyaktig to uker.
+        else -> 0
     }
 
     private fun selectAnmerkninger(

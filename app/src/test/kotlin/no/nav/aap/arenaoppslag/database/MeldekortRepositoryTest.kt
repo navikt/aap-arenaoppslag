@@ -93,6 +93,22 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
     }
 
     @Test
+    fun `meldekortdager over aarsskiftet faar riktig dato`() {
+        // Sak 9005 har et meldekort med uke 52 (2022) og uke 1 (2023).
+        val meldekort = repo.hentForSak(SakId(9005)).meldekort.first { it.meldekortId == 6501L }
+
+        assertThat(meldekort.periode.fraOgMedDato).isEqualTo(LocalDate.of(2022, 12, 26))
+        val mandagUke52 = meldekort.dager.first { it.ukenr == 52 && it.dagnr == 1 }
+        assertThat(mandagUke52.dato).isEqualTo(LocalDate.of(2022, 12, 26))
+        val søndagUke52 = meldekort.dager.first { it.ukenr == 52 && it.dagnr == 7 }
+        assertThat(søndagUke52.dato).isEqualTo(LocalDate.of(2023, 1, 1))
+        val mandagUke1 = meldekort.dager.first { it.ukenr == 1 && it.dagnr == 1 }
+        assertThat(mandagUke1.dato).isEqualTo(LocalDate.of(2023, 1, 2))
+        val søndagUke1 = meldekort.dager.first { it.ukenr == 1 && it.dagnr == 7 }
+        assertThat(søndagUke1.dato).isEqualTo(LocalDate.of(2023, 1, 8))
+    }
+
+    @Test
     fun `meldekort henter anmerkninger som reduksjon`() {
         val resultat = repo.hentForSak(sakMedMeldekort)
 
