@@ -35,6 +35,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             sak_id, 
             aar,
             lopenrvedtak,
+            lopenrsak,
             vedtakstatuskode, 
             vedtaktypekode, 
             fra_dato, 
@@ -51,11 +52,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
-                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
+                ((vedtaktypekode IN ('O','E','G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
-                     vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
-                AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
         """.trimIndent()
@@ -68,6 +67,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             sak_id, 
             aar,
             lopenrvedtak,
+            lopenrsak,
             vedtakstatuskode, 
             vedtaktypekode, 
             fra_dato, 
@@ -84,11 +84,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
-                (vedtaktypekode IN ('O','E','G') AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
+                ( (vedtaktypekode IN ('O','E','G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND (til_dato IS NULL OR til_dato >= ?) ) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND NOT EXISTS(select vedtak_id from vedtak vv where 
-                     vv.lopenrvedtak > v.lopenrvedtak and vv.vedtak_id=v.vedtak_id_relatert and vv.vedtaktypekode !='S')
-                     AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
         """.trimIndent()
@@ -103,6 +101,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.sak_id,
             v.aar,
             v.lopenrvedtak,
+            v.lopenrsak,
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
@@ -133,6 +132,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.sak_id,
             v.aar,
             v.lopenrvedtak,
+            v.lopenrsak,
             vedtakstatuskode,
             vedtaktypekode,
             CAST(NULL AS DATE)                    AS fra_dato,
@@ -169,7 +169,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrvedtak DESC"
+                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC"
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
