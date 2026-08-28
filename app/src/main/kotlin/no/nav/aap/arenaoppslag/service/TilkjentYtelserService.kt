@@ -16,6 +16,7 @@ import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseRad
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.modeller.tilRespons
 import java.time.Duration
+import java.time.LocalDate
 import kotlin.math.roundToInt
 
 
@@ -46,7 +47,7 @@ class TilkjentYtelserService(
             personId?.let { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(it)) }.orEmpty()
         )
 
-        val rader = meldekortForSak.posteringer.map { postering ->
+        val posteringsrader = meldekortForSak.posteringer.map { postering ->
             val meldekort = postering.meldekortId?.let { meldekortPerId[it] }
             registrerUkjentKilde(postering)
 
@@ -71,9 +72,40 @@ class TilkjentYtelserService(
             )
         }
 
+        val meldekortIderMedPostering = meldekortForSak.posteringer.mapNotNull { it.meldekortId }.toSet()
+        val meldekortrader = meldekortForSak.meldekort
+            .filterNot { it.meldekortId in meldekortIderMedPostering }
+            .map { meldekort -> byggRadUtenPostering(meldekort, kvoteSaldo) }
+
         return TilkjentYtelseResponse(
             sakId = sakId.id,
-            rader = rader,
+            rader = (posteringsrader + meldekortrader).sortedWith(radRekkefolge),
+        )
+    }
+
+    // Meldekort uten postering er levert, men ikke utbetalt (f.eks. full reduksjon eller ikke ferdig
+    // beregnet). Dagsatsene ligger på posteringens vedtak, så de er ukjente for disse radene.
+    private fun byggRadUtenPostering(meldekort: Meldekort, kvoteSaldo: KvoteSaldo): TilkjentYtelseRad {
+        val timerArbeidetEtterStraff = timerArbeidetEtterStraffedager(meldekort)
+        return TilkjentYtelseRad(
+            fraOgMedDato = meldekort.periode.fraOgMedDato,
+            tilOgMedDato = meldekort.periode.tilOgMedDato,
+            uke = "${meldekort.ukenrUke1}-${meldekort.ukenrUke2}",
+            kilde = PosteringKilde.MELDEKORT,
+            dagsatsMedBarnetillegg = null,
+            dagsats = null,
+            beregnetBrutto = null,
+            timerArbeidet = timerArbeidetEtterStraff,
+            reduksjon = byggReduksjon(
+                meldekort = meldekort,
+                timerArbeidet = timerArbeidetEtterStraff,
+                dagsats = null,
+                dagsatsForSamordning = null,
+                insGrad = null,
+            ),
+            meldekort = meldekort.tilRespons(),
+            gjenstaaendeOrdinaerDager = kvoteSaldo.gjenstaaende(meldekort.meldekortId, KVOTE_ORDINAER),
+            gjenstaaendeUnntakDager = kvoteSaldo.gjenstaaende(meldekort.meldekortId, KVOTE_UNNTAK),
         )
     }
 
@@ -162,6 +194,11 @@ class TilkjentYtelserService(
         private const val KVOTE_UNNTAK = "MAAPU"
         private const val ARBEIDSDAGER_I_MELDEKORTPERIODE = 10
         private const val TIMER_PER_DAG = 7.5
+
+        // Rader fra posteringer og rader fra meldekort uten postering slås sammen, og må sorteres
+        // kronologisk for at frontend skal vise dem i riktig rekkefølge.
+        private val radRekkefolge = compareBy<TilkjentYtelseRad, LocalDate?>(nullsLast()) { it.fraOgMedDato }
+            .thenBy(nullsLast<Long>()) { it.meldekort?.meldekortId }
     }
 }
 

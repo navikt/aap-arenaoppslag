@@ -74,5 +74,31 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rader.first { it.kilde == PosteringKilde.BETALINGSPLAN }.beregnetBrutto).isEqualTo(2500)
         }
     }
+
+    @Test
+    fun `meldekort uten postering kommer med i responsen`() {
+        withTestServer(h2) { gateway ->
+            val rader = gateway.hentSakDetaljert(9006).tilkjentYtelse!!.rader
+
+            // 7004 er et dagpenge-meldekort og 7005 er postert på sak 9007 — ingen av dem hører hjemme her.
+            assertThat(rader.map { it.meldekort?.meldekortId }).containsExactly(7001L, 7002L, 7003L)
+
+            val utbetalt = rader.first { it.meldekort?.meldekortId == 7001L }
+            assertThat(utbetalt.beregnetBrutto).isEqualTo(6000)
+
+            val utenUtbetaling = rader.first { it.meldekort?.meldekortId == 7002L }
+            assertThat(utenUtbetaling.beregnetBrutto).isNull()
+            assertThat(utenUtbetaling.kilde).isEqualTo(PosteringKilde.MELDEKORT)
+            assertThat(utenUtbetaling.uke).isEqualTo("13-14")
+            assertThat(utenUtbetaling.fraOgMedDato).isEqualTo(LocalDate.of(2023, 3, 27))
+            assertThat(utenUtbetaling.timerArbeidet).isEqualTo(15.0)
+            assertThat(utenUtbetaling.reduksjon?.fravar).isEqualTo(10.0f)
+            assertThat(utenUtbetaling.meldekort?.beregningStatusKode).isEqualTo("FERDI")
+
+            val ikkeBeregnet = rader.first { it.meldekort?.meldekortId == 7003L }
+            assertThat(ikkeBeregnet.beregnetBrutto).isNull()
+            assertThat(ikkeBeregnet.meldekort?.beregningStatusKode).isEqualTo("OPPRE")
+        }
+    }
 }
 

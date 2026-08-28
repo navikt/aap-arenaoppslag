@@ -278,6 +278,57 @@ class TilkjentYtelserServiceTest {
     }
 
     @Test
+    fun `meldekort uten postering blir egen rad sortert kronologisk`() {
+        val sakId = SakId(9006)
+        val periodeEn = Periode(LocalDate.of(2023, 3, 13), LocalDate.of(2023, 3, 26))
+        val periodeTo = Periode(LocalDate.of(2023, 3, 27), LocalDate.of(2023, 4, 9))
+        val periodeTre = Periode(LocalDate.of(2023, 4, 10), LocalDate.of(2023, 4, 23))
+
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    vedtakId = 90060, personId = 106, meldekortId = 7001, periode = periodeEn,
+                    belop = 6000, dagsatsMedBarnetillegg = 600, dagsats = 600, dagsatsForSamordning = 600,
+                    insGrad = null, kilde = PosteringKilde.MELDEKORT,
+                ),
+            ),
+            meldekort = listOf(
+                meldekort(meldekortId = 7001, periode = periodeEn, ukenrUke1 = 11, ukenrUke2 = 12),
+                meldekort(
+                    meldekortId = 7002, periode = periodeTo, ukenrUke1 = 13, ukenrUke2 = 14,
+                    dager = listOf(MeldekortDag(13, 1, LocalDate.of(2023, 3, 27), 7.5, false)),
+                    beregningStatusKode = "FERDI",
+                ),
+                meldekort(
+                    meldekortId = 7003, periode = periodeTre, ukenrUke1 = 15, ukenrUke2 = 16,
+                    beregningStatusKode = "OPPRE",
+                ),
+            ),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+
+        val rader = service.hentTilkjenteYtelserForSak(sakId).rader
+
+        assertThat(rader.map { it.meldekort?.meldekortId }).containsExactly(7001L, 7002L, 7003L)
+
+        val utenPostering = rader.first { it.meldekort?.meldekortId == 7002L }
+        // null betyr at det ikke finnes en postering — ikke at det er utbetalt 0 kroner.
+        assertThat(utenPostering.beregnetBrutto).isNull()
+        assertThat(utenPostering.kilde).isEqualTo(PosteringKilde.MELDEKORT)
+        assertThat(utenPostering.uke).isEqualTo("13-14")
+        assertThat(utenPostering.dagsats).isNull()
+        assertThat(utenPostering.dagsatsMedBarnetillegg).isNull()
+        assertThat(utenPostering.timerArbeidet).isEqualTo(7.5)
+        assertThat(utenPostering.reduksjon?.timerArbeidetProsent).isEqualTo(10)
+        assertThat(utenPostering.reduksjon?.samordningsProsent).isEqualTo(0)
+        assertThat(utenPostering.meldekort?.beregningStatusKode).isEqualTo("FERDI")
+
+        assertThat(rader.first { it.meldekort?.meldekortId == 7003L }.meldekort?.beregningStatusKode)
+            .isEqualTo("OPPRE")
+        assertThat(rader.first { it.meldekort?.meldekortId == 7001L }.beregnetBrutto).isEqualTo(6000)
+    }
+
+    @Test
     fun `returnerer tom respons for sak uten posteringer`() {
         val sakId = SakId(123)
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(emptyList(), emptyList())
@@ -324,6 +375,28 @@ class TilkjentYtelserServiceTest {
         verify(exactly = 1) { meldekortRepository.hentForSak(sakEn) }
         verify(exactly = 1) { meldekortRepository.hentForSak(sakTo) }
     }
+
+    private fun meldekort(
+        meldekortId: Long,
+        periode: Periode,
+        ukenrUke1: Int,
+        ukenrUke2: Int,
+        dager: List<MeldekortDag> = emptyList(),
+        beregningStatusKode: String? = null,
+    ) = Meldekort(
+        meldekortId = meldekortId,
+        personId = 106,
+        periode = periode,
+        ukenrUke1 = ukenrUke1,
+        ukenrUke2 = ukenrUke2,
+        meldedato = null,
+        meldeform = "E1",
+        fortsattRegistrertArbeidssoker = true,
+        kommentar = null,
+        dager = dager,
+        reduksjon = MeldekortReduksjon(dagerForSent = 0, fravar = 0.0f, sykedager = 0.0f),
+        beregningStatusKode = beregningStatusKode,
+    )
 
     private fun kvotebrukHendelse(
         id: Int,

@@ -1,0 +1,81 @@
+-- Testdata for meldekort som ikke har postering. Egen sak (9006) slik at radantallet for de
+-- andre sakene er uendret. Dekker: meldekort med postering, meldekort uten postering (ferdig
+-- beregnet og ikke ferdig beregnet), dagpenge-meldekort og meldekort postert på en annen sak.
+
+insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
+values (106, '55555555555', 'Uten', 'Postering');
+
+Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR,
+                 LOPENRSAK, DATO_AVSLUTTET, SAKSTATUSKODE, AETATENHET_ANSVARLIG, PARTISJON, ER_UTLAND)
+values (9006, 'AA', DATE '2023-03-01', 'TEST', DATE '2023-03-01', 'TEST', 'PERS', 106, 2023, 9006, null, 'INAKT',
+        '4402', null, 'N');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE,
+                    PERSON_ID, FRA_DATO, TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK,
+                    AKTFASEKODE, DATO_MOTTATT)
+values (90060, 9006, 'IVERK', 'O', 'JA', 'AAP', 106,
+        DATE '2023-03-01', DATE '2023-04-30', '4402', 9006, 2023, 1, 'IKKE', DATE '2023-03-01');
+
+insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI, REG_DATO)
+values (90060, 'DAGSMBT', '600', DATE '2023-03-01'),
+       (90060, 'DAGS', '600', DATE '2023-03-01'),
+       (90060, 'DAGSFSAM', '600', DATE '2023-03-01');
+
+-- Sak nummer to for samme person, med et vedtaksvindu som slutter før sak 9006 sine meldekort.
+Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR,
+                 LOPENRSAK, DATO_AVSLUTTET, SAKSTATUSKODE, AETATENHET_ANSVARLIG, PARTISJON, ER_UTLAND)
+values (9007, 'AA', DATE '2023-02-01', 'TEST', DATE '2023-02-01', 'TEST', 'PERS', 106, 2023, 9007, null, 'INAKT',
+        '4402', null, 'N');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE,
+                    PERSON_ID, FRA_DATO, TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK,
+                    AKTFASEKODE, DATO_MOTTATT)
+values (90070, 9007, 'IVERK', 'O', 'JA', 'AAP', 106,
+        DATE '2023-02-01', DATE '2023-03-12', '4402', 9007, 2023, 1, 'IKKE', DATE '2023-02-01');
+
+insert into MELDEKORTPERIODE (AAR, PERIODEKODE, UKENR_UKE1, UKENR_UKE2, DATO_FRA, DATO_TIL)
+values (2023, '05', 9, 10, DATE '2023-02-27', DATE '2023-03-12'),
+       (2023, '06', 11, 12, DATE '2023-03-13', DATE '2023-03-26'),
+       (2023, '07', 13, 14, DATE '2023-03-27', DATE '2023-04-09'),
+       (2023, '08', 15, 16, DATE '2023-04-10', DATE '2023-04-23'),
+       (2023, '09', 17, 18, DATE '2023-04-24', DATE '2023-05-07');
+
+-- 7001: ordinært meldekort med utbetaling
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
+values (7001, 106, 2023, '06', 'E1', 'FERDI', 'AT');
+
+-- 7002: ferdig beregnet, men uten postering (full reduksjon gir ingen utbetaling)
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
+values (7002, 106, 2023, '07', 'E1', 'FERDI', 'AT');
+
+-- 7003: levert, men ikke ferdig beregnet — har derfor heller ingen postering
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
+values (7003, 106, 2023, '08', 'E1', 'OPPRE', 'AT');
+
+-- 7004: dagpenge-meldekort — hører ikke til AAP-saken
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
+values (7004, 106, 2023, '09', 'E1', 'FERDI', 'DP');
+
+-- 7005: ligger innenfor vedtaksvinduet til 9006, men er postert på sak 9007
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
+values (7005, 106, 2023, '05', 'E1', 'FERDI', 'AT');
+
+insert into MELDEKORTDAG (MELDEKORT_ID, UKENR, DAGNR, STATUS_ARBEIDSDAG, STATUS_KURS, STATUS_SYK, TIMER_ARBEIDET)
+values (7001, 11, 1, 'J', 'N', 'N', 7.5),
+       (7002, 13, 1, 'J', 'N', 'N', 7.5),
+       (7002, 13, 2, 'J', 'N', 'N', 7.5),
+       (7003, 15, 1, 'N', 'N', 'N', 0.0),
+       (7005, 9, 1, 'J', 'N', 'N', 3.0);
+
+insert into ANMERKNING (ANMERKNING_ID, ANMERKNINGKODE, TABELLNAVNALIAS, OBJEKT_ID, VEDTAK_ID, VERDI)
+values (7101, 'FXNN', 'MKORT', 7002, 90060, 10);
+
+insert into POSTERING (POSTERING_ID, BELOP, BELOPKODE, DATO_PERIODE_FRA, DATO_PERIODE_TIL, DATO_POSTERT, AAR,
+                       PERSON_ID, POSTERINGTYPEKODE, TRANSAKSJONSKODE, DATO_GRUNNLAG, VEDTAK_ID, ARTKODE,
+                       KAPITTEL, POST, UNDERPOST, BRUKER_ID_SAKSBEHANDLER, AETATENHET_ANSVARLIG, MELDEKORT_ID,
+                       TABELLNAVNALIAS_KILDE, OBJEKT_ID_KILDE)
+values (8601, 6000, 'AAP', DATE '2023-03-13', DATE '2023-03-26', DATE '2023-03-31', 2023, 106,
+        'ORD', 'AA00', DATE '2023-03-13', 90060, 'ART', '2900', '01', '001', 'TEST', '4402', 7001, 'MKORT', 7001),
+       (8602, 5000, 'AAP', DATE '2023-02-27', DATE '2023-03-12', DATE '2023-03-17', 2023, 106,
+        'ORD', 'AA00', DATE '2023-02-27', 90070, 'ART', '2900', '01', '001', 'TEST', '4402', 7005, 'MKORT', 7005);
+

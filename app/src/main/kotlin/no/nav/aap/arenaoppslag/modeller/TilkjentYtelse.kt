@@ -30,7 +30,8 @@ data class TilkjentYtelseRad(
     val kilde: PosteringKilde,
     val dagsatsMedBarnetillegg: Int?,
     val dagsats: Int?,
-    val beregnetBrutto: Int,
+    // null betyr at det ikke finnes en postering for raden — ikke det samme som utbetalt 0 kroner
+    val beregnetBrutto: Int?,
     val timerArbeidet: Double?,
     val reduksjon: ReduksjonRespons?,
     val meldekort: MeldekortRespons?,
@@ -54,6 +55,7 @@ data class MeldekortRespons(
     val meldeform: String?,
     val fortsattRegistrertArbeidssoker: Boolean?,
     val kommentar: String?,
+    val beregningStatusKode: String?,
     val uker: List<MeldekortUkeRespons>,
     val anmerkninger: List<AnmerkningRespons>,
 )
@@ -86,6 +88,7 @@ fun Meldekort.tilRespons(): MeldekortRespons = MeldekortRespons(
     meldeform = meldeform,
     fortsattRegistrertArbeidssoker = fortsattRegistrertArbeidssoker,
     kommentar = kommentar,
+    beregningStatusKode = beregningStatusKode,
     uker = dager.groupBy { it.ukenr }
         .toSortedMap()
         .map { (ukenr, dagerForUke) ->

@@ -15,6 +15,12 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
 
     // Sak 9004 har én postering per kildevariant (MKORT, SPESUTB, BETPLAN og manglende alias).
     private val sakMedKildevarianter = SakId(9004)
+
+    // Sak 9006 har meldekort både med og uten postering, samt et dagpenge-meldekort.
+    private val sakMedMeldekortUtenPostering = SakId(9006)
+
+    // Sak 9007 tilhører samme person som 9006 og eier meldekort 7005.
+    private val annenSakForSammePerson = SakId(9007)
     private val ukjentSak = SakId(99999)
 
     @Test
@@ -143,6 +149,41 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
 
         val meldekort5002 = resultat.meldekort.first { it.meldekortId == 5002L }
         assertThat(meldekort5002.anmerkninger.map { it.kode }).containsExactly("SENN", "FXNN")
+    }
+
+    @Test
+    fun `henter meldekort uten postering innenfor sakens vedtaksvindu`() {
+        val meldekort = repo.hentForSak(sakMedMeldekortUtenPostering).meldekort
+
+        // 7001 har postering, 7002 og 7003 har ikke. 7004 er dagpenger og 7005 er postert på sak 9007.
+        assertThat(meldekort.map { it.meldekortId }).containsExactly(7001L, 7002L, 7003L)
+    }
+
+    @Test
+    fun `beregningstatus foelger med paa meldekortet`() {
+        val meldekort = repo.hentForSak(sakMedMeldekortUtenPostering).meldekort
+
+        assertThat(meldekort.first { it.meldekortId == 7002L }.beregningStatusKode).isEqualTo("FERDI")
+        assertThat(meldekort.first { it.meldekortId == 7003L }.beregningStatusKode).isEqualTo("OPPRE")
+    }
+
+    @Test
+    fun `meldekort uten postering har dager og anmerkninger`() {
+        val meldekort = repo.hentForSak(sakMedMeldekortUtenPostering).meldekort
+            .first { it.meldekortId == 7002L }
+
+        assertThat(meldekort.dager.sumOf { it.timerArbeidet }).isEqualTo(15.0)
+        assertThat(meldekort.reduksjon.fravar).isEqualTo(10.0f)
+        assertThat(meldekort.periode.fraOgMedDato).isEqualTo(LocalDate.of(2023, 3, 27))
+    }
+
+    @Test
+    fun `meldekort postert paa annen sak hoerer til den saken`() {
+        val resultat = repo.hentForSak(annenSakForSammePerson)
+
+        // 7005 er postert her. 7002 og 7003 ligger utenfor vedtaksvinduet til 9007.
+        assertThat(resultat.meldekort.map { it.meldekortId }).containsExactly(7005L)
+        assertThat(resultat.posteringer.map { it.meldekortId }).containsExactly(7005L)
     }
 }
 

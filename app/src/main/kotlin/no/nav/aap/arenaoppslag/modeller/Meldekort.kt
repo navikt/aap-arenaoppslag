@@ -58,6 +58,9 @@ data class Meldekort(
     val dager: List<MeldekortDag>,
     val reduksjon: MeldekortReduksjon,
     val anmerkninger: List<MeldekortAnmerkning> = emptyList(),
+    // BEREGNINGSTATUSKODE sier om meldekortet er ferdig beregnet. Uten den kan ikke frontend skille
+    // et meldekort som venter på beregning fra et som er beregnet uten utbetaling.
+    val beregningStatusKode: String? = null,
 )
 
 data class MeldekortDag(

@@ -11,6 +11,7 @@ import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
+import java.sql.Date
 import java.sql.ResultSet
 import java.time.LocalDate
 import javax.sql.DataSource
@@ -57,8 +58,13 @@ class MeldekortRepository(
         }
 
     private fun selectMeldekort(sakId: SakId, connection: Connection): List<Meldekort> {
-        val metadata = connection.createParameterizedQuery(meldekortMetadataForSakSql).use { preparedStatement ->
+        val metadata = connection.createParameterizedQuery(meldekortForSakSql).use { preparedStatement ->
             preparedStatement.setInt(1, sakId.id)
+            // Åpne vedtak (til_dato = NULL) avgrenses av dagens dato. Datoen sendes inn som parameter
+            // i stedet for SYSDATE slik at spørringen oppfører seg likt i Oracle og H2.
+            preparedStatement.setDate(2, Date.valueOf(LocalDate.now()))
+            preparedStatement.setInt(3, sakId.id)
+            preparedStatement.setInt(4, sakId.id)
             preparedStatement.executeQuery().map { row -> mapMeldekortMetadata(row) }
         }
         if (metadata.isEmpty()) return emptyList()
@@ -82,6 +88,7 @@ class MeldekortRepository(
                 dager = dagerPerMeldekort[meta.meldekortId].orEmpty(),
                 reduksjon = tilReduksjon(anmerkninger),
                 anmerkninger = anmerkninger,
+                beregningStatusKode = meta.beregningStatusKode,
             )
         }
     }
@@ -163,6 +170,7 @@ class MeldekortRepository(
         meldeform = row.getString("mkskortkode"),
         fortsattArbeidssoker = tilBoolean(row.getString("status_fortsatt_arbeidsoker")),
         kommentar = row.getString("kommentar"),
+        beregningStatusKode = row.getString("beregningstatuskode"),
     )
 
     private fun tilBoolean(verdi: String?): Boolean? = when (verdi) {
@@ -182,6 +190,7 @@ class MeldekortRepository(
         val meldeform: String?,
         val fortsattArbeidssoker: Boolean?,
         val kommentar: String?,
+        val beregningStatusKode: String?,
     )
 
     @Language("OracleSql")
@@ -210,17 +219,43 @@ class MeldekortRepository(
          ORDER BY p.dato_periode_fra, p.postering_id
     """.trimIndent()
 
+    // Meldekort uten utbetaling har ingen postering, og ville falt ut om vi bare joinet mot POSTERING.
+    // Andre del av unionen henter derfor meldekortene til personen innenfor sakens vedtaksvindu.
+    // 'DP' er dagpenge-meldekort og hører ikke til en AAP-sak, og meldekort som allerede er postert
+    // på en annen sak filtreres bort slik at et meldekort kun vises på én sak.
     @Language("OracleSql")
-    private val meldekortMetadataForSakSql = """
-        SELECT DISTINCT m.meldekort_id, m.person_id, m.dato_innkommet, m.mkskortkode,
-                        m.status_fortsatt_arbeidsoker, m.kommentar,
-                        mkp.dato_fra, mkp.dato_til, mkp.ukenr_uke1, mkp.ukenr_uke2
+    private val meldekortForSakSql = """
+        SELECT m.meldekort_id, m.person_id, m.dato_innkommet, m.mkskortkode,
+               m.status_fortsatt_arbeidsoker, m.kommentar, m.beregningstatuskode,
+               mkp.dato_fra, mkp.dato_til, mkp.ukenr_uke1, mkp.ukenr_uke2
           FROM meldekort m
-          JOIN postering p ON p.meldekort_id = m.meldekort_id
-          JOIN vedtak v ON v.vedtak_id = p.vedtak_id
           JOIN meldekortperiode mkp ON mkp.aar = m.aar AND mkp.periodekode = m.periodekode
-         WHERE v.sak_id = ?
-         ORDER BY mkp.dato_fra, m.meldekort_id
+         WHERE m.meldekort_id IN (SELECT p.meldekort_id
+                                    FROM postering p
+                                    JOIN vedtak v ON v.vedtak_id = p.vedtak_id
+                                   WHERE v.sak_id = ?)
+        UNION
+        SELECT m.meldekort_id, m.person_id, m.dato_innkommet, m.mkskortkode,
+               m.status_fortsatt_arbeidsoker, m.kommentar, m.beregningstatuskode,
+               mkp.dato_fra, mkp.dato_til, mkp.ukenr_uke1, mkp.ukenr_uke2
+          FROM meldekort m
+          JOIN meldekortperiode mkp ON mkp.aar = m.aar AND mkp.periodekode = m.periodekode
+          JOIN (SELECT v.person_id,
+                       MIN(v.fra_dato) AS fra_dato,
+                       MAX(COALESCE(v.til_dato, ?)) AS til_dato
+                  FROM vedtak v
+                 WHERE v.sak_id = ?
+                   AND v.fra_dato IS NOT NULL
+                 GROUP BY v.person_id) saksvindu ON saksvindu.person_id = m.person_id
+         WHERE mkp.dato_til >= saksvindu.fra_dato
+           AND mkp.dato_fra <= saksvindu.til_dato
+           AND (m.meldekortkode IS NULL OR m.meldekortkode <> 'DP')
+           AND NOT EXISTS (SELECT 1
+                             FROM postering p2
+                             JOIN vedtak v2 ON v2.vedtak_id = p2.vedtak_id
+                            WHERE p2.meldekort_id = m.meldekort_id
+                              AND v2.sak_id <> ?)
+         ORDER BY dato_fra, meldekort_id
     """.trimIndent()
 
     // Oracle støtter ikke listeparametere i PreparedStatement, så meldekort-IDer interpoleres direkte.
