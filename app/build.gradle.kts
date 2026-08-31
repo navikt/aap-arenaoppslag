@@ -30,7 +30,6 @@ dependencies {
     implementation(platform(libs.jackson3.bom))
 
     implementation(project(":kontrakt"))
-<<<<<<< HEAD
     implementation(libs.konfig)
     implementation(libs.kelvin.server)
     implementation(libs.kelvin.infrastructure)
@@ -51,7 +50,6 @@ dependencies {
     implementation(libs.ktor.serialization.jackson)
     implementation(libs.jackson.datatype.jsr310)
 
-<<<<<<< HEAD
     implementation(libs.micrometer.registry.prometheus)
     implementation(libs.logback.classic)
     runtimeOnly(libs.logstash.logback.encoder)
