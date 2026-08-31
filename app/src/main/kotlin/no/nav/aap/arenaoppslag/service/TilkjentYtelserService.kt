@@ -9,6 +9,7 @@ import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Meldekort
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.ReduksjonRespons
 import no.nav.aap.arenaoppslag.modeller.SakId
@@ -17,6 +18,7 @@ import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.modeller.tilRespons
 import java.time.Duration
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 
@@ -136,9 +138,10 @@ class TilkjentYtelserService(
     ): ReduksjonRespons {
         val dagerForSent = meldekort.reduksjon.dagerForSent
         // Fulltid i en meldekortperiode er 75 timer (10 arbeidsdager à 7,5 t), jf. anmerkningkode TE75T
-        // "Arbeidet 75 timer eller mer i perioden sett under ett". Straffedagene reduserer antall
-        // dager som inngår i fulltidsgrunnlaget.
-        val aktiveDager = ARBEIDSDAGER_I_MELDEKORTPERIODE - dagerForSent
+        // "Arbeidet 75 timer eller mer i perioden sett under ett". Avkortede meldekortperioder har
+        // færre dager å fordele timene på, og straffedagene reduserer grunnlaget ytterligere.
+        val dagerIPerioden = antallDagerIPerioden(meldekort.periode) ?: ARBEIDSDAGER_I_MELDEKORTPERIODE
+        val aktiveDager = minOf(ARBEIDSDAGER_I_MELDEKORTPERIODE, dagerIPerioden) - dagerForSent
         val timerArbeidetProsent = if (aktiveDager > 0) {
             (timerArbeidet / (aktiveDager * TIMER_PER_DAG) * 100).roundToInt()
         } else {
@@ -160,6 +163,15 @@ class TilkjentYtelserService(
     private fun beregnSamordningsProsent(dagsats: Int?, dagsatsForSamordning: Int?): Int {
         if (dagsats == null || dagsatsForSamordning == null || dagsatsForSamordning == 0) return 0
         return ((dagsatsForSamordning - dagsats).toDouble() / dagsatsForSamordning * 100).roundToInt()
+    }
+
+    // Returnerer null når perioden er ufullstendig, slik at kallstedet kan falle tilbake på
+    // normalperioden framfor å regne med et grunnlag vi ikke kjenner.
+    private fun antallDagerIPerioden(periode: Periode): Int? {
+        val fraOgMed = periode.fraOgMedDato ?: return null
+        val tilOgMed = periode.tilOgMedDato ?: return null
+        if (tilOgMed.isBefore(fraOgMed)) return 0
+        return (ChronoUnit.DAYS.between(fraOgMed, tilOgMed) + 1).toInt()
     }
 
     /**
