@@ -32,6 +32,7 @@ import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
+import no.nav.aap.arenaoppslag.database.MeldekortRepository
 import no.nav.aap.arenaoppslag.database.OppgaveRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -59,6 +60,7 @@ import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
 import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
+import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import org.slf4j.LoggerFactory
 
 val logger = LoggerFactory.getLogger("App")
@@ -205,11 +207,22 @@ private fun skapUtbetalingService(datasource: DataSource): PosteringService {
     return PosteringService(posteringRepository)
 }
 
-private fun skapManuellFordelingsgrunnlagService(datasource: DataSource): ManuellFordelingsgrunnlagService {
+private fun skapTilkjentYtelserService(
+    datasource: DataSource,
+    telleverkService: TelleverkService,
+): TilkjentYtelserService {
+    val meldekortRepository = MeldekortRepository(datasource)
+    return TilkjentYtelserService(meldekortRepository, telleverkService)
+}
+
+private fun skapManuellFordelingsgrunnlagService(
+    datasource: DataSource,
+    telleverkService: TelleverkService,
+): ManuellFordelingsgrunnlagService {
     return ManuellFordelingsgrunnlagService(
         skapSakListeService(datasource),
         skapUtbetalingService(datasource),
-        skapTelleverkService(datasource),
+        telleverkService,
         skapOppgaveService(datasource),
     )
 }
@@ -238,8 +251,9 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val sakListeService = skapSakListeService(datasource)
     val utbetalingService = skapUtbetalingService(datasource)
     val saksopplysningService = skapSaksopplysningService(datasource)
+    val tilkjentYtelserService = skapTilkjentYtelserService(datasource, telleverkService)
     val oppgaveService = skapOppgaveService(datasource)
-    val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource)
+    val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
 
     routing {
         actuator(prometheus)
@@ -272,6 +286,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     sakOgVedtakService = sakOgVedtakService,
                     telleverkService = telleverkService,
                     saksopplysningService = saksopplysningService,
+                    tilkjentYtelserService = tilkjentYtelserService,
                     oppgaveService = oppgaveService
                 )
             }

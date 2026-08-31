@@ -18,7 +18,6 @@ import javax.sql.DataSource
 
 class MaksimumRepository(
     private val dataSource: DataSource,
-    // Oracle har en hard grense på 1000 elementer i IN-lister. Vi chunker for å holde oss under denne grensen.
     private val chunkStørrelse: Int = 999,
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)

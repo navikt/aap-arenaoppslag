@@ -1,0 +1,104 @@
+package no.nav.aap.arenaoppslag
+
+import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
+import no.nav.aap.arenaoppslag.database.H2TestBase
+import no.nav.aap.arenaoppslag.modeller.PosteringKilde
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import java.time.LocalDate
+
+// Tilkjent ytelse eksponeres som en del av /api/intern/sak/{sakid}/detaljert-responsen,
+// så vi verifiserer payloaden gjennom det endepunktet.
+class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
+
+    @Test
+    fun `detaljert-responsen inkluderer tilkjent ytelse med meldekort for sak`() {
+        withTestServer(h2) { gateway ->
+            val response = gateway.hentSakDetaljert(9001)
+
+            val tilkjentYtelse = response.tilkjentYtelse
+            assertThat(tilkjentYtelse).isNotNull
+            assertThat(tilkjentYtelse!!.sakId).isEqualTo(9001)
+            assertThat(tilkjentYtelse.rader).hasSize(2)
+
+            val rad = tilkjentYtelse.rader.first { it.meldekort?.meldekortId == 5001L }
+            assertThat(rad.kilde).isEqualTo(PosteringKilde.MELDEKORT)
+            assertThat(rad.uke).isEqualTo("1-2")
+            assertThat(rad.beregnetBrutto).isEqualTo(7700)
+            assertThat(rad.fraOgMedDato).isEqualTo(LocalDate.of(2023, 1, 2))
+            assertThat(rad.meldekort?.uker).isNotEmpty()
+
+            // 5 timer arbeidet av 10 arbeidsdager à 7,5 timer = 75 timer → 7 %. Ingen samordning (DAGS == DAGSFSAM). insGrad = 33 → total = 7 + 0 + 33 = 40 %.
+            assertThat(rad.reduksjon?.levertForSentDager).isEqualTo(0)
+            assertThat(rad.reduksjon?.timerArbeidetProsent).isEqualTo(7)
+            assertThat(rad.reduksjon?.samordningsProsent).isEqualTo(0)
+            assertThat(rad.reduksjon?.totalReduksjonProsent).isEqualTo(40)
+            assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
+            assertThat(rad.reduksjon?.sykedager).isEqualTo(1.0f)
+            assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(33)
+
+            // Anmerkningene ligger på meldekortet, også de som ikke gir reduksjon (MAXAA).
+            assertThat(rad.meldekort?.anmerkninger?.map { it.kode }).containsExactly("FSNN", "MAXAA")
+            val sykdom = rad.meldekort?.anmerkninger?.first { it.kode == "FSNN" }
+            assertThat(sykdom?.navn).isEqualTo("Fravær av type S")
+            assertThat(sykdom?.beskrivelseFlettet).isEqualTo("Utbetalingen er redusert pga sykdom 1 dager")
+
+            // Meldekort 5001 trekker kun ordinær kvote (20 - 10), unntakskvoten videreføres fra INIT.
+            assertThat(rad.gjenstaaendeOrdinaerDager).isEqualTo(10)
+            assertThat(rad.gjenstaaendeUnntakDager).isEqualTo(30)
+
+            val radMeldekortTo = tilkjentYtelse.rader.first { it.meldekort?.meldekortId == 5002L }
+            assertThat(radMeldekortTo.gjenstaaendeOrdinaerDager).isEqualTo(4)
+            assertThat(radMeldekortTo.gjenstaaendeUnntakDager).isEqualTo(25)
+
+            // Saldoen for personen som helhet kommer fra BEREGNINGSLEDD og ligger på telleverkForPerson,
+            // ikke på tilkjent ytelse.
+            assertThat(response.telleverkForPerson?.ordineerAAPKvote).isEqualTo(4)
+            assertThat(response.telleverkForPerson?.utvidetAAPKvote).isEqualTo(25)
+        }
+    }
+
+    @Test
+    fun `kilde utledes per postering og alle kildetyper er med i responsen`() {
+        withTestServer(h2) { gateway ->
+            val rader = gateway.hentSakDetaljert(9004).tilkjentYtelse!!.rader
+
+            assertThat(rader.map { it.kilde }).containsExactly(
+                PosteringKilde.MELDEKORT,
+                PosteringKilde.SPESIALUTBETALING,
+                PosteringKilde.BETALINGSPLAN,
+                // Postering uten kildealias skal ikke gjettes til spesialutbetaling.
+                PosteringKilde.UKJENT,
+            )
+            assertThat(rader.first { it.kilde == PosteringKilde.SPESIALUTBETALING }.meldekort).isNull()
+            assertThat(rader.first { it.kilde == PosteringKilde.BETALINGSPLAN }.beregnetBrutto).isEqualTo(2500)
+        }
+    }
+
+    @Test
+    fun `meldekort uten postering kommer med i responsen`() {
+        withTestServer(h2) { gateway ->
+            val rader = gateway.hentSakDetaljert(9006).tilkjentYtelse!!.rader
+
+            // 7004 er et dagpenge-meldekort og 7005 er postert på sak 9007 — ingen av dem hører hjemme her.
+            assertThat(rader.map { it.meldekort?.meldekortId }).containsExactly(7001L, 7002L, 7003L)
+
+            val utbetalt = rader.first { it.meldekort?.meldekortId == 7001L }
+            assertThat(utbetalt.beregnetBrutto).isEqualTo(6000)
+
+            val utenUtbetaling = rader.first { it.meldekort?.meldekortId == 7002L }
+            assertThat(utenUtbetaling.beregnetBrutto).isNull()
+            assertThat(utenUtbetaling.kilde).isEqualTo(PosteringKilde.MELDEKORT)
+            assertThat(utenUtbetaling.uke).isEqualTo("13-14")
+            assertThat(utenUtbetaling.fraOgMedDato).isEqualTo(LocalDate.of(2023, 3, 27))
+            assertThat(utenUtbetaling.timerArbeidet).isEqualTo(15.0)
+            assertThat(utenUtbetaling.reduksjon?.fravar).isEqualTo(10.0f)
+            assertThat(utenUtbetaling.meldekort?.beregningStatusKode).isEqualTo("FERDI")
+
+            val ikkeBeregnet = rader.first { it.meldekort?.meldekortId == 7003L }
+            assertThat(ikkeBeregnet.beregnetBrutto).isNull()
+            assertThat(ikkeBeregnet.meldekort?.beregningStatusKode).isEqualTo("OPPRE")
+        }
+    }
+}
+
