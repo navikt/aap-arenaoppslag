@@ -54,7 +54,22 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND ( 
                 ((vedtaktypekode IN ('O','E','G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)
+                      -- En gammel sak kan ha endt med et stans-vedtak, men personen har en løpende ny sak. 
+                      -- Ekskluder slike gamle stans-vedtak: 
+                      AND NOT EXISTS(
+                           SELECT vedtak_id FROM vedtak vv WHERE
+                              vv.person_id = v.person_id -- for samme person
+                              -- Samme begrensning som hovedspørringen:
+                              AND vv.rettighetkode = 'AAP'
+                              AND vv.vedtaktypekode IN ('O','E','G')   
+                              AND vv.vedtakstatuskode IN ('IVERK','AVSLU')
+                              AND vv.utfallkode != 'AVBRUTT'
+                              -- Et nyere vedtak erstatter denne stansen:
+                              AND vv.vedtak_id > v.vedtak_id -- et nyere vedtak
+                              AND (vv.fra_dato IS NOT NULL AND v.fra_dato IS NOT NULL AND vv.fra_dato > v.fra_dato) -- med nyere fra_dato
+                      )
+                ) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
         """.trimIndent()
@@ -86,7 +101,22 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND ( 
                 ( (vedtaktypekode IN ('O','E','G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND (til_dato IS NULL OR til_dato >= ?) ) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)
+                      -- En gammel sak kan ha endt med et stans-vedtak, men personen har en løpende ny sak. 
+                      -- Ekskluder slike gamle stans-vedtak: 
+                      AND NOT EXISTS(
+                           SELECT vedtak_id FROM vedtak vv WHERE
+                              vv.person_id = v.person_id -- for samme person
+                              -- Samme begrensning som hovedspørringen:
+                              AND vv.rettighetkode = 'AA115'
+                              AND vv.vedtaktypekode IN ('O','E','G')   
+                              AND vv.vedtakstatuskode IN ('IVERK','AVSLU')
+                              AND vv.utfallkode != 'AVBRUTT'
+                              -- Et nyere vedtak erstatter denne stansen:
+                              AND vv.vedtak_id > v.vedtak_id -- et nyere vedtak
+                              AND (vv.fra_dato IS NOT NULL AND v.fra_dato IS NOT NULL AND vv.fra_dato > v.fra_dato) -- med nyere fra_dato
+                      )
+                ) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
         """.trimIndent()
