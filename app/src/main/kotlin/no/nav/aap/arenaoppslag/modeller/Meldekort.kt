@@ -10,6 +10,8 @@ data class MeldekortPostering(
     val meldekortId: Long?,
     val periode: Periode,
     val belop: Int,
+    // POSTERING.ANTALL — antall dager posteringen dekker. Kan mangle på eldre/manuelle posteringer.
+    val antall: Double? = null,
     // Dagsats med barnetillegg (vedtakfakta DAGSMBT) — null hvis ikke registrert på vedtaket
     val dagsatsMedBarnetillegg: Int?,
     // Dagsats uten barnetillegg (vedtakfakta DAGS) — null hvis ikke registrert på vedtaket

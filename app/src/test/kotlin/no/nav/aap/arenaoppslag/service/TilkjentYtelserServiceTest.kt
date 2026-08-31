@@ -59,6 +59,7 @@ class TilkjentYtelserServiceTest {
                     vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
                     belop = 4970, dagsatsMedBarnetillegg = 1812, dagsats = 1500, dagsatsForSamordning = 1500,
                     insGrad = null, kilde = PosteringKilde.MELDEKORT, kildeAlias = "MKORT", kildeObjektId = 5001,
+                    antall = 4.75,
                 ),
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = null, periode = periode,
@@ -94,6 +95,8 @@ class TilkjentYtelserServiceTest {
         assertThat(meldekortRad.reduksjon?.fravar).isEqualTo(0.0f)
         assertThat(meldekortRad.reduksjon?.sykedager).isEqualTo(0.0f)
         assertThat(meldekortRad.reduksjon?.institusjonsProsent).isNull()
+        // 4,75 anviste dager à 20 % = 95 %, avrundet til nærmeste hele prosent.
+        assertThat(meldekortRad.reduksjon?.anvistProsent).isEqualTo(95)
         assertThat(meldekortRad.meldekort?.uker).hasSize(1)
         assertThat(meldekortRad.meldekort?.fortsattRegistrertArbeidssoker).isTrue()
         // Anmerkningene følger meldekortet, og beskrivelsen flettes med verdien fra anmerkningen.

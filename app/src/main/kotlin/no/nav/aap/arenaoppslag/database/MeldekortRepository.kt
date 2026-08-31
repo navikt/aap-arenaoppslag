@@ -46,6 +46,7 @@ class MeldekortRepository(
                         tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
                     ),
                     belop = row.getInt("belop"),
+                    antall = row.getDoubleOrNull("antall"),
                     dagsatsMedBarnetillegg = row.getString("dagsats_med_barnetillegg")?.toIntOrNull(),
                     dagsats = row.getString("dagsats")?.toIntOrNull(),
                     dagsatsForSamordning = row.getString("dagsats_for_samordning")?.toIntOrNull(),
@@ -196,6 +197,7 @@ class MeldekortRepository(
     @Language("OracleSql")
     private val posteringerForSakSql = """
         SELECT p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
+               p.antall,
                p.tabellnavnalias_kilde, p.objekt_id_kilde,
                (SELECT MAX(vf.vedtakverdi)
                   FROM vedtakfakta vf

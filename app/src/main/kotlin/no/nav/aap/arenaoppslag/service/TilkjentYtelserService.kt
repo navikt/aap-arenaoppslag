@@ -55,7 +55,7 @@ class TilkjentYtelserService(
 
             val timerArbeidetEtterStraff = meldekort?.let { timerArbeidetEtterStraffedager(it) }
             val reduksjon = meldekort?.let {
-                byggReduksjon(it, timerArbeidetEtterStraff ?: 0.0, postering.dagsats, postering.dagsatsForSamordning, postering.insGrad)
+                byggReduksjon(it, timerArbeidetEtterStraff ?: 0.0, postering)
             }
             TilkjentYtelseRad(
                 fraOgMedDato = postering.periode.fraOgMedDato,
@@ -101,9 +101,7 @@ class TilkjentYtelserService(
             reduksjon = byggReduksjon(
                 meldekort = meldekort,
                 timerArbeidet = timerArbeidetEtterStraff,
-                dagsats = null,
-                dagsatsForSamordning = null,
-                insGrad = null,
+                postering = null,
             ),
             meldekort = meldekort.tilRespons(),
             gjenstaaendeOrdinaerDager = kvoteSaldo.gjenstaaende(meldekort.meldekortId, KVOTE_ORDINAER),
@@ -132,22 +130,23 @@ class TilkjentYtelserService(
     private fun byggReduksjon(
         meldekort: Meldekort,
         timerArbeidet: Double,
-        dagsats: Int?,
-        dagsatsForSamordning: Int?,
-        insGrad: Int?,
+        // null for meldekort uten postering — da er dagsatser og institusjonsgrad ukjente.
+        postering: MeldekortPostering?,
     ): ReduksjonRespons {
+        val insGrad = postering?.insGrad
         val dagerForSent = meldekort.reduksjon.dagerForSent
         // Fulltid i en meldekortperiode er 75 timer (10 arbeidsdager à 7,5 t), jf. anmerkningkode TE75T
         // "Arbeidet 75 timer eller mer i perioden sett under ett". Avkortede meldekortperioder har
         // færre dager å fordele timene på, og straffedagene reduserer grunnlaget ytterligere.
-        val dagerIPerioden = antallDagerIPerioden(meldekort.periode) ?: ARBEIDSDAGER_I_MELDEKORTPERIODE
+        val dagerIPerioden =  antallDagerIPerioden(meldekort.periode) ?: ARBEIDSDAGER_I_MELDEKORTPERIODE
         val aktiveDager = minOf(ARBEIDSDAGER_I_MELDEKORTPERIODE, dagerIPerioden) - dagerForSent
+
         val timerArbeidetProsent = if (aktiveDager > 0) {
             (timerArbeidet / (aktiveDager * TIMER_PER_DAG) * 100).roundToInt()
         } else {
             0
         }
-        val samordningsProsent = beregnSamordningsProsent(dagsats, dagsatsForSamordning)
+        val samordningsProsent = beregnSamordningsProsent(postering?.dagsats, postering?.dagsatsForSamordning)
         return ReduksjonRespons(
             levertForSentDager = dagerForSent,
             timerArbeidetProsent = timerArbeidetProsent,
@@ -156,9 +155,9 @@ class TilkjentYtelserService(
             fravar = meldekort.reduksjon.fravar,
             sykedager = meldekort.reduksjon.sykedager,
             institusjonsProsent = insGrad,
+            anvistProsent = postering?.antall?.let { (it * PROSENT_PER_ANVIST_DAG).roundToInt() },
         )
     }
-
 
     private fun beregnSamordningsProsent(dagsats: Int?, dagsatsForSamordning: Int?): Int {
         if (dagsats == null || dagsatsForSamordning == null || dagsatsForSamordning == 0) return 0
@@ -206,6 +205,7 @@ class TilkjentYtelserService(
         private const val KVOTE_UNNTAK = "MAAPU"
         private const val ARBEIDSDAGER_I_MELDEKORTPERIODE = 10
         private const val TIMER_PER_DAG = 7.5
+        private const val PROSENT_PER_ANVIST_DAG = 20
 
         // Rader fra posteringer og rader fra meldekort uten postering slås sammen, og må sorteres
         // kronologisk for at frontend skal vise dem i riktig rekkefølge.

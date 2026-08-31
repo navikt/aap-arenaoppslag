@@ -47,6 +47,7 @@ data class ReduksjonRespons(
     val fravar: Float,
     val sykedager: Float,
     val institusjonsProsent: Int?,
+    val anvistProsent: Int?
 )
 
 data class MeldekortRespons(
@@ -57,7 +58,7 @@ data class MeldekortRespons(
     val kommentar: String?,
     val beregningStatusKode: String?,
     val uker: List<MeldekortUkeRespons>,
-    val anmerkninger: List<AnmerkningRespons>,
+    val anmerkninger: List<AnmerkningRespons>
 )
 
 data class AnmerkningRespons(
@@ -97,8 +98,7 @@ fun Meldekort.tilRespons(): MeldekortRespons = MeldekortRespons(
                 dager = dagerForUke.sortedBy { it.dagnr }.map { it.tilRespons() },
             )
         },
-    anmerkninger = anmerkninger.map { it.tilRespons() },
-)
+    anmerkninger = anmerkninger.map { it.tilRespons() })
 
 fun MeldekortAnmerkning.tilRespons(): AnmerkningRespons = AnmerkningRespons(
     kode = kode,

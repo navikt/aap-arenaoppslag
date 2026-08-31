@@ -47,6 +47,15 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.insGrad).isEqualTo(33)
         assertThat(første.kilde).isEqualTo(PosteringKilde.MELDEKORT)
         assertThat(første.kildeObjektId).isEqualTo(5001)
+        assertThat(første.antall).isEqualTo(10.0)
+    }
+
+    @Test
+    fun `antall er null naar posteringen mangler antall dager`() {
+        val posteringer = repo.hentForSak(sakMedMeldekort).posteringer
+
+        // ANTALL er nullable i Arena — 0 og "ikke registrert" må kunne skilles fra hverandre.
+        assertThat(posteringer.first { it.meldekortId == 5002L }.antall).isNull()
     }
 
     @Test

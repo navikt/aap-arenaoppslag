@@ -48,6 +48,12 @@ fun ResultSet.getIntOrNull(columnLabel: String): Int? {
     return if (wasNull()) null else value
 }
 
+// getDouble returnerer 0.0 for NULL-kolonner — vi bruker wasNull() for å skille null fra 0.0
+fun ResultSet.getDoubleOrNull(columnLabel: String): Double? {
+    val value = getDouble(columnLabel)
+    return if (wasNull()) null else value
+}
+
 @Suppress("MagicNumber")
 fun Connection.createParameterizedQuery(queryString: String): PreparedStatement {
     val query = prepareStatement(queryString)
