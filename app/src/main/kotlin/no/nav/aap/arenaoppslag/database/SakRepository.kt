@@ -215,6 +215,7 @@ class SakRepository(private val dataSource: DataSource) {
                                     AND vv.rettighetkode = 'AAP'
                                     AND vv.utfallkode = 'JA'
                                     AND vv.vedtakstatuskode IN ('IVERK','AVSLU')
+                                    AND vv.utfallkode != 'AVBRUTT'
                                     -- Et nyere vedtak erstatter denne stansen:
                                     AND vv.vedtak_id > v.vedtak_id -- et nyere vedtak
                                     AND (vv.fra_dato IS NOT NULL AND v.fra_dato IS NOT NULL AND vv.fra_dato > v.fra_dato) -- med nyere fra_dato
