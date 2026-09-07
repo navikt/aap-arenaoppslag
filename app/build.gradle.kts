@@ -2,16 +2,11 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     id("aap.conventions")
-    id("com.gradleup.shadow") version "9.6.1"
-    id("io.ktor.plugin") version "3.5.2"
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.ktor)
     id("dev.detekt")
     application
 }
-
-val ktorVersion = "3.5.2"
-val jacksonVersion = "2.22.2"
-val jackson3Version = "3.2.2"
-val nettyVersion = "4.2.17.Final"
 
 application {
     mainClass.set("no.nav.aap.arenaoppslag.AppKt")
@@ -29,49 +24,49 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
 dependencies {
 
     // Overstyr versjoner ktor setter, for å få sikkerhetsfikser
-    implementation(platform("io.netty:netty-bom:$nettyVersion"))
-    implementation(platform("com.fasterxml.jackson:jackson-bom:$jacksonVersion"))
+    implementation(platform(libs.netty.bom))
+    implementation(platform(libs.jackson.bom))
     // Overstyr versjoner logstash setter, for å få sikkerhetsfikser
-    implementation(platform("tools.jackson:jackson-bom:$jackson3Version"))
+    implementation(platform(libs.jackson3.bom))
 
     implementation(project(":kontrakt"))
-    implementation("com.natpryce:konfig:1.6.10.0")
-    implementation("no.nav.aap.kelvin:server:2.0.142")
-    implementation("no.nav.aap.kelvin:infrastructure:2.0.142")
+    implementation(libs.konfig)
+    implementation(libs.kelvin.server)
+    implementation(libs.kelvin.infrastructure)
 
-    implementation("io.ktor:ktor-server-auth:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-core:$ktorVersion")
-    implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
-    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-logging-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-id:$ktorVersion")
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt)
+    implementation(libs.ktor.server.auth.jvm)
+    implementation(libs.ktor.server.core.jvm)
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.metrics.micrometer)
+    implementation(libs.ktor.server.status.pages)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.call.logging.jvm)
+    implementation(libs.ktor.server.call.id)
 
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation(libs.ktor.serialization.jackson)
+    implementation(libs.jackson.datatype.jsr310)
 
-    implementation("io.micrometer:micrometer-registry-prometheus:1.17.0")
-    implementation("ch.qos.logback:logback-classic:1.6.3")
-    runtimeOnly("net.logstash.logback:logstash-logback-encoder:9.0")
+    implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.logback.classic)
+    runtimeOnly(libs.logstash.logback.encoder)
 
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
+    implementation(libs.caffeine)
 
-    implementation("com.oracle.database.jdbc:ojdbc11:23.26.3.0.0")
-    implementation("com.zaxxer:HikariCP:7.1.0")
+    implementation(libs.oracle.ojdbc11)
+    implementation(libs.hikaricp)
 
     testImplementation(kotlin("test"))
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("com.nimbusds:nimbus-jose-jwt:10.9.1")
-    testImplementation("org.flywaydb:flyway-core:12.9.0")
-    testImplementation("org.assertj:assertj-core:3.27.7")
-    testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    testImplementation("com.h2database:h2:2.4.240") // 2.4.240 er nyeste versjon offisielt støttet av flyway 12.9.0
-    testImplementation("io.mockk:mockk:1.14.11")
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.nimbus.jose.jwt)
+    testImplementation(libs.flyway.core)
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.ktor.client.content.negotiation)
+    testImplementation(libs.h2)
+    testImplementation(libs.mockk)
 }
 
 tasks {
