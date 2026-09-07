@@ -200,6 +200,36 @@ fun Route.sakDetaljert(
     }
 }
 
+// Tilkjent ytelse eksponeres også som eget endepunkt. Feltet i detaljert-responsen beholdes
+// inntil frontend er migrert over, og skal fjernes etterpå.
+fun Route.tilkjentYtelseForSak(sakService: SakService, tilkjentYtelserService: TilkjentYtelserService) {
+    get("/sak/{sakid}/tilkjent-ytelse") {
+        val sakid = call.parameters["sakid"]
+
+        if (sakid == null) {
+            logger.info("Sakid kan ikke være NULL")
+            return@get call.respond(HttpStatusCode.BadRequest)
+        }
+
+        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
+        val sakId = when (sakidentifikator) {
+            is SakId -> sakService.hentSakId(saksId = sakidentifikator)
+            is Saksnummer -> sakService.hentSakId(saksnummer = sakidentifikator)
+            else -> null
+        }
+
+        if (sakId == null) {
+            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        logger.info("Henter tilkjent ytelse for sak")
+        // En sak uten meldekort og posteringer gir en tom rad-liste, ikke 404
+        val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(sakId)
+        call.respond(status = HttpStatusCode.OK, message = tilkjentYtelse)
+    }
+}
+
 
 fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
     post("/person/vedtak") {

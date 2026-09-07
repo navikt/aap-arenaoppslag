@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag
 
+import io.ktor.http.HttpStatusCode
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
@@ -98,6 +99,43 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             val ikkeBeregnet = rader.first { it.meldekort?.meldekortId == 7003L }
             assertThat(ikkeBeregnet.beregnetBrutto).isNull()
             assertThat(ikkeBeregnet.meldekort?.beregningStatusKode).isEqualTo("OPPRE")
+        }
+    }
+
+    @Test
+    fun `eget endepunkt returnerer samme tilkjent ytelse som detaljert-responsen`() {
+        withTestServer(h2) { gateway ->
+            val fraDetaljert = gateway.hentSakDetaljert(9001).tilkjentYtelse
+            val fraEgetEndepunkt = gateway.hentTilkjentYtelse("9001")
+
+            assertThat(fraEgetEndepunkt).isEqualTo(fraDetaljert)
+        }
+    }
+
+    @Test
+    fun `eget endepunkt slaar opp sak med saksnummer`() {
+        withTestServer(h2) { gateway ->
+            val medSaksnummer = gateway.hentTilkjentYtelse("2023-9001")
+
+            assertThat(medSaksnummer).isEqualTo(gateway.hentTilkjentYtelse("9001"))
+        }
+    }
+
+    @Test
+    fun `sak uten meldekort og posteringer gir tom liste`() {
+        withTestServer(h2) { gateway ->
+            val response = gateway.hentTilkjentYtelse("9002")
+
+            assertThat(response.sakId).isEqualTo(9002)
+            assertThat(response.rader).isEmpty()
+        }
+    }
+
+    @Test
+    fun `ukjent sak gir 404`() {
+        withTestServer(h2) { gateway ->
+            assertThat(gateway.hentTilkjentYtelseStatus("99999")).isEqualTo(HttpStatusCode.NotFound)
+            assertThat(gateway.hentTilkjentYtelseStatus("2023-99999")).isEqualTo(HttpStatusCode.NotFound)
         }
     }
 }
