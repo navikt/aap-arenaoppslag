@@ -8,7 +8,7 @@ jackson3 = "3.2.2"
 netty = "4.2.17.Final"
 konfig = "1.6.10.0"
 kelvin = "2.0.155"
-micrometer = "1.17.0"
+micrometer = "1.17.1"
 logback = "1.6.3"
 logstash-encoder = "9.0"
 caffeine = "3.2.4"
@@ -17,7 +17,7 @@ hikaricp = "7.1.0"
 nimbus-jose-jwt = "10.9.1"
 flyway = "12.9.0"
 assertj = "3.27.7"
-h2 = "2.3.232" # 2.3.232 er nyeste versjon offisielt støttet av flyway 12.9.0
+h2 = "2.4.240" # 2.3.232 er nyeste versjon offisielt støttet av flyway 12.9.0
 mockk = "1.14.11"
 foojay-resolver = "1.0.0"
 
