@@ -16,7 +16,7 @@ class MaksimumRepositoryChunkingTest : H2TestBase("flyway/maksimum") {
 
     @Test
     fun `chunking slår korrekt sammen anmerkninger fra flere chunks`() {
-        val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak, søkeperiodeFra, søkeperiodeTil)
+        val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak)
             .vedtak.first().utbetaling
 
         assertThat(utbetalinger).hasSize(2)

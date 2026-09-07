@@ -15,29 +15,16 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
     // Person uten vedtak
     private val fnrUtenVedtak = "00000000000"
 
-    // Person med vedtak i 2020 — utenfor standardsøkeperioden 2023
-    private val fnrVedtakUtenforPeriode = "11111111111"
-
-    private val søkeperiodeFra = LocalDate.of(2023, 1, 1)
-    private val søkeperiodeTil = LocalDate.of(2023, 12, 31)
-
     @Test
     fun `returnerer tomt vedtakliste for person uten vedtak`() {
-        val resultat = repo.hentMaksimumsløsning(fnrUtenVedtak, søkeperiodeFra, søkeperiodeTil)
-
-        assertThat(resultat.vedtak).isEmpty()
-    }
-
-    @Test
-    fun `returnerer tomt vedtakliste når vedtak er utenfor søkeperioden`() {
-        val resultat = repo.hentMaksimumsløsning(fnrVedtakUtenforPeriode, søkeperiodeFra, søkeperiodeTil)
+        val resultat = repo.hentMaksimumsløsning(fnrUtenVedtak)
 
         assertThat(resultat.vedtak).isEmpty()
     }
 
     @Test
     fun `henter vedtak med korrekte feltverdier`() {
-        val resultat = repo.hentMaksimumsløsning(fnrMedVedtak, søkeperiodeFra, søkeperiodeTil)
+        val resultat = repo.hentMaksimumsløsning(fnrMedVedtak)
 
         assertThat(resultat.vedtak).hasSize(1)
         val vedtak = resultat.vedtak.first()
@@ -56,7 +43,7 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
 
     @Test
     fun `henter utbetalinger med korrekt periode, beløp og vedtakfakta`() {
-        val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak, søkeperiodeFra, søkeperiodeTil)
+        val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak)
             .vedtak.first().utbetaling
 
         assertThat(utbetalinger).hasSize(2)
@@ -70,7 +57,7 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
 
     @Test
     fun `henter timer arbeidet per meldekortperiode`() {
-        val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak, søkeperiodeFra, søkeperiodeTil)
+        val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak)
             .vedtak.first().utbetaling
 
         val utbetaling1 = utbetalinger.find { it.periode.fraOgMedDato == LocalDate.of(2023, 1, 2) }!!
@@ -86,9 +73,7 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         // ut vedtak over flere år (f.eks. tilDato = NULL). Årsaken til dette er at MELDEKORTPERIODE har
         // Primary key (periodekode, aar), men vi joinet kun på periodekode.
         val resultat = repo.hentMaksimumsløsning(
-            "22222222222",
-            LocalDate.of(2023, 1, 1),
-            LocalDate.of(2024, 12, 31)
+            "22222222222"
         )
 
         val vedtak = resultat.vedtak.single()
@@ -97,7 +82,7 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
 
     @Test
     fun `henter meldekortdata per utbetalingsperiode`() {
-        val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak, søkeperiodeFra, søkeperiodeTil)
+        val utbetalinger = repo.hentMaksimumsløsning(fnrMedVedtak)
             .vedtak.first().utbetaling
 
         val utbetaling1 = utbetalinger.find { it.periode.fraOgMedDato == LocalDate.of(2023, 1, 2) }!!

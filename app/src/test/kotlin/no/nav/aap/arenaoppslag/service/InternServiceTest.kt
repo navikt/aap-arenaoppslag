@@ -33,7 +33,7 @@ class InternServiceTest {
 
     @Test
     fun `kan kalle på maksimum`() {
-        underTest.hentMaksimum("ff", LocalDate.now().minusDays(1), LocalDate.now())
+        underTest.hentMaksimum("ff")
     }
 
     @Test

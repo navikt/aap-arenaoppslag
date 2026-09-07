@@ -5,6 +5,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
+import no.nav.aap.arenaoppslag.kontrakt.intern.MaksimumRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
@@ -43,11 +44,9 @@ fun Route.perioder(internService: InternService) {
 fun Route.maksimum(internService: InternService) {
     post("/maksimum") {
         logger.info("Henter maksimum")
-        val request: InternVedtakRequest = call.receive()
+        val request= call.receive<MaksimumRequest>()
         val response: Maksimum = internService.hentMaksimum(
-            request.personidentifikator,
-            request.fraOgMedDato,
-            request.tilOgMedDato
+            request.personidentifikator
         )
 
         call.respond(response)
