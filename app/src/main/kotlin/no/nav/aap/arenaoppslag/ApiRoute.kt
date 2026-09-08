@@ -191,11 +191,8 @@ fun Route.sakDetaljert(
         )
 
 
-        val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(SakId(sak.sakId.toInt()))
-            .takeIf { it.rader.isNotEmpty() }
-
         logger.info("Henter saksdetaljer")
-        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, tilkjentYtelse,oppgaver)
+        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, null,oppgaver)
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
