@@ -2,6 +2,8 @@ package no.nav.aap.arenaoppslag.service
 
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -28,26 +30,26 @@ class InternServiceTest {
         val vedtakRepository = VedtakRepository(datasource)
         val telleverkRepository = TelleverkRepository(datasource)
         val personRepository = PersonRepository(datasource)
-        underTest = InternService(maksimumRepository, periodeRepository, vedtakRepository)
+        underTest = InternService(maksimumRepository, periodeRepository, vedtakRepository, Dispatchers.Unconfined)
     }
 
     @Test
-    fun `kan kalle på maksimum`() {
+    fun `kan kalle på maksimum`() = runBlocking {
         underTest.hentMaksimum("ff", LocalDate.now().minusDays(1), LocalDate.now())
     }
 
     @Test
-    fun `kan kalle på 11-17 perioder`() {
+    fun `kan kalle på 11-17 perioder`() = runBlocking {
         underTest.hent11_17Perioder("ff", LocalDate.now().minusDays(1), LocalDate.now())
     }
 
     @Test
-    fun `kan kalle på perioder`() {
+    fun `kan kalle på perioder`() = runBlocking {
         underTest.hentPerioder("ff", LocalDate.now().minusDays(1), LocalDate.now())
     }
 
     @Test
-    fun `kan kalle på saker`() {
+    fun `kan kalle på saker`() = runBlocking {
         underTest.hentSaker(setOf("ff"))
     }
 

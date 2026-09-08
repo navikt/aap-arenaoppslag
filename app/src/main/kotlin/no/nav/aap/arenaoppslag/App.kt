@@ -40,6 +40,7 @@ import no.nav.aap.arenaoppslag.database.PosteringRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.SaksopplysningRepository
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
+import no.nav.aap.arenaoppslag.database.tilDbDispatcher
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
@@ -173,7 +174,7 @@ private fun skapInternService(datasource: DataSource): InternService {
     val maksimumRepository = MaksimumRepository(datasource)
     val vedtakRepository = VedtakRepository(datasource)
 
-    return InternService(maksimumRepository, periodeRepository, vedtakRepository)
+    return InternService(maksimumRepository, periodeRepository, vedtakRepository, datasource.tilDbDispatcher())
 }
 
 private fun skapHistorikkService(datasource: DataSource): HistorikkService {
