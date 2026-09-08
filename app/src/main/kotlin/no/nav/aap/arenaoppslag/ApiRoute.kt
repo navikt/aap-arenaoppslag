@@ -196,8 +196,6 @@ fun Route.sakDetaljert(
     }
 }
 
-// Tilkjent ytelse er skilt ut fra detaljert-responsen fordi den er tung å bygge og
-// hentes uavhengig av resten av saksdetaljene.
 fun Route.tilkjentYtelseForSak(sakService: SakService, tilkjentYtelserService: TilkjentYtelserService) {
     get("/sak/{sakid}/tilkjent-ytelse") {
         val sakid = call.parameters["sakid"]

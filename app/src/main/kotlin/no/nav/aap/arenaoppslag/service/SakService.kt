@@ -35,8 +35,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
         }
     }
 
-    // Slår opp saken for å skille mellom en sak som ikke finnes og en sak uten data,
-    // og for å oversette saksnummer (åååå-løpenr) til den interne sakId-en.
+
     fun hentSakId(saksnummer: Saksnummer): SakId? =
         sakRepository.hentSak(saksnummer)?.tilSakId()
 
