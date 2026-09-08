@@ -8,18 +8,15 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-// Tilkjent ytelse eksponeres som en del av /api/intern/sak/{sakid}/detaljert-responsen,
-// så vi verifiserer payloaden gjennom det endepunktet.
+// Tilkjent ytelse eksponeres av /api/intern/sak/{sakid}/tilkjent-ytelse.
 class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
 
     @Test
-    fun `detaljert-responsen inkluderer tilkjent ytelse med meldekort for sak`() {
+    fun `responsen inneholder tilkjent ytelse med meldekort for sak`() {
         withTestServer(h2) { gateway ->
-            val response = gateway.hentSakDetaljert(9001)
+            val tilkjentYtelse = gateway.hentTilkjentYtelse("9001")
 
-            val tilkjentYtelse = response.tilkjentYtelse
-            assertThat(tilkjentYtelse).isNotNull
-            assertThat(tilkjentYtelse!!.sakId).isEqualTo(9001)
+            assertThat(tilkjentYtelse.sakId).isEqualTo(9001)
             assertThat(tilkjentYtelse.rader).hasSize(2)
 
             val rad = tilkjentYtelse.rader.first { it.meldekort?.meldekortId == 5001L }
@@ -51,18 +48,26 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             val radMeldekortTo = tilkjentYtelse.rader.first { it.meldekort?.meldekortId == 5002L }
             assertThat(radMeldekortTo.gjenstaaendeOrdinaerDager).isEqualTo(4)
             assertThat(radMeldekortTo.gjenstaaendeUnntakDager).isEqualTo(25)
+        }
+    }
+
+    @Test
+    fun `detaljert-responsen har ikke lenger tilkjent ytelse, men beholder telleverk for personen`() {
+        withTestServer(h2) { gateway ->
+            val response = gateway.hentSakDetaljert(9001)
 
             // Saldoen for personen som helhet kommer fra BEREGNINGSLEDD og ligger på telleverkForPerson,
             // ikke på tilkjent ytelse.
             assertThat(response.telleverkForPerson?.ordineerAAPKvote).isEqualTo(4)
             assertThat(response.telleverkForPerson?.utvidetAAPKvote).isEqualTo(25)
+            assertThat(response.tilkjentYtelse).isNull()
         }
     }
 
     @Test
     fun `kilde utledes per postering og alle kildetyper er med i responsen`() {
         withTestServer(h2) { gateway ->
-            val rader = gateway.hentSakDetaljert(9004).tilkjentYtelse!!.rader
+            val rader = gateway.hentTilkjentYtelse("9004").rader
 
             assertThat(rader.map { it.kilde }).containsExactly(
                 PosteringKilde.MELDEKORT,
@@ -79,7 +84,7 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     @Test
     fun `meldekort uten postering kommer med i responsen`() {
         withTestServer(h2) { gateway ->
-            val rader = gateway.hentSakDetaljert(9006).tilkjentYtelse!!.rader
+            val rader = gateway.hentTilkjentYtelse("9006").rader
 
             // 7004 er et dagpenge-meldekort og 7005 er postert på sak 9007 — ingen av dem hører hjemme her.
             assertThat(rader.map { it.meldekort?.meldekortId }).containsExactly(7001L, 7002L, 7003L)
@@ -103,17 +108,7 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     }
 
     @Test
-    fun `eget endepunkt returnerer samme tilkjent ytelse som detaljert-responsen`() {
-        withTestServer(h2) { gateway ->
-            val fraDetaljert = gateway.hentSakDetaljert(9001).tilkjentYtelse
-            val fraEgetEndepunkt = gateway.hentTilkjentYtelse("9001")
-
-            assertThat(fraEgetEndepunkt).isEqualTo(fraDetaljert)
-        }
-    }
-
-    @Test
-    fun `eget endepunkt slaar opp sak med saksnummer`() {
+    fun `endepunktet slaar opp sak med saksnummer`() {
         withTestServer(h2) { gateway ->
             val medSaksnummer = gateway.hentTilkjentYtelse("2023-9001")
 
@@ -139,4 +134,3 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
         }
     }
 }
-
