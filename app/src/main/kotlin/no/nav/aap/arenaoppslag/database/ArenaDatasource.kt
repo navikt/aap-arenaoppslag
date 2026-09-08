@@ -2,13 +2,20 @@ package no.nav.aap.arenaoppslag.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import no.nav.aap.arenaoppslag.DbConfig
 import no.nav.aap.arenaoppslag.Metrics
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import javax.sql.DataSource
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+
+// Speiler HikariCP sin egen default maximumPoolSize, brukt som fallback for datasources
+// (f.eks. H2 i tester) som ikke er HikariDataSource.
+private const val DEFAULT_MAKS_POOLSTØRRELSE = 10
 
 internal object ArenaDatasource {
     @Suppress("MagicNumber")
@@ -59,4 +66,13 @@ fun Connection.createParameterizedQuery(queryString: String): PreparedStatement 
     val query = prepareStatement(queryString)
     query.queryTimeout = 300 // set a timeout in seconds, to avoid long running queries
     return query
+}
+
+// Blokkerende JDBC-kall må avlastes fra Ktor/Netty sine event loop-tråder (se AppConfig.ktorParallellitet),
+// ellers vil ett tregt Oracle-kall blokkere HELE applikasjonen for alle andre samtidige kall. Dispatcheren
+// begrenses til HikariCP sin maximumPoolSize — flere samtidige DB-kall enn det gir uansett ingen nytte,
+// de vil bare vente på en ledig connection.
+fun DataSource.tilDbDispatcher(): CoroutineDispatcher {
+    val poolstørrelse = (this as? HikariDataSource)?.maximumPoolSize ?: DEFAULT_MAKS_POOLSTØRRELSE
+    return Dispatchers.IO.limitedParallelism(poolstørrelse)
 }

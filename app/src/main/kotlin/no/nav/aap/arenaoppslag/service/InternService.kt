@@ -2,6 +2,8 @@ package no.nav.aap.arenaoppslag.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
@@ -18,6 +20,10 @@ class InternService(
     private val maksimumRepository: MaksimumRepository,
     private val periodeRepository: PeriodeRepository,
     private val vedtakRepository: VedtakRepository,
+    // Blokkerende JDBC-kall må avlastes fra Ktor/Netty sine event loop-tråder (se AppConfig.ktorParallellitet),
+    // ellers vil ett tregt Oracle-kall blokkere HELE applikasjonen for alle andre samtidige kall. Se
+    // ArenaDatasource.tilDbDispatcher() for hvordan denne dimensjoneres etter HikariCP sin maximumPoolSize.
+    private val dbDispatcher: CoroutineDispatcher,
 ) {
     private val maksimumCache = Caffeine.newBuilder()
         .maximumSize(10_000)
@@ -46,24 +52,28 @@ class InternService(
         CaffeineCacheMetrics.monitor(prometheus, perioder11_17Cache, "arenaoppslag_perioder_11_17")
     }
 
-    fun hentPerioder(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): PerioderResponse =
-        perioderCache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
-            val hentPerioder = periodeRepository.hentPerioder(fodselsnr, fraOgMedDato, tilOgMedDato)
-            PerioderResponse(perioder = hentPerioder.map { it.tilKontrakt() })
+    suspend fun hentPerioder(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): PerioderResponse =
+        withContext(dbDispatcher) {
+            perioderCache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
+                val hentPerioder = periodeRepository.hentPerioder(fodselsnr, fraOgMedDato, tilOgMedDato)
+                PerioderResponse(perioder = hentPerioder.map { it.tilKontrakt() })
+            }
         }
 
-    fun hent11_17Perioder(
+    suspend fun hent11_17Perioder(
         fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
     ): PerioderMed11_17Response =
-        perioder11_17Cache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
-            val perioder = periodeRepository.hentPeriodeInkludert11_17(fodselsnr, fraOgMedDato, tilOgMedDato)
-            PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
+        withContext(dbDispatcher) {
+            perioder11_17Cache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
+                val perioder = periodeRepository.hentPeriodeInkludert11_17(fodselsnr, fraOgMedDato, tilOgMedDato)
+                PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
+            }
         }
 
 
-    fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> {
+    suspend fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> = withContext(dbDispatcher) {
         // Merk: kontraktobjektet heter fra gammelt av feilaktig SakStatus, selv om det omhandler VedtakStatus
-        return fodselsnummerene.flatMap { fnr ->
+        fodselsnummerene.flatMap { fnr ->
             sakerCache.get(fnr) {
                 vedtakRepository.hentVedtakStatuser(fnr)
                     .map { SakStatus(it.sakId, it.statusKode, it.periode.tilKontrakt(), it.kilde) }
@@ -71,11 +81,13 @@ class InternService(
         }
     }
 
-    fun hentMaksimum(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum =
-        maksimumCache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
-            maksimumRepository.hentMaksimumsløsning(
-                fodselsnr, fraOgMedDato, tilOgMedDato
-            ).tilKontrakt()
+    suspend fun hentMaksimum(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum =
+        withContext(dbDispatcher) {
+            maksimumCache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
+                maksimumRepository.hentMaksimumsløsning(
+                    fodselsnr, fraOgMedDato, tilOgMedDato
+                ).tilKontrakt()
+            }
         }
 
 }
