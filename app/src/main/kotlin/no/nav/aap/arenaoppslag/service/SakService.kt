@@ -7,8 +7,11 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
+import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
@@ -31,6 +34,15 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
             SakerResponse(saker = saker.map { it.tilKontrakt() })
         }
     }
+
+
+    fun hentSakId(saksnummer: Saksnummer): SakId? =
+        sakRepository.hentSak(saksnummer)?.tilSakId()
+
+    fun hentSakId(saksId: SakId): SakId? =
+        sakRepository.hentSak(saksId)?.tilSakId()
+
+    private fun ArenaSak.tilSakId(): SakId? = sakId.toIntOrNull()?.let { SakId(it) }
 
     fun hentMaksdatoAapMedVedtakOgSak(personId: PersonId): SakMedSisteVedtakOgMaksdato? {
         val sakMedVedtak = sakRepository.hentMaxdatoForSisteVedtak(personId)

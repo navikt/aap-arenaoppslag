@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -32,6 +33,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
+import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
@@ -128,6 +130,24 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         gjørArenaOppslagGet<ArenaSakDetaljert>(
             "/api/intern/sak/$sakId/detaljert"
         ).getOrThrow()
+
+    suspend fun hentTilkjentYtelse(sakid: String): TilkjentYtelseResponse =
+        gjørArenaOppslagGet<TilkjentYtelseResponse>(
+            "/api/intern/sak/$sakid/tilkjent-ytelse"
+        ).getOrThrow()
+
+    suspend fun hentTilkjentYtelseStatus(sakid: String): HttpStatusCode {
+        val token = tokenProvider.generate()
+        // Testklienten validerer respons og kaster på feilstatus, så statusen hentes fra unntaket
+        return try {
+            httpClient.get("/api/intern/sak/$sakid/tilkjent-ytelse") {
+                accept(ContentType.Application.Json)
+                bearerAuth(token)
+            }.status
+        } catch (e: ResponseException) {
+            e.response.status
+        }
+    }
 
     private suspend inline fun <reified T> gjørArenaOppslagGet(
         endepunkt: String

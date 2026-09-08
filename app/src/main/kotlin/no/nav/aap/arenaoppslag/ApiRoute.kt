@@ -153,7 +153,6 @@ fun Route.sakDetaljert(
     telleverkService: TelleverkService,
     saksopplysningService: SaksopplysningService,
     oppgaveService: OppgaveService,
-    tilkjentYtelserService: TilkjentYtelserService
 ) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]
@@ -191,12 +190,37 @@ fun Route.sakDetaljert(
         )
 
 
-        val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(SakId(sak.sakId.toInt()))
-            .takeIf { it.rader.isNotEmpty() }
-
         logger.info("Henter saksdetaljer")
-        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, tilkjentYtelse,oppgaver)
+        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, null,oppgaver)
         call.respond(status = HttpStatusCode.OK, message = response)
+    }
+}
+
+fun Route.tilkjentYtelseForSak(sakService: SakService, tilkjentYtelserService: TilkjentYtelserService) {
+    get("/sak/{sakid}/tilkjent-ytelse") {
+        val sakid = call.parameters["sakid"]
+
+        if (sakid == null) {
+            logger.info("Sakid kan ikke være NULL")
+            return@get call.respond(HttpStatusCode.BadRequest)
+        }
+
+        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
+        val sakId = when (sakidentifikator) {
+            is SakId -> sakService.hentSakId(saksId = sakidentifikator)
+            is Saksnummer -> sakService.hentSakId(saksnummer = sakidentifikator)
+            else -> null
+        }
+
+        if (sakId == null) {
+            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        logger.info("Henter tilkjent ytelse for sak")
+        // En sak uten meldekort og posteringer gir en tom rad-liste, ikke 404
+        val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(sakId)
+        call.respond(status = HttpStatusCode.OK, message = tilkjentYtelse)
     }
 }
 
