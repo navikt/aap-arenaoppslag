@@ -153,7 +153,6 @@ fun Route.sakDetaljert(
     telleverkService: TelleverkService,
     saksopplysningService: SaksopplysningService,
     oppgaveService: OppgaveService,
-    tilkjentYtelserService: TilkjentYtelserService
 ) {
     get("/sak/{sakid}/detaljert") {
         val sakid = call.parameters["sakid"]

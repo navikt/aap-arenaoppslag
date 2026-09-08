@@ -286,7 +286,6 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     sakOgVedtakService = sakOgVedtakService,
                     telleverkService = telleverkService,
                     saksopplysningService = saksopplysningService,
-                    tilkjentYtelserService = tilkjentYtelserService,
                     oppgaveService = oppgaveService
                 )
                 tilkjentYtelseForSak(
