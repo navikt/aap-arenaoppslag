@@ -5,10 +5,28 @@ import io.micrometer.core.instrument.Tag
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("MagicNumber")
 object Metrics {
     val prometheus = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+
+    // Gjør dbDispatcher (se ArenaDatasource.tilDbDispatcher()) observerbar: uten disse er det
+    // umulig å se om dispatcheren er en flaskehals — antall kall som venter på å få kjøre,
+    // antall som faktisk kjører samtidig, og hvor lenge de venter i kø.
+    val dbDispatcherVentendeKall = AtomicInteger(0)
+    val dbDispatcherAktiveKall = AtomicInteger(0)
+
+    init {
+        prometheus.gauge("arenaoppslag_db_dispatcher_ventende_kall", dbDispatcherVentendeKall)
+        prometheus.gauge("arenaoppslag_db_dispatcher_aktive_kall", dbDispatcherAktiveKall)
+    }
+
+    fun registrerDbDispatcherKøTid(kall: String, varighetNanos: Long) {
+        prometheus.timer("arenaoppslag_db_dispatcher_ko_tid_seconds", "kall", kall)
+            .record(varighetNanos, TimeUnit.NANOSECONDS)
+    }
 
     fun MeterRegistry.registrerSignifikantVedtak(vedtak: ArenaVedtak) {
         this.counter("arenaoppslag_signifikant_vedtak", taggListeForVedtak(vedtak))

@@ -3,7 +3,9 @@ package no.nav.aap.arenaoppslag.database
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import no.nav.aap.arenaoppslag.DbConfig
 import no.nav.aap.arenaoppslag.Metrics
 import java.sql.Connection
@@ -75,4 +77,33 @@ fun Connection.createParameterizedQuery(queryString: String): PreparedStatement 
 fun DataSource.tilDbDispatcher(): CoroutineDispatcher {
     val poolstørrelse = (this as? HikariDataSource)?.maximumPoolSize ?: DEFAULT_MAKS_POOLSTØRRELSE
     return Dispatchers.IO.limitedParallelism(poolstørrelse)
+}
+
+// Wrapper rundt withContext(dbDispatcher) som gjør dispatcheren observerbar i Prometheus:
+// - arenaoppslag_db_dispatcher_ventende_kall: kall som venter på å få kjøre (dispatcheren er begrenset,
+//   se tilDbDispatcher())
+// - arenaoppslag_db_dispatcher_aktive_kall: kall som faktisk kjører nå
+// - arenaoppslag_db_dispatcher_ko_tid_seconds: hvor lenge et kall måtte vente før det fikk kjøre
+// "kall"-taggen bør være et stabilt navn på kallstedet, f.eks. "maksimum" eller "saker".
+suspend fun <T> CoroutineDispatcher.målDbKall(kall: String, block: suspend CoroutineScope.() -> T): T {
+    val startTid = System.nanoTime()
+    Metrics.dbDispatcherVentendeKall.incrementAndGet()
+    var harStartetKjøring = false
+    try {
+        return withContext(this) {
+            harStartetKjøring = true
+            Metrics.dbDispatcherVentendeKall.decrementAndGet()
+            Metrics.registrerDbDispatcherKøTid(kall, System.nanoTime() - startTid)
+            Metrics.dbDispatcherAktiveKall.incrementAndGet()
+            try {
+                block()
+            } finally {
+                Metrics.dbDispatcherAktiveKall.decrementAndGet()
+            }
+        }
+    } finally {
+        if (!harStartetKjøring) {
+            Metrics.dbDispatcherVentendeKall.decrementAndGet()
+        }
+    }
 }

@@ -3,11 +3,11 @@ package no.nav.aap.arenaoppslag.service
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
+import no.nav.aap.arenaoppslag.database.målDbKall
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
@@ -53,7 +53,7 @@ class InternService(
     }
 
     suspend fun hentPerioder(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): PerioderResponse =
-        withContext(dbDispatcher) {
+        dbDispatcher.målDbKall("perioder") {
             perioderCache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
                 val hentPerioder = periodeRepository.hentPerioder(fodselsnr, fraOgMedDato, tilOgMedDato)
                 PerioderResponse(perioder = hentPerioder.map { it.tilKontrakt() })
@@ -63,7 +63,7 @@ class InternService(
     suspend fun hent11_17Perioder(
         fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate
     ): PerioderMed11_17Response =
-        withContext(dbDispatcher) {
+        dbDispatcher.målDbKall("perioder_11_17") {
             perioder11_17Cache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
                 val perioder = periodeRepository.hentPeriodeInkludert11_17(fodselsnr, fraOgMedDato, tilOgMedDato)
                 PerioderMed11_17Response(perioder = perioder.map { it.tilKontrakt() })
@@ -71,7 +71,7 @@ class InternService(
         }
 
 
-    suspend fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> = withContext(dbDispatcher) {
+    suspend fun hentSaker(fodselsnummerene: Set<String>): List<SakStatus> = dbDispatcher.målDbKall("saker") {
         // Merk: kontraktobjektet heter fra gammelt av feilaktig SakStatus, selv om det omhandler VedtakStatus
         fodselsnummerene.flatMap { fnr ->
             sakerCache.get(fnr) {
@@ -82,7 +82,7 @@ class InternService(
     }
 
     suspend fun hentMaksimum(fodselsnr: String, fraOgMedDato: LocalDate, tilOgMedDato: LocalDate): Maksimum =
-        withContext(dbDispatcher) {
+        dbDispatcher.målDbKall("maksimum") {
             maksimumCache.get("$fodselsnr-$fraOgMedDato-$tilOgMedDato") {
                 maksimumRepository.hentMaksimumsløsning(
                     fodselsnr, fraOgMedDato, tilOgMedDato
