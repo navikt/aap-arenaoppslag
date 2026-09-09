@@ -20,17 +20,12 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
-import no.nav.aap.arenaoppslag.modeller.PersonId
-import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.HistorikkService
-import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
-import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
-import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -139,75 +134,6 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
 
         logger.info("Henter sak med vedtak")
         call.respond(status = HttpStatusCode.OK, message = sak.tilKontrakt())
-    }
-}
-
-fun Route.sakDetaljert(
-    sakService: SakService,
-    posteringService: PosteringService,
-    sakOgVedtakService: SakOgVedtakService,
-    telleverkService: TelleverkService,
-    saksopplysningService: SaksopplysningService,
-    oppgaveService: OppgaveService,
-) {
-    get("/sak/{saksnummer}/detaljert") {
-        val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
-
-        if (saksnummer == null) {
-            logger.info("saksnummer er på et ugyldig format")
-            return@get call.respond(HttpStatusCode.BadRequest)
-        }
-
-        val sak = sakOgVedtakService.hentSakMedVedtak(saksnummer)
-
-        if (sak == null) {
-            logger.info("Klarte ikke hente sak for saksnummer $saksnummer")
-            return@get call.respond(HttpStatusCode.NotFound)
-        }
-
-        val personId = PersonId(sak.person.personId)
-
-        val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
-        val telleverk = telleverkService.hentTelleverkForPerson(personId)
-        val maksdato = sakService.hentMaksdatoAapForPerson(personId)
-        val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
-        val oppgaver = oppgaveService.hentOppgaverForPerson(personId)
-        val saksopplysningerPerVedtak = saksopplysningService.hentForVedtakIder(sak.vedtak.map { it.vedtakId })
-        val alleSaksopplysninger = sak.vedtak.associate { vedtak ->
-            vedtak.vedtakId to (saksopplysningerPerVedtak[vedtak.vedtakId] ?: emptyList())
-        }
-        val samordningPerVedtak = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
-        val sakMedSamordning = sak.copy(
-            vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
-        )
-
-
-        logger.info("Henter saksdetaljer")
-        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, null,oppgaver)
-        call.respond(status = HttpStatusCode.OK, message = response)
-    }
-}
-
-fun Route.tilkjentYtelseForSak(sakService: SakService, tilkjentYtelserService: TilkjentYtelserService) {
-    get("/sak/{saksnummer}/tilkjent-ytelse") {
-        val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
-
-        if (saksnummer == null) {
-            logger.info("saksnummer er på et ugyldig format")
-            return@get call.respond(HttpStatusCode.BadRequest)
-        }
-
-        val sakId = sakService.hentSakId(saksnummer)
-
-        if (sakId == null) {
-            logger.info("Fant ikke sak med saksnummer $saksnummer")
-            return@get call.respond(HttpStatusCode.NotFound)
-        }
-
-        logger.info("Henter tilkjent ytelse for sak")
-        // En sak uten meldekort og posteringer gir en tom rad-liste, ikke 404
-        val tilkjentYtelse = tilkjentYtelserService.hentTilkjenteYtelserForSak(sakId)
-        call.respond(status = HttpStatusCode.OK, message = tilkjentYtelse)
     }
 }
 
