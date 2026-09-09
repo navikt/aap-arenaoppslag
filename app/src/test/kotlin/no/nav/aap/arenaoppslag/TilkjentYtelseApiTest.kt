@@ -52,19 +52,6 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     }
 
     @Test
-    fun `detaljert-responsen har ikke lenger tilkjent ytelse, men beholder telleverk for personen`() {
-        withTestServer(h2) { gateway ->
-            val response = gateway.hentSakDetaljert("2023-9001")
-
-            // Saldoen for personen som helhet kommer fra BEREGNINGSLEDD og ligger på telleverkForPerson,
-            // ikke på tilkjent ytelse.
-            assertThat(response.telleverkForPerson?.ordineerAAPKvote).isEqualTo(4)
-            assertThat(response.telleverkForPerson?.utvidetAAPKvote).isEqualTo(25)
-            assertThat(response.tilkjentYtelse).isNull()
-        }
-    }
-
-    @Test
     fun `kilde utledes per postering og alle kildetyper er med i responsen`() {
         withTestServer(h2) { gateway ->
             val rader = gateway.hentTilkjentYtelse("2023-9004").rader

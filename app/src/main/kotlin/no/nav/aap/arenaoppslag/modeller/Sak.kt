@@ -88,31 +88,6 @@ data class ArenaSakMedVedtak(
     val avsluttetDato: LocalDateTime?,
     val vedtak: List<ArenaVedtakMedDetaljer>
 ) {
-    fun tilKontrakt(
-        telleverkForPerson: TelleverkForPerson?,
-        kvoteHistorikk: Set<KvotebrukHendelse>,
-        sisteUtbetalingDato: LocalDate?,
-        maksdato: LocalDate?,
-        tilkjentYtelse: TilkjentYtelseResponse? = null,
-        oppgaver: List<ArenaOppgave>,
-    ) = ArenaSakDetaljert(
-        sakId = sakId,
-        opprettetAar = opprettetAar,
-        lopenr = lopenr,
-        person = person,
-        statuskode = statuskode,
-        statusnavn = statusnavn,
-        registrertDato = registrertDato,
-        avsluttetDato = avsluttetDato,
-        vedtak = vedtak,
-        telleverkForPerson = telleverkForPerson,
-        kvoteHistorikk = kvoteHistorikk,
-        maksdato = maksdato,
-        sisteUtbetalingDato = sisteUtbetalingDato,
-        oppgaver = oppgaver,
-        tilkjentYtelse = tilkjentYtelse,
-    )
-
     fun tilKontrakt() = ArenaSakMedVedtakResponse(
         sakId = sakId,
         opprettetAar = opprettetAar,
