@@ -126,11 +126,6 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/api/v1/person/historikk/signifikant", req
         ).getOrThrow()
 
-    suspend fun hentSakDetaljert(sakId: Int): ArenaSakDetaljert =
-        gjørArenaOppslagGet<ArenaSakDetaljert>(
-            "/api/intern/sak/$sakId/detaljert"
-        ).getOrThrow()
-
     suspend fun hentTilkjentYtelse(sakid: String): TilkjentYtelseResponse =
         gjørArenaOppslagGet<TilkjentYtelseResponse>(
             "/api/intern/sak/$sakid/tilkjent-ytelse"

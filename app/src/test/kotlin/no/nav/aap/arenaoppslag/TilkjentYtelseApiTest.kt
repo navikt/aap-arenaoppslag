@@ -14,7 +14,7 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     @Test
     fun `responsen inneholder tilkjent ytelse med meldekort for sak`() {
         withTestServer(h2) { gateway ->
-            val tilkjentYtelse = gateway.hentTilkjentYtelse("9001")
+            val tilkjentYtelse = gateway.hentTilkjentYtelse("2023-9001")
 
             assertThat(tilkjentYtelse.sakId).isEqualTo(9001)
             assertThat(tilkjentYtelse.rader).hasSize(2)
@@ -54,7 +54,7 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     @Test
     fun `detaljert-responsen har ikke lenger tilkjent ytelse, men beholder telleverk for personen`() {
         withTestServer(h2) { gateway ->
-            val response = gateway.hentSakDetaljert(9001)
+            val response = gateway.hentSakDetaljert("2023-9001")
 
             // Saldoen for personen som helhet kommer fra BEREGNINGSLEDD og ligger på telleverkForPerson,
             // ikke på tilkjent ytelse.
@@ -67,7 +67,7 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     @Test
     fun `kilde utledes per postering og alle kildetyper er med i responsen`() {
         withTestServer(h2) { gateway ->
-            val rader = gateway.hentTilkjentYtelse("9004").rader
+            val rader = gateway.hentTilkjentYtelse("2023-9004").rader
 
             assertThat(rader.map { it.kilde }).containsExactly(
                 PosteringKilde.MELDEKORT,
@@ -84,7 +84,7 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     @Test
     fun `meldekort uten postering kommer med i responsen`() {
         withTestServer(h2) { gateway ->
-            val rader = gateway.hentTilkjentYtelse("9006").rader
+            val rader = gateway.hentTilkjentYtelse("2023-9006").rader
 
             // 7004 er et dagpenge-meldekort og 7005 er postert på sak 9007 — ingen av dem hører hjemme her.
             assertThat(rader.map { it.meldekort?.meldekortId }).containsExactly(7001L, 7002L, 7003L)
@@ -110,16 +110,16 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     @Test
     fun `endepunktet slaar opp sak med saksnummer`() {
         withTestServer(h2) { gateway ->
-            val medSaksnummer = gateway.hentTilkjentYtelse("2023-9001")
+            val tilkjentYtelse = gateway.hentTilkjentYtelse("2023-9001")
 
-            assertThat(medSaksnummer).isEqualTo(gateway.hentTilkjentYtelse("9001"))
+            assertThat(tilkjentYtelse.sakId).isEqualTo(9001)
         }
     }
 
     @Test
     fun `sak uten meldekort og posteringer gir tom liste`() {
         withTestServer(h2) { gateway ->
-            val response = gateway.hentTilkjentYtelse("9002")
+            val response = gateway.hentTilkjentYtelse("2020-9002")
 
             assertThat(response.sakId).isEqualTo(9002)
             assertThat(response.rader).isEmpty()
@@ -127,9 +127,15 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     }
 
     @Test
+    fun `ugyldig saksnummerformat gir 400`() {
+        withTestServer(h2) { gateway ->
+            assertThat(gateway.hentTilkjentYtelseStatus("99999")).isEqualTo(HttpStatusCode.BadRequest)
+        }
+    }
+
+    @Test
     fun `ukjent sak gir 404`() {
         withTestServer(h2) { gateway ->
-            assertThat(gateway.hentTilkjentYtelseStatus("99999")).isEqualTo(HttpStatusCode.NotFound)
             assertThat(gateway.hentTilkjentYtelseStatus("2023-99999")).isEqualTo(HttpStatusCode.NotFound)
         }
     }

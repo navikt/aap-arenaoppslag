@@ -11,7 +11,7 @@ class SakDetaljertApiTest : H2TestBase("flyway/minimumtest", "flyway/oppgave") {
     @Test
     fun `Henter oppgaver for personen bak saken`() {
         withTestServer(h2) { gateway ->
-            val sak = gateway.hentSakDetaljert("1")
+            val sak = gateway.hentSakDetaljert("2021-1")
 
             assertThat(sak.sakId).isEqualTo("1")
             assertThat(sak.oppgaver.map { it.fristDato })
@@ -23,7 +23,7 @@ class SakDetaljertApiTest : H2TestBase("flyway/minimumtest", "flyway/oppgave") {
     @Test
     fun `Returnerer tom oppgaveliste for person uten oppgaver`() {
         withTestServer(h2) { gateway ->
-            val sak = gateway.hentSakDetaljert("9")
+            val sak = gateway.hentSakDetaljert("2023-9")
 
             assertThat(sak.oppgaver).isEmpty()
         }
