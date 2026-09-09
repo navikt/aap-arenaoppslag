@@ -98,7 +98,6 @@ class VedtakRepository(private val dataSource: DataSource) {
                  WHERE fodselsnr = ?) 
            AND rettighetkode = 'AAP'
            AND vedtaktypekode IN ('O', 'E', 'G', 'S')
-           AND (fra_dato <= til_dato OR til_dato IS NULL)
         """.trimIndent()
 
         fun selectVedtakStatuser(fodselsnr: String, connection: Connection): List<VedtakStatus> {
