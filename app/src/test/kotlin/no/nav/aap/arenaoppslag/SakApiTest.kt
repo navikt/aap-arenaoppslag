@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test
 class SakApiTest : H2TestBase("flyway/minimumtest") {
 
     @Test
-    fun `Henter sak med vedtak for kjent sakId`() {
+    fun `Henter sak med vedtak via saksnummer`() {
         withTestServer(h2) { gateway ->
-            val sak: ArenaSakMedVedtakResponse = gateway.hentSak("1")
+            val sak: ArenaSakMedVedtakResponse = gateway.hentSak("2021-1")
 
             assertThat(sak.sakId).isEqualTo("1")
             assertThat(sak.opprettetAar).isEqualTo(2021)
@@ -23,19 +23,9 @@ class SakApiTest : H2TestBase("flyway/minimumtest") {
     }
 
     @Test
-    fun `Henter sak med vedtak via saksnummer`() {
+    fun `Returnerer 404 for ukjent saksnummer`() {
         withTestServer(h2) { gateway ->
-            val sak: ArenaSakMedVedtakResponse = gateway.hentSak("2021-1")
-
-            assertThat(sak.sakId).isEqualTo("1")
-            assertThat(sak.vedtak).hasSize(1)
-        }
-    }
-
-    @Test
-    fun `Returnerer 404 for ukjent sakId`() {
-        withTestServer(h2) { gateway ->
-            val statusKode = runCatching { gateway.hentSak("99999") }
+            val statusKode = runCatching { gateway.hentSak("2099-99999") }
                 .exceptionOrNull()
                 ?.message
 

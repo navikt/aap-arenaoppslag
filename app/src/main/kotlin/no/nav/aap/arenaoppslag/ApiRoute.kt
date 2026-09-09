@@ -121,23 +121,19 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
 
 
 fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
-    get("/sak/{sakid}") {
-        val sakid = call.parameters["sakid"]
+    get("/sak/{saksnummer}") {
+        val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
 
-        if (sakid == null) {
-            logger.info("Sakid kan ikke være NULL")
+        if (saksnummer == null) {
+            logger.info("saksnummer er på et ugyldig format")
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
-        val sak = when (sakidentifikator) {
-            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId = sakidentifikator)
-            is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
-            else -> null
-        }
+
+        val sak = sakOgVedtakService.hentSakMedVedtak(saksnummer)
 
         if (sak == null) {
-            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            logger.info("Klarte ikke hente sak for saksnummer $saksnummer")
             return@get call.respond(HttpStatusCode.NotFound)
         }
 
@@ -154,25 +150,21 @@ fun Route.sakDetaljert(
     saksopplysningService: SaksopplysningService,
     oppgaveService: OppgaveService,
 ) {
-    get("/sak/{sakid}/detaljert") {
-        val sakid = call.parameters["sakid"]
+    get("/sak/{saksnummer}/detaljert") {
+        val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
 
-        if (sakid == null) {
-            logger.info("Sakid kan ikke være NULL")
+        if (saksnummer == null) {
+            logger.info("saksnummer er på et ugyldig format")
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
-        val sak = when (sakidentifikator) {
-            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId = sakidentifikator)
-            is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
-            else -> null
-        }
+        val sak = sakOgVedtakService.hentSakMedVedtak(saksnummer)
 
         if (sak == null) {
-            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            logger.info("Klarte ikke hente sak for saksnummer $saksnummer")
             return@get call.respond(HttpStatusCode.NotFound)
         }
+
         val personId = PersonId(sak.person.personId)
 
         val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
@@ -197,23 +189,18 @@ fun Route.sakDetaljert(
 }
 
 fun Route.tilkjentYtelseForSak(sakService: SakService, tilkjentYtelserService: TilkjentYtelserService) {
-    get("/sak/{sakid}/tilkjent-ytelse") {
-        val sakid = call.parameters["sakid"]
+    get("/sak/{saksnummer}/tilkjent-ytelse") {
+        val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
 
-        if (sakid == null) {
-            logger.info("Sakid kan ikke være NULL")
+        if (saksnummer == null) {
+            logger.info("saksnummer er på et ugyldig format")
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
-        val sakId = when (sakidentifikator) {
-            is SakId -> sakService.hentSakId(saksId = sakidentifikator)
-            is Saksnummer -> sakService.hentSakId(saksnummer = sakidentifikator)
-            else -> null
-        }
+        val sakId = sakService.hentSakId(saksnummer)
 
         if (sakId == null) {
-            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            logger.info("Fant ikke sak med saksnummer $saksnummer")
             return@get call.respond(HttpStatusCode.NotFound)
         }
 

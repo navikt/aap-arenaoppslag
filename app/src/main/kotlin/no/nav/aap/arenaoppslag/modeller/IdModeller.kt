@@ -12,7 +12,9 @@ data class SakId(val id: Int) {
 
 data class Saksnummer(val lopenummer: Int, val aar: Int) {
     companion object {
-        fun fromString(id: String): Saksnummer? {
+        fun fromString(id: String?): Saksnummer? {
+            if(id == null) return null
+
             if (!id.contains('-')) {
                 return null;
             }
@@ -20,5 +22,9 @@ data class Saksnummer(val lopenummer: Int, val aar: Int) {
             val (aar, lopenr) = id.split('-')
             return Saksnummer(lopenummer = lopenr.toInt(), aar = aar.toInt())
         }
+    }
+
+    override fun toString(): String {
+        return "${aar}-${lopenummer}"
     }
 }

@@ -19,11 +19,6 @@ class SakOgVedtakService(
     private val vedtakfaktaRepository: VedtakfaktaRepository,
     private val vilkårsvurderingRepository: VilkårsvurderingRepository,
 ) {
-    fun hentSakMedVedtak(saksId: SakId): ArenaSakMedVedtak? {
-        val sak = sakRepository.hentSak(saksId) ?: return null
-        return getArenaSakMedVedtak(sak)
-    }
-
     fun hentSakMedVedtak(saksnummer: Saksnummer): ArenaSakMedVedtak? {
         val sak = sakRepository.hentSak(saksnummer) ?: return null
         return getArenaSakMedVedtak(sak)
