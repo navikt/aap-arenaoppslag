@@ -39,6 +39,9 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
     fun hentSakId(saksnummer: Saksnummer): SakId? =
         sakRepository.hentSak(saksnummer)?.tilSakId()
 
+    fun hentSak(saksnummer: Saksnummer): ArenaSak? =
+        sakRepository.hentSak(saksnummer)
+
     private fun ArenaSak.tilSakId(): SakId? = sakId.toIntOrNull()?.let { SakId(it) }
 
     fun hentMaksdatoAapMedVedtakOgSak(personId: PersonId): SakMedSisteVedtakOgMaksdato? {

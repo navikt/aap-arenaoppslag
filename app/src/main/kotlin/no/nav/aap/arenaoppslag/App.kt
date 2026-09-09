@@ -293,6 +293,19 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     sakService = sakListeService,
                     tilkjentYtelserService = tilkjentYtelserService
                 )
+                oppgaverForSak(
+                    sakService = sakListeService,
+                    oppgaveService = oppgaveService
+                )
+                kvotehistorikkForSak(
+                    sakService = sakListeService,
+                    telleverkService = telleverkService
+                )
+                telleverkForSak(
+                    sakService = sakListeService,
+                    posteringService = utbetalingService,
+                    telleverkService = telleverkService,
+                )
             }
         }
     }
