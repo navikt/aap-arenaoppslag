@@ -32,7 +32,10 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
+import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
+import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
@@ -131,11 +134,38 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/api/intern/sak/$sakid/tilkjent-ytelse"
         ).getOrThrow()
 
-    suspend fun hentTilkjentYtelseStatus(sakid: String): HttpStatusCode {
+    suspend fun hentTilkjentYtelseStatus(sakid: String): HttpStatusCode =
+        hentStatus("/api/intern/sak/$sakid/tilkjent-ytelse")
+
+    suspend fun hentTelleverk(sakid: String): TelleverkResponse =
+        gjørArenaOppslagGet<TelleverkResponse>(
+            "/api/intern/sak/$sakid/telleverk"
+        ).getOrThrow()
+
+    suspend fun hentTelleverkStatus(sakid: String): HttpStatusCode =
+        hentStatus("/api/intern/sak/$sakid/telleverk")
+
+    suspend fun hentKvotehistorikk(sakid: String): List<KvotebrukHendelse> =
+        gjørArenaOppslagGet<List<KvotebrukHendelse>>(
+            "/api/intern/sak/$sakid/kvotehistorikk"
+        ).getOrThrow()
+
+    suspend fun hentKvotehistorikkStatus(sakid: String): HttpStatusCode =
+        hentStatus("/api/intern/sak/$sakid/kvotehistorikk")
+
+    suspend fun hentOppgaver(sakid: String): List<ArenaOppgave> =
+        gjørArenaOppslagGet<List<ArenaOppgave>>(
+            "/api/intern/sak/$sakid/oppgaver"
+        ).getOrThrow()
+
+    suspend fun hentOppgaverStatus(sakid: String): HttpStatusCode =
+        hentStatus("/api/intern/sak/$sakid/oppgaver")
+
+    private suspend fun hentStatus(endepunkt: String): HttpStatusCode {
         val token = tokenProvider.generate()
         // Testklienten validerer respons og kaster på feilstatus, så statusen hentes fra unntaket
         return try {
-            httpClient.get("/api/intern/sak/$sakid/tilkjent-ytelse") {
+            httpClient.get(endepunkt) {
                 accept(ContentType.Application.Json)
                 bearerAuth(token)
             }.status
