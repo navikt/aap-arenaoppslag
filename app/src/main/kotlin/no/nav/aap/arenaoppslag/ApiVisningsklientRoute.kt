@@ -5,6 +5,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
+import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
 import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -128,5 +129,36 @@ fun Route.oppgaverForSak(sakService: SakService, oppgaveService: OppgaveService)
         val oppgaver = oppgaveService.hentOppgaverForPerson(PersonId(sak.person.personId))
 
         call.respond(status = HttpStatusCode.OK, message = oppgaver)
+    }
+}
+
+fun Route.telleverkForSak(sakService: SakService, posteringService: PosteringService, telleverkService: TelleverkService) {
+    get("/sak/{saksnummer}/telleverk") {
+        logger.info("Henter telleverk for sak")
+        val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
+
+        if (saksnummer == null) {
+            logger.info("saksnummer er på et ugyldig format")
+            return@get call.respond(HttpStatusCode.BadRequest)
+        }
+
+        val sak = sakService.hentSak(saksnummer)
+
+        if (sak == null) {
+            logger.info("Fant ikke sak med saksnummer $saksnummer")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        val personId = PersonId(sak.person.personId)
+
+        val tellerverk = telleverkService.hentTelleverkForPerson(personId)
+        val maksdato = sakService.hentMaksdatoAapForPerson(personId)
+        val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
+
+        call.respond(status = HttpStatusCode.OK, message = TelleverkResponse(
+            telleverk = tellerverk,
+            maksdato = maksdato,
+            sisteUtbetalingDato = sisteUtbetalingDato
+        ))
     }
 }
