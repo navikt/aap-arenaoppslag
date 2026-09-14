@@ -99,6 +99,18 @@ data class ArenaSakMedVedtak(
         avsluttetDato = avsluttetDato,
         vedtak = vedtak.map { it.tilKontrakt() },
     )
+
+    fun tilDetaljert() = ArenaSakDetaljert(
+        sakId = sakId,
+        opprettetAar = opprettetAar,
+        lopenr = lopenr,
+        person = person,
+        statuskode = statuskode,
+        statusnavn = statusnavn,
+        registrertDato = registrertDato,
+        avsluttetDato = avsluttetDato,
+        vedtak = vedtak,
+    )
 }
 
 data class ArenaSakPerson(
