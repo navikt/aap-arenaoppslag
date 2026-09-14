@@ -89,6 +89,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
+          AND NOT (vedtakstatuskode = 'AVSLU' OR vedtakstatuskode = 'IVERK') -- AAP-vedtak er opprettet, vi følger heller det
         """.trimIndent()
 
         // S3: Hent alle AAP-klager med relevant historikk for personen
