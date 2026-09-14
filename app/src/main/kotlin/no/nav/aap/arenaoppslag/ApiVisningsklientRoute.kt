@@ -18,12 +18,8 @@ import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
  * og er mest ment til visningsklienten som gir detaljert innsyn i arenasaker
  */
 fun Route.sakDetaljert(
-    sakService: SakService,
-    posteringService: PosteringService,
     sakOgVedtakService: SakOgVedtakService,
-    telleverkService: TelleverkService,
     saksopplysningService: SaksopplysningService,
-    oppgaveService: OppgaveService,
 ) {
     get("/sak/{saksnummer}/detaljert") {
         val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
@@ -40,13 +36,6 @@ fun Route.sakDetaljert(
             return@get call.respond(HttpStatusCode.NotFound)
         }
 
-        val personId = PersonId(sak.person.personId)
-
-        val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
-        val telleverk = telleverkService.hentTelleverkForPerson(personId)
-        val maksdato = sakService.hentMaksdatoAapForPerson(personId)
-        val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
-        val oppgaver = oppgaveService.hentOppgaverForPerson(personId)
         val saksopplysningerPerVedtak = saksopplysningService.hentForVedtakIder(sak.vedtak.map { it.vedtakId })
         val alleSaksopplysninger = sak.vedtak.associate { vedtak ->
             vedtak.vedtakId to (saksopplysningerPerVedtak[vedtak.vedtakId] ?: emptyList())
@@ -58,7 +47,7 @@ fun Route.sakDetaljert(
 
 
         logger.info("Henter saksdetaljer")
-        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, null,oppgaver)
+        val response = sakMedSamordning.tilKontrakt()
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
