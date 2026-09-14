@@ -47,7 +47,7 @@ fun Route.sakDetaljert(
 
 
         logger.info("Henter saksdetaljer")
-        val response = sakMedSamordning.tilKontrakt()
+        val response = sakMedSamordning.tilDetaljert()
         call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
