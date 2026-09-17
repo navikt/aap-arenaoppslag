@@ -56,6 +56,9 @@ spec:
         - application: postmottak-backend
           cluster: {{cluster}}-gcp
           namespace: aap
+        - application: behandlingsflyt
+          cluster: {{cluster}}-gcp
+          namespace: aap
         {{#if isdev}}
         - application: azure-token-generator
           cluster: dev-gcp
