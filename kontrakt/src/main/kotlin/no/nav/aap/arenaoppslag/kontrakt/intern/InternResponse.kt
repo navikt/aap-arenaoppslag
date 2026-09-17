@@ -5,17 +5,6 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Periode
 import java.time.LocalDate
 
-@Deprecated("Bruk nytt endepunkt person/historikk", level = DeprecationLevel.WARNING)
-public data class PersonEksistererIAAPArena(
-    val eksisterer: Boolean
-)
-
-@Deprecated("Bruk nytt endepunkt person/historikk/signifikant", level = DeprecationLevel.ERROR)
-public data class SignifikanteSakerResponse(
-    val harSignifikantHistorikk: Boolean,
-    val signifikanteSaker: List<String> // signifikante Arena-saker, sortert på dato, nyeste først
-)
-
 public data class Person(val personIdentifikator: String, val fornavn: String, val etternavn: String)
 
 public data class PerioderResponse(
