@@ -38,19 +38,17 @@ class HistorikkRepository(private val dataSource: DataSource) {
                                         utfallkode
                                  FROM vedtak v
                                  WHERE v.person_id = ?
-                                   AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT') -- TODO: kan nøye oss med utfallkode null eller JA?
+                                   AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') 
                                    AND v.rettighetkode = 'AAP'
                                    AND v.MOD_DATO >= ?                                               -- ytelse: unngå å løpe gjennom veldig gamle vedtak
                                    AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
                                    AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR
                                         vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
                                    AND (
-                                     ((vedtaktypekode IN ('O', 'E', 'G') OR
-                                       (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND
+                                     ((vedtaktypekode IN ('O', 'E', 'G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) 
+                                       AND
                                       (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                                      )
-                                   AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND
-                                            (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
         ),
              stansede_aap_vedtak AS (SELECT sak_id,
                                         aar,
