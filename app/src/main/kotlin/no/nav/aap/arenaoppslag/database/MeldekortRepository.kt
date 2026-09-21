@@ -31,7 +31,9 @@ class MeldekortRepository(
 
     private fun selectPosteringer(sakId: SakId, connection: Connection): List<MeldekortPostering> =
         connection.createParameterizedQuery(posteringerForSakSql).use { preparedStatement ->
+            // Saken filtrerer både vedtaksfaktaene i WITH-blokken og posteringene i hovedspørringen.
             preparedStatement.setInt(1, sakId.id)
+            preparedStatement.setInt(2, sakId.id)
             preparedStatement.executeQuery().map { row ->
                 // wasNull() må sjekkes rett etter getLong, før vi leser andre kolonner.
                 val meldekortId = row.getLong("meldekort_id").let { if (row.wasNull()) null else it }
@@ -196,27 +198,24 @@ class MeldekortRepository(
 
     @Language("OracleSql")
     private val posteringerForSakSql = """
+        WITH fakta AS (
+            SELECT vf.vedtak_id,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSMBT'  THEN vf.vedtakverdi END) AS dagsats_med_barnetillegg,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGS'     THEN vf.vedtakverdi END) AS dagsats,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSFSAM' THEN vf.vedtakverdi END) AS dagsats_for_samordning,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'INSGRAD'  THEN vf.vedtakverdi END) AS ins_grad
+              FROM vedtakfakta vf
+             WHERE vf.vedtak_id IN (SELECT v.vedtak_id FROM vedtak v WHERE v.sak_id = ?)
+               AND vf.vedtakfaktakode IN ('DAGSMBT', 'DAGS', 'DAGSFSAM', 'INSGRAD')
+             GROUP BY vf.vedtak_id
+        )
         SELECT p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
                p.antall,
                p.tabellnavnalias_kilde, p.objekt_id_kilde,
-               (SELECT MAX(vf.vedtakverdi)
-                  FROM vedtakfakta vf
-                 WHERE vf.vedtak_id = p.vedtak_id
-                   AND vf.vedtakfaktakode = 'DAGSMBT') AS dagsats_med_barnetillegg,
-               (SELECT MAX(vf.vedtakverdi)
-                  FROM vedtakfakta vf
-                 WHERE vf.vedtak_id = p.vedtak_id
-                   AND vf.vedtakfaktakode = 'DAGS') AS dagsats,
-               (SELECT MAX(vf.vedtakverdi)
-                  FROM vedtakfakta vf
-                 WHERE vf.vedtak_id = p.vedtak_id
-                   AND vf.vedtakfaktakode = 'DAGSFSAM') AS dagsats_for_samordning,
-               (SELECT MAX(vf.vedtakverdi)
-                  FROM vedtakfakta vf
-                 WHERE vf.vedtak_id = p.vedtak_id
-                   AND vf.vedtakfaktakode = 'INSGRAD') AS ins_grad
+               f.dagsats_med_barnetillegg, f.dagsats, f.dagsats_for_samordning, f.ins_grad
           FROM postering p
           JOIN vedtak v ON v.vedtak_id = p.vedtak_id
+          LEFT JOIN fakta f ON f.vedtak_id = p.vedtak_id
          WHERE v.sak_id = ?
          ORDER BY p.dato_periode_fra, p.postering_id
     """.trimIndent()
