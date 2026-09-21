@@ -50,6 +50,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
         assertThat(signifikanteVedtak.map { it.rettighetkode }.sorted()).isEqualTo(
             listOf(
+                "AA115",
                 "AAP"
             )
         )
@@ -57,6 +58,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         assertThat(signifikanteVedtak).extracting("rettighetkode", "aar", "lopenrvedtak")
             .containsExactlyInAnyOrder(
                 tuple("AAP", 2021, 30),
+                tuple("AA115", 2021, 31),
             )
     }
 

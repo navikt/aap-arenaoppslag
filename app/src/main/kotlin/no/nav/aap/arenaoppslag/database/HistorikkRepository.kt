@@ -78,9 +78,17 @@ class HistorikkRepository(private val dataSource: DataSource) {
         FROM 
               vedtak v 
         WHERE v.person_id = ?
+          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
           AND v.rettighetkode = 'AA115'
-          AND v.utfallkode IS NULL -- ikke behandlet enda 
-          AND v.MOD_DATO >= ? -- ikke utdatert
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+          AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
+          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
+          AND ( 
+                ( (vedtaktypekode IN ('O','E','G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND (til_dato IS NULL OR til_dato >= ?) ) -- vanlig tidsbuffer
+                  OR
+                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+              )
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL) -- bruker fikk avslag
         """.trimIndent()
 
         // S3: Hent alle AAP-klager med relevant historikk for personen
@@ -144,7 +152,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
         const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
-        const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
         const val modnedGrenseVedtak = 72L
         const val modnedGrenseKlageInnvilget = 6L
 
@@ -155,7 +162,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
             val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(stansTidsbufferUker))
             val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
             val klageInnvilgetGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseKlageInnvilget))
-            val aa115BehandlingUkerGrense = Date.valueOf(søknadMottattPå.minusWeeks(aa115BehandlingUker))
 
             val query =
                 listOf(
@@ -175,7 +181,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 // S2: 11-5-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, aa115BehandlingUkerGrense)
+                preparedStatement.setDate(p++, vedtakModnedGrense)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, stansTidsbuffer)
                 // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
