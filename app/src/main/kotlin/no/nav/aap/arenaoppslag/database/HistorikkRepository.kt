@@ -43,7 +43,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                                         AND v.utfallkode IS NULL -- ikke behandlet enda
                                         AND v.MOD_DATO >= ? -- ikke utdatert
         ),
-         ikke_stansede_app_vedtak AS (SELECT sak_id,
+        ikke_stansede_aap_vedtak AS (SELECT sak_id,
                                        vedtak_id,
                                        aar,
                                        lopenrvedtak,
@@ -106,12 +106,12 @@ class HistorikkRepository(private val dataSource: DataSource) {
                                       rettighetkode,
                                       aktfasekode,
                                       utfallkode
-                               FROM ikke_stansede_app_vedtak 
+                               FROM ikke_stansede_aap_vedtak 
                                WHERE vedtakstatuskode IN ('IVERK', 'AVSLU')
                                ORDER by til_dato DESC NULLS LAST
                                    FETCH FIRST 1 ROW ONLY
          ),
-         siste_stansede_vedtak as (SELECT sak_id,
+         siste_stansede_aap_vedtak as (SELECT sak_id,
                                           vedtak_id,
                                           aar,
                                           lopenrvedtak,
@@ -138,10 +138,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             FROM ubehandlede_aa115_vedtak
                UNION ALL
             SELECT *
-            FROM ikke_stansede_app_vedtak
+            FROM ikke_stansede_aap_vedtak
                UNION ALL
             SELECT *
-            FROM siste_stansede_vedtak     
+            FROM siste_stansede_aap_vedtak     
         """.trimIndent()
 
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
@@ -162,7 +162,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 // ubehandlede_aa115_vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, aa115BehandlingUkerGrense)
-                // ikke_stansede_app_vedtak
+                // ikke_stansede_aap_vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
