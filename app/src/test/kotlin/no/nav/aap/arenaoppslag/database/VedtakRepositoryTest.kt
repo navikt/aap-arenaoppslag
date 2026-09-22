@@ -104,6 +104,27 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
     }
 
     @Test
+    fun `hentForsteInnvilgetVedtakForSak returnerer det eldste vedtaket med utfallkode JA`() {
+        val vedtakRepository = VedtakRepository(h2)
+
+        val vedtak = vedtakRepository.hentForsteInnvilgetVedtakForSak(SakId(3))
+
+        assertThat(vedtak).isNotNull
+        assertThat(vedtak?.vedtakId).isEqualTo(27)
+        assertThat(vedtak?.fraOgMed).isEqualTo(LocalDate.of(2022, 8, 27))
+        assertThat(vedtak?.utfallkode).isEqualTo("JA")
+    }
+
+    @Test
+    fun `hentForsteInnvilgetVedtakForSak returnerer null når saken ikke finnes`() {
+        val vedtakRepository = VedtakRepository(h2)
+
+        val vedtak = vedtakRepository.hentForsteInnvilgetVedtakForSak(SakId(1919191919))
+
+        assertThat(vedtak).isNull()
+    }
+
+    @Test
     fun `hentVedtak for person returnerer alle vedtak for person uten filtrering`() {
         val vedtakRepository = VedtakRepository(h2)
 
