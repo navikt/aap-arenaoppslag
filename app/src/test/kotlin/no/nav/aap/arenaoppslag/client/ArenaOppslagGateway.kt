@@ -24,6 +24,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakfaktaResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
@@ -160,6 +161,11 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     suspend fun hentOppgaverStatus(sakid: String): HttpStatusCode =
         hentStatus("/api/intern/sak/$sakid/oppgaver")
+
+    suspend fun hentVedtakfakta(vedtakId: String): VedtakfaktaResponse =
+        gjørArenaOppslagGet<VedtakfaktaResponse>(
+            "/api/v1/vedtak/$vedtakId/fakta"
+        ).getOrThrow()
 
     private suspend fun hentStatus(endepunkt: String): HttpStatusCode {
         val token = tokenProvider.generate()

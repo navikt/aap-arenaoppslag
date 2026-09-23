@@ -52,6 +52,10 @@ public data class ArenaVedtakfakta(
     val registrertDato: LocalDate,
 )
 
+public data class VedtakfaktaResponse(
+    val fakta: List<ArenaVedtakfakta>,
+)
+
 @Deprecated("bruk nytt navn uten -Kontrakt suffiks", level= DeprecationLevel.ERROR)
 public typealias ArenaVilkårsvurderingKontrakt = ArenaVilkårsvurdering
 

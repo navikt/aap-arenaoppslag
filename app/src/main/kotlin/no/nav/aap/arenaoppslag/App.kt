@@ -58,6 +58,7 @@ import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.service.VedtakfaktaService
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
 import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
@@ -243,6 +244,11 @@ private fun skapOppgaveService(datasource: DataSource): OppgaveService {
     return OppgaveService(oppgaveRepository)
 }
 
+private fun skapVedtakfaktaService(datasource: DataSource): VedtakfaktaService {
+    val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
+    return VedtakfaktaService(vedtakfaktaRepository)
+}
+
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
@@ -255,6 +261,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val tilkjentYtelserService = skapTilkjentYtelserService(datasource, telleverkService)
     val oppgaveService = skapOppgaveService(datasource)
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
+    val vedtakfaktaService = skapVedtakfaktaService(datasource)
 
     routing {
         actuator(prometheus)
@@ -276,6 +283,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 maksdato(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
+                vedtakfakta(vedtakfaktaService)
                 sak(sakOgVedtakService)
             }
             route("/api/intern") {

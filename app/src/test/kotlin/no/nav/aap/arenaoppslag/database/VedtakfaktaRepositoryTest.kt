@@ -1,6 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakfakta
+import no.nav.aap.arenaoppslag.modeller.VedtakId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -57,5 +58,17 @@ class VedtakfaktaRepositoryTest : H2TestBase("flyway/vedtakfakta") {
         val fakta = repo.hentForVedtakIder(listOf(4321))[4321]
 
         assertThat(fakta?.first { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()).isFalse()
+    }
+
+    @Test
+    fun `hentForVedtakId henter alle fakta for ett vedtak`() {
+        val fakta = repo.hentForVedtakId(VedtakId(1234))
+
+        assertThat(fakta.map { it.kode }).containsExactlyInAnyOrder("UNNTAKAAP", "AAPVILKUNN")
+    }
+
+    @Test
+    fun `hentForVedtakId returnerer tom liste for ukjent vedtakId`() {
+        assertThat(repo.hentForVedtakId(VedtakId(999999999))).isEmpty()
     }
 }

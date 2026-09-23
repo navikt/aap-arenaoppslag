@@ -1,12 +1,16 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakfakta
+import no.nav.aap.arenaoppslag.modeller.VedtakId
 import org.intellij.lang.annotations.Language
 import java.sql.ResultSet
 import java.time.LocalDate
 import javax.sql.DataSource
 
 class VedtakfaktaRepository(private val dataSource: DataSource) {
+
+    fun hentForVedtakId(vedtakId: VedtakId): List<ArenaVedtakfakta> =
+        hentForVedtakIder(listOf(vedtakId.id))[vedtakId.id] ?: emptyList()
 
     fun hentForVedtakIder(vedtakIder: List<Int>): Map<Int, List<ArenaVedtakfakta>> {
         if (vedtakIder.isEmpty()) return emptyMap()

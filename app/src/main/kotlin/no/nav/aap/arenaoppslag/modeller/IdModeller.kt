@@ -10,6 +10,14 @@ data class SakId(val id: Int) {
     }
 }
 
+data class VedtakId(val id: Int) {
+    companion object {
+        fun fromString(id: String?): VedtakId? {
+            return id?.toIntOrNull()?.let { VedtakId(it) }
+        }
+    }
+}
+
 data class Saksnummer(val lopenummer: Int, val aar: Int) {
     companion object {
         fun fromString(id: String?): Saksnummer? {
