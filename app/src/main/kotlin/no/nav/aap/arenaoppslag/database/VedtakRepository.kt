@@ -41,6 +41,12 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentForsteInnvilgetVedtakForSak(saksId: SakId): ArenaVedtakRad? {
+        return dataSource.connection.use { con ->
+            selectForsteInnvilgetVedtakForSak(saksId, con)
+        }
+    }
+
     companion object {
 
         @TestOnly
@@ -138,6 +144,31 @@ class VedtakRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(1, sakId.id)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { mapperForArenaVedtakRad(it) }.toList()
+            }
+        }
+
+        @Language("OracleSql")
+        private val selectForsteInnvilgetVedtakForSak = """
+        SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
+               v.fra_dato, v.til_dato, v.rettighetkode, rt.rettighetnavn, v.utfallkode, v.begrunnelse,
+               v.brukerid_ansvarlig, v.brukerid_beslutter, v.vedtak_id_relatert,
+               a.aktfasekode, a.aktfasenavn
+          FROM vedtak v
+          LEFT JOIN vedtaktype vt ON vt.vedtaktypekode = v.vedtaktypekode
+          LEFT JOIN vedtakstatus vs ON v.vedtakstatuskode = vs.vedtakstatuskode
+          LEFT JOIN aktivitetfase a ON a.aktfasekode = v.aktfasekode
+          LEFT JOIN rettighettype rt ON rt.rettighetkode = v.rettighetkode
+         WHERE sak_id = ?
+           AND v.utfallkode = 'JA'
+         ORDER BY v.fra_dato ASC
+         FETCH FIRST 1 ROW ONLY
+        """.trimIndent()
+
+        private fun selectForsteInnvilgetVedtakForSak(sakId: SakId, connection: Connection): ArenaVedtakRad? {
+            connection.createParameterizedQuery(selectForsteInnvilgetVedtakForSak).use { preparedStatement ->
+                preparedStatement.setInt(1, sakId.id)
+                val resultSet = preparedStatement.executeQuery()
+                return if (resultSet.next()) mapperForArenaVedtakRad(resultSet) else null
             }
         }
 
