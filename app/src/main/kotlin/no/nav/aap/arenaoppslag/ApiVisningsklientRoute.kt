@@ -3,15 +3,18 @@ package no.nav.aap.arenaoppslag
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakfaktaResponse
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
+import no.nav.aap.arenaoppslag.modeller.VedtakId
 import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
+import no.nav.aap.arenaoppslag.service.VedtakfaktaService
 
 /**
  * Ting som ligger i denne fila skal ligge under /api/intern
@@ -118,6 +121,23 @@ fun Route.oppgaverForSak(sakService: SakService, oppgaveService: OppgaveService)
         val oppgaver = oppgaveService.hentOppgaverForPerson(PersonId(sak.person.personId))
 
         call.respond(status = HttpStatusCode.OK, message = oppgaver)
+    }
+}
+
+fun Route.vedtakfaktaForVedtak(vedtakfaktaService: VedtakfaktaService) {
+    get("/vedtak/{vedtakId}/fakta") {
+        logger.info("Henter vedtakfakta for vedtak")
+        val vedtakId = VedtakId.fromString(call.parameters["vedtakId"])
+
+        if (vedtakId == null) {
+            logger.info("vedtakId er på et ugyldig format")
+            return@get call.respond(HttpStatusCode.BadRequest)
+        }
+
+        // Et vedtak uten registrerte fakta, og et ukjent vedtak, gir begge en tom liste
+        val fakta = vedtakfaktaService.hentVedtakfaktaForVedtak(vedtakId).map { it.tilKontrakt() }
+
+        call.respond(status = HttpStatusCode.OK, message = VedtakfaktaResponse(fakta))
     }
 }
 

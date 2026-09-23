@@ -283,7 +283,6 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 maksdato(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
-                vedtakfakta(vedtakfaktaService)
                 sak(sakOgVedtakService)
             }
             route("/api/intern") {
@@ -309,6 +308,9 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     sakService = sakListeService,
                     posteringService = utbetalingService,
                     telleverkService = telleverkService,
+                )
+                vedtakfaktaForVedtak(
+                    vedtakfaktaService = vedtakfaktaService
                 )
             }
         }

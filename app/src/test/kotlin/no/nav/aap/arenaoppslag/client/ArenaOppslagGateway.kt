@@ -164,7 +164,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     suspend fun hentVedtakfakta(vedtakId: String): VedtakfaktaResponse =
         gjørArenaOppslagGet<VedtakfaktaResponse>(
-            "/api/v1/vedtak/$vedtakId/fakta"
+            "/api/intern/vedtak/$vedtakId/fakta"
         ).getOrThrow()
 
     private suspend fun hentStatus(endepunkt: String): HttpStatusCode {

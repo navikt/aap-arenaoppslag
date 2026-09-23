@@ -6,7 +6,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-// Vedtakfakta eksponeres av /api/v1/vedtak/{vedtakId}/fakta.
+// Vedtakfakta eksponeres av /api/intern/vedtak/{vedtakId}/fakta.
 class VedtakfaktaApiTest : H2TestBase("flyway/vedtakfakta") {
 
     @Test

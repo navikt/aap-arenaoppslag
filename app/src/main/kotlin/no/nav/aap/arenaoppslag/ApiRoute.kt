@@ -17,18 +17,15 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakfaktaResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
-import no.nav.aap.arenaoppslag.modeller.VedtakId
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
-import no.nav.aap.arenaoppslag.service.VedtakfaktaService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -169,22 +166,6 @@ fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService:
     }
 }
 
-fun Route.vedtakfakta(vedtakfaktaService: VedtakfaktaService) {
-    get("/vedtak/{vedtakId}/fakta") {
-        val vedtakId = VedtakId.fromString(call.parameters["vedtakId"])
-
-        if (vedtakId == null) {
-            logger.info("vedtakId er på et ugyldig format")
-            return@get call.respond(HttpStatusCode.BadRequest)
-        }
-
-        logger.info("Henter vedtakfakta for vedtak")
-        // Et vedtak uten registrerte fakta, og et ukjent vedtak, gir begge en tom liste
-        val fakta = vedtakfaktaService.hentVedtakfaktaForVedtak(vedtakId).map { it.tilKontrakt() }
-
-        call.respond(HttpStatusCode.OK, VedtakfaktaResponse(fakta))
-    }
-}
 
 fun Route.telleverk(telleverkService: TelleverkService, personService: PersonService) {
     post("/telleverk") {
