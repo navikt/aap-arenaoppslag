@@ -221,7 +221,8 @@ private fun skapTilkjentYtelserService(
 private fun skapMigreringService(datasource: DataSource, telleverkService: TelleverkService): MigreringService {
     val vedtakRepository = VedtakRepository(datasource)
     val meldekortperiodeRepository = MeldekortperiodeRepository(datasource)
-    return MigreringService(vedtakRepository, meldekortperiodeRepository, telleverkService)
+    val vilkårsvurderingRepository = VilkårsvurderingRepository(datasource)
+    return MigreringService(vedtakRepository, meldekortperiodeRepository, telleverkService, vilkårsvurderingRepository)
 }
 
 private fun skapManuellFordelingsgrunnlagService(

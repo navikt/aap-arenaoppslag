@@ -4,9 +4,11 @@ import io.mockk.every
 import io.mockk.mockk
 import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
+import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.ArenaVilkårsvurdering
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
@@ -21,8 +23,14 @@ class MigreringServiceTest {
     private val vedtakRepository = mockk<VedtakRepository>()
     private val meldekortperiodeRepository = mockk<MeldekortperiodeRepository>()
     private val telleverkService = mockk<TelleverkService>()
+    private val vilkårsvurderingRepository = mockk<VilkårsvurderingRepository>()
 
-    private val service = MigreringService(vedtakRepository, meldekortperiodeRepository, telleverkService)
+    private val service = MigreringService(
+        vedtakRepository,
+        meldekortperiodeRepository,
+        telleverkService,
+        vilkårsvurderingRepository,
+    )
 
     private val sakId = SakId(9001)
     private val idag = LocalDate.of(2024, 3, 10)
@@ -109,5 +117,62 @@ class MigreringServiceTest {
         assertThat(krav.soknadsdato).isNull()
         assertThat(krav.migreringsdato).isNull()
         assertThat(krav.gjenstaaendeOrdinaerKvote).isNull()
+    }
+
+    private fun vilkårsvurdering(id: Long, kode: String, statuskode: String, begrunnelse: String? = null) =
+        ArenaVilkårsvurdering(
+            vilkårsvurderingId = id,
+            vilkårkode = kode,
+            begrunnelse = begrunnelse,
+            vurdertAv = "TEST01",
+            vilkårnavn = kode,
+            erObligatorisk = true,
+            hjelpetekstUrl = null,
+            lovtekstUrl = null,
+            rundskrivUrl = null,
+            statuskode = statuskode,
+            statusnavn = statuskode,
+        )
+
+    @Test
+    fun `henter begrunnelse og vilkår fra gjeldende 11-5-vedtak`() {
+        val vedtak115 = vedtak(LocalDate.of(2024, 1, 1))
+            .copy(vedtakId = 115, rettighetkode = "AA115", begrunnelse = "Nedsatt arbeidsevne")
+        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak115
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(
+                vilkårsvurdering(1, "SYKSKADLYT", "J", begrunnelse = "Legeerklæring foreligger"),
+                vilkårsvurdering(2, "INNTNEDS", "N"),
+                vilkårsvurdering(3, "AAARBEVNE", "V"),
+            )
+        )
+
+        val respons = service.hentSykdomsvurderingForSak(sakId, idag)!!.tilKontrakt()
+
+        assertThat(respons.vedtakId).isEqualTo(115)
+        assertThat(respons.begrunnelse).isEqualTo("Nedsatt arbeidsevne")
+        assertThat(respons.vilkar.map { listOf(it.id, it.kode, it.status, it.begrunnelse) })
+            .containsExactly(
+                listOf(1L, "SYKSKADLYT", "J", "Legeerklæring foreligger"),
+                listOf(2L, "INNTNEDS", "N", null),
+                listOf(3L, "AAARBEVNE", "V", null),
+            )
+    }
+
+    @Test
+    fun `gir tom vilkårsliste når 11-5-vedtaket mangler vilkårsvurderinger`() {
+        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+
+        val sykdomsvurdering = service.hentSykdomsvurderingForSak(sakId, idag)
+
+        assertThat(sykdomsvurdering?.vilkar).isEmpty()
+    }
+
+    @Test
+    fun `returnerer null når saken mangler gjeldende 11-5-vedtak`() {
+        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns null
+
+        assertThat(service.hentSykdomsvurderingForSak(sakId, idag)).isNull()
     }
 }
