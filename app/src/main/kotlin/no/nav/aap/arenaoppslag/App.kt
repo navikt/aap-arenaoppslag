@@ -33,6 +33,7 @@ import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
+import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.OppgaveRepository
 import no.nav.aap.arenaoppslag.database.PeriodeRepository
 import no.nav.aap.arenaoppslag.database.PersonRepository
@@ -61,6 +62,7 @@ import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
 import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
+import no.nav.aap.arenaoppslag.service.MigreringService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import org.slf4j.LoggerFactory
 
@@ -216,6 +218,12 @@ private fun skapTilkjentYtelserService(
     return TilkjentYtelserService(meldekortRepository, telleverkService)
 }
 
+private fun skapMigreringService(datasource: DataSource, telleverkService: TelleverkService): MigreringService {
+    val vedtakRepository = VedtakRepository(datasource)
+    val meldekortperiodeRepository = MeldekortperiodeRepository(datasource)
+    return MigreringService(vedtakRepository, meldekortperiodeRepository, telleverkService)
+}
+
 private fun skapManuellFordelingsgrunnlagService(
     datasource: DataSource,
     telleverkService: TelleverkService,
@@ -255,6 +263,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val tilkjentYtelserService = skapTilkjentYtelserService(datasource, telleverkService)
     val oppgaveService = skapOppgaveService(datasource)
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
+    val migreringService = skapMigreringService(datasource, telleverkService)
 
     routing {
         actuator(prometheus)
@@ -301,6 +310,12 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     sakService = sakListeService,
                     posteringService = utbetalingService,
                     telleverkService = telleverkService,
+                )
+            }
+            route("/api/migrering") {
+                migrering(
+                    sakService = sakListeService,
+                    migreringService = migreringService,
                 )
             }
         }

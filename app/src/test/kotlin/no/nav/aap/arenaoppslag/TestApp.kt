@@ -7,7 +7,6 @@ import io.ktor.server.netty.*
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
 import no.nav.aap.arenaoppslag.util.Fakes
-import no.nav.aap.arenaoppslag.util.texas
 import no.nav.aap.arenaoppslag.util.port
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
@@ -18,7 +17,7 @@ fun main() {
     val dataSource: HikariDataSource = ArenaDatasource.create(TestConfig.oracleH2)
     // Initialize database with schema and test data using the same initializer as tests
     Flyway.configure().dataSource(dataSource)
-        .locations("flyway/common", "flyway/dsop", "flyway/minimumtest", "flyway/eksisterer").load()
+        .locations("flyway/common", "flyway/dsop", "flyway/minimumtest", "flyway/eksisterer", "flyway/migrering").load()
         .apply {
             migrate()
             logger.info("Testdatabase klar, url=${dataSource.jdbcUrl}")
@@ -29,7 +28,6 @@ fun main() {
 
     embeddedServer(Netty, port = 8087) {
         server(config = config, pdlGateway = FakePdlGateway())
-        texas()
         module(dataSource)
     }.start(wait = true)
 }
