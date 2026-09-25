@@ -11,7 +11,9 @@ import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
+import java.sql.Date
 import java.sql.ResultSet
+import java.time.LocalDate
 import javax.sql.DataSource
 
 class VedtakRepository(private val dataSource: DataSource) {
@@ -44,6 +46,12 @@ class VedtakRepository(private val dataSource: DataSource) {
     fun hentForsteInnvilgetVedtakForSak(saksId: SakId): ArenaVedtakRad? {
         return dataSource.connection.use { con ->
             selectForsteInnvilgetVedtakForSak(saksId, con)
+        }
+    }
+
+    fun hentGjeldende115VedtakForSak(saksId: SakId, idag: LocalDate): ArenaVedtakRad? {
+        return dataSource.connection.use { con ->
+            selectGjeldende115VedtakForSak(saksId, idag, con)
         }
     }
 
@@ -167,6 +175,44 @@ class VedtakRepository(private val dataSource: DataSource) {
         private fun selectForsteInnvilgetVedtakForSak(sakId: SakId, connection: Connection): ArenaVedtakRad? {
             connection.createParameterizedQuery(selectForsteInnvilgetVedtakForSak).use { preparedStatement ->
                 preparedStatement.setInt(1, sakId.id)
+                val resultSet = preparedStatement.executeQuery()
+                return if (resultSet.next()) mapperForArenaVedtakRad(resultSet) else null
+            }
+        }
+
+        // Kun iverksatte, innvilgede 11-5-vedtak som dekker dagens dato. Ved overlapp vinner det nyeste.
+        @Language("OracleSql")
+        private val selectGjeldende115VedtakForSak = """
+        SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
+               v.fra_dato, v.til_dato, v.rettighetkode, rt.rettighetnavn, v.utfallkode, v.begrunnelse,
+               v.brukerid_ansvarlig, v.brukerid_beslutter, v.vedtak_id_relatert,
+               a.aktfasekode, a.aktfasenavn
+          FROM vedtak v
+          LEFT JOIN vedtaktype vt ON vt.vedtaktypekode = v.vedtaktypekode
+          LEFT JOIN vedtakstatus vs ON v.vedtakstatuskode = vs.vedtakstatuskode
+          LEFT JOIN aktivitetfase a ON a.aktfasekode = v.aktfasekode
+          LEFT JOIN rettighettype rt ON rt.rettighetkode = v.rettighetkode
+         WHERE v.sak_id = ?
+           AND v.rettighetkode = 'AA115'
+           AND v.vedtaktypekode IN ('O', 'E', 'G')
+           AND v.utfallkode = 'JA'
+           AND v.vedtakstatuskode = 'IVERK'
+           AND v.fra_dato <= ?
+           AND (v.til_dato IS NULL OR v.til_dato >= ?)
+         ORDER BY v.fra_dato DESC, v.vedtak_id DESC
+         FETCH FIRST 1 ROW ONLY
+        """.trimIndent()
+
+        private fun selectGjeldende115VedtakForSak(
+            sakId: SakId,
+            idag: LocalDate,
+            connection: Connection,
+        ): ArenaVedtakRad? {
+            connection.createParameterizedQuery(selectGjeldende115VedtakForSak).use { preparedStatement ->
+                val dato = Date.valueOf(idag)
+                preparedStatement.setInt(1, sakId.id)
+                preparedStatement.setDate(2, dato)
+                preparedStatement.setDate(3, dato)
                 val resultSet = preparedStatement.executeQuery()
                 return if (resultSet.next()) mapperForArenaVedtakRad(resultSet) else null
             }

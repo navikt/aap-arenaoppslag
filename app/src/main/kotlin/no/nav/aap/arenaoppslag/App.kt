@@ -32,6 +32,7 @@ import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
 import no.nav.aap.arenaoppslag.database.MaksimumRepository
+import no.nav.aap.arenaoppslag.database.MedisinskOpplysningRepository
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
 import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.OppgaveRepository
@@ -221,7 +222,15 @@ private fun skapTilkjentYtelserService(
 private fun skapMigreringService(datasource: DataSource, telleverkService: TelleverkService): MigreringService {
     val vedtakRepository = VedtakRepository(datasource)
     val meldekortperiodeRepository = MeldekortperiodeRepository(datasource)
-    return MigreringService(vedtakRepository, meldekortperiodeRepository, telleverkService)
+    val vilkårsvurderingRepository = VilkårsvurderingRepository(datasource)
+    val medisinskOpplysningRepository = MedisinskOpplysningRepository(datasource)
+    return MigreringService(
+        vedtakRepository,
+        meldekortperiodeRepository,
+        telleverkService,
+        vilkårsvurderingRepository,
+        medisinskOpplysningRepository,
+    )
 }
 
 private fun skapManuellFordelingsgrunnlagService(
