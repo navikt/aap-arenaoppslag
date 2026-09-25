@@ -2,14 +2,18 @@ package no.nav.aap.arenaoppslag.service
 
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import no.nav.aap.arenaoppslag.database.MedisinskOpplysningRepository
 import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaDiagnose
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.ArenaVilkårsvurdering
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
+import no.nav.aap.arenaoppslag.modeller.MedisinskOpplysning
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
@@ -24,12 +28,14 @@ class MigreringServiceTest {
     private val meldekortperiodeRepository = mockk<MeldekortperiodeRepository>()
     private val telleverkService = mockk<TelleverkService>()
     private val vilkårsvurderingRepository = mockk<VilkårsvurderingRepository>()
+    private val medisinskOpplysningRepository = mockk<MedisinskOpplysningRepository>()
 
     private val service = MigreringService(
         vedtakRepository,
         meldekortperiodeRepository,
         telleverkService,
         vilkårsvurderingRepository,
+        medisinskOpplysningRepository,
     )
 
     private val sakId = SakId(9001)
@@ -146,8 +152,9 @@ class MigreringServiceTest {
                 vilkårsvurdering(3, "AAARBEVNE", "V"),
             )
         )
+        every { medisinskOpplysningRepository.hentForPerson(PersonId(100)) } returns emptyList()
 
-        val respons = service.hentSykdomsvurderingForSak(sakId, idag)!!.tilKontrakt()
+        val respons = service.hentSykdomsvurderingForSak(sak, sakId, idag)!!.tilKontrakt()
 
         assertThat(respons.vedtakId).isEqualTo(115)
         assertThat(respons.begrunnelse).isEqualTo("Nedsatt arbeidsevne")
@@ -163,16 +170,36 @@ class MigreringServiceTest {
     fun `gir tom vilkårsliste når 11-5-vedtaket mangler vilkårsvurderinger`() {
         every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+        every { medisinskOpplysningRepository.hentForPerson(PersonId(100)) } returns emptyList()
 
-        val sykdomsvurdering = service.hentSykdomsvurderingForSak(sakId, idag)
+        val sykdomsvurdering = service.hentSykdomsvurderingForSak(sak, sakId, idag)
 
         assertThat(sykdomsvurdering?.vilkar).isEmpty()
+        assertThat(sykdomsvurdering?.diagnoser).isEmpty()
+    }
+
+    @Test
+    fun `sender diagnosene videre med Arena-kodene uendret`() {
+        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+        every { medisinskOpplysningRepository.hentForPerson(PersonId(100)) } returns listOf(
+            MedisinskOpplysning(1, "ICPC2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
+            MedisinskOpplysning(2, "ICD10", "M54", "BI", LocalDate.of(2023, 3, 1)),
+        )
+
+        val respons = service.hentSykdomsvurderingForSak(sak, sakId, idag)!!.tilKontrakt()
+
+        assertThat(respons.diagnoser).containsExactly(
+            ArenaDiagnose("ICPC2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
+            ArenaDiagnose("ICD10", "M54", "BI", LocalDate.of(2023, 3, 1)),
+        )
     }
 
     @Test
     fun `returnerer null når saken mangler gjeldende 11-5-vedtak`() {
         every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns null
 
-        assertThat(service.hentSykdomsvurderingForSak(sakId, idag)).isNull()
+        assertThat(service.hentSykdomsvurderingForSak(sak, sakId, idag)).isNull()
+        verify(exactly = 0) { medisinskOpplysningRepository.hentForPerson(any()) }
     }
 }

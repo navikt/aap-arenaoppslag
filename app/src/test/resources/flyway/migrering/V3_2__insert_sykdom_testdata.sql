@@ -48,9 +48,37 @@ insert into VILKAARVURDERING (VILKAARVURDERING_ID, VEDTAKTYPEKODE, VILKAARKODE, 
                               BEGRUNNELSE)
 values (910451, 'E', 'SYKSKADLYT', 91045, CURRENT_DATE, 'TEST', CURRENT_DATE, 'TEST', 'AA115', 'IKKE', 'J',
         'TEST01', 'Dokumentert gjennom legeerklæring'),
-       (910452, 'E', 'AASSLDOK', 91045, CURRENT_DATE, 'TEST', CURRENT_DATE, 'TEST', 'AA115', 'IKKE', 'N',
+       (910452, 'E', 'INNTNEDS', 91045, CURRENT_DATE, 'TEST', CURRENT_DATE, 'TEST', 'AA115', 'IKKE', 'N',
         'TEST01', null),
-       (910453, 'E', 'AANEDSSL', 91045, CURRENT_DATE, 'TEST', CURRENT_DATE, 'TEST', 'AA115', 'IKKE', 'V',
+       (910453, 'E', 'AAARBEVNE', 91045, CURRENT_DATE, 'TEST', CURRENT_DATE, 'TEST', 'AA115', 'IKKE', 'V',
         'TEST01', null),
        (910441, 'O', 'SYKSKADLYT', 91044, CURRENT_DATE, 'TEST', CURRENT_DATE, 'TEST', 'AA115', 'IKKE', 'J',
         'TEST01', null);
+
+-- Diagnoser er knyttet til personen via ATTFORINGOPPLYSNING, ikke til sak eller vedtak.
+insert into DIAGNOSEKLASSE (DIAGNOSEKLASSEKODE, DIAGNOSEKLASSENAVN)
+values ('ICPC2', 'ICPC-2'),
+       ('ICD10', 'ICD-10');
+
+insert into DIAGNOSE (DIAGNOSEKODE, DIAGNOSEKLASSEKODE, DIAGNOSENAVN, DATO_FRA, REG_DATO, REG_USER, MOD_DATO,
+                      MOD_USER, HOVEDDIAGNOSE_JN)
+values ('L84', 'ICPC2', 'Ryggsyndrom uten smerteutstråling', DATE '2000-01-01', DATE '2000-01-01', 'TEST',
+        DATE '2000-01-01', 'TEST', 'J'),
+       ('P76', 'ICPC2', 'Depresjon', DATE '2000-01-01', DATE '2000-01-01', 'TEST', DATE '2000-01-01', 'TEST', 'J'),
+       ('M54', 'ICD10', 'Ryggsmerter', DATE '2000-01-01', DATE '2000-01-01', 'TEST', DATE '2000-01-01', 'TEST', 'J');
+
+insert into ATTFORINGOPPLYSNING (ATTFORINGOPPLYSNING_ID, PERSON_ID, ATTFORINGAARSAKKODE, SJEKK_NEI_INNSYN)
+values (9201, 203, 'HELSE', 'J'),
+       -- Annen person, skal aldri lekke inn i sykdomsvurderingen for person 203
+       (9202, 200, 'HELSE', 'J');
+
+insert into MEDISINSK_OPPLYSNING (MEDISINSK_OPPLYSNING_ID, ATTFORINGSOPPLYSNING_ID, DIAGNOSEKLASSEKODE,
+                                  DIAGNOSETYPEKODE, DIAGNOSEKODE, KILDE_DATO, KILDEKODE)
+values (92011, 9201, 'ICPC2', 'HOVED', 'L84', DATE '2023-02-01', 'LEGE'),
+       (92012, 9201, 'ICD10', 'BI', 'M54', DATE '2023-03-01', 'LEGE'),
+       (92013, 9201, 'ICPC2', 'BI', 'P76', DATE '2023-04-01', 'LEGE'),
+       (92021, 9202, 'ICPC2', 'HOVED', 'P76', DATE '2023-02-01', 'LEGE');
+
+
+
+

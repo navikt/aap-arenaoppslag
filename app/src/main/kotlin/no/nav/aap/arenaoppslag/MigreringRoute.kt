@@ -21,10 +21,10 @@ fun Route.migrering(sakService: SakService, migreringService: MigreringService) 
     }
 
     get("/{saksnummer}/sykdom") {
-        val (_, sakId) = hentSakFraSaksnummer(sakService) ?: return@get
+        val (sak, sakId) = hentSakFraSaksnummer(sakService) ?: return@get
 
         logger.info("Henter ut relevant migreringsinformasjon for sykdom-steget for sak")
-        val sykdomsvurdering = migreringService.hentSykdomsvurderingForSak(sakId)
+        val sykdomsvurdering = migreringService.hentSykdomsvurderingForSak(sak, sakId)
 
         if (sykdomsvurdering == null) {
             logger.info("Fant ikke gjeldende 11-5-vedtak for sak")

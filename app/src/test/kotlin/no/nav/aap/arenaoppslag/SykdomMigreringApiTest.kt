@@ -3,9 +3,11 @@ package no.nav.aap.arenaoppslag
 import io.ktor.http.HttpStatusCode
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaDiagnose
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaVilkar
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class SykdomMigreringApiTest : H2TestBase("flyway/migrering") {
 
@@ -25,16 +27,21 @@ class SykdomMigreringApiTest : H2TestBase("flyway/migrering") {
                 ),
                 ArenaVilkar(
                     id = 910452,
-                    kode = "AASSLDOK",
+                    kode = "INNTNEDS",
                     status = "N",
                     begrunnelse = null,
                 ),
                 ArenaVilkar(
                     id = 910453,
-                    kode = "AANEDSSL",
+                    kode = "AAARBEVNE",
                     status = "V",
                     begrunnelse = null,
                 ),
+            )
+            assertThat(respons.diagnoser).containsExactly(
+                ArenaDiagnose("ICPC2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
+                ArenaDiagnose("ICD10", "M54", "BI", LocalDate.of(2023, 3, 1)),
+                ArenaDiagnose("ICPC2", "P76", "BI", LocalDate.of(2023, 4, 1)),
             )
         }
     }

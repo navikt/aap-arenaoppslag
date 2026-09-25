@@ -19,11 +19,6 @@ public data class ArenaVilkar(
 public data class ArenaDiagnose(
     val kodeverk: String,
     val kode: String,
-    val type: ArenaDiagnoseType,
+    val type: String,
     val opprettet: LocalDate
 )
-
-public enum class ArenaDiagnoseType {
-    HOVEDDIAGNOSE,
-    BIDIAGNOSE
-}

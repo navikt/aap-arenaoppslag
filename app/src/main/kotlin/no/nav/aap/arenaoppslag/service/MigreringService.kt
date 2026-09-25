@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.service
 
+import no.nav.aap.arenaoppslag.database.MedisinskOpplysningRepository
 import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
@@ -15,6 +16,7 @@ class MigreringService(
     private val meldekortperiodeRepository: MeldekortperiodeRepository,
     private val telleverkService: TelleverkService,
     private val vilkårsvurderingRepository: VilkårsvurderingRepository,
+    private val medisinskOpplysningRepository: MedisinskOpplysningRepository,
 ) {
 
     fun hentKravForSak(sak: ArenaSak, sakId: SakId, idag: LocalDate = LocalDate.now()): Krav {
@@ -35,15 +37,21 @@ class MigreringService(
         )
     }
 
-    fun hentSykdomsvurderingForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): Sykdomsvurdering? {
+    fun hentSykdomsvurderingForSak(
+        sak: ArenaSak,
+        sakId: SakId,
+        idag: LocalDate = LocalDate.now(),
+    ): Sykdomsvurdering? {
         val vedtak = vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) ?: return null
         val vilkårsvurderinger = vilkårsvurderingRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId]
             .orEmpty()
+        val diagnoser = medisinskOpplysningRepository.hentForPerson(PersonId(sak.person.personId))
 
         return Sykdomsvurdering(
             vedtakId = vedtak.vedtakId,
             begrunnelse = vedtak.begrunnelse,
-            vilkar = vilkårsvurderinger.filter { it.vilkårkode in setOf("INNTNEDS", "SYKSKADLYT", "AAARBEVNE") }
+            vilkar = vilkårsvurderinger.filter { it.vilkårkode in setOf("INNTNEDS", "SYKSKADLYT", "AAARBEVNE") },
+            diagnoser = diagnoser,
         )
     }
 
