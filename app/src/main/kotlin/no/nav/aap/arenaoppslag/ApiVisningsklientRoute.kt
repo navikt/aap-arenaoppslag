@@ -1,12 +1,17 @@
 package no.nav.aap.arenaoppslag
 
 import io.ktor.http.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeRequest
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
+import no.nav.aap.arenaoppslag.service.MeldekortService
 import no.nav.aap.arenaoppslag.service.OppgaveService
+import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
@@ -118,6 +123,21 @@ fun Route.oppgaverForSak(sakService: SakService, oppgaveService: OppgaveService)
         val oppgaver = oppgaveService.hentOppgaverForPerson(PersonId(sak.person.personId))
 
         call.respond(status = HttpStatusCode.OK, message = oppgaver)
+    }
+}
+
+fun Route.meldekortStartuke(meldekortService: MeldekortService, personService: PersonService) {
+    post("/person/meldekort/startuke") {
+        logger.info("Henter startuke for siste meldekort for person")
+        val request: MeldekortStartukeRequest = call.receive()
+
+        val personId = personService.hentPersonId(request.personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+
+        val response = meldekortService.hentStartukeForSisteMeldekort(personId)?.tilResponse()
+            ?: MeldekortStartukeResponse.ingen
+
+        call.respond(status = HttpStatusCode.OK, message = response)
     }
 }
 

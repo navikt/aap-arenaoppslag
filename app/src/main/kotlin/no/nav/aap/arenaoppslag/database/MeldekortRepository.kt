@@ -6,7 +6,9 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortDag
 import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
 import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartuke
 import no.nav.aap.arenaoppslag.modeller.Periode
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
 import org.intellij.lang.annotations.Language
@@ -27,6 +29,18 @@ class MeldekortRepository(
             posteringer = selectPosteringer(sakId, con),
             meldekort = selectMeldekort(sakId, con),
         )
+    }
+
+    fun hentStartukeForSisteMeldekort(personId: PersonId): MeldekortStartuke? = dataSource.connection.use { con ->
+        con.createParameterizedQuery(startukeForSisteMeldekortSql).use { preparedStatement ->
+            preparedStatement.setInt(1, personId.id)
+            preparedStatement.executeQuery().map { row ->
+                MeldekortStartuke(
+                    aar = row.getInt("aar"),
+                    ukenummer = row.getString("periodekode"),
+                )
+            }.firstOrNull()
+        }
     }
 
     private fun selectPosteringer(sakId: SakId, connection: Connection): List<MeldekortPostering> =
@@ -269,6 +283,18 @@ class MeldekortRepository(
              ORDER BY meldekort_id, ukenr, dagnr
         """.trimIndent()
     }
+
+    // Meldekort-ID er stigende sekvens i Arena, så høyeste ID er personens siste meldekort.
+    // Meldegruppe ATTF avgrenser til AAP-meldekort.
+    @Language("OracleSql")
+    private val startukeForSisteMeldekortSql = """
+        SELECT m.aar, m.periodekode
+          FROM meldekort m
+         WHERE m.meldekort_id = (SELECT MAX(meldekort_id)
+                                   FROM meldekort
+                                  WHERE person_id = ?
+                                    AND meldegruppekode = 'ATTF')
+    """.trimIndent()
 
     // Oracle støtter ikke listeparametere i PreparedStatement, så meldekort-IDer interpoleres direkte.
     private fun anmerkningerForMeldekortlisteSql(meldekortIder: List<Long>): String {

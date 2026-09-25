@@ -53,6 +53,7 @@ import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.MeldekortService
 import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
@@ -251,6 +252,11 @@ private fun skapOppgaveService(datasource: DataSource): OppgaveService {
     return OppgaveService(oppgaveRepository)
 }
 
+private fun skapMeldekortService(datasource: DataSource): MeldekortService {
+    val meldekortRepository = MeldekortRepository(datasource)
+    return MeldekortService(meldekortRepository)
+}
+
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
@@ -264,6 +270,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val oppgaveService = skapOppgaveService(datasource)
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
+    val meldekortService = skapMeldekortService(datasource)
 
     routing {
         actuator(prometheus)
@@ -310,6 +317,10 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     sakService = sakListeService,
                     posteringService = utbetalingService,
                     telleverkService = telleverkService,
+                )
+                meldekortStartuke(
+                    meldekortService = meldekortService,
+                    personService = personService,
                 )
             }
             route("/api/migrering") {

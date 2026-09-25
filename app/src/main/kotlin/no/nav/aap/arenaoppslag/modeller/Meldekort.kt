@@ -79,3 +79,29 @@ data class MeldekortForSak(
     val meldekort: List<Meldekort>,
 )
 
+// Domeneobjekt: år og startuke for personens siste AAP-meldekort (meldegruppe ATTF).
+// ukenummer er rå MELDEKORT.PERIODEKODE (VARCHAR2 med ledende null) inntil datatypen er bekreftet i dev.
+data class MeldekortStartuke(
+    val aar: Int,
+    val ukenummer: String,
+) {
+    fun tilResponse(): MeldekortStartukeResponse = MeldekortStartukeResponse(
+        aar = aar,
+        ukenummer = ukenummer,
+    )
+}
+
+data class MeldekortStartukeRequest(
+    val personidentifikator: String,
+)
+
+// Feltene er null når personen finnes i Arena, men ikke har AAP-meldekort
+data class MeldekortStartukeResponse(
+    val aar: Int?,
+    val ukenummer: String?,
+) {
+    companion object {
+        val ingen = MeldekortStartukeResponse(aar = null, ukenummer = null)
+    }
+}
+
