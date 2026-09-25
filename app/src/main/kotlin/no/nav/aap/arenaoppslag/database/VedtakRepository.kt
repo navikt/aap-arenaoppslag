@@ -194,6 +194,7 @@ class VedtakRepository(private val dataSource: DataSource) {
           LEFT JOIN rettighettype rt ON rt.rettighetkode = v.rettighetkode
          WHERE v.sak_id = ?
            AND v.rettighetkode = 'AA115'
+           AND v.vedtaktypekode IN ('O', 'E', 'G')
            AND v.utfallkode = 'JA'
            AND v.vedtakstatuskode = 'IVERK'
            AND v.fra_dato <= ?

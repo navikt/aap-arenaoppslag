@@ -41,7 +41,11 @@ values
     -- AAP-vedtak som dekker i dag: skal ikke velges fordi rettigheten ikke er 11-5
     (91047, 9104, 'IVERK', 'O', 'JA', 'AAP', 203,
      DATEADD('DAY', -1, CURRENT_DATE), null, '4402', 504, 2023, 7, 'IKKE',
-     DATEADD('DAY', -1, CURRENT_DATE), 'AAP-vedtak');
+     DATEADD('DAY', -1, CURRENT_DATE), 'AAP-vedtak'),
+    -- Stansvedtak som dekker i dag: skal ikke velges selv om det er nyere enn 91045
+    (91048, 9104, 'IVERK', 'S', 'JA', 'AA115', 203,
+     DATEADD('DAY', -2, CURRENT_DATE), null, '4402', 504, 2023, 8, 'IKKE',
+     DATEADD('DAY', -2, CURRENT_DATE), 'Stans');
 
 insert into VILKAARVURDERING (VILKAARVURDERING_ID, VEDTAKTYPEKODE, VILKAARKODE, VEDTAK_ID, REG_DATO, REG_USER,
                               MOD_DATO, MOD_USER, RETTIGHETKODE, AKTFASEKODE, VILKAARSTATUSKODE, VURDERT_AV,

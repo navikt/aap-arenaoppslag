@@ -21,6 +21,14 @@ class Gjeldende115VedtakRepositoryTest : H2TestBase("flyway/migrering") {
     }
 
     @Test
+    fun `velger ikke stansvedtak selv om det er nyere`() {
+        // 91048 er et iverksatt stansvedtak med fra_dato etter 91045 og uten til_dato
+        val vedtak = repo.hentGjeldende115VedtakForSak(SakId(9104), idag)
+
+        assertThat(vedtak?.vedtakId).isEqualTo(91045)
+    }
+
+    @Test
     fun `velger fremtidig vedtak når det har blitt gjeldende`() {
         val vedtak = repo.hentGjeldende115VedtakForSak(SakId(9104), idag.plusDays(40))
 
