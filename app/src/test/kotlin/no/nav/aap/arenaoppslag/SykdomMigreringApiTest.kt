@@ -39,9 +39,9 @@ class SykdomMigreringApiTest : H2TestBase("flyway/migrering") {
                 ),
             )
             assertThat(respons.diagnoser).containsExactly(
-                ArenaDiagnose("ICPC2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
-                ArenaDiagnose("ICD10", "M54", "BI", LocalDate.of(2023, 3, 1)),
-                ArenaDiagnose("ICPC2", "P76", "BI", LocalDate.of(2023, 4, 1)),
+                ArenaDiagnose("ICPC-2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
+                ArenaDiagnose("ICD-10", "M54", "BI", LocalDate.of(2023, 3, 1)),
+                ArenaDiagnose("ICPC-2", "P76", "BI", LocalDate.of(2023, 4, 1)),
             )
         }
     }

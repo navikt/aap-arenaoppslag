@@ -15,9 +15,9 @@ class MedisinskOpplysningRepositoryTest : H2TestBase("flyway/migrering") {
         val opplysninger = repo.hentForPerson(PersonId(203))
 
         assertThat(opplysninger).containsExactly(
-            MedisinskOpplysning(92011, "ICPC2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
-            MedisinskOpplysning(92012, "ICD10", "M54", "BI", LocalDate.of(2023, 3, 1)),
-            MedisinskOpplysning(92013, "ICPC2", "P76", "BI", LocalDate.of(2023, 4, 1)),
+            MedisinskOpplysning(92011, "ICPC-2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
+            MedisinskOpplysning(92012, "ICD-10", "M54", "BI", LocalDate.of(2023, 3, 1)),
+            MedisinskOpplysning(92013, "ICPC-2", "P76", "BI", LocalDate.of(2023, 4, 1)),
         )
     }
 

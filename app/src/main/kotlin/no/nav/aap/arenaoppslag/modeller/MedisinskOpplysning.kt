@@ -5,13 +5,13 @@ import java.time.LocalDate
 
 data class MedisinskOpplysning(
     val medisinskOpplysningId: Long,
-    val diagnoseklassekode: String,
+    val diagnoseklassenavn: String,
     val diagnosekode: String,
     val diagnosetypekode: String,
     val kildeDato: LocalDate,
 ) {
     fun tilKontrakt() = ArenaDiagnose(
-        kodeverk = diagnoseklassekode,
+        kodeverk = diagnoseklassenavn,
         kode = diagnosekode,
         type = diagnosetypekode,
         opprettet = kildeDato,
