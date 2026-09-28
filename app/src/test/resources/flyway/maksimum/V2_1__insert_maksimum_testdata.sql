@@ -19,14 +19,15 @@ values (90010, 9001, 'IVERK', 'O', 'JA', 'AAP', 100,
         DATE '2023-01-01', DATE '2023-12-31', '4402', 9001, 2023, 1, 'IKKE', DATE '2023-01-01');
 
 -- VedtakFakta for vedtak 90010
-insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI)
-values (90010, 'DAGSMBT', '550'),
-       (90010, 'BARNTILL', '30'),
-       (90010, 'DAGS', '520'),
-       (90010, 'BARNMSTON', '2'),
-       (90010, 'DAGSFSAM', '520'),
-       (90010, 'GRUNN', '450000'),
-       (90010, 'JUSTERTG', 'NyG2024');
+insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI, REG_DATO)
+values (90010, 'DAGSMBT', '550', DATE '2023-01-01'),
+       (90010, 'BARNTILL', '30', DATE '2023-01-01'),
+       (90010, 'DAGS', '520', DATE '2023-01-01'),
+       (90010, 'BARNMSTON', '2', DATE '2023-01-01'),
+       (90010, 'DAGSFSAM', '520', DATE '2023-01-01'),
+       (90010, 'GRUNN', '450000', DATE '2023-01-01'),
+       (90010, 'JUSTERTG', 'NyG2024', DATE '2023-01-01'),
+       (90010, 'INSGRAD', '33', DATE '2023-01-01');
 
 -- Meldekortperioder
 insert into MELDEKORTPERIODE (AAR, PERIODEKODE, UKENR_UKE1, UKENR_UKE2, DATO_FRA, DATO_TIL)
@@ -70,15 +71,21 @@ values (5002, 3, 1, 'J', 'N', 'N', 4.0),
 -- Posteringer knyttet til vedtak 90010 og meldekortene
 insert into POSTERING (POSTERING_ID, BELOP, BELOPKODE, DATO_PERIODE_FRA, DATO_PERIODE_TIL, DATO_POSTERT, AAR,
                        PERSON_ID, POSTERINGTYPEKODE, TRANSAKSJONSKODE, DATO_GRUNNLAG, VEDTAK_ID, ARTKODE,
-                       KAPITTEL, POST, UNDERPOST, BRUKER_ID_SAKSBEHANDLER, AETATENHET_ANSVARLIG, MELDEKORT_ID)
+                       KAPITTEL, POST, UNDERPOST, BRUKER_ID_SAKSBEHANDLER, AETATENHET_ANSVARLIG, MELDEKORT_ID,
+                       TABELLNAVNALIAS_KILDE, OBJEKT_ID_KILDE, ANTALL)
 values (8001, 7700, 'AAP', DATE '2023-01-02', DATE '2023-01-15', DATE '2023-01-20', 2023, 100,
-        'ORD', 'AA00', DATE '2023-01-02', 90010, 'ART', '2900', '01', '001', 'TEST', '4402', 5001),
+        'ORD', 'AA00', DATE '2023-01-02', 90010, 'ART', '2900', '01', '001', 'TEST', '4402', 5001, 'MKORT', 5001, 10),
        (8002, 6600, 'AAP', DATE '2023-01-16', DATE '2023-01-29', DATE '2023-02-03', 2023, 100,
-        'ORD', 'AA00', DATE '2023-01-16', 90010, 'ART', '2900', '01', '001', 'TEST', '4402', 5002);
+        'ORD', 'AA00', DATE '2023-01-16', 90010, 'ART', '2900', '01', '001', 'TEST', '4402', 5002, 'MKORT', 5002, null);
 
 -- Meldekortdata for meldekort 5001: 1 sykedag (FSNN)
 insert into ANMERKNING (ANMERKNING_ID, ANMERKNINGKODE, TABELLNAVNALIAS, OBJEKT_ID, VEDTAK_ID, VERDI)
 values (7001, 'FSNN', 'MKORT', 5001, 90010, 1);
+
+-- Anmerkning uten reduksjonseffekt på meldekort 5001 — skal komme med i anmerkningslista,
+-- men ikke påvirke reduksjonstallene
+insert into ANMERKNING (ANMERKNING_ID, ANMERKNINGKODE, TABELLNAVNALIAS, OBJEKT_ID, VEDTAK_ID, VERDI)
+values (7004, 'MAXAA', 'MKORT', 5001, 90010, null);
 
 -- Meldekortdata for meldekort 5002: for sent (SENN=1) og fravær (FXNN=2)
 insert into ANMERKNING (ANMERKNING_ID, ANMERKNINGKODE, TABELLNAVNALIAS, OBJEKT_ID, VEDTAK_ID, VERDI)
@@ -122,14 +129,14 @@ insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLK
 values (90030, 9003, 'IVERK', 'O', 'JA', 'AAP', 103,
         DATE '2023-01-01', NULL, '4402', 9003, 2023, 1, 'IKKE', DATE '2023-01-01');
 
-insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI)
-values (90030, 'DAGSMBT', '500'),
-       (90030, 'BARNTILL', '0'),
-       (90030, 'DAGS', '500'),
-       (90030, 'BARNMSTON', '0'),
-       (90030, 'DAGSFSAM', '500'),
-       (90030, 'GRUNN', '400000'),
-       (90030, 'JUSTERTG', 'NyG2024');
+insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI, REG_DATO)
+values (90030, 'DAGSMBT', '500', DATE '2023-01-01'),
+       (90030, 'BARNTILL', '0', DATE '2023-01-01'),
+       (90030, 'DAGS', '500', DATE '2023-01-01'),
+       (90030, 'BARNMSTON', '0', DATE '2023-01-01'),
+       (90030, 'DAGSFSAM', '500', DATE '2023-01-01'),
+       (90030, 'GRUNN', '400000', DATE '2023-01-01'),
+       (90030, 'JUSTERTG', 'NyG2024', DATE '2023-01-01');
 
 -- Meldekortperiode for 2023, periode 10 — finnes også for 2024 (samme periodekode, forskjellig år)
 -- Dette er det som trigger duplikater: JOIN uten AAR-betingelse treffer begge radene
@@ -154,6 +161,7 @@ values (6001, 19, 1, 'J', 'N', 'N', 3.0),
 
 insert into POSTERING (POSTERING_ID, BELOP, BELOPKODE, DATO_PERIODE_FRA, DATO_PERIODE_TIL, DATO_POSTERT, AAR,
                        PERSON_ID, POSTERINGTYPEKODE, TRANSAKSJONSKODE, DATO_GRUNNLAG, VEDTAK_ID, ARTKODE,
-                       KAPITTEL, POST, UNDERPOST, BRUKER_ID_SAKSBEHANDLER, AETATENHET_ANSVARLIG, MELDEKORT_ID)
+                       KAPITTEL, POST, UNDERPOST, BRUKER_ID_SAKSBEHANDLER, AETATENHET_ANSVARLIG, MELDEKORT_ID,
+                       TABELLNAVNALIAS_KILDE, OBJEKT_ID_KILDE)
 values (9001, 5000, 'AAP', DATE '2023-05-08', DATE '2023-05-21', DATE '2023-05-25', 2023, 103,
-        'ORD', 'AA00', DATE '2023-05-08', 90030, 'ART', '2900', '01', '001', 'TEST', '4402', 6001);
+        'ORD', 'AA00', DATE '2023-05-08', 90030, 'ART', '2900', '01', '001', 'TEST', '4402', 6001, 'MKORT', 6001);

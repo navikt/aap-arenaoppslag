@@ -27,6 +27,7 @@ class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
 
         assertThat(aap.id).isEqualTo(100)
         assertThat(aap.endringsGrunnlag).isEqualTo("MKORT")
+        assertThat(aap.objektIdGrunnlag).isEqualTo(1L)
         assertThat(aap.antallBevegelse).isEqualTo(20)
         assertThat(aap.posteringTypeKode).isEqualTo("OPPD")
         assertThat(aap.begrunnelse).isEqualTo("Automatisk")

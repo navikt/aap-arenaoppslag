@@ -62,6 +62,7 @@ class TelleverkRepository(private val datasource: DataSource) {
                         id = row.getInt("kvotebruk_id"),
                         kvoteTypeKode = row.getString("kvotetypekode"),
                         endringsGrunnlag = row.getString("tabellnavnalias_grunnlag"),
+                        objektIdGrunnlag = row.getLong("objekt_id_grunnlag"),
                         antallBevegelse = row.getInt("antall_bevegelse"),
                         posteringTypeKode = row.getString("posteringtypekode"),
                         datoHendelse = row.getDate("dato_hendelse").toLocalDate(),

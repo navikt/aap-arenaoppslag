@@ -6,6 +6,7 @@ metadata:
   labels:
     team: aap
     komponent: datadeling
+    systemkatalog.nav.no/system: SK-268
 spec:
   image: {{image}}
   azure:
@@ -53,6 +54,9 @@ spec:
           cluster: {{cluster}}-gcp
           namespace: aap
         - application: postmottak-backend
+          cluster: {{cluster}}-gcp
+          namespace: aap
+        - application: behandlingsflyt
           cluster: {{cluster}}-gcp
           namespace: aap
         {{#if isdev}}

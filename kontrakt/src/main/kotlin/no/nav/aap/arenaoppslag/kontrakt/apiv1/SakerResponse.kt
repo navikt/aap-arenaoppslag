@@ -51,7 +51,11 @@ public data class SakMedSisteVedtakOgMaksdato(
     public fun utredesForUfor(): Boolean = sisteVedtak.aktfaseKode == "UVUP" // 11-18
     public fun erFerdigAvklart(): Boolean = sisteVedtak.aktfaseKode == "FA" // 11-17
     public fun erSykepengeErstatning(): Boolean = sisteVedtak.aktfaseKode == "SPE" // 11-13
-    public fun harInnvilget11_12(): Boolean = unntaksvilkaarGjelderFra != null // er innvilget fra en gitt dato
+
+    @Deprecated("Bruk unntaksvilkaarOppfylt() eller unntaksvilkaarIkkeOppfylt()")
+    public fun harInnvilget11_12(): Boolean = unntaksvilkaarInnvilget == true // eksplisitt Ja til 11-12
+
+    public fun unntaksvilkaarOppfylt(): Boolean = unntaksvilkaarInnvilget == true // eksplisitt Ja til 11-12
     public fun unntaksvilkaarIkkeOppfylt(): Boolean = unntaksvilkaarInnvilget == false // eksplisitt Nei til 11-12
 }
 

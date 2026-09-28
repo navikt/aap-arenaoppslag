@@ -18,15 +18,11 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
-import no.nav.aap.arenaoppslag.modeller.PersonId
-import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.HistorikkService
-import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
-import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
@@ -109,23 +105,19 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
 
 
 fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
-    get("/sak/{sakid}") {
-        val sakid = call.parameters["sakid"]
+    get("/sak/{saksnummer}") {
+        val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
 
-        if (sakid == null) {
-            logger.info("Sakid kan ikke være NULL")
+        if (saksnummer == null) {
+            logger.info("saksnummer er på et ugyldig format")
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
-        val sak = when (sakidentifikator) {
-            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId = sakidentifikator)
-            is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
-            else -> null
-        }
+
+        val sak = sakOgVedtakService.hentSakMedVedtak(saksnummer)
 
         if (sak == null) {
-            logger.info("Klarte ikke hente sak for saksnummer $sakid")
+            logger.info("Klarte ikke hente sak for saksnummer $saksnummer")
             return@get call.respond(HttpStatusCode.NotFound)
         }
 
@@ -134,54 +126,6 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     }
 }
 
-fun Route.sakDetaljert(
-    sakService: SakService,
-    posteringService: PosteringService,
-    sakOgVedtakService: SakOgVedtakService,
-    telleverkService: TelleverkService,
-    saksopplysningService: SaksopplysningService,
-    oppgaveService: OppgaveService,
-) {
-    get("/sak/{sakid}/detaljert") {
-        val sakid = call.parameters["sakid"]
-
-        if (sakid == null) {
-            logger.info("Sakid kan ikke være NULL")
-            return@get call.respond(HttpStatusCode.BadRequest)
-        }
-
-        val sakidentifikator = Saksnummer.fromString(sakid) ?: SakId.fromString(sakid)
-        val sak = when (sakidentifikator) {
-            is SakId -> sakOgVedtakService.hentSakMedVedtak(saksId = sakidentifikator)
-            is Saksnummer -> sakOgVedtakService.hentSakMedVedtak(saksnummer = sakidentifikator)
-            else -> null
-        }
-
-        if (sak == null) {
-            logger.info("Klarte ikke hente sak for saksnummer $sakid")
-            return@get call.respond(HttpStatusCode.NotFound)
-        }
-        val personId = PersonId(sak.person.personId)
-
-        val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
-        val telleverk = telleverkService.hentTelleverkForPerson(personId)
-        val maksdato = sakService.hentMaksdatoAapForPerson(personId)
-        val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
-        val oppgaver = oppgaveService.hentOppgaverForPerson(personId)
-        val saksopplysningerPerVedtak = saksopplysningService.hentForVedtakIder(sak.vedtak.map { it.vedtakId })
-        val alleSaksopplysninger = sak.vedtak.associate { vedtak ->
-            vedtak.vedtakId to (saksopplysningerPerVedtak[vedtak.vedtakId] ?: emptyList())
-        }
-        val samordningPerVedtak = saksopplysningService.hentSamordningOgInstitusjon(alleSaksopplysninger)
-        val sakMedSamordning = sak.copy(
-            vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
-        )
-
-        logger.info("Henter saksdetaljer")
-        val response = sakMedSamordning.tilKontrakt(telleverk, kvoteHistorikk, sisteUtbetalingDato, maksdato, oppgaver)
-        call.respond(status = HttpStatusCode.OK, message = response)
-    }
-}
 
 fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
     post("/person/vedtak") {

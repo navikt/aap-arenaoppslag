@@ -5,7 +5,6 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.PersonId
-import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
@@ -13,12 +12,6 @@ import java.sql.ResultSet
 import javax.sql.DataSource
 
 class SakRepository(private val dataSource: DataSource) {
-    fun hentSak(saksId: SakId): ArenaSak? {
-        return dataSource.connection.use { con ->
-            selectSakMedId(saksId, con)
-        }
-    }
-
     fun hentSak(saksnummer: Saksnummer): ArenaSak? {
         return dataSource.connection.use { con ->
             selectSakMedSaksnummer(saksnummer, con)
@@ -85,20 +78,6 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectSakMedId(saksid: SakId, connection: Connection): ArenaSak? {
-            connection.prepareStatement(selectSakMedSaksId).use { preparedStatement ->
-                preparedStatement.setInt(1, saksid.id)
-                val resultSet = preparedStatement.executeQuery()
-                val saker = resultSet.map { row -> mapperForArenaSak(row) }
-
-                if (saker.isEmpty()) {
-                    return null
-                }
-
-                return saker.first()
-            }
-        }
-
         fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
             connection.prepareStatement(selectSakMedSaksnummer).use { preparedStatement ->
                 preparedStatement.setInt(1, saksnummer.lopenummer)
@@ -153,16 +132,6 @@ class SakRepository(private val dataSource: DataSource) {
         """.trimIndent()
 
         @Language("OracleSql")
-        internal val selectSakMedSaksId = """
-            SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id, 
-                person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
-            FROM SAK
-            LEFT JOIN person ON person.person_id = sak.objekt_id
-            LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
-            WHERE SAK_ID = ? AND TABELLNAVNALIAS='PERS'
-        """.trimIndent()
-
-        @Language("OracleSql")
         internal val selectSakMedSaksnummer = """
             SELECT sak.sak_id, sak.aar, sak.sakstatuskode, sakstatus.sakstatusnavn, sak.lopenrsak, person.person_id, 
                 person.fornavn, person.etternavn, person.fodselsnr, sak.reg_dato, sak.dato_avsluttet
@@ -186,7 +155,6 @@ class SakRepository(private val dataSource: DataSource) {
                 sak.sakstatuskode, sakstatus.sakstatusnavn
         """.trimIndent()
 
-
         @Language("OracleSql")
         internal val selectVedtakMedNyesteMaxdatoForPerson = """
             -- Hent først siste vedtak
@@ -198,18 +166,35 @@ class SakRepository(private val dataSource: DataSource) {
                         v.aktfasekode,
                         v.fra_dato,
                         v.til_dato,
-                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS LAST, v.vedtak_id DESC) as rn
+                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS FIRST, v.vedtak_id DESC) as rn
                     FROM vedtak v
                     WHERE v.person_id = ?
                         AND v.rettighetkode = 'AAP'
                         AND v.utfallkode = 'JA'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
+                        -- Krev til_dato, utenom for stansede vedtak som ikke er erstattet av et nytt vedtak
+                        AND (v.til_dato IS NOT NULL OR (v.vedtaktypekode = 'S' AND v.til_dato IS NULL 
+                            -- Gjenopptak fører til at stansede vedtak får satt til_dato.                          
+                            -- En gammel sak kan ha endt med et stans-vedtak, men personen har en løpende ny sak. 
+                            -- Ekskluder slike gamle stans-vedtak: 
+                            AND NOT EXISTS(
+                                 SELECT vedtak_id FROM vedtak vv WHERE
+                                    vv.person_id = v.person_id -- for samme person
+                                    -- Samme begrensning som hovedspørringen:
+                                    AND vv.rettighetkode = 'AAP'
+                                    AND vv.utfallkode = 'JA'
+                                    AND vv.vedtakstatuskode IN ('IVERK','AVSLU')
+                                    -- Et nyere vedtak erstatter denne stansen:
+                                    AND vv.vedtak_id > v.vedtak_id -- et nyere vedtak
+                                    AND (vv.fra_dato IS NOT NULL AND v.fra_dato IS NOT NULL AND vv.fra_dato > v.fra_dato) -- med nyere fra_dato
+                            )
+                            )) 
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato) 
                 ) WHERE rn = 1
             )
-            -- legg på informasjon om saken
+            -- Legg på informasjon om saken
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
                 s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, nv.til_dato,  
                 vmd.max_dato, vmd.max_unntak_dato
@@ -217,8 +202,10 @@ class SakRepository(private val dataSource: DataSource) {
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
                 JOIN sak s on s.sak_id = nv.sak_id
             ORDER BY nv.til_dato DESC
-            FETCH FIRST 1 ROW ONLY -- bare det siste vedtaket
+            -- Returner kun det siste vedtaket for denne personen
+            FETCH FIRST 1 ROW ONLY
         """.trimIndent()
+
     }
 
 }

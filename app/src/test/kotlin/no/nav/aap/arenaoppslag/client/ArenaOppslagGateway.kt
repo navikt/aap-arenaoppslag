@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -31,7 +32,11 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
+import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
+import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
+import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.server
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
@@ -123,6 +128,79 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         gjørArenaOppslag<SignifikantHistorikkResponse, SignifikantHistorikkRequest>(
             "/api/v1/person/historikk/signifikant", req
         ).getOrThrow()
+
+    suspend fun hentTilkjentYtelse(sakid: String): TilkjentYtelseResponse =
+        gjørArenaOppslagGet<TilkjentYtelseResponse>(
+            "/api/intern/sak/$sakid/tilkjent-ytelse"
+        ).getOrThrow()
+
+    suspend fun hentTilkjentYtelseStatus(sakid: String): HttpStatusCode =
+        hentStatus("/api/intern/sak/$sakid/tilkjent-ytelse")
+
+    suspend fun hentTelleverk(sakid: String): TelleverkResponse =
+        gjørArenaOppslagGet<TelleverkResponse>(
+            "/api/intern/sak/$sakid/telleverk"
+        ).getOrThrow()
+
+    suspend fun hentTelleverkStatus(sakid: String): HttpStatusCode =
+        hentStatus("/api/intern/sak/$sakid/telleverk")
+
+    suspend fun hentKvotehistorikk(sakid: String): List<KvotebrukHendelse> =
+        gjørArenaOppslagGet<List<KvotebrukHendelse>>(
+            "/api/intern/sak/$sakid/kvotehistorikk"
+        ).getOrThrow()
+
+    suspend fun hentKvotehistorikkStatus(sakid: String): HttpStatusCode =
+        hentStatus("/api/intern/sak/$sakid/kvotehistorikk")
+
+    suspend fun hentOppgaver(sakid: String): List<ArenaOppgave> =
+        gjørArenaOppslagGet<List<ArenaOppgave>>(
+            "/api/intern/sak/$sakid/oppgaver"
+        ).getOrThrow()
+
+    suspend fun hentOppgaverStatus(sakid: String): HttpStatusCode =
+        hentStatus("/api/intern/sak/$sakid/oppgaver")
+
+    private suspend fun hentStatus(endepunkt: String): HttpStatusCode {
+        val token = tokenProvider.generate()
+        // Testklienten validerer respons og kaster på feilstatus, så statusen hentes fra unntaket
+        return try {
+            httpClient.get(endepunkt) {
+                accept(ContentType.Application.Json)
+                bearerAuth(token)
+            }.status
+        } catch (e: ResponseException) {
+            e.response.status
+        }
+    }
+
+    private suspend inline fun <reified T> gjørArenaOppslagGet(
+        endepunkt: String
+    ): Result<T> {
+        var fikkToken = false
+        var fikkArenaData = false
+
+        return runCatching {
+            val token = tokenProvider.generate().also { fikkToken = true }
+
+            val arenaResponse = httpClient.get(endepunkt) {
+                accept(ContentType.Application.Json)
+                bearerAuth(token)
+            }.also {
+                if (it.status.isSuccess()) {
+                    fikkArenaData = true
+                }
+            }
+
+            objectMapper.readValue<T>(arenaResponse.bodyAsText())
+        }.onFailure { e ->
+            when {
+                !fikkToken -> log.error("Fetch av token for Arena-oppslag feilet", e)
+                !fikkArenaData -> log.error("Fetch av Arena-data feilet for '$endepunkt'", e)
+                else -> log.error("Parsefeil for '$endepunkt'", e)
+            }
+        }
+    }
 
     suspend fun hentSak(sakId: String): ArenaSakMedVedtakResponse {
         val token = tokenProvider.generate()
