@@ -8,15 +8,12 @@ import no.nav.aap.arenaoppslag.Metrics.registrerEnsligSignifikantVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerNyesteSignifikanteVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
-import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
-import no.nav.aap.arenaoppslag.kontrakt.intern.PersonEksistererIAAPArena
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import java.time.LocalDate
 
 class HistorikkService(
-    private val personRepository: PersonRepository,
     private val historikkRepository: HistorikkRepository,
 ) {
 
@@ -62,20 +59,6 @@ class HistorikkService(
         if (vedtakene.size == 1) {
             prometheus.registrerEnsligSignifikantVedtak(vedtakene.first())
         }
-    }
-
-    fun personEksistererIAapArena(fodselsnummerene: Set<String>): PersonEksistererIAAPArena {
-        // TODO deprekert, fjern når kallere er oppdatert
-        val personId: Int? = hentPersonId(fodselsnummerene)
-        return PersonEksistererIAAPArena(personId != null)
-    }
-
-    private fun hentPersonId(fodselsnummerene: Set<String>): Int? {
-        return fodselsnummerene.firstNotNullOfOrNull { personIdCache.getIfPresent(it) }
-            ?: personRepository.hentPersonIdHvisEksisterer(fodselsnummerene)
-                ?.also { funnetPersonId ->
-                    fodselsnummerene.forEach { personIdCache.put(it, funnetPersonId.id) }
-                }?.id
     }
 
 }
