@@ -84,7 +84,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         """.trimIndent()
 
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
-        const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
+        const val stansTidsbufferDager = 109L * 7 + 4 + 14 // foreldrepenger for 3+ barn, 80%$ utbetalt, mor tar alt, 2 uker premature barn
         const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
         const val modnedGrenseVedtak = 72L
 
@@ -92,7 +92,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val vanligTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(vanligTidsbufferUker))
-            val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(stansTidsbufferUker))
+            val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusDays(stansTidsbufferDager))
             val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
             val aa115BehandlingUkerGrense = Date.valueOf(søknadMottattPå.minusWeeks(aa115BehandlingUker))
 
