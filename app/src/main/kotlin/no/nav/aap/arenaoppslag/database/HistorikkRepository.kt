@@ -58,8 +58,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
               )
           -- Se bort ifra vedtak som er automatiske stanser kun pga. at til-dato for vedtaket er passert:
           AND NOT (vedtaktypekode = 'S' AND reg_user='GRENSESN' AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.')
-          -- Se bort i fra avslag som er gamle nok til at det ikke er sannsynlig at det opprettes nye vedtak i saksbehandlingen:
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+          -- Se bort i fra avslag som er gamle nok til at det ikke er sannsynlig at det opprettes nye AAP-vedtak i samme sak:
+          AND NOT (utfallkode = 'NEI' AND mod_dato <= ?) 
         """.trimIndent()
 
 
@@ -90,6 +90,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val stansTidsbufferDager = 118L * 7 + 4 + 14 // foreldrepenger for 3+ barn, 80%$ utbetalt, kun mor har rett, 2 uker premature barn
         const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
         const val modnedGrenseVedtak = 72L
+        const val avslagTidsbufferUker = 4L // i tilfelle saksbehandlingen fortsetter etter avslag i Arena
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
@@ -97,6 +98,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             val vanligTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(vanligTidsbufferUker))
             val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusDays(stansTidsbufferDager))
             val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
+            val avslagTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(avslagTidsbufferUker))
             val aa115BehandlingUkerGrense = Date.valueOf(søknadMottattPå.minusWeeks(aa115BehandlingUker))
 
             val query =
@@ -112,7 +114,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, stansTidsbuffer)
-                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, avslagTidsbuffer)
                 // S2: 11-5-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, aa115BehandlingUkerGrense)
