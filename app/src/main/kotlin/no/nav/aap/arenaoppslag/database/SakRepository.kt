@@ -188,7 +188,13 @@ class SakRepository(private val dataSource: DataSource) {
                                     AND vv.vedtak_id > v.vedtak_id -- et nyere vedtak
                                     AND (vv.fra_dato IS NOT NULL AND v.fra_dato IS NOT NULL AND vv.fra_dato > v.fra_dato) -- med nyere fra_dato
                             )
-                            )) 
+                            -- Og ikke vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
+                            AND NOT (
+                                reg_user='GRENSESN'  
+                                AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
+                                )
+                            )
+                        ) 
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato) 
