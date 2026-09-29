@@ -62,6 +62,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND NOT (v.utfallkode IS NOT NULL AND v.utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
           AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
           AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+          -- Se bort ifra vedtak som er automatiske stanser kun pga. at til-dato for vedtaket er passert:
+          AND NOT (vedtaktypekode = 'S' AND reg_user='GRENSESN' AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.')
+          -- Se bort i fra avslag som er gamle nok til at det ikke er sannsynlig at det opprettes nye vedtak i saksbehandlingen:
+          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
         """.trimIndent()
 
 
