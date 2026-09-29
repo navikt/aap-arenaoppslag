@@ -17,10 +17,10 @@ class MeldekortServiceTest {
     fun `hentStartukeForSisteMeldekort returnerer startuke fra repository`() {
         val personId = PersonId(500)
         every { meldekortRepository.hentStartukeForSisteMeldekort(personId) } returns
-                MeldekortStartuke(aar = 2026, ukenummer = "53")
+                MeldekortStartuke(aar = 2026, ukenummer = 53)
 
         assertThat(service.hentStartukeForSisteMeldekort(personId))
-            .isEqualTo(MeldekortStartuke(aar = 2026, ukenummer = "53"))
+            .isEqualTo(MeldekortStartuke(aar = 2026, ukenummer = 53))
     }
 
     @Test

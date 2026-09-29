@@ -16,7 +16,7 @@ class MeldekortStartukeApiTest : H2TestBase("flyway/meldekort") {
         withTestServer(h2) { gateway ->
             val response = gateway.hentMeldekortStartuke(MeldekortStartukeRequest("50000000001"))
 
-            assertThat(response).isEqualTo(MeldekortStartukeResponse(aar = 2026, ukenummer = "53"))
+            assertThat(response).isEqualTo(MeldekortStartukeResponse(aar = 2026, ukenummer = 53))
         }
     }
 

@@ -13,7 +13,14 @@ class MeldekortStartukeRepositoryTest : H2TestBase("flyway/meldekort") {
     fun `henter år og periodekode fra siste ATTF-meldekort`() {
         val startuke = meldekortRepository.hentStartukeForSisteMeldekort(PersonId(500))
 
-        assertThat(startuke).isEqualTo(MeldekortStartuke(aar = 2026, ukenummer = "53"))
+        assertThat(startuke).isEqualTo(MeldekortStartuke(aar = 2026, ukenummer = 53))
+    }
+
+    @Test
+    fun `tolker periodekode med ledende null som ukenummer`() {
+        val startuke = meldekortRepository.hentStartukeForSisteMeldekort(PersonId(503))
+
+        assertThat(startuke).isEqualTo(MeldekortStartuke(aar = 2025, ukenummer = 5))
     }
 
     @Test

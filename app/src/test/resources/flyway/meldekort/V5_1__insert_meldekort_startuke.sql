@@ -24,3 +24,10 @@ values (50011, 501, 2026, '10', 'E1', 'FERDI', 'DAGP');
 insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
 values (502, '50000000003', 'Kortløs', 'Inga');
 
+-- Person med periodekode med ledende null, for å verifisere tolkningen som tall
+insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
+values (503, '50000000004', 'Nullesen', 'Ledende');
+
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEGRUPPEKODE)
+values (50021, 503, 2025, '05', 'E1', 'FERDI', 'ATTF');
+
