@@ -84,7 +84,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         """.trimIndent()
 
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
-        const val stansTidsbufferDager = 109L * 7 + 4 + 14 // foreldrepenger for 3+ barn, 80%$ utbetalt, mor tar alt, 2 uker premature barn
+        const val stansTidsbufferDager = 118L * 7 + 4 + 14 // foreldrepenger for 3+ barn, 80%$ utbetalt, kun mor har rett, 2 uker premature barn
         const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
         const val modnedGrenseVedtak = 72L
 
