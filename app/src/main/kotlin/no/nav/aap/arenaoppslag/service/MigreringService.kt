@@ -1,17 +1,22 @@
 package no.nav.aap.arenaoppslag.service
 
+import no.nav.aap.arenaoppslag.database.MedisinskOpplysningRepository
 import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
+import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.migrering.Krav
+import no.nav.aap.arenaoppslag.modeller.migrering.Sykdomsvurdering
 import java.time.LocalDate
 
 class MigreringService(
     private val vedtakRepository: VedtakRepository,
     private val meldekortperiodeRepository: MeldekortperiodeRepository,
     private val telleverkService: TelleverkService,
+    private val vilkårsvurderingRepository: VilkårsvurderingRepository,
+    private val medisinskOpplysningRepository: MedisinskOpplysningRepository,
 ) {
 
     fun hentKravForSak(sak: ArenaSak, sakId: SakId, idag: LocalDate = LocalDate.now()): Krav {
@@ -29,6 +34,24 @@ class MigreringService(
             soknadsdato = forsteInnvilgedeVedtak?.fraOgMed,
             migreringsdato = migreringsdato,
             gjenstaaendeOrdinaerKvote = gjenstaaendeOrdinaerKvote,
+        )
+    }
+
+    fun hentSykdomsvurderingForSak(
+        sak: ArenaSak,
+        sakId: SakId,
+        idag: LocalDate = LocalDate.now(),
+    ): Sykdomsvurdering? {
+        val vedtak = vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) ?: return null
+        val vilkårsvurderinger = vilkårsvurderingRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId]
+            .orEmpty()
+        val diagnoser = medisinskOpplysningRepository.hentForPerson(PersonId(sak.person.personId))
+
+        return Sykdomsvurdering(
+            vedtakId = vedtak.vedtakId,
+            begrunnelse = vedtak.begrunnelse,
+            vilkar = vilkårsvurderinger.filter { it.vilkårkode in setOf("INNTNEDS", "SYKSKADLYT", "AAARBEVNE") },
+            diagnoser = diagnoser,
         )
     }
 
