@@ -163,6 +163,14 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     suspend fun hentOppgaverStatus(sakid: String): HttpStatusCode =
         hentStatus("/api/intern/sak/$sakid/oppgaver")
 
+    suspend fun hentSykdomsvurdering(saksnummer: String): ArenaSykdomsvurderingResponse =
+        gjørArenaOppslagGet<ArenaSykdomsvurderingResponse>(
+            "/api/migrering/$saksnummer/sykdom"
+        ).getOrThrow()
+
+    suspend fun hentSykdomsvurderingStatus(saksnummer: String): HttpStatusCode =
+        hentStatus("/api/migrering/$saksnummer/sykdom")
+
     suspend fun hentMeldekortStartuke(
         req: MeldekortStartukeRequest
     ): MeldekortStartukeResponse =
