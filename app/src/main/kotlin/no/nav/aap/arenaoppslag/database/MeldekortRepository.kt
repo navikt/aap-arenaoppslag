@@ -37,7 +37,6 @@ class MeldekortRepository(
             preparedStatement.executeQuery().map { row ->
                 MeldekortStartuke(
                     aar = row.getInt("aar"),
-                    // PERIODEKODE er VARCHAR2 med ledende null ("01"-"53") og tilsvarer ukenummeret periodens starter i
                     ukenummer = row.getString("periodekode").toInt(),
                 )
             }.firstOrNull()
