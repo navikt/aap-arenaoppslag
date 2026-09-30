@@ -96,8 +96,8 @@ class MigreringServiceTest {
         every { meldekortperiodeRepository.hentGjeldendePeriode(idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
         every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
-            kvotebrukHendelse(id = 1, dato = LocalDate.of(2023, 2, 1), resterende = 250),
-            kvotebrukHendelse(id = 2, dato = LocalDate.of(2024, 2, 1), resterende = 200),
+            kvotebrukHendelse(id = 1, dato = LocalDate.of(2023, 2, 1), resterende = 15680),
+            kvotebrukHendelse(id = 2, dato = LocalDate.of(2024, 2, 1), resterende = 15480),
             // Nyere hendelse enn migreringsdatoen skal ikke telle med i saldoen på migreringstidspunktet.
             kvotebrukHendelse(id = 3, dato = LocalDate.of(2024, 6, 1), resterende = 150),
             // Annen kvotetype skal ikke påvirke ordinær-saldoen.
@@ -110,7 +110,7 @@ class MigreringServiceTest {
         assertThat(krav.aar).isEqualTo(2023)
         assertThat(krav.soknadsdato).isEqualTo(LocalDate.of(2023, 1, 1))
         assertThat(krav.migreringsdato).isEqualTo(LocalDate.of(2024, 3, 4))
-        assertThat(krav.gjenstaaendeOrdinaerKvote).isEqualTo(200)
+        assertThat(krav.gjenstaaendeOrdinaerKvote).isEqualTo(774)
     }
 
     @Test

@@ -60,8 +60,12 @@ class MigreringService(
             .filter { it.kvoteTypeKode == KVOTE_ORDINAER && !it.datoHendelse.isAfter(somAv) }
             .maxByOrNull { it.id }
             ?.resterende
+            ?.let { it / KVOTEENHETER_PER_DAG }
 
     private companion object {
         private const val KVOTE_ORDINAER = "AAP"
+        // Arena lagrer kvoten i enheter der én hel dag = 20 (100 per uke), f.eks. 15680 = 784 dager.
+        // Delvise dager rundes ned fordi Krav-kontrakten bruker hele dager.
+        private const val KVOTEENHETER_PER_DAG = 20
     }
 }
