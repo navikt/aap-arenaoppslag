@@ -28,14 +28,16 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
-import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaSykdomsvurderingResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaSykdomsvurderingResponse
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeRequest
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
 import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.server
@@ -169,6 +171,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     suspend fun hentSykdomsvurderingStatus(saksnummer: String): HttpStatusCode =
         hentStatus("/api/migrering/$saksnummer/sykdom")
+
+    suspend fun hentMeldekortStartuke(
+        req: MeldekortStartukeRequest
+    ): MeldekortStartukeResponse =
+        gjørArenaOppslag<MeldekortStartukeResponse, MeldekortStartukeRequest>(
+            "/api/intern/person/meldekort/startuke", req
+        ).getOrThrow()
 
     private suspend fun hentStatus(endepunkt: String): HttpStatusCode {
         val token = tokenProvider.generate()
