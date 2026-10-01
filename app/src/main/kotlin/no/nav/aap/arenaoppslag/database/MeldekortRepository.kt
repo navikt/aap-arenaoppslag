@@ -9,6 +9,7 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Spesialutbetaling
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.Date
@@ -39,6 +40,7 @@ class MeldekortRepository(
                 val meldekortId = row.getLong("meldekort_id").let { if (row.wasNull()) null else it }
                 val kildeObjektId = row.getLong("objekt_id_kilde").let { if (row.wasNull()) null else it }
                 val kildeAlias = row.getString("tabellnavnalias_kilde")
+                val spesialutbetaling = mapSpesialutbetaling(row)
                 MeldekortPostering(
                     vedtakId = row.getInt("vedtak_id"),
                     personId = row.getInt("person_id"),
@@ -56,9 +58,35 @@ class MeldekortRepository(
                     kilde = PosteringKilde.fraKode(kildeAlias),
                     kildeAlias = kildeAlias,
                     kildeObjektId = kildeObjektId,
+                    spesialutbetaling = spesialutbetaling,
                 )
             }
         }
+
+    // LEFT JOIN gir NULL i spes_id når posteringen ikke er en spesialutbetaling, eller når raden
+    // i SPESIALUTBETALING mangler. Da finnes det ingen spesialutbetaling å vise.
+    private fun mapSpesialutbetaling(row: ResultSet): Spesialutbetaling? {
+        row.getLong("spes_id")
+        if (row.wasNull()) return null
+        return Spesialutbetaling(
+            begrunnelse = row.getString("spes_begrunnelse"),
+            belop = row.getDoubleOrNull("spes_belop"),
+            belopKode = row.getString("spes_belopkode"),
+            datoUtbetaling = row.getDate("spes_dato_utbetaling")?.toLocalDate(),
+            periode = Periode(
+                fraOgMedDato = row.getDate("spes_dato_fra")?.toLocalDate(),
+                tilOgMedDato = row.getDate("spes_dato_til")?.toLocalDate(),
+            ),
+            vedtakStatusKode = row.getString("spes_vedtakstatuskode"),
+            posteringTypeKode = row.getString("spes_posteringtypekode"),
+            statusBilag = tilBoolean(row.getString("spes_status_bilag")),
+            statusAnvistBilag = tilBoolean(row.getString("spes_status_anvis_bilag")),
+            kategori = row.getString("spes_kategori"),
+            valgtUtbetalingType = row.getString("spes_valgt_utbet_type"),
+            saksbehandler = row.getString("spes_saksbehandler"),
+            beslutter = row.getString("spes_beslutter"),
+        )
+    }
 
     private fun selectMeldekort(sakId: SakId, connection: Connection): List<Meldekort> {
         val metadata = connection.createParameterizedQuery(meldekortForSakSql).use { preparedStatement ->
@@ -212,10 +240,20 @@ class MeldekortRepository(
         SELECT p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
                p.antall,
                p.tabellnavnalias_kilde, p.objekt_id_kilde,
-               f.dagsats_med_barnetillegg, f.dagsats, f.dagsats_for_samordning, f.ins_grad
+               f.dagsats_med_barnetillegg, f.dagsats, f.dagsats_for_samordning, f.ins_grad,
+               s.spesutbetaling_id AS spes_id, s.begrunnelse AS spes_begrunnelse, s.belop AS spes_belop,
+               s.belopkode AS spes_belopkode, s.dato_utbetaling AS spes_dato_utbetaling,
+               s.dato_fra AS spes_dato_fra, s.dato_til AS spes_dato_til,
+               s.vedtakstatuskode AS spes_vedtakstatuskode, s.posteringtypekode AS spes_posteringtypekode,
+               s.status_bilag AS spes_status_bilag, s.status_anvis_bilag AS spes_status_anvis_bilag,
+               s.kategori AS spes_kategori, s.valgt_utbet_type AS spes_valgt_utbet_type,
+               s.bruker_id_saksbehandler AS spes_saksbehandler, s.bruker_id_beslutter AS spes_beslutter
           FROM postering p
           JOIN vedtak v ON v.vedtak_id = p.vedtak_id
           LEFT JOIN fakta f ON f.vedtak_id = p.vedtak_id
+          -- Aliaset må med i join-betingelsen fordi OBJEKT_ID_KILDE peker på ulike tabeller avhengig av kilde
+          LEFT JOIN spesialutbetaling s ON s.spesutbetaling_id = p.objekt_id_kilde
+                                       AND p.tabellnavnalias_kilde = 'SPESUTB'
          WHERE v.sak_id = ?
          ORDER BY p.dato_periode_fra, p.postering_id
     """.trimIndent()

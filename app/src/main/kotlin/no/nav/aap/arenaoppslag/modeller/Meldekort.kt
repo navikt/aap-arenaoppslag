@@ -26,6 +26,27 @@ data class MeldekortPostering(
     val kildeAlias: String? = null,
     // POSTERING.OBJEKT_ID_KILDE — peker på forekomsten i kildetabellen. Brukes internt, eksponeres ikke.
     val kildeObjektId: Long? = null,
+    // Kun satt når kilden er SPESUTB og raden finnes i SPESIALUTBETALING
+    val spesialutbetaling: Spesialutbetaling? = null,
+)
+
+// Domeneobjekt: én rad fra SPESIALUTBETALING. Alle kolonner kan mangle i Arena, så alt er nullable.
+data class Spesialutbetaling(
+    val begrunnelse: String?,
+    // DECIMAL(12,2) i Arena — kan inneholde øre, i motsetning til POSTERING.BELOP
+    val belop: Double?,
+    val belopKode: String?,
+    val datoUtbetaling: LocalDate?,
+    val periode: Periode,
+    val vedtakStatusKode: String?,
+    val posteringTypeKode: String?,
+    val statusBilag: Boolean?,
+    val statusAnvistBilag: Boolean?,
+    val kategori: String?,
+    // Ventebetingelse når utbetalingen er satt på vent (f.eks. REFKRAVSOS, REFKRAVTP, AVREGNAYT)
+    val valgtUtbetalingType: String?,
+    val saksbehandler: String?,
+    val beslutter: String?,
 )
 
 data class MeldekortReduksjon(

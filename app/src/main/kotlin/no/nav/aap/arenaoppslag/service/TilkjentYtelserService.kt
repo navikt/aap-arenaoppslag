@@ -71,6 +71,7 @@ class TilkjentYtelserService(
                 // Kvotetrekk registreres kun per meldekort, så spesialutbetalinger får ingen saldo.
                 gjenstaaendeOrdinaerDager = postering.meldekortId?.let { kvoteSaldo.gjenstaaende(it, KVOTE_ORDINAER) },
                 gjenstaaendeUnntakDager = postering.meldekortId?.let { kvoteSaldo.gjenstaaende(it, KVOTE_UNNTAK) },
+                spesialutbetaling = postering.spesialutbetaling?.tilRespons(),
             )
         }
 
@@ -106,6 +107,7 @@ class TilkjentYtelserService(
             meldekort = meldekort.tilRespons(),
             gjenstaaendeOrdinaerDager = kvoteSaldo.gjenstaaende(meldekort.meldekortId, KVOTE_ORDINAER),
             gjenstaaendeUnntakDager = kvoteSaldo.gjenstaaende(meldekort.meldekortId, KVOTE_UNNTAK),
+            spesialutbetaling = null,
         )
     }
 

@@ -37,6 +37,42 @@ data class TilkjentYtelseRad(
     val meldekort: MeldekortRespons?,
     val gjenstaaendeOrdinaerDager: Int?,
     val gjenstaaendeUnntakDager: Int?,
+    // Kun satt for rader med kilde SPESIALUTBETALING der raden finnes i SPESIALUTBETALING
+    val spesialutbetaling: SpesialutbetalingRespons?,
+)
+
+data class SpesialutbetalingRespons(
+    val begrunnelse: String?,
+    val belop: Double?,
+    val belopKode: String?,
+    val datoUtbetaling: LocalDate?,
+    val fraOgMedDato: LocalDate?,
+    val tilOgMedDato: LocalDate?,
+    val vedtakStatusKode: String?,
+    val posteringTypeKode: String?,
+    val statusBilag: Boolean?,
+    val statusAnvistBilag: Boolean?,
+    val kategori: String?,
+    val valgtUtbetalingType: String?,
+    val saksbehandler: String?,
+    val beslutter: String?,
+)
+
+fun Spesialutbetaling.tilRespons(): SpesialutbetalingRespons = SpesialutbetalingRespons(
+    begrunnelse = begrunnelse,
+    belop = belop,
+    belopKode = belopKode,
+    datoUtbetaling = datoUtbetaling,
+    fraOgMedDato = periode.fraOgMedDato,
+    tilOgMedDato = periode.tilOgMedDato,
+    vedtakStatusKode = vedtakStatusKode,
+    posteringTypeKode = posteringTypeKode,
+    statusBilag = statusBilag,
+    statusAnvistBilag = statusAnvistBilag,
+    kategori = kategori,
+    valgtUtbetalingType = valgtUtbetalingType,
+    saksbehandler = saksbehandler,
+    beslutter = beslutter,
 )
 
 data class ReduksjonRespons(

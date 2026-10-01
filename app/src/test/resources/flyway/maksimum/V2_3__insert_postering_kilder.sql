@@ -31,11 +31,12 @@ insert into MELDEKORTDAG (MELDEKORT_ID, UKENR, DAGNR, STATUS_ARBEIDSDAG, STATUS_
 values (5004, 5, 1, 'J', 'N', 'N', 7.5);
 
 Insert into SPESIALUTBETALING (SPESUTBETALING_ID, PERSON_ID, VEDTAK_ID, LOPENR, BRUKER_ID_SAKSBEHANDLER,
-                               DATO_UTBETALING, BEGRUNNELSE, BELOP, BELOPKODE, RETTIGHETKODE, AKTFASEKODE,
-                               VEDTAKSTATUSKODE, POSTERINGTYPEKODE, DATO_FRA, DATO_TIL, ORDINAER_YTELSE,
-                               STATUS_BILAG, STATUS_ANVIS_BILAG)
-values (7700004, 104, 90040, 1, 'TEST', DATE '2023-02-20', 'etterbetaling', 3459, 'AAP', 'AAP', 'UA',
-        'INNST', 'INIT', DATE '2023-02-13', DATE '2023-02-26', 'J', 'N', 'N');
+                               BRUKER_ID_BESLUTTER, DATO_UTBETALING, BEGRUNNELSE, BELOP, BELOPKODE,
+                               RETTIGHETKODE, AKTFASEKODE, VEDTAKSTATUSKODE, POSTERINGTYPEKODE, DATO_FRA,
+                               DATO_TIL, ORDINAER_YTELSE, STATUS_BILAG, STATUS_ANVIS_BILAG, VALGT_UTBET_TYPE,
+                               KATEGORI)
+values (7700004, 104, 90040, 1, 'TEST', 'BESL', DATE '2023-02-20', 'etterbetaling', 3459.50, 'AAP', 'AAP', 'UA',
+        'INNST', 'INIT', DATE '2023-02-13', DATE '2023-02-26', 'J', 'J', 'N', 'REFKRAVTP', 'ETTERBET');
 
 -- Fire posteringer med hver sin kilde. Merk at både SPESUTB-, BETPLAN- og den aliasløse
 -- posteringen har MELDEKORT_ID = NULL — det er nettopp derfor kilden må leses fra aliaset.

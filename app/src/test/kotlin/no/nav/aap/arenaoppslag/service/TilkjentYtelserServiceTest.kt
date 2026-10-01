@@ -15,6 +15,7 @@ import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Spesialutbetaling
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -66,6 +67,21 @@ class TilkjentYtelserServiceTest {
                     belop = 3459, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
                     insGrad = null, kilde = PosteringKilde.SPESIALUTBETALING, kildeAlias = "SPESUTB",
                     kildeObjektId = 7700004,
+                    spesialutbetaling = Spesialutbetaling(
+                        begrunnelse = "etterbetaling",
+                        belop = 3459.50,
+                        belopKode = "AAP",
+                        datoUtbetaling = LocalDate.of(2023, 2, 20),
+                        periode = periode,
+                        vedtakStatusKode = "INNST",
+                        posteringTypeKode = "INIT",
+                        statusBilag = true,
+                        statusAnvistBilag = false,
+                        kategori = "ETTERBET",
+                        valgtUtbetalingType = "REFKRAVTP",
+                        saksbehandler = "TEST",
+                        beslutter = "BESL",
+                    ),
                 ),
             ),
             meldekort = listOf(meldekort),
@@ -108,6 +124,7 @@ class TilkjentYtelserServiceTest {
         // Meldekortet trekker kun ordinær kvote, så unntakskvoten videreføres fra forrige bevegelse.
         assertThat(meldekortRad.gjenstaaendeOrdinaerDager).isEqualTo(10)
         assertThat(meldekortRad.gjenstaaendeUnntakDager).isEqualTo(30)
+        assertThat(meldekortRad.spesialutbetaling).isNull()
 
         val spesialRad = response.rader.first { it.kilde == PosteringKilde.SPESIALUTBETALING }
         assertThat(spesialRad.uke).isNull()
@@ -115,6 +132,21 @@ class TilkjentYtelserServiceTest {
         assertThat(spesialRad.beregnetBrutto).isEqualTo(3459)
         assertThat(spesialRad.gjenstaaendeOrdinaerDager).isNull()
         assertThat(spesialRad.gjenstaaendeUnntakDager).isNull()
+        val spesialutbetaling = spesialRad.spesialutbetaling
+        assertThat(spesialutbetaling?.begrunnelse).isEqualTo("etterbetaling")
+        assertThat(spesialutbetaling?.belop).isEqualTo(3459.50)
+        assertThat(spesialutbetaling?.belopKode).isEqualTo("AAP")
+        assertThat(spesialutbetaling?.datoUtbetaling).isEqualTo(LocalDate.of(2023, 2, 20))
+        assertThat(spesialutbetaling?.fraOgMedDato).isEqualTo(periode.fraOgMedDato)
+        assertThat(spesialutbetaling?.tilOgMedDato).isEqualTo(periode.tilOgMedDato)
+        assertThat(spesialutbetaling?.vedtakStatusKode).isEqualTo("INNST")
+        assertThat(spesialutbetaling?.posteringTypeKode).isEqualTo("INIT")
+        assertThat(spesialutbetaling?.statusBilag).isTrue()
+        assertThat(spesialutbetaling?.statusAnvistBilag).isFalse()
+        assertThat(spesialutbetaling?.kategori).isEqualTo("ETTERBET")
+        assertThat(spesialutbetaling?.valgtUtbetalingType).isEqualTo("REFKRAVTP")
+        assertThat(spesialutbetaling?.saksbehandler).isEqualTo("TEST")
+        assertThat(spesialutbetaling?.beslutter).isEqualTo("BESL")
     }
 
     @Test
