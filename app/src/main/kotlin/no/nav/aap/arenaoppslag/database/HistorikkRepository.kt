@@ -56,7 +56,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+          -- Se bort ifra vedtak som er automatiske stanser kun pga. at til-dato for vedtaket er passert:
+          AND NOT (vedtaktypekode = 'S' AND reg_user='GRENSESN' AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.')
+          -- Se bort i fra avslag som er gamle nok til at det ikke er sannsynlig at det opprettes nye AAP-vedtak i samme sak:
+          AND NOT (utfallkode = 'NEI' AND mod_dato <= ?) 
         """.trimIndent()
 
 
@@ -83,86 +86,25 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND v.MOD_DATO >= ? -- ikke utdatert
         """.trimIndent()
 
-        // S3: Hent alle AAP-klager med relevant historikk for personen
-        // Forbedringsmulighet: Vi kan se bort i fra klag1 for de som har klag2, angitt ved vedtak.vedtak_id_relatert
-        @Language("OracleSql")
-        val selectKunRelevanteKlager = """
-        -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres. 
-        -- Dersom den er null, er klagen fortsatt under behandling.
-        SELECT
-            v.sak_id,
-            v.aar,
-            v.lopenrvedtak,
-            v.lopenrsak,
-            vedtakstatuskode,
-            vedtaktypekode,
-            CAST(NULL AS DATE)                    AS fra_dato,
-            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
-            v.rettighetkode,
-            v.aktfasekode,
-            v.utfallkode
-        FROM
-            vedtak v
-            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
-        WHERE
-            v.person_id = ?
-            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
-            AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
-            AND vf.vedtakfaktakode = 'INNVF'
-            -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
-            -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
-            AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
-            -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
-            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ? AND v.utfallkode IN ('JA', 'DELVIS' ) )
-        """.trimIndent()
-
-        // S4: Hent alle AAP-anker med relevant historikk for personen
-        @Language("OracleSql")
-        val selectKunRelevanteAnker = """
-        SELECT
-            v.sak_id,
-            v.aar,
-            v.lopenrvedtak,
-            v.lopenrsak,
-            vedtakstatuskode,
-            vedtaktypekode,
-            CAST(NULL AS DATE)                    AS fra_dato,
-            CAST(NULL AS DATE)                    AS til_dato,
-            v.rettighetkode,
-            v.aktfasekode,
-            v.utfallkode
-        FROM
-            vedtak v
-            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
-        WHERE
-            v.person_id = ?
-            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
-            AND rettighetkode = 'ANKE'
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
-        """.trimIndent()
-
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
-        const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
+        const val stansTidsbufferDager = 118L * 7 + 4 + 14 // foreldrepenger for 3+ barn, 80%$ utbetalt, kun mor har rett, 2 uker premature barn
         const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
         const val modnedGrenseVedtak = 72L
-        const val modnedGrenseKlageInnvilget = 6L
+        const val avslagTidsbufferUker = 4L // i tilfelle saksbehandlingen fortsetter etter avslag i Arena
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val vanligTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(vanligTidsbufferUker))
-            val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(stansTidsbufferUker))
+            val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusDays(stansTidsbufferDager))
             val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
-            val klageInnvilgetGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseKlageInnvilget))
+            val avslagTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(avslagTidsbufferUker))
             val aa115BehandlingUkerGrense = Date.valueOf(søknadMottattPå.minusWeeks(aa115BehandlingUker))
 
             val query =
                 listOf(
                     selectKunRelevanteAapVedtak,
                     selectKunRelevante11_5Vedtak,
-                    selectKunRelevanteKlager,
-                    selectKunRelevanteAnker,
                 ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC"
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
@@ -172,18 +114,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, stansTidsbuffer)
-                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, avslagTidsbuffer)
                 // S2: 11-5-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, aa115BehandlingUkerGrense)
-                // S3: klager
-                preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, vanligTidsbuffer)
-                preparedStatement.setDate(p++, klageInnvilgetGrense)
-                // S4: anker
-                preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, vedtakModnedGrense)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }
