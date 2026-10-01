@@ -5,8 +5,10 @@ import io.mockk.mockk
 import io.mockk.verify
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
+import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakfakta
+import no.nav.aap.arenaoppslag.modeller.ArenaVilkårsvurdering
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.assertj.core.api.Assertions.assertThat
@@ -21,12 +23,13 @@ class SakServiceTest {
     fun `hentSakerForPerson mapper saker til kontrakt og cacher per person`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
         every { sakRepository.hentSakerForPerson(personId) } returns listOf(
             arenaSakOppsummering(sakId = "1"),
             arenaSakOppsummering(sakId = "2"),
         )
 
-        val service = SakService(sakRepository, vedtakfaktaRepository)
+        val service = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository)
 
         val foersteKall = service.hentSakerForPerson(personId)
         val andreKall = service.hentSakerForPerson(personId)
@@ -40,13 +43,14 @@ class SakServiceTest {
     fun `hentMaksdatoAapMedVedtakOgSak mapper maksdatolinjer til kontrakt`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
 
         val maxdato = LocalDate.of(2026, 5, 1)
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = maxdato)
         every { vedtakfaktaRepository.hentForVedtakIder(any()) } returns emptyMap()
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository).hentMaksdatoAapMedVedtakOgSak(personId)
 
         assertThat(resultat).isNotNull
         assertThat(resultat?.sakId).isEqualTo(1)
@@ -58,6 +62,7 @@ class SakServiceTest {
     fun `hentMaksdatoAapMedVedtakOgSak setter unntaksvilkaar fra vedtakfakta paa forventet format`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
 
         val maxdato = LocalDate.of(2026, 5, 1)
         val unntaksdato = LocalDate.of(2025, 2, 1)
@@ -71,7 +76,7 @@ class SakServiceTest {
             )
         )
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository).hentMaksdatoAapMedVedtakOgSak(personId)
 
         assertThat(resultat).isNotNull
         assertThat(resultat?.unntaksvilkaarInnvilget).isTrue()
@@ -79,9 +84,10 @@ class SakServiceTest {
     }
 
     @Test
-    fun `hentMaksdatoAapMedVedtakOgSak setter unntaksvilkaarInnvilget til null for ukjent UNNTAKAAP-verdi`() {
+    fun `hentMaksdatoAapMedVedtakOgSak bruker vilkårsvurdering for ukjent UNNTAKAAP-verdi`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
 
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = LocalDate.of(2026, 5, 1))
@@ -89,31 +95,33 @@ class SakServiceTest {
             10 to listOf(vedtakfakta(kode = "UNNTAKAAP", verdi = "APPELSIN"))
         )
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository).hentMaksdatoAapMedVedtakOgSak(personId)
 
-        assertThat(resultat?.unntaksvilkaarInnvilget).isNull()
+        assertThat(resultat?.unntaksvilkaarInnvilget).isTrue()
     }
 
     @Test
-    fun `hentMaksdatoAapMedVedtakOgSak setter unntaksvilkaar til null naar vedtakfakta mangler`() {
+    fun `hentMaksdatoAapMedVedtakOgSak bruker vilkårsvurdering naar vedtakfakta mangler`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
 
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = LocalDate.of(2026, 5, 1))
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(10)) } returns emptyMap()
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository).hentMaksdatoAapMedVedtakOgSak(personId)
 
         assertThat(resultat).isNotNull
-        assertThat(resultat?.unntaksvilkaarInnvilget).isNull()
+        assertThat(resultat?.unntaksvilkaarInnvilget).isTrue()
         assertThat(resultat?.unntaksvilkaarGjelderFra).isNull()
     }
 
     @Test
-    fun `hentMaksdatoAapMedVedtakOgSak setter unntaksvilkaar til null naar relevante koder ikke finnes`() {
+    fun `hentMaksdatoAapMedVedtakOgSak bruker vilkårsvurdering naar relevante koder mangler`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
 
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = LocalDate.of(2026, 5, 1))
@@ -121,9 +129,9 @@ class SakServiceTest {
             10 to listOf(vedtakfakta(kode = "NOEANNET", verdi = "J"))
         )
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository).hentMaksdatoAapMedVedtakOgSak(personId)
 
-        assertThat(resultat?.unntaksvilkaarInnvilget).isNull()
+        assertThat(resultat?.unntaksvilkaarInnvilget).isTrue()
         assertThat(resultat?.unntaksvilkaarGjelderFra).isNull()
     }
 
@@ -131,13 +139,14 @@ class SakServiceTest {
     fun `hentMaksdatoAapForPerson returnerer maksdato for lopende vedtak`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
 
         val senest = LocalDate.of(2027, 6, 30)
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 3, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = senest)
         every { vedtakfaktaRepository.hentForVedtakIder(any()) } returns emptyMap()
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapForPerson(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository).hentMaksdatoAapForPerson(personId)
 
         assertThat(resultat).isEqualTo(senest)
     }
@@ -147,11 +156,13 @@ class SakServiceTest {
     fun `hentMaksdatoAapForPerson returnerer null naar lopende vedtak mangler maksdato`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
+
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = null)
         every { vedtakfaktaRepository.hentForVedtakIder(any()) } returns emptyMap()
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapForPerson(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository).hentMaksdatoAapForPerson(personId)
 
         assertThat(resultat).isNull()
     }
@@ -160,10 +171,11 @@ class SakServiceTest {
     fun `hentMaksdatoAapForPerson returnerer null naar det ikke finnes noen saker`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val vilkårsvurderingRepository = vilkårsvurderingRepositoryMedAAARBEID1Oppfylt()
 
         every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns null
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapForPerson(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository, vilkårsvurderingRepository).hentMaksdatoAapForPerson(personId)
 
         assertThat(resultat).isNull()
     }
@@ -185,6 +197,32 @@ class SakServiceTest {
         navn = kode,
         verdi = verdi,
         registrertDato = LocalDate.of(2025, 1, 1),
+    )
+
+    private fun vilkårsvurderingRepositoryMedAAARBEID1Oppfylt(): VilkårsvurderingRepository {
+        val repo = mockk<VilkårsvurderingRepository>()
+        every { repo.hentForVedtakIder(any()) } answers {
+            @Suppress("UNCHECKED_CAST")
+            val vedtakIder = args[0] as List<Int>
+            vedtakIder.associateWith {
+                listOf(vilkårsvurdering(vilkårkode = "AAARBEID1", statuskode = "J"))
+            }
+        }
+        return repo
+    }
+
+    private fun vilkårsvurdering(vilkårkode: String, statuskode: String) = ArenaVilkårsvurdering(
+        vilkårsvurderingId = 1L,
+        vilkårkode = vilkårkode,
+        begrunnelse = null,
+        vurdertAv = null,
+        vilkårnavn = vilkårkode,
+        erObligatorisk = true,
+        hjelpetekstUrl = null,
+        lovtekstUrl = null,
+        rundskrivUrl = null,
+        statuskode = statuskode,
+        statusnavn = statuskode, // forenkling, samme som kode her i testen
     )
 
     private fun maksdatolinje(
