@@ -4,21 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.HistorikkService
@@ -113,8 +99,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         val response = personId?.let {
             val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
             MaksdatoSamordningResponse.from(sakMedSisteVedtakOgMaksdato)
-        }?: MaksdatoSamordningResponse.INGEN
-
+        } ?: MaksdatoSamordningResponse.INGEN // personen finnes ikke i Arena
 
         call.respond(HttpStatusCode.OK, response)
     }
