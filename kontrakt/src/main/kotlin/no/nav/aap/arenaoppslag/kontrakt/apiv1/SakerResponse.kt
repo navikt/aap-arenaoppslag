@@ -77,9 +77,29 @@ public data class VedtakMedMaksdato(
 @Deprecated("Bruk MaksdatoMedVedtakResponse")
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
 
-public data class MaksdatoSamordningResponse(val harAktuelleVedtak: Boolean?) {
+public data class MaksdatoSamordningResponse(
+    val harAktuelleVedtak: Boolean?,
+    val maksdato: LocalDate?,
+    val harForlengelse: Boolean?,
+    val saknummer: String?,
+    val sisteVedtak: VedtakMedMaksdato?,
+    val stanset: Boolean
+) {
     public companion object {
-        public val INGEN: MaksdatoSamordningResponse = MaksdatoSamordningResponse(false)
+        public fun from(sakMedSisteVedtakOgMaksdato: SakMedSisteVedtakOgMaksdato?): MaksdatoSamordningResponse {
+            return sakMedSisteVedtakOgMaksdato?.let {
+                MaksdatoSamordningResponse(
+                    harAktuelleVedtak = true,
+                    harForlengelse = it.unntaksvilkaarInnvilget == true,
+                    stanset = it.sisteVedtak.vedtaktypeKode == "S",
+                    maksdato = it.sisteVedtak.maxdatoUnntak ?: it.sisteVedtak.maxdatoOrdinaer,
+                    saknummer = it.saknummer,
+                    sisteVedtak = it.sisteVedtak,
+                )
+            } ?: INGEN
+        }
+
+        public val INGEN: MaksdatoSamordningResponse = MaksdatoSamordningResponse(false, null, false, null, null, false)
     }
 }
 

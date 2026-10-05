@@ -44,8 +44,6 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
 
     private fun ArenaSak.tilSakId(): SakId? = sakId.toIntOrNull()?.let { SakId(it) }
 
-    fun hentMaksdatoAapMedVedtakOgSak(personId: PersonId?) = personId?.let { sakRepository.hentMaxdatoForSisteVedtak(personId)}
-
     fun hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId: PersonId): SakMedSisteVedtakOgMaksdato? {
         val sakMedVedtak = sakRepository.hentMaxdatoForSisteVedtak(personId)
 

@@ -109,9 +109,12 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         val request: MaksdatoSamordningRequest = call.receive()
         val personidentifikator = request.personidentifikator
         val personId = personService.hentPersonId(personidentifikator)
-        val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSak(personId)
-        val response =
-            sakMedSisteVedtakOgMaksdato?.toMaksdatoSamordningResponse() ?: MaksdatoSamordningResponse.INGEN
+
+        val response = personId?.let {
+            val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
+            MaksdatoSamordningResponse.from(sakMedSisteVedtakOgMaksdato)
+        }?: MaksdatoSamordningResponse.INGEN
+
 
         call.respond(HttpStatusCode.OK, response)
     }

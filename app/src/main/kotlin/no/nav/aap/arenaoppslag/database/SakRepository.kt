@@ -207,7 +207,6 @@ class SakRepository(private val dataSource: DataSource) {
             FROM nyeste_vedtak nv
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
                 JOIN sak s on s.sak_id = nv.sak_id
-            ORDER BY nv.til_dato DESC
             -- Returner kun det siste vedtaket for denne personen
             FETCH FIRST 1 ROW ONLY
         """.trimIndent()

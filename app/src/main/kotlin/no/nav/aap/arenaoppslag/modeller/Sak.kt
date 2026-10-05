@@ -74,12 +74,6 @@ data class Maksdatolinje(
                 maxdatoUnntak ?: maxdatoOrdinaer,
             )
         )
-
-    fun toMaksdatoSamordningResponse() {
-        // Lag et objekt som passer for Kelvin her
-        TODO("Not yet implemented")
-    }
-
 }
 
 data class ArenaSakMedVedtak(
