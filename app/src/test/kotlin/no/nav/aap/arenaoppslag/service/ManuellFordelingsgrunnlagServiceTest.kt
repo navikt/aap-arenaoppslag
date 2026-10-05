@@ -62,7 +62,7 @@ class ManuellFordelingsgrunnlagServiceTest {
 
     @Test
     fun `beregner gjenstaaende dager og aktiv sak`() {
-        every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns
+        every { sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId) } returns
             sak(maxdatoOrdinaer = iDag.plusDays(67), maxdatoUnntak = iDag.plusDays(10), til = iDag.minusWeeks(10))
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns iDag.minusWeeks(10)
         every { telleverkService.hentTelleverkForPerson(personId) } returns
@@ -83,7 +83,7 @@ class ManuellFordelingsgrunnlagServiceTest {
 
     @Test
     fun `løpende vedtak uten til-dato regnes som under 52 uker`() {
-        every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns sak(til = null)
+        every { sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId) } returns sak(til = null)
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
         every { oppgaveService.hentOppgaverForPerson(personId) } returns emptyList()
@@ -95,7 +95,7 @@ class ManuellFordelingsgrunnlagServiceTest {
 
     @Test
     fun `mangler telleverk gir null gjenstaaende dager`() {
-        every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns
+        every { sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId) } returns
             sak(maxdatoOrdinaer = iDag.minusDays(5))
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
@@ -109,7 +109,7 @@ class ManuellFordelingsgrunnlagServiceTest {
 
     @Test
     fun `siste vedtak til-dato eldre enn 52 uker gir under52Uker false`() {
-        every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns sak(til = iDag.minusWeeks(53))
+        every { sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId) } returns sak(til = iDag.minusWeeks(53))
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
         every { oppgaveService.hentOppgaverForPerson(personId) } returns emptyList()
@@ -121,7 +121,7 @@ class ManuellFordelingsgrunnlagServiceTest {
 
     @Test
     fun `stansvedtak gir ikke aktiv sak`() {
-        every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns
+        every { sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId) } returns
             sak(vedtaktypeKode = "S")
         every { posteringService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
@@ -134,7 +134,7 @@ class ManuellFordelingsgrunnlagServiceTest {
 
     @Test
     fun `person uten AAP-sak gir null grunnlag`() {
-        every { sakService.hentMaksdatoAapMedVedtakOgSak(personId) } returns null
+        every { sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId) } returns null
 
         val grunnlag = service.hentManuellFordelingsgrunnlag(personId, iDag)
 

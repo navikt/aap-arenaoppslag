@@ -44,7 +44,9 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
 
     private fun ArenaSak.tilSakId(): SakId? = sakId.toIntOrNull()?.let { SakId(it) }
 
-    fun hentMaksdatoAapMedVedtakOgSak(personId: PersonId): SakMedSisteVedtakOgMaksdato? {
+    fun hentMaksdatoAapMedVedtakOgSak(personId: PersonId?) = personId?.let { sakRepository.hentMaxdatoForSisteVedtak(personId)}
+
+    fun hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId: PersonId): SakMedSisteVedtakOgMaksdato? {
         val sakMedVedtak = sakRepository.hentMaxdatoForSisteVedtak(personId)
 
         val vedtakfakta = sakMedVedtak?.vedtakId?.let { vedtakId ->
@@ -68,7 +70,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
      * Hvis vi ikke finner noen relevante saker: Returnere null
      */
     fun hentMaksdatoAapForPerson(personId: PersonId): LocalDate? {
-        val sisteVedtak = hentMaksdatoAapMedVedtakOgSak(personId)?.sisteVedtak
+        val sisteVedtak = hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)?.sisteVedtak
 
         return sisteVedtak
             ?.takeUnless { it.vedtaktypeKode == "S" }

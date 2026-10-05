@@ -11,6 +11,8 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
@@ -81,7 +83,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         val personId = personService.hentPersonId(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val saker = sakService.hentMaksdatoAapMedVedtakOgSak(personId)?.let {
+        val saker = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)?.let {
             listOf(it)
         } ?: emptyList()
 
@@ -96,10 +98,22 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         val personId = personService.hentPersonId(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSak(personId)
+        val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
 
         // dersom personen finnes i Arena men ikke har aktuelle AAP-vedtak blir ingen sak returnert
         call.respond(HttpStatusCode.OK, MaksdatoMedVedtakResponse(sakMedSisteVedtakOgMaksdato))
+    }
+
+    post("/samordning/person/maksdato") {
+        logger.info("Henter maksdato-AAP for samordning på person")
+        val request: MaksdatoSamordningRequest = call.receive()
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator)
+        val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSak(personId)
+        val response =
+            sakMedSisteVedtakOgMaksdato?.toMaksdatoSamordningResponse() ?: MaksdatoSamordningResponse.INGEN
+
+        call.respond(HttpStatusCode.OK, response)
     }
 }
 

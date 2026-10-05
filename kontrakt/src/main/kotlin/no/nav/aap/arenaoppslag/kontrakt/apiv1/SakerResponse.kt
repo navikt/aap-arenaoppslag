@@ -10,6 +10,10 @@ public data class MaksdatoRequest(
     val personidentifikator: String
 )
 
+public data class MaksdatoSamordningRequest(
+    val personidentifikator: String
+)
+
 public data class SakerResponse(
     val saker: List<ArenaSakOppsummeringKontrakt>
 )
@@ -72,6 +76,13 @@ public data class VedtakMedMaksdato(
 
 @Deprecated("Bruk MaksdatoMedVedtakResponse")
 public data class MaksdatoResponse(val sakliste: List<SakMedSisteVedtakOgMaksdato>)
+
+public data class MaksdatoSamordningResponse(val harAktuelleVedtak: Boolean?) {
+    public companion object {
+        public val INGEN: MaksdatoSamordningResponse = MaksdatoSamordningResponse(false)
+    }
+}
+
 
 public data class MaksdatoMedVedtakResponse(val sak: SakMedSisteVedtakOgMaksdato?)
 

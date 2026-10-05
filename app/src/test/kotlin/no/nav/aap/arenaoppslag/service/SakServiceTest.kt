@@ -46,7 +46,7 @@ class SakServiceTest {
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = maxdato)
         every { vedtakfaktaRepository.hentForVedtakIder(any()) } returns emptyMap()
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
 
         assertThat(resultat).isNotNull
         assertThat(resultat?.sakId).isEqualTo(1)
@@ -71,7 +71,7 @@ class SakServiceTest {
             )
         )
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
 
         assertThat(resultat).isNotNull
         assertThat(resultat?.unntaksvilkaarInnvilget).isTrue()
@@ -89,7 +89,7 @@ class SakServiceTest {
             10 to listOf(vedtakfakta(kode = "UNNTAKAAP", verdi = "APPELSIN"))
         )
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
 
         assertThat(resultat?.unntaksvilkaarInnvilget).isNull()
     }
@@ -103,7 +103,7 @@ class SakServiceTest {
             maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = LocalDate.of(2026, 5, 1))
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(10)) } returns emptyMap()
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
 
         assertThat(resultat).isNotNull
         assertThat(resultat?.unntaksvilkaarInnvilget).isNull()
@@ -121,7 +121,7 @@ class SakServiceTest {
             10 to listOf(vedtakfakta(kode = "NOEANNET", verdi = "J"))
         )
 
-        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSak(personId)
+        val resultat = SakService(sakRepository, vedtakfaktaRepository).hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
 
         assertThat(resultat?.unntaksvilkaarInnvilget).isNull()
         assertThat(resultat?.unntaksvilkaarGjelderFra).isNull()
