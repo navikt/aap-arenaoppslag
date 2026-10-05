@@ -205,6 +205,7 @@ Available Flyway migration sets (all automatically include `flyway/common`):
 | `flyway/saklistetest` | Sak-list test data (multiple saker for person lookups) |
 | `flyway/maksimum` | Maksimum/utbetaling test data |
 | `flyway/oppgave` | Oppgave test data (`V_OPPGAVE`) |
+| `flyway/meldekort` | Meldekort with `MELDEGRUPPEKODE` (ATTF vs. other groups) for startuke lookups |
 
 ### Integration tests
 
