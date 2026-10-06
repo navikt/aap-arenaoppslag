@@ -22,8 +22,8 @@ public enum class SamordningVedtakStatus {
 
 public data class SamordningSisteVedtak(
     val vedtakId: Int,
-    val maksdato: LocalDate?, // nullable hvis siste vedtak er stanset
-    val saknummer: String,
+    val saknummer: String, // nullable hvis siste vedtak er stanset
+    val maksdato: LocalDate?,
     val status: SamordningVedtakStatus,
     val harForlengelseEtter11_12: Boolean
 )
@@ -35,8 +35,8 @@ public data class MaksdatoSamordningResponse(val sisteAktuelleVedtak: Samordning
                 MaksdatoSamordningResponse(
                     SamordningSisteVedtak(
                         vedtakId = it.sisteVedtak.vedtakId,
-                        maksdato = it.sisteVedtak.maxdatoUnntak ?: it.sisteVedtak.maxdatoOrdinaer,
                         saknummer = it.saknummer,
+                        maksdato = it.sisteVedtak.maxdatoUnntak ?: it.sisteVedtak.maxdatoOrdinaer,
                         status = SamordningVedtakStatus.fromArenaKode(it.sisteVedtak),
                         harForlengelseEtter11_12 = it.unntaksvilkaarInnvilget == true,
                     )
