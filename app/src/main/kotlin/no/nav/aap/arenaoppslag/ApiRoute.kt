@@ -61,7 +61,6 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
 }
 
 fun Route.maksdato(sakService: SakService, personService: PersonService) {
-
     post("/person/maksdato") {
         logger.info("Henter maksdato-AAP for person")
         val request: MaksdatoRequest = call.receive()
@@ -75,6 +74,9 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         call.respond(HttpStatusCode.OK, MaksdatoMedVedtakResponse(sakMedSisteVedtakOgMaksdato))
     }
 
+}
+
+fun Route.samordning(sakService: SakService, personService: PersonService) {
     post("/samordning/person/maksdato") {
         logger.info("Henter maksdato-AAP for samordning på person")
         val request: MaksdatoSamordningRequest = call.receive()
@@ -89,7 +91,6 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         call.respond(HttpStatusCode.OK, response)
     }
 }
-
 
 fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     get("/sak/{saksnummer}") {
