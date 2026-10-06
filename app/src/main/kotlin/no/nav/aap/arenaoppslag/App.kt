@@ -223,12 +223,14 @@ private fun skapMigreringService(datasource: DataSource, telleverkService: Telle
     val meldekortperiodeRepository = MeldekortperiodeRepository(datasource)
     val vilkårsvurderingRepository = VilkårsvurderingRepository(datasource)
     val medisinskOpplysningRepository = MedisinskOpplysningRepository(datasource)
+    val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
     return MigreringService(
         vedtakRepository,
         meldekortperiodeRepository,
         telleverkService,
         vilkårsvurderingRepository,
         medisinskOpplysningRepository,
+        vedtakfaktaRepository
     )
 }
 

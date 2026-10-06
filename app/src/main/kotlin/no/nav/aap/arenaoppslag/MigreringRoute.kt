@@ -33,6 +33,20 @@ fun Route.migrering(sakService: SakService, migreringService: MigreringService) 
 
         call.respond(status = HttpStatusCode.OK, message = sykdomsvurdering.tilKontrakt())
     }
+
+    get("/{saksnummer}/refusjonskrav") {
+        val (_, sakId) = hentSakFraSaksnummer(sakService) ?: return@get
+
+        logger.info("Henter ut relevant migreringsinformasjon om refusjonskrav for sak")
+        val refusjonskravForSak = migreringService.hentRefusjonskravForSak(sakId)
+
+        if (refusjonskravForSak == null) {
+            logger.info("Fant ikke gjeldende 11-5-vedtak for sak")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        call.respond(status = HttpStatusCode.OK, message = refusjonskravForSak.tilKontrakt())
+    }
 }
 
 // Svarer selv med 400/404 og returnerer null når saken ikke kan slås opp, så route-en bare avbryter

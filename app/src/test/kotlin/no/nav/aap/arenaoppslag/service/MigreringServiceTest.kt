@@ -6,11 +6,17 @@ import io.mockk.verify
 import no.nav.aap.arenaoppslag.database.MedisinskOpplysningRepository
 import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
+import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaDiagnose
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskrav
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
+import no.nav.aap.arenaoppslag.modeller.migrering.Refusjonskrav
+import no.nav.aap.arenaoppslag.modeller.migrering.RefusjonskravForSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtakfakta
 import no.nav.aap.arenaoppslag.modeller.ArenaVilkårsvurdering
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.MedisinskOpplysning
@@ -29,6 +35,7 @@ class MigreringServiceTest {
     private val telleverkService = mockk<TelleverkService>()
     private val vilkårsvurderingRepository = mockk<VilkårsvurderingRepository>()
     private val medisinskOpplysningRepository = mockk<MedisinskOpplysningRepository>()
+    private val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
 
     private val service = MigreringService(
         vedtakRepository,
@@ -36,6 +43,7 @@ class MigreringServiceTest {
         telleverkService,
         vilkårsvurderingRepository,
         medisinskOpplysningRepository,
+        vedtakfaktaRepository,
     )
 
     private val sakId = SakId(9001)
@@ -282,6 +290,56 @@ class MigreringServiceTest {
             ArenaDiagnose("ICPC2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
             ArenaDiagnose("ICD10", "M54", "BI", LocalDate.of(2023, 3, 1)),
         )
+    }
+
+    private fun vedtakfakta(kode: String, verdi: String?) =
+        ArenaVedtakfakta(kode = kode, navn = kode, verdi = verdi, registrertDato = LocalDate.of(2024, 1, 15))
+
+    @Test
+    fun `mapper vedtaksfakta til refusjonskrav`() {
+        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(
+                vedtakfakta("UTBETVENTK", "REFKRAVSOS"),
+                vedtakfakta("UTBETVENTF", "01-02-2024"),
+                vedtakfakta("UTBETVENTT", "31-03-2024"),
+                vedtakfakta("UNNTAKAAP", "J"),
+            )
+        )
+
+        val refusjonskrav = service.hentRefusjonskravForSak(sakId, idag)
+
+        assertThat(refusjonskrav?.tilKontrakt()).isEqualTo(
+            ArenaRefusjonskravResponse(
+                ArenaRefusjonskrav("REFKRAVSOS", LocalDate.of(2024, 2, 1), LocalDate.of(2024, 3, 31))
+            )
+        )
+    }
+
+    @Test
+    fun `refusjonskrav er null uten UTBETVENTK`() {
+        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(vedtakfakta("UTBETVENTF", "01-02-2024"), vedtakfakta("UTBETVENTK", null))
+        )
+
+        assertThat(service.hentRefusjonskravForSak(sakId, idag)).isEqualTo(RefusjonskravForSak(null))
+    }
+
+    @Test
+    fun `refusjonskrav er null når vedtaket ikke har vedtaksfakta`() {
+        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+
+        assertThat(service.hentRefusjonskravForSak(sakId, idag)).isEqualTo(RefusjonskravForSak(null))
+    }
+
+    @Test
+    fun `svaret er null og vedtaksfakta hentes ikke når saken mangler gjeldende 11-5-vedtak`() {
+        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns null
+
+        assertThat(service.hentRefusjonskravForSak(sakId, idag)).isNull()
+        verify(exactly = 0) { vedtakfaktaRepository.hentForVedtakIder(any()) }
     }
 
     @Test
