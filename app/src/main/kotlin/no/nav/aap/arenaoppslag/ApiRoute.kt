@@ -61,21 +61,6 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
 }
 
 fun Route.maksdato(sakService: SakService, personService: PersonService) {
-    // TODO deprekert - fjern når kallere er oppdatert
-    post("/maksdato") {
-        logger.info("Henter maksdato-AAP for saksliste")
-        val request: MaksdatoRequest = call.receive()
-        val personidentifikator = request.personidentifikator
-        val personId = personService.hentPersonId(personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
-
-        val saker = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)?.let {
-            listOf(it)
-        } ?: emptyList()
-
-        // dersom personen finnes i Arena men ikke har AAP-vedtak utenfor Stans blir listen tom
-        call.respond(HttpStatusCode.OK, MaksdatoResponse(saker))
-    }
 
     post("/person/maksdato") {
         logger.info("Henter maksdato-AAP for person")
