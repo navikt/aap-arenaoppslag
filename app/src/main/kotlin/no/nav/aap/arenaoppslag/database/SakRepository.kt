@@ -192,9 +192,9 @@ class SakRepository(private val dataSource: DataSource) {
                             )
                             -- Ekskluder også vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
                             AND NOT (
-                                reg_user='GRENSESN'  
-                                AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
-                                )
+                                reg_user IS NOT NULL AND reg_user = 'GRENSESN'
+                                AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
+                            )
                             )
                         ) 
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
