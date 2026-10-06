@@ -3,6 +3,10 @@ package no.nav.aap.arenaoppslag.kontrakt.apiv1
 import java.time.LocalDate
 
 
+public data class MaksdatoSamordningRequest(
+    val personidentifikator: String
+)
+
 public enum class SamordningVedtakStatus {
     LØPENDE, STANSET, AVSLUTTET, ANNET;
 
@@ -22,8 +26,8 @@ public enum class SamordningVedtakStatus {
 
 public data class SamordningSisteVedtak(
     val vedtakId: Int,
-    val saknummer: String, // nullable hvis siste vedtak er stanset
-    val maksdato: LocalDate?,
+    val saknummer: String,
+    val maksdato: LocalDate?, // nullable hvis siste vedtak er stanset
     val status: SamordningVedtakStatus,
     val harForlengelseEtter11_12: Boolean
 )

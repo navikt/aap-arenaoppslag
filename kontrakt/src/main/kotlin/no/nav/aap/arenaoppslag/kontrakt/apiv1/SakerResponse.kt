@@ -10,10 +10,6 @@ public data class MaksdatoRequest(
     val personidentifikator: String
 )
 
-public data class MaksdatoSamordningRequest(
-    val personidentifikator: String
-)
-
 public data class SakerResponse(
     val saker: List<ArenaSakOppsummeringKontrakt>
 )
