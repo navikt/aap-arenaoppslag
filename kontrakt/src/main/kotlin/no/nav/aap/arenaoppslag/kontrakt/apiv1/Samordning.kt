@@ -2,10 +2,38 @@ package no.nav.aap.arenaoppslag.kontrakt.apiv1
 
 import java.time.LocalDate
 
-
 public data class MaksdatoSamordningRequest(
     val personidentifikator: String
 )
+
+public data class MaksdatoSamordningResponse(
+    val sisteAktuelleVedtak: SamordningSisteVedtak? // null dersom ingen slike finnes for personen
+) {
+    public companion object {
+        public fun from(sakMedSisteVedtakOgMaksdato: SakMedSisteVedtakOgMaksdato?): MaksdatoSamordningResponse {
+            return sakMedSisteVedtakOgMaksdato?.let {
+                val status = SamordningVedtakStatus.fromArenaKode(it.sisteVedtak)
+                // Vi vet ikke hvor lenge stansen varer, så vi kan ikke vite maksdato for stansede vedtak
+                val maksdatoErDefinert = status != SamordningVedtakStatus.STANSET
+                val maksdato = if (maksdatoErDefinert) {
+                    it.sisteVedtak.maxdatoUnntak ?: it.sisteVedtak.maxdatoOrdinaer
+                } else null
+
+                MaksdatoSamordningResponse(
+                    SamordningSisteVedtak(
+                        vedtakId = it.sisteVedtak.vedtakId,
+                        saknummer = it.saknummer,
+                        maksdato = maksdato,
+                        status = status,
+                        harForlengelseEtter11_12 = it.unntaksvilkaarInnvilget == true,
+                    )
+                )
+            } ?: INGEN
+        }
+
+        public val INGEN: MaksdatoSamordningResponse = MaksdatoSamordningResponse(null)
+    }
+}
 
 public enum class SamordningVedtakStatus {
     LØPENDE, STANSET, AVSLUTTET, ANNET;
@@ -27,29 +55,7 @@ public enum class SamordningVedtakStatus {
 public data class SamordningSisteVedtak(
     val vedtakId: Int,
     val saknummer: String,
-    val maksdato: LocalDate?, // nullable hvis verdien ikke er definert i Arena (f.eks. for stansede vedtak)
+    val maksdato: LocalDate?, // null hvis verdien ikke er definert i Arena
     val status: SamordningVedtakStatus,
     val harForlengelseEtter11_12: Boolean
 )
-
-public data class MaksdatoSamordningResponse(
-    val sisteAktuelleVedtak: SamordningSisteVedtak? // null dersom ingen slike finnes for personen
-) {
-    public companion object {
-        public fun from(sakMedSisteVedtakOgMaksdato: SakMedSisteVedtakOgMaksdato?): MaksdatoSamordningResponse {
-            return sakMedSisteVedtakOgMaksdato?.let {
-                MaksdatoSamordningResponse(
-                    SamordningSisteVedtak(
-                        vedtakId = it.sisteVedtak.vedtakId,
-                        saknummer = it.saknummer,
-                        maksdato = it.sisteVedtak.maxdatoUnntak ?: it.sisteVedtak.maxdatoOrdinaer,
-                        status = SamordningVedtakStatus.fromArenaKode(it.sisteVedtak),
-                        harForlengelseEtter11_12 = it.unntaksvilkaarInnvilget == true,
-                    )
-                )
-            } ?: INGEN
-        }
-
-        public val INGEN: MaksdatoSamordningResponse = MaksdatoSamordningResponse(null)
-    }
-}
