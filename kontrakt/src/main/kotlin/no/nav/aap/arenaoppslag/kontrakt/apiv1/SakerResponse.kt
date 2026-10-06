@@ -67,6 +67,7 @@ public data class VedtakMedMaksdato(
     val vedtakId: Int,
     val aktfaseKode: String,
     val vedtaktypeKode: String,
+    val vedtakstatuskode: String,
     val fra: LocalDate?,
     val til: LocalDate?,
     val maxdatoOrdinaer: LocalDate?,

@@ -115,6 +115,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
         assertThat(sak).isEqualTo(
             Maksdatolinje(
                 1_12_0, 2022, 1_12_0, 1_12_2, "IKKE", "O",
+                vedtakstatuskode = "IVERK",
                 LocalDate.of(2027, 1, 1),
                 LocalDate.of(2011, 1, 1),
                 LocalDate.of(2027, 1, 1),
@@ -132,6 +133,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
         assertThat(sak).isEqualTo(
             Maksdatolinje(
                 1_13_0, 2022, 1_13_0, 1_13_1, "IKKE", "O",
+                vedtakstatuskode = "IVERK",
                 LocalDate.of(2030, 1, 1),
                 LocalDate.of(2020, 1, 1),
                 LocalDate.of(2031, 1, 1),

@@ -53,6 +53,7 @@ class SakRepository(private val dataSource: DataSource) {
                 vedtakId = row.getInt("vedtak_id"),
                 aktfaseKode = row.getString("aktfasekode"),
                 vedtaktypeKode = row.getString("vedtaktypekode"),
+                vedtakstatuskode = row.getString("vedtakstatuskode"),
                 til = row.getDate("til_dato")?.toLocalDate(),
                 fra = row.getDate("fra_dato")?.toLocalDate(),
                 maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
@@ -159,13 +160,14 @@ class SakRepository(private val dataSource: DataSource) {
         internal val selectVedtakMedNyesteMaxdatoForPerson = """
             -- Hent først siste vedtak
             WITH nyeste_vedtak AS (
-                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, fra_dato, til_dato FROM (
+                SELECT sak_id, vedtak_id, vedtaktypekode, aktfasekode, vedtakstatuskode, fra_dato, til_dato FROM (
                     SELECT v.sak_id,
                         v.vedtak_id,
                         v.vedtaktypekode,
                         v.aktfasekode,
                         v.fra_dato,
                         v.til_dato,
+                        v.vedtakstatuskode,
                         ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS FIRST, v.vedtak_id DESC) as rn
                     FROM vedtak v
                     WHERE v.person_id = ?
@@ -202,7 +204,7 @@ class SakRepository(private val dataSource: DataSource) {
             )
             -- Legg på informasjon om saken
             SELECT nv.sak_id, s.reg_dato as sak_registrert_dato, s.dato_avsluttet as sak_avsluttet_dato, s.sakstatuskode as sak_statuskode, 
-                s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, nv.til_dato,  
+                s.aar, s.lopenrsak, nv.vedtak_id, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, nv.til_dato, nv.vedtakstatuskode,  
                 vmd.max_dato, vmd.max_unntak_dato
             FROM nyeste_vedtak nv
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id

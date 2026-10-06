@@ -4,12 +4,15 @@ import java.time.LocalDate
 
 
 public enum class SamordningVedtakStatus {
-    LOPENDE, STANSET, OPPHORT, ANNET;
+    LØPENDE, STANSET, AVSLUTTET, ANNET;
 
     public companion object {
-        public fun fromArenaKode(vedtaktypeKode: String): SamordningVedtakStatus {
-            return when (vedtaktypeKode) {
-                "O", "E", "G" -> LOPENDE
+        public fun fromArenaKode(vedtak: VedtakMedMaksdato): SamordningVedtakStatus {
+            if (vedtak.vedtakstatuskode == "AVSLU") {
+                return AVSLUTTET
+            }
+            return when (vedtak.vedtaktypeKode) {
+                "O", "E", "G" -> LØPENDE
                 "S" -> STANSET
                 else -> ANNET
             }
@@ -19,7 +22,7 @@ public enum class SamordningVedtakStatus {
 
 public data class MaksdatoSamordningResponse(
     val harAktuelleVedtak: Boolean,
-    val maksdato: LocalDate?,
+    val maksdato: LocalDate?, // nullable hvis siste vedtak er stanset
     val harForlengelseEtter11_12: Boolean?,
     val saknummer: String?,
     val status: SamordningVedtakStatus?,
@@ -33,7 +36,7 @@ public data class MaksdatoSamordningResponse(
                     maksdato = it.sisteVedtak.maxdatoUnntak ?: it.sisteVedtak.maxdatoOrdinaer,
                     harForlengelseEtter11_12 = it.unntaksvilkaarInnvilget == true,
                     saknummer = it.saknummer,
-                    status = SamordningVedtakStatus.fromArenaKode(it.sisteVedtak.vedtaktypeKode),
+                    status = SamordningVedtakStatus.fromArenaKode(it.sisteVedtak),
                     vedtakId = it.sisteVedtak.vedtakId,
                 )
             } ?: INGEN

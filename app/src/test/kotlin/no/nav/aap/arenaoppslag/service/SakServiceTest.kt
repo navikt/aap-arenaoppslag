@@ -199,6 +199,7 @@ class SakServiceTest {
         vedtakId = sakId * 10,
         aktfaseKode = "FA",
         vedtaktypeKode = vedtaktypeKode,
+        vedtakstatuskode = "IVERK",
         fra = LocalDate.of(2025, 1, 1),
         til = LocalDate.of(2026, 1, 1),
         maxdatoUnntak = null,

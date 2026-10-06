@@ -52,6 +52,7 @@ class ManuellFordelingsgrunnlagServiceTest {
             vedtakId = 1,
             aktfaseKode = "UVUP",
             vedtaktypeKode = vedtaktypeKode,
+            vedtakstatuskode = "IVERK",
             fra = LocalDate.of(2024, 1, 1),
             til = til,
             maxdatoOrdinaer = maxdatoOrdinaer,
