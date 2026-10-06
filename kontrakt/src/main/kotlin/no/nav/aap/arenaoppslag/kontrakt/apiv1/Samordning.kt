@@ -27,12 +27,14 @@ public enum class SamordningVedtakStatus {
 public data class SamordningSisteVedtak(
     val vedtakId: Int,
     val saknummer: String,
-    val maksdato: LocalDate?, // nullable hvis siste vedtak er stanset
+    val maksdato: LocalDate?, // nullable hvis verdien ikke er definert i Arena (f.eks. for stansede vedtak)
     val status: SamordningVedtakStatus,
     val harForlengelseEtter11_12: Boolean
 )
 
-public data class MaksdatoSamordningResponse(val sisteAktuelleVedtak: SamordningSisteVedtak?) {
+public data class MaksdatoSamordningResponse(
+    val sisteAktuelleVedtak: SamordningSisteVedtak? // null dersom ingen slike finnes for personen
+) {
     public companion object {
         public fun from(sakMedSisteVedtakOgMaksdato: SakMedSisteVedtakOgMaksdato?): MaksdatoSamordningResponse {
             return sakMedSisteVedtakOgMaksdato?.let {
