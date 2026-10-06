@@ -20,30 +20,30 @@ public enum class SamordningVedtakStatus {
     }
 }
 
-public data class MaksdatoSamordningResponse(
-    val harAktuelleVedtak: Boolean,
+public data class SamordningSisteVedtak(
+    val vedtakId: Int,
     val maksdato: LocalDate?, // nullable hvis siste vedtak er stanset
-    val harForlengelseEtter11_12: Boolean?,
-    val saknummer: String?,
-    val status: SamordningVedtakStatus?,
-    val vedtakId: Int?
-) {
+    val saknummer: String,
+    val status: SamordningVedtakStatus,
+    val harForlengelseEtter11_12: Boolean
+)
+
+public data class MaksdatoSamordningResponse(val sisteAktuelleVedtak: SamordningSisteVedtak?) {
     public companion object {
         public fun from(sakMedSisteVedtakOgMaksdato: SakMedSisteVedtakOgMaksdato?): MaksdatoSamordningResponse {
             return sakMedSisteVedtakOgMaksdato?.let {
                 MaksdatoSamordningResponse(
-                    harAktuelleVedtak = true,
-                    maksdato = it.sisteVedtak.maxdatoUnntak ?: it.sisteVedtak.maxdatoOrdinaer,
-                    harForlengelseEtter11_12 = it.unntaksvilkaarInnvilget == true,
-                    saknummer = it.saknummer,
-                    status = SamordningVedtakStatus.fromArenaKode(it.sisteVedtak),
-                    vedtakId = it.sisteVedtak.vedtakId,
+                    SamordningSisteVedtak(
+                        vedtakId = it.sisteVedtak.vedtakId,
+                        maksdato = it.sisteVedtak.maxdatoUnntak ?: it.sisteVedtak.maxdatoOrdinaer,
+                        saknummer = it.saknummer,
+                        status = SamordningVedtakStatus.fromArenaKode(it.sisteVedtak),
+                        harForlengelseEtter11_12 = it.unntaksvilkaarInnvilget == true,
+                    )
                 )
             } ?: INGEN
         }
 
-        public val INGEN: MaksdatoSamordningResponse = MaksdatoSamordningResponse(
-            false, null, false, null, null, null,
-        )
+        public val INGEN: MaksdatoSamordningResponse = MaksdatoSamordningResponse(null)
     }
 }
