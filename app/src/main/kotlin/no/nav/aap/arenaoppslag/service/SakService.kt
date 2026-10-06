@@ -53,12 +53,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
         val unntakInnvilget = vedtakfakta?.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
         val unntaksdato = vedtakfakta?.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
 
-        val sakMedKorrigertMaxdatoUnntak = sakMedVedtak?.copy(
-            // Korriger for at v_vedtak_maxdato i databasen gir ut max_unntak_dato selv om unntak ikke er innvilget
-            maxdatoUnntak = if (unntakInnvilget == true) sakMedVedtak.maxdatoUnntak else null
-        )
-
-        return sakMedKorrigertMaxdatoUnntak?.tilKontrakt()?.copy(
+        return sakMedVedtak?.tilKontrakt()?.copy(
             unntaksvilkaarGjelderFra = unntaksdato,
             unntaksvilkaarInnvilget = unntakInnvilget,
         )
