@@ -16,6 +16,7 @@ import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseRad
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.modeller.tilRespons
+import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -53,9 +54,13 @@ class TilkjentYtelserService(
             val meldekort = postering.meldekortId?.let { meldekortPerId[it] }
             registrerUkjentKilde(postering)
 
-            val timerArbeidetEtterStraff = meldekort?.let { timerArbeidetEtterStraffedager(it) }
+            // Arena kan postere et meldekort per uke. Timer og reduksjon regnes da bare for
+            // dagene posteringen dekker, ellers teller hver ukerad timene for hele meldekortet.
+            val timerArbeidetEtterStraff = meldekort?.let {
+                timerArbeidetEtterStraffedager(it, snitt(it.periode, postering.periode))
+            }
             val reduksjon = meldekort?.let {
-                byggReduksjon(it, timerArbeidetEtterStraff ?: 0.0, postering)
+                byggReduksjon(it, snitt(it.periode, postering.periode), timerArbeidetEtterStraff ?: 0.0, postering)
             }
             TilkjentYtelseRad(
                 posteringId = postering.posteringId,
@@ -77,10 +82,15 @@ class TilkjentYtelserService(
             )
         }
 
-        val meldekortIderMedPostering = meldekortForSak.posteringer.mapNotNull { it.meldekortId }.toSet()
-        val meldekortrader = meldekortForSak.meldekort
-            .filterNot { it.meldekortId in meldekortIderMedPostering }
-            .map { meldekort -> byggRadUtenPostering(meldekort, kvoteSaldo) }
+        // Deler av en meldekortperiode som ingen postering dekker (f.eks. en uke med full reduksjon)
+        // ville ellers forsvunnet når resten av meldekortet er postert.
+        val posteringsperioderPerMeldekort = meldekortForSak.posteringer
+            .mapNotNull { postering -> postering.meldekortId?.let { it to postering.periode } }
+            .groupBy({ it.first }, { it.second })
+        val meldekortrader = meldekortForSak.meldekort.flatMap { meldekort ->
+            udekkedePerioder(meldekort.periode, posteringsperioderPerMeldekort[meldekort.meldekortId].orEmpty())
+                .map { delperiode -> byggRadUtenPostering(meldekort, delperiode, kvoteSaldo) }
+        }
 
         return TilkjentYtelseResponse(
             sakId = sakId.id,
@@ -88,15 +98,19 @@ class TilkjentYtelserService(
         )
     }
 
-    // Meldekort uten postering er levert, men ikke utbetalt (f.eks. full reduksjon eller ikke ferdig
-    // beregnet). Dagsatsene ligger på posteringens vedtak, så de er ukjente for disse radene.
-    private fun byggRadUtenPostering(meldekort: Meldekort, kvoteSaldo: KvoteSaldo): TilkjentYtelseRad {
-        val timerArbeidetEtterStraff = timerArbeidetEtterStraffedager(meldekort)
+    // Meldekort (eller deler av det) uten postering er levert, men ikke utbetalt (f.eks. full reduksjon
+    // eller ikke ferdig beregnet). Dagsatsene ligger på posteringens vedtak, så de er ukjente her.
+    private fun byggRadUtenPostering(
+        meldekort: Meldekort,
+        delperiode: Periode,
+        kvoteSaldo: KvoteSaldo,
+    ): TilkjentYtelseRad {
+        val timerArbeidetEtterStraff = timerArbeidetEtterStraffedager(meldekort, delperiode)
         return TilkjentYtelseRad(
             posteringId = null,
             posteringTypeKode = null,
-            fraOgMedDato = meldekort.periode.fraOgMedDato,
-            tilOgMedDato = meldekort.periode.tilOgMedDato,
+            fraOgMedDato = delperiode.fraOgMedDato,
+            tilOgMedDato = delperiode.tilOgMedDato,
             uke = "${meldekort.ukenrUke1}-${meldekort.ukenrUke2}",
             kilde = PosteringKilde.MELDEKORT,
             dagsatsMedBarnetillegg = null,
@@ -105,6 +119,7 @@ class TilkjentYtelserService(
             timerArbeidet = timerArbeidetEtterStraff,
             reduksjon = byggReduksjon(
                 meldekort = meldekort,
+                delperiode = delperiode,
                 timerArbeidet = timerArbeidetEtterStraff,
                 postering = null,
             ),
@@ -126,26 +141,25 @@ class TilkjentYtelserService(
         ).increment()
     }
 
-    private fun timerArbeidetEtterStraffedager(meldekort: Meldekort): Double {
+    private fun timerArbeidetEtterStraffedager(meldekort: Meldekort, delperiode: Periode): Double {
         val aktivFraOgMed = meldekort.periode.fraOgMedDato?.plusDays(meldekort.reduksjon.dagerForSent.toLong())
         return meldekort.dager
-            .filter { !it.dato.isBefore(aktivFraOgMed) }
+            .filter { aktivFraOgMed == null || !it.dato.isBefore(aktivFraOgMed) }
+            .filter { delperiode.inneholder(it.dato) }
             .sumOf { it.timerArbeidet }
     }
 
     private fun byggReduksjon(
         meldekort: Meldekort,
+        delperiode: Periode,
         timerArbeidet: Double,
         // null for meldekort uten postering — da er dagsatser og institusjonsgrad ukjente.
         postering: MeldekortPostering?,
     ): ReduksjonRespons {
         val insGrad = postering?.insGrad
         val dagerForSent = meldekort.reduksjon.dagerForSent
-        // Fulltid i en meldekortperiode er 75 timer (10 arbeidsdager à 7,5 t), jf. anmerkningkode TE75T
-        // "Arbeidet 75 timer eller mer i perioden sett under ett". Avkortede meldekortperioder har
-        // færre dager å fordele timene på, og straffedagene reduserer grunnlaget ytterligere.
-        val dagerIPerioden =  antallDagerIPerioden(meldekort.periode) ?: ARBEIDSDAGER_I_MELDEKORTPERIODE
-        val aktiveDager = minOf(ARBEIDSDAGER_I_MELDEKORTPERIODE, dagerIPerioden) - dagerForSent
+        val aktiveDager = arbeidsdagerIGrunnlaget(meldekort, delperiode) -
+            straffedagerIDelperiode(meldekort, delperiode)
 
         val timerArbeidetProsent = if (aktiveDager > 0) {
             (timerArbeidet / (aktiveDager * TIMER_PER_DAG) * 100).roundToInt()
@@ -163,6 +177,33 @@ class TilkjentYtelserService(
             institusjonsProsent = insGrad,
             anvistProsent = postering?.antall?.let { (it * PROSENT_PER_ANVIST_DAG).roundToInt() },
         )
+    }
+
+    // Fulltid i en meldekortperiode er 75 timer (10 arbeidsdager à 7,5 t), jf. anmerkningkode TE75T
+    // "Arbeidet 75 timer eller mer i perioden sett under ett". Avkortede meldekortperioder har færre
+    // dager å fordele timene på. For en del av perioden (f.eks. én uke) teller vi hverdagene, siden
+    // kalenderdager ville gitt 7 arbeidsdager for en uke.
+    private fun arbeidsdagerIGrunnlaget(meldekort: Meldekort, delperiode: Periode): Int {
+        if (delperiode == meldekort.periode) {
+            val dagerIPerioden = antallDagerIPerioden(meldekort.periode) ?: ARBEIDSDAGER_I_MELDEKORTPERIODE
+            return minOf(ARBEIDSDAGER_I_MELDEKORTPERIODE, dagerIPerioden)
+        }
+        val fraOgMed = delperiode.fraOgMedDato ?: return ARBEIDSDAGER_I_MELDEKORTPERIODE
+        val tilOgMed = delperiode.tilOgMedDato ?: return ARBEIDSDAGER_I_MELDEKORTPERIODE
+        return generateSequence(fraOgMed) { it.plusDays(1) }
+            .takeWhile { !it.isAfter(tilOgMed) }
+            .count { it.dayOfWeek != DayOfWeek.SATURDAY && it.dayOfWeek != DayOfWeek.SUNDAY }
+            .coerceAtMost(ARBEIDSDAGER_I_MELDEKORTPERIODE)
+    }
+
+    // Straffedagene ligger først i meldekortperioden, så bare delperioder som overlapper
+    // starten av meldekortet får trekk i grunnlaget.
+    private fun straffedagerIDelperiode(meldekort: Meldekort, delperiode: Periode): Int {
+        val dagerForSent = meldekort.reduksjon.dagerForSent
+        if (dagerForSent <= 0 || delperiode == meldekort.periode) return dagerForSent
+        val start = meldekort.periode.fraOgMedDato ?: return dagerForSent
+        val straffeperiode = Periode(start, start.plusDays(dagerForSent - 1L))
+        return antallDagerIPerioden(snitt(straffeperiode, delperiode)) ?: 0
     }
 
     private fun beregnSamordningsProsent(dagsats: Int?, dagsatsForSamordning: Int?): Int {
@@ -218,6 +259,35 @@ class TilkjentYtelserService(
         private val radRekkefolge = compareBy<TilkjentYtelseRad, LocalDate?>(nullsLast()) { it.fraOgMedDato }
             .thenBy(nullsLast<Long>()) { it.meldekort?.meldekortId }
     }
+}
+
+// Manglende dato betyr åpen ende, så snittet bruker den andre periodens dato.
+// Perioder som ikke overlapper gir en periode der tilOgMed er før fraOgMed.
+internal fun snitt(a: Periode, b: Periode) = Periode(
+    fraOgMedDato = listOfNotNull(a.fraOgMedDato, b.fraOgMedDato).maxOrNull(),
+    tilOgMedDato = listOfNotNull(a.tilOgMedDato, b.tilOgMedDato).minOrNull(),
+)
+
+internal fun Periode.inneholder(dato: LocalDate): Boolean =
+    (fraOgMedDato == null || !dato.isBefore(fraOgMedDato)) &&
+        (tilOgMedDato == null || !dato.isAfter(tilOgMedDato))
+
+// Returnerer delene av perioden som ingen av de dekkede periodene overlapper, i kronologisk rekkefølge.
+internal fun udekkedePerioder(periode: Periode, dekket: List<Periode>): List<Periode> {
+    val fraOgMed = periode.fraOgMedDato ?: return emptyList()
+    val tilOgMed = periode.tilOgMedDato ?: return emptyList()
+    val resultat = mutableListOf<Periode>()
+    var neste = fraOgMed
+    dekket
+        .map { snitt(it, periode) }
+        .filter { !it.tilOgMedDato!!.isBefore(it.fraOgMedDato!!) }
+        .sortedBy { it.fraOgMedDato }
+        .forEach { del ->
+            if (del.fraOgMedDato!!.isAfter(neste)) resultat += Periode(neste, del.fraOgMedDato.minusDays(1))
+            if (!del.tilOgMedDato!!.isBefore(neste)) neste = del.tilOgMedDato.plusDays(1)
+        }
+    if (!neste.isAfter(tilOgMed)) resultat += Periode(neste, tilOgMed)
+    return resultat
 }
 
 

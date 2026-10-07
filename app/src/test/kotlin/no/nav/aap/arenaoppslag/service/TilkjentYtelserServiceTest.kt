@@ -458,6 +458,109 @@ class TilkjentYtelserServiceTest {
         assertThat(rad.posteringTypeKode).isNull()
     }
 
+    @Test
+    fun `uke uten postering i et delvis postert meldekort blir egen rad`() {
+        val sakId = SakId(461)
+        val meldekortperiode = Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 12, 7))
+        val uke48 = Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 11, 30))
+        val mk = meldekort(
+            meldekortId = 5010, periode = meldekortperiode, ukenrUke1 = 48, ukenrUke2 = 49,
+            dager = listOf(
+                MeldekortDag(48, 1, LocalDate.of(2025, 11, 24), 7.5, false),
+                MeldekortDag(49, 1, LocalDate.of(2025, 12, 1), 30.0, false),
+            ),
+        )
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    posteringId = 8010, posteringTypeKode = "ORD",
+                    vedtakId = 90010, personId = 106, meldekortId = 5010, periode = uke48,
+                    belop = 1461, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null, kilde = PosteringKilde.MELDEKORT,
+                ),
+            ),
+            meldekort = listOf(mk),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+
+        val rader = service.hentTilkjenteYtelserForSak(sakId).rader
+
+        assertThat(rader).hasSize(2)
+        val (postert, upostert) = rader
+        assertThat(postert.fraOgMedDato).isEqualTo(LocalDate.of(2025, 11, 24))
+        assertThat(postert.tilOgMedDato).isEqualTo(LocalDate.of(2025, 11, 30))
+        assertThat(postert.beregnetBrutto).isEqualTo(1461)
+        assertThat(postert.uke).isEqualTo("48-49")
+        // Bare uke 48 teller: 7,5 timer av 5 arbeidsdager à 7,5 timer = 20 %.
+        assertThat(postert.timerArbeidet).isEqualTo(7.5)
+        assertThat(postert.reduksjon?.timerArbeidetProsent).isEqualTo(20)
+
+        assertThat(upostert.fraOgMedDato).isEqualTo(LocalDate.of(2025, 12, 1))
+        assertThat(upostert.tilOgMedDato).isEqualTo(LocalDate.of(2025, 12, 7))
+        assertThat(upostert.beregnetBrutto).isNull()
+        assertThat(upostert.posteringId).isNull()
+        assertThat(upostert.uke).isEqualTo("48-49")
+        assertThat(upostert.meldekort?.meldekortId).isEqualTo(5010L)
+        // 30 timer av 37,5 = 80 %.
+        assertThat(upostert.timerArbeidet).isEqualTo(30.0)
+        assertThat(upostert.reduksjon?.timerArbeidetProsent).isEqualTo(80)
+    }
+
+    @Test
+    fun `straffedager trekkes bare fra delperioden de faller i`() {
+        val sakId = SakId(462)
+        val meldekortperiode = Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 12, 7))
+        val mk = meldekort(
+            meldekortId = 5011, periode = meldekortperiode, ukenrUke1 = 48, ukenrUke2 = 49,
+            dager = listOf(
+                MeldekortDag(48, 3, LocalDate.of(2025, 11, 26), 7.5, false),
+                MeldekortDag(49, 1, LocalDate.of(2025, 12, 1), 7.5, false),
+            ),
+        ).copy(reduksjon = MeldekortReduksjon(dagerForSent = 2, fravar = 0.0f, sykedager = 0.0f))
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    vedtakId = 90010, personId = 106, meldekortId = 5011,
+                    periode = Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 11, 30)),
+                    belop = 1000, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null,
+                ),
+                MeldekortPostering(
+                    vedtakId = 90010, personId = 106, meldekortId = 5011,
+                    periode = Periode(LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 7)),
+                    belop = 1000, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null,
+                ),
+            ),
+            meldekort = listOf(mk),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+
+        val (uke48, uke49) = service.hentTilkjenteYtelserForSak(sakId).rader
+
+        // Uke 48: (5 - 2) arbeidsdager = 22,5 t grunnlag. 7,5 / 22,5 = 33 %.
+        assertThat(uke48.reduksjon?.timerArbeidetProsent).isEqualTo(33)
+        // Uke 49: ingen straffedager. 7,5 / 37,5 = 20 %.
+        assertThat(uke49.reduksjon?.timerArbeidetProsent).isEqualTo(20)
+    }
+
+    @Test
+    fun `udekkede perioder finner hull foer, mellom og etter posteringer`() {
+        val periode = Periode(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 14))
+        val dekket = listOf(
+            Periode(LocalDate.of(2025, 1, 3), LocalDate.of(2025, 1, 4)),
+            Periode(LocalDate.of(2025, 1, 8), LocalDate.of(2025, 1, 10)),
+        )
+
+        assertThat(udekkedePerioder(periode, dekket)).containsExactly(
+            Periode(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 2)),
+            Periode(LocalDate.of(2025, 1, 5), LocalDate.of(2025, 1, 7)),
+            Periode(LocalDate.of(2025, 1, 11), LocalDate.of(2025, 1, 14)),
+        )
+        assertThat(udekkedePerioder(periode, listOf(periode))).isEmpty()
+        assertThat(udekkedePerioder(periode, emptyList())).containsExactly(periode)
+    }
+
     private fun meldekort(
         meldekortId: Long,
         periode: Periode,
