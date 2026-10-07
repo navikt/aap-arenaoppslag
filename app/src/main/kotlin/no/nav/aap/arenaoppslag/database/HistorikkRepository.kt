@@ -56,10 +56,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          -- Se bort ifra vedtak som er automatiske stanser kun pga. at til-dato for vedtaket er passert:
-          AND NOT (vedtaktypekode = 'S' AND reg_user='GRENSESN' AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.')
-          -- Se bort i fra avslag som er gamle nok til at det ikke er sannsynlig at det opprettes nye AAP-vedtak i samme sak:
-          AND NOT (utfallkode = 'NEI' AND mod_dato <= ?) 
+          -- Ekskluder også vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
+          AND NOT (
+              reg_user IS NOT NULL AND reg_user = 'GRENSESN'
+              AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
+          )
+          -- Ekskluder også avslag som er gamle nok til at det ikke er sannsynlig at det opprettes nye AAP-vedtak i samme sak:
+          AND NOT (utfallkode = 'NEI' AND mod_dato <= ?)
         """.trimIndent()
 
 
