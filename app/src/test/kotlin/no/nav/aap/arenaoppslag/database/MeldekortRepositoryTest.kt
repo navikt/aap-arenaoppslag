@@ -51,6 +51,8 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.kilde).isEqualTo(PosteringKilde.MELDEKORT)
         assertThat(første.kildeObjektId).isEqualTo(5001)
         assertThat(første.antall).isEqualTo(10.0)
+        assertThat(første.posteringId).isEqualTo(8001)
+        assertThat(første.posteringTypeKode).isEqualTo("ORD")
     }
 
     @Test

@@ -4,6 +4,9 @@ import java.time.LocalDate
 
 // Domeneobjekt: én posteringslinje for en sak — tilsvarer én rad i tilkjent-ytelse-tabellen.
 data class MeldekortPostering(
+    // POSTERING_ID + POSTERINGTYPEKODE er primærnøkkelen i POSTERING. ID-en alene er ikke garantert unik.
+    val posteringId: Long? = null,
+    val posteringTypeKode: String? = null,
     val vedtakId: Int,
     val personId: Int,
     // null betyr utbetaling uten tilknyttet meldekort (f.eks. spesialutbetaling)

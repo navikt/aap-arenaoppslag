@@ -411,6 +411,53 @@ class TilkjentYtelserServiceTest {
         verify(exactly = 1) { meldekortRepository.hentForSak(sakTo) }
     }
 
+    @Test
+    fun `to posteringer paa samme meldekort gir to rader med hver sin posteringId`() {
+        val sakId = SakId(459)
+        val periode = Periode(LocalDate.of(2023, 1, 2), LocalDate.of(2023, 1, 15))
+        val mk = meldekort(meldekortId = 5001, periode = periode, ukenrUke1 = 1, ukenrUke2 = 2)
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    posteringId = 8001, posteringTypeKode = "ORD",
+                    vedtakId = 90010, personId = 106, meldekortId = 5001, periode = periode,
+                    belop = 7700, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null, kilde = PosteringKilde.MELDEKORT,
+                ),
+                MeldekortPostering(
+                    posteringId = 8002, posteringTypeKode = "ORD",
+                    vedtakId = 90010, personId = 106, meldekortId = 5001, periode = periode,
+                    belop = 1200, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null, kilde = PosteringKilde.MELDEKORT,
+                ),
+            ),
+            meldekort = listOf(mk),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+
+        val rader = service.hentTilkjenteYtelserForSak(sakId).rader
+
+        assertThat(rader).hasSize(2)
+        assertThat(rader.map { it.meldekort?.meldekortId }).containsOnly(5001L)
+        assertThat(rader.map { it.posteringId }).containsExactlyInAnyOrder(8001L, 8002L)
+    }
+
+    @Test
+    fun `rad uten postering har ingen posteringId`() {
+        val sakId = SakId(460)
+        val periode = Periode(LocalDate.of(2023, 1, 2), LocalDate.of(2023, 1, 15))
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = emptyList(),
+            meldekort = listOf(meldekort(meldekortId = 5003, periode = periode, ukenrUke1 = 1, ukenrUke2 = 2)),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+
+        val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
+
+        assertThat(rad.posteringId).isNull()
+        assertThat(rad.posteringTypeKode).isNull()
+    }
+
     private fun meldekort(
         meldekortId: Long,
         periode: Periode,

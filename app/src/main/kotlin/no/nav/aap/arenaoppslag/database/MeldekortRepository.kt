@@ -42,6 +42,8 @@ class MeldekortRepository(
                 val kildeAlias = row.getString("tabellnavnalias_kilde")
                 val spesialutbetaling = mapSpesialutbetaling(row)
                 MeldekortPostering(
+                    posteringId = row.getLong("postering_id"),
+                    posteringTypeKode = row.getString("posteringtypekode"),
                     vedtakId = row.getInt("vedtak_id"),
                     personId = row.getInt("person_id"),
                     meldekortId = meldekortId,
@@ -237,7 +239,7 @@ class MeldekortRepository(
                AND vf.vedtakfaktakode IN ('DAGSMBT', 'DAGS', 'DAGSFSAM', 'INSGRAD')
              GROUP BY vf.vedtak_id
         )
-        SELECT p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
+        SELECT p.postering_id, p.posteringtypekode, p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
                p.antall,
                p.tabellnavnalias_kilde, p.objekt_id_kilde,
                f.dagsats_med_barnetillegg, f.dagsats, f.dagsats_for_samordning, f.ins_grad,

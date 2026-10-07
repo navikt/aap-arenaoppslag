@@ -58,6 +58,8 @@ class TilkjentYtelserService(
                 byggReduksjon(it, timerArbeidetEtterStraff ?: 0.0, postering)
             }
             TilkjentYtelseRad(
+                posteringId = postering.posteringId,
+                posteringTypeKode = postering.posteringTypeKode,
                 fraOgMedDato = postering.periode.fraOgMedDato,
                 tilOgMedDato = postering.periode.tilOgMedDato,
                 uke = meldekort?.let { "${it.ukenrUke1}-${it.ukenrUke2}" },
@@ -91,6 +93,8 @@ class TilkjentYtelserService(
     private fun byggRadUtenPostering(meldekort: Meldekort, kvoteSaldo: KvoteSaldo): TilkjentYtelseRad {
         val timerArbeidetEtterStraff = timerArbeidetEtterStraffedager(meldekort)
         return TilkjentYtelseRad(
+            posteringId = null,
+            posteringTypeKode = null,
             fraOgMedDato = meldekort.periode.fraOgMedDato,
             tilOgMedDato = meldekort.periode.tilOgMedDato,
             uke = "${meldekort.ukenrUke1}-${meldekort.ukenrUke2}",

@@ -24,6 +24,10 @@ enum class PosteringKilde(val kode: String) {
 }
 
 data class TilkjentYtelseRad(
+    // null for rader fra meldekort uten postering. Sammen med posteringTypeKode gir den frontend
+    // en stabil nøkkel når flere posteringer deler samme meldekort.
+    val posteringId: Long?,
+    val posteringTypeKode: String?,
     val fraOgMedDato: LocalDate?,
     val tilOgMedDato: LocalDate?,
     val uke: String?,
