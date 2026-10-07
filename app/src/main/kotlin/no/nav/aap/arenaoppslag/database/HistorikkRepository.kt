@@ -89,10 +89,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
                                         vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST'))  -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
                                    -- Må være stans som ikke er gjenopptatt (ikke har null til_dato)
                                    AND (
-                                     (vedtaktypekode = 'S' AND til_dato IS NULL AND
-                                      (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
+                                     -- Ekstra tidsbuffer for Stans, som bare har fra_dato
+                                     vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?) 
                                      )
-                                   -- Ekskluder også vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
+                                   -- Ekskluder også vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert
                                    AND NOT (
                                        reg_user IS NOT NULL AND reg_user = 'GRENSESN'
                                        AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
