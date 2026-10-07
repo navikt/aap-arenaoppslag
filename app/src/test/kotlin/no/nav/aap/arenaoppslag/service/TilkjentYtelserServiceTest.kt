@@ -42,7 +42,7 @@ class TilkjentYtelserServiceTest {
             fortsattRegistrertArbeidssoker = true,
             kommentar = null,
             dager = listOf(MeldekortDag(10, 1, LocalDate.of(2023, 1, 2), 7.5, false)),
-            reduksjon = MeldekortReduksjon(dagerForSent = 0, fravar = 0.0f, sykedager = 0.0f),
+            reduksjon = MeldekortReduksjon(dagerForSent = 0, fravar = 0.0f, sykedager = 3.0f),
             anmerkninger = listOf(
                 MeldekortAnmerkning(
                     kode = "FSNN",
@@ -109,7 +109,8 @@ class TilkjentYtelserServiceTest {
         assertThat(meldekortRad.reduksjon?.samordningsProsent).isEqualTo(0)
         assertThat(meldekortRad.reduksjon?.totalReduksjonProsent).isEqualTo(10)
         assertThat(meldekortRad.reduksjon?.fravar).isEqualTo(0.0f)
-        assertThat(meldekortRad.reduksjon?.sykedager).isEqualTo(0.0f)
+        // Sykedagene kommer fra FSNN-anmerkningen.
+        assertThat(meldekortRad.reduksjon?.sykedager).isEqualTo(3.0f)
         assertThat(meldekortRad.reduksjon?.institusjonsProsent).isNull()
         // 4,75 anviste dager à 20 % = 95 %, avrundet til nærmeste hele prosent.
         assertThat(meldekortRad.reduksjon?.anvistProsent).isEqualTo(95)
@@ -170,6 +171,7 @@ class TilkjentYtelserServiceTest {
                 MeldekortDag(10, 2, LocalDate.of(2023, 1, 3), 7.5, false),
             ),
             reduksjon = MeldekortReduksjon(dagerForSent = 1, fravar = 0.0f, sykedager = 0.0f),
+            anmerkninger = listOf(MeldekortAnmerkning("SENN", null, null, verdi = 1, verdi2 = null)),
         )
 
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
@@ -516,7 +518,10 @@ class TilkjentYtelserServiceTest {
                 MeldekortDag(48, 3, LocalDate.of(2025, 11, 26), 7.5, false),
                 MeldekortDag(49, 1, LocalDate.of(2025, 12, 1), 7.5, false),
             ),
-        ).copy(reduksjon = MeldekortReduksjon(dagerForSent = 2, fravar = 0.0f, sykedager = 0.0f))
+        ).copy(
+            reduksjon = MeldekortReduksjon(dagerForSent = 2, fravar = 0.0f, sykedager = 0.0f),
+            anmerkninger = listOf(MeldekortAnmerkning("SENN", null, null, verdi = 2, verdi2 = null)),
+        )
         every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
             posteringer = listOf(
                 MeldekortPostering(
