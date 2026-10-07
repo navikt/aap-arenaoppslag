@@ -227,6 +227,17 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
     }
 
     @Test
+    fun `anmerkninger fra vedtak paa en annen sak tas ikke med`() {
+        // Sak 9009: meldekort 7201 er beregnet mot vedtak 90090 og 90091. Anmerkning SENN er
+        // fra vedtak 90100 på sak 9010 og hører ikke til denne saken.
+        val meldekort = repo.hentForSak(SakId(9009)).meldekort.single { it.meldekortId == 7201L }
+
+        assertThat(meldekort.anmerkninger.map { it.kode to it.vedtakId })
+            .containsExactly("FSNN" to 90090, "FXNN" to 90091, "MAXAA" to null)
+        assertThat(meldekort.reduksjon.dagerForSent).isEqualTo(0)
+    }
+
+    @Test
     fun `meldekort postert paa annen sak hoerer til den saken`() {
         val resultat = repo.hentForSak(annenSakForSammePerson)
 

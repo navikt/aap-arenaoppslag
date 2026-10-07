@@ -67,7 +67,28 @@ data class MeldekortAnmerkning(
     // Substitusjonsparameter 1 og 2 som flettes inn i beskrivelsen (&1 og &2)
     val verdi: Int?,
     val verdi2: Int?,
+    // Vedtaket meldekortet ble beregnet mot da anmerkningen ble laget. null betyr at anmerkningen
+    // gjelder selve meldekortet og ikke en bestemt beregning.
+    val vedtakId: Int? = null,
 )
+
+// Reduksjonstallene er summen av verdiene på de tre anmerkningkodene som påvirker utbetalingen:
+// for sent levert meldekort, annet fravær og sykdom.
+fun reduksjonFra(anmerkninger: List<MeldekortAnmerkning>) = MeldekortReduksjon(
+    dagerForSent = summerVerdi(anmerkninger, "SENN"),
+    fravar = summerVerdi(anmerkninger, "FXNN").toFloat(),
+    sykedager = summerVerdi(anmerkninger, "FSNN").toFloat(),
+)
+
+private fun summerVerdi(anmerkninger: List<MeldekortAnmerkning>, kode: String): Int =
+    anmerkninger.filter { it.kode == kode }.sumOf { it.verdi ?: 0 }
+
+// Et meldekort kan beregnes mot flere vedtak, og hver beregning legger igjen egne anmerkninger.
+// Reduksjonen regnes på nytt slik at den bare bygger på anmerkningene som er beholdt.
+fun Meldekort.medAnmerkninger(behold: (MeldekortAnmerkning) -> Boolean): Meldekort {
+    val beholdte = anmerkninger.filter(behold)
+    return copy(anmerkninger = beholdte, reduksjon = reduksjonFra(beholdte))
+}
 
 // Domeneobjekt: ett meldekort med tilhørende dager og anmerkninger.
 data class Meldekort(

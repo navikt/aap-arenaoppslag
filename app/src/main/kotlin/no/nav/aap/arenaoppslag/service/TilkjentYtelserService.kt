@@ -15,6 +15,7 @@ import no.nav.aap.arenaoppslag.modeller.ReduksjonRespons
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseRad
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
+import no.nav.aap.arenaoppslag.modeller.medAnmerkninger
 import no.nav.aap.arenaoppslag.modeller.tilRespons
 import java.time.DayOfWeek
 import java.time.Duration
@@ -51,7 +52,10 @@ class TilkjentYtelserService(
         )
 
         val posteringsrader = meldekortForSak.posteringer.map { postering ->
+            // Et meldekort kan være beregnet mot flere vedtak. Raden viser bare anmerkningene fra
+            // beregningen mot posteringens vedtak, pluss de som gjelder selve meldekortet.
             val meldekort = postering.meldekortId?.let { meldekortPerId[it] }
+                ?.medAnmerkninger { it.vedtakId == null || it.vedtakId == postering.vedtakId }
             registrerUkjentKilde(postering)
 
             // Arena kan postere et meldekort per uke. Timer og reduksjon regnes da bare for

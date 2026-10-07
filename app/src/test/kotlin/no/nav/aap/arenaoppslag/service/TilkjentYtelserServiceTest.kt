@@ -561,6 +561,48 @@ class TilkjentYtelserServiceTest {
         assertThat(udekkedePerioder(periode, emptyList())).containsExactly(periode)
     }
 
+    @Test
+    fun `posteringsrad viser bare anmerkninger fra posteringens vedtak`() {
+        val sakId = SakId(463)
+        val meldekortperiode = Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 12, 7))
+        val mk = meldekort(meldekortId = 7201, periode = meldekortperiode, ukenrUke1 = 48, ukenrUke2 = 49)
+            .copy(
+                anmerkninger = listOf(
+                    MeldekortAnmerkning("FSNN", null, null, verdi = 2, verdi2 = null, vedtakId = 90090),
+                    MeldekortAnmerkning("FXNN", null, null, verdi = 3, verdi2 = null, vedtakId = 90091),
+                    MeldekortAnmerkning("MAXAA", null, null, verdi = null, verdi2 = null, vedtakId = null),
+                ),
+            )
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    vedtakId = 90090, personId = 106, meldekortId = 7201,
+                    periode = Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 11, 30)),
+                    belop = 1461, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null,
+                ),
+                MeldekortPostering(
+                    vedtakId = 90091, personId = 106, meldekortId = 7201,
+                    periode = Periode(LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 7)),
+                    belop = 731, dagsatsMedBarnetillegg = null, dagsats = null, dagsatsForSamordning = null,
+                    insGrad = null,
+                ),
+            ),
+            meldekort = listOf(mk),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+
+        val (uke48, uke49) = service.hentTilkjenteYtelserForSak(sakId).rader
+
+        assertThat(uke48.meldekort?.anmerkninger?.map { it.kode }).containsExactly("FSNN", "MAXAA")
+        assertThat(uke48.reduksjon?.sykedager).isEqualTo(2.0f)
+        assertThat(uke48.reduksjon?.fravar).isEqualTo(0.0f)
+
+        assertThat(uke49.meldekort?.anmerkninger?.map { it.kode }).containsExactly("FXNN", "MAXAA")
+        assertThat(uke49.reduksjon?.sykedager).isEqualTo(0.0f)
+        assertThat(uke49.reduksjon?.fravar).isEqualTo(3.0f)
+    }
+
     private fun meldekort(
         meldekortId: Long,
         periode: Periode,
