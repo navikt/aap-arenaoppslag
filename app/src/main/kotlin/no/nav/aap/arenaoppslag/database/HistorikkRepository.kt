@@ -87,10 +87,16 @@ class HistorikkRepository(private val dataSource: DataSource) {
                                    AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
                                    AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR
                                         vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST'))  -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
+                                   -- Må være stans som ikke er gjenopptatt (ikke har null til_dato)
                                    AND (
                                      (vedtaktypekode = 'S' AND til_dato IS NULL AND
                                       (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
                                      )
+                                   -- Ekskluder også vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
+                                   AND NOT (
+                                       reg_user IS NOT NULL AND reg_user = 'GRENSESN'
+                                       AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
+                                   )  
          ),
          siste_lopende_vedtak as (SELECT sak_id,
                                       vedtak_id,
@@ -126,7 +132,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                                       WHERE
                                          -- Stansen må komme etter det siste løpende vedtaket:
                                          stansede.vedtak_id > siste.vedtak_id -- et nyere vedtak
-                                         AND (siste.fra_dato IS NOT NULL AND stansede.fra_dato IS NOT NULL AND stansede.fra_dato > siste.fra_dato) -- med nyere fra_dato
+                                         AND (siste.fra_dato IS NOT NULL AND stansede.fra_dato IS NOT NULL AND stansede.fra_dato >= siste.fra_dato) -- starter ikke før det siste vedtaket
                                    )
                                    ORDER BY fra_dato DESC NULLS LAST
                                        FETCH FIRST 1 ROW ONLY
