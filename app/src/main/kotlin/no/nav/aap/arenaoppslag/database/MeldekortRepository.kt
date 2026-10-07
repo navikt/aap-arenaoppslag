@@ -32,11 +32,9 @@ class MeldekortRepository(
 
     private fun selectPosteringer(sakId: SakId, connection: Connection): List<MeldekortPostering> =
         connection.createParameterizedQuery(posteringerForSakSql).use { preparedStatement ->
-            // Saken filtrerer både vedtaksfaktaene i WITH-blokken og posteringene i hovedspørringen.
             preparedStatement.setInt(1, sakId.id)
             preparedStatement.setInt(2, sakId.id)
             preparedStatement.executeQuery().map { row ->
-                // wasNull() må sjekkes rett etter getLong, før vi leser andre kolonner.
                 val meldekortId = row.getLong("meldekort_id").let { if (row.wasNull()) null else it }
                 val kildeObjektId = row.getLong("objekt_id_kilde").let { if (row.wasNull()) null else it }
                 val kildeAlias = row.getString("tabellnavnalias_kilde")
@@ -151,13 +149,9 @@ class MeldekortRepository(
         }.groupBy({ it.first }, { it.second })
     }
 
-    // Ukenumrene er kalenderuker, så subtraksjon av ukenummer feiler over årsskiftet
-    // (uke 52 etterfulgt av uke 1 ville gitt en negativ forskyvning på nesten et år).
-    // Vi utleder derfor forskyvningen av om raden hører til første eller andre uke i meldekortperioden.
     private fun ukeforskyvningIDager(ukenr: Int, meta: MeldekortMetadata): Int = when (ukenr) {
         meta.ukenrUke1 -> 0
         meta.ukenrUke2 -> DAGER_PER_UKE
-        // Ukjente ukenummer behandles som første uke — meldekortperioden er alltid nøyaktig to uker.
         else -> 0
     }
 
