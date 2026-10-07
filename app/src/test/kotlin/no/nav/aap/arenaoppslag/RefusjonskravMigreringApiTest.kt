@@ -12,7 +12,7 @@ import java.time.LocalDate
 class RefusjonskravMigreringApiTest : H2TestBase("flyway/migrering") {
 
     @Test
-    fun `henter refusjonskrav fra vedtaksfakta på gjeldende 11-5-vedtak`() {
+    fun `henter refusjonskrav fra vedtaksfakta på siste løpende aap-vedtak`() {
         withTestServer(h2) { gateway ->
             val respons = gateway.hentRefusjonskrav("2023-505")
 
@@ -29,7 +29,7 @@ class RefusjonskravMigreringApiTest : H2TestBase("flyway/migrering") {
     }
 
     @Test
-    fun `svarer 200 med null når gjeldende 11-5-vedtak ikke har refusjonskrav`() {
+    fun `svarer 200 med null når siste løpende aap-vedtak ikke har refusjonskrav`() {
         withTestServer(h2) { gateway ->
             assertThat(gateway.hentRefusjonskravStatus("2023-506")).isEqualTo(HttpStatusCode.OK)
             assertThat(gateway.hentRefusjonskrav("2023-506").refusjonskrav).isNull()
@@ -37,7 +37,7 @@ class RefusjonskravMigreringApiTest : H2TestBase("flyway/migrering") {
     }
 
     @Test
-    fun `svarer 404 når saken ikke har gjeldende 11-5-vedtak`() {
+    fun `svarer 404 når saken ikke har løpende aap-vedtak`() {
         withTestServer(h2) { gateway ->
             assertThat(gateway.hentRefusjonskravStatus("2023-502")).isEqualTo(HttpStatusCode.NotFound)
         }

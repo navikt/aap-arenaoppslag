@@ -1,8 +1,8 @@
 -- Testdata for refusjonskrav-endepunktet i migrering.
--- Saksnummer 2023-505: gjeldende 11-5-vedtak med refusjonskrav (UTBETVENT*).
--- Saksnummer 2023-506: gjeldende 11-5-vedtak uten refusjonskrav.
--- Saksnummer 2023-507: gjeldende 11-5-vedtak med årsak, men uten fra-dato (fraDato er null i svaret).
--- Saksnummer 2023-508: gjeldende 11-5-vedtak med ugyldig datoformat på til-dato.
+-- Saksnummer 2023-505: siste løpende aap-vedtak med refusjonskrav (UTBETVENT*).
+-- Saksnummer 2023-506: siste løpende aap-vedtak uten refusjonskrav.
+-- Saksnummer 2023-507: siste løpende aap-vedtak med årsak, men uten fra-dato (fraDato er null i svaret).
+-- Saksnummer 2023-508: siste løpende aap-vedtak med ugyldig datoformat på til-dato.
 -- Datoene er relative til CURRENT_DATE, så vedtakene alltid dekker dagens dato.
 
 insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
@@ -22,14 +22,14 @@ values (9105, 'AA', DATE '2023-01-01', 'TEST', DATE '2023-01-01', 'TEST', 'PERS'
 insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE,
                     PERSON_ID, FRA_DATO, TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK,
                     AKTFASEKODE, DATO_MOTTATT)
-values (91051, 9105, 'IVERK', 'O', 'JA', 'AA115', 204, DATEADD('DAY', -30, CURRENT_DATE), null, '4402', 505, 2023, 1,
-        'IKKE', DATEADD('DAY', -30, CURRENT_DATE)),
-       (91061, 9106, 'IVERK', 'O', 'JA', 'AA115', 204, DATEADD('DAY', -30, CURRENT_DATE), null, '4402', 506, 2023, 1,
-        'IKKE', DATEADD('DAY', -30, CURRENT_DATE)),
-       (91071, 9107, 'IVERK', 'O', 'JA', 'AA115', 204, DATEADD('DAY', -30, CURRENT_DATE), null, '4402', 507, 2023, 1,
-        'IKKE', DATEADD('DAY', -30, CURRENT_DATE)),
-       (91081, 9108, 'IVERK', 'O', 'JA', 'AA115', 204, DATEADD('DAY', -30, CURRENT_DATE), null, '4402', 508, 2023, 1,
-        'IKKE', DATEADD('DAY', -30, CURRENT_DATE));
+values (91051, 9105, 'IVERK', 'O', 'JA', 'AAP', 204, DATEADD('DAY', -30, CURRENT_DATE), null, '4402', 505, 2023, 1,
+        'UA', DATEADD('DAY', -30, CURRENT_DATE)),
+       (91061, 9106, 'IVERK', 'O', 'JA', 'AAP', 204, DATEADD('DAY', -30, CURRENT_DATE), null, '4402', 506, 2023, 1,
+        'UA', DATEADD('DAY', -30, CURRENT_DATE)),
+       (91071, 9107, 'IVERK', 'O', 'JA', 'AAP', 204, DATEADD('DAY', -30, CURRENT_DATE), null, '4402', 507, 2023, 1,
+        'UA', DATEADD('DAY', -30, CURRENT_DATE)),
+       (91081, 9108, 'IVERK', 'O', 'JA', 'AAP', 204, DATEADD('DAY', -30, CURRENT_DATE), null, '4402', 508, 2023, 1,
+        'UA', DATEADD('DAY', -30, CURRENT_DATE));
 
 insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI, REG_DATO)
 values (91051, 'UTBETVENTK', 'REFKRAVSOS', DATE '2024-01-15'),

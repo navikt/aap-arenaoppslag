@@ -60,7 +60,7 @@ class MigreringService(
     }
 
     fun hentRefusjonskravForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): RefusjonskravForSak? {
-        val vedtak = vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) ?: return null
+        val vedtak = vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) ?: return null
         val vedtakfakta = vedtakfaktaRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId].orEmpty()
 
         return RefusjonskravForSak(Refusjonskrav.fraVedtakfakta(vedtakfakta))

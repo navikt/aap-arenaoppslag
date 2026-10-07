@@ -297,7 +297,7 @@ class MigreringServiceTest {
 
     @Test
     fun `mapper vedtaksfakta til refusjonskrav`() {
-        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
             115 to listOf(
                 vedtakfakta("UTBETVENTK", "REFKRAVSOS"),
@@ -318,7 +318,7 @@ class MigreringServiceTest {
 
     @Test
     fun `refusjonskrav er null uten UTBETVENTK`() {
-        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
             115 to listOf(vedtakfakta("UTBETVENTF", "01-02-2024"), vedtakfakta("UTBETVENTK", null))
         )
@@ -328,15 +328,15 @@ class MigreringServiceTest {
 
     @Test
     fun `refusjonskrav er null når vedtaket ikke har vedtaksfakta`() {
-        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
 
         assertThat(service.hentRefusjonskravForSak(sakId, idag)).isEqualTo(RefusjonskravForSak(null))
     }
 
     @Test
-    fun `svaret er null og vedtaksfakta hentes ikke når saken mangler gjeldende 11-5-vedtak`() {
-        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns null
+    fun `svaret er null og vedtaksfakta hentes ikke når saken mangler løpende aap-vedtak`() {
+        every { vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) } returns null
 
         assertThat(service.hentRefusjonskravForSak(sakId, idag)).isNull()
         verify(exactly = 0) { vedtakfaktaRepository.hentForVedtakIder(any()) }
