@@ -5,10 +5,11 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortAnmerkning
 import no.nav.aap.arenaoppslag.modeller.MeldekortDag
 import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
-import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Spesialutbetaling
+import no.nav.aap.arenaoppslag.modeller.reduksjonFra
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.Date
@@ -31,15 +32,16 @@ class MeldekortRepository(
 
     private fun selectPosteringer(sakId: SakId, connection: Connection): List<MeldekortPostering> =
         connection.createParameterizedQuery(posteringerForSakSql).use { preparedStatement ->
-            // Saken filtrerer både vedtaksfaktaene i WITH-blokken og posteringene i hovedspørringen.
             preparedStatement.setInt(1, sakId.id)
             preparedStatement.setInt(2, sakId.id)
             preparedStatement.executeQuery().map { row ->
-                // wasNull() må sjekkes rett etter getLong, før vi leser andre kolonner.
                 val meldekortId = row.getLong("meldekort_id").let { if (row.wasNull()) null else it }
                 val kildeObjektId = row.getLong("objekt_id_kilde").let { if (row.wasNull()) null else it }
                 val kildeAlias = row.getString("tabellnavnalias_kilde")
+                val spesialutbetaling = mapSpesialutbetaling(row)
                 MeldekortPostering(
+                    posteringId = row.getLong("postering_id"),
+                    posteringTypeKode = row.getString("posteringtypekode"),
                     vedtakId = row.getInt("vedtak_id"),
                     personId = row.getInt("person_id"),
                     meldekortId = meldekortId,
@@ -56,9 +58,35 @@ class MeldekortRepository(
                     kilde = PosteringKilde.fraKode(kildeAlias),
                     kildeAlias = kildeAlias,
                     kildeObjektId = kildeObjektId,
+                    spesialutbetaling = spesialutbetaling,
                 )
             }
         }
+
+    // LEFT JOIN gir NULL i spes_id når posteringen ikke er en spesialutbetaling, eller når raden
+    // i SPESIALUTBETALING mangler. Da finnes det ingen spesialutbetaling å vise.
+    private fun mapSpesialutbetaling(row: ResultSet): Spesialutbetaling? {
+        row.getLong("spes_id")
+        if (row.wasNull()) return null
+        return Spesialutbetaling(
+            begrunnelse = row.getString("spes_begrunnelse"),
+            belop = row.getDoubleOrNull("spes_belop"),
+            belopKode = row.getString("spes_belopkode"),
+            datoUtbetaling = row.getDate("spes_dato_utbetaling")?.toLocalDate(),
+            periode = Periode(
+                fraOgMedDato = row.getDate("spes_dato_fra")?.toLocalDate(),
+                tilOgMedDato = row.getDate("spes_dato_til")?.toLocalDate(),
+            ),
+            vedtakStatusKode = row.getString("spes_vedtakstatuskode"),
+            posteringTypeKode = row.getString("spes_posteringtypekode"),
+            statusBilag = tilBoolean(row.getString("spes_status_bilag")),
+            statusAnvistBilag = tilBoolean(row.getString("spes_status_anvis_bilag")),
+            kategori = row.getString("spes_kategori"),
+            valgtUtbetalingType = row.getString("spes_valgt_utbet_type"),
+            saksbehandler = row.getString("spes_saksbehandler"),
+            beslutter = row.getString("spes_beslutter"),
+        )
+    }
 
     private fun selectMeldekort(sakId: SakId, connection: Connection): List<Meldekort> {
         val metadata = connection.createParameterizedQuery(meldekortForSakSql).use { preparedStatement ->
@@ -74,7 +102,7 @@ class MeldekortRepository(
 
         val meldekortIder = metadata.map { it.meldekortId }
         val dagerPerMeldekort = selectMeldekortdager(metadata.associateBy { it.meldekortId }, connection)
-        val anmerkningerPerMeldekort = selectAnmerkninger(meldekortIder, connection)
+        val anmerkningerPerMeldekort = selectAnmerkninger(sakId, meldekortIder, connection)
 
         return metadata.map { meta ->
             val anmerkninger = anmerkningerPerMeldekort[meta.meldekortId].orEmpty()
@@ -89,7 +117,7 @@ class MeldekortRepository(
                 fortsattRegistrertArbeidssoker = meta.fortsattArbeidssoker,
                 kommentar = meta.kommentar,
                 dager = dagerPerMeldekort[meta.meldekortId].orEmpty(),
-                reduksjon = tilReduksjon(anmerkninger),
+                reduksjon = reduksjonFra(anmerkninger),
                 anmerkninger = anmerkninger,
                 beregningStatusKode = meta.beregningStatusKode,
             )
@@ -121,17 +149,14 @@ class MeldekortRepository(
         }.groupBy({ it.first }, { it.second })
     }
 
-    // Ukenumrene er kalenderuker, så subtraksjon av ukenummer feiler over årsskiftet
-    // (uke 52 etterfulgt av uke 1 ville gitt en negativ forskyvning på nesten et år).
-    // Vi utleder derfor forskyvningen av om raden hører til første eller andre uke i meldekortperioden.
     private fun ukeforskyvningIDager(ukenr: Int, meta: MeldekortMetadata): Int = when (ukenr) {
         meta.ukenrUke1 -> 0
         meta.ukenrUke2 -> DAGER_PER_UKE
-        // Ukjente ukenummer behandles som første uke — meldekortperioden er alltid nøyaktig to uker.
         else -> 0
     }
 
     private fun selectAnmerkninger(
+        sakId: SakId,
         meldekortIder: List<Long>,
         connection: Connection,
     ): Map<Long, List<MeldekortAnmerkning>> {
@@ -139,6 +164,7 @@ class MeldekortRepository(
         return meldekortIder.chunked(chunkStørrelse).flatMap { chunk ->
             val sql = anmerkningerForMeldekortlisteSql(chunk)
             connection.createParameterizedQuery(sql).use { preparedStatement ->
+                preparedStatement.setInt(1, sakId.id)
                 preparedStatement.executeQuery().map { row ->
                     row.getLong("objekt_id") to MeldekortAnmerkning(
                         kode = row.getString("anmerkningkode"),
@@ -146,21 +172,12 @@ class MeldekortRepository(
                         beskrivelse = row.getString("beskrivelse"),
                         verdi = row.getIntOrNull("verdi"),
                         verdi2 = row.getIntOrNull("verdi2"),
+                        vedtakId = row.getIntOrNull("vedtak_id"),
                     )
                 }
             }
         }.groupBy({ it.first }, { it.second })
     }
-
-    // Reduksjonstallene er summen av verdiene på de tre anmerkningkodene som påvirker utbetalingen.
-    private fun tilReduksjon(anmerkninger: List<MeldekortAnmerkning>) = MeldekortReduksjon(
-        dagerForSent = summerVerdi(anmerkninger, KODE_FOR_SENT),
-        fravar = summerVerdi(anmerkninger, KODE_ANNET_FRAVAER).toFloat(),
-        sykedager = summerVerdi(anmerkninger, KODE_SYKEDAGER).toFloat(),
-    )
-
-    private fun summerVerdi(anmerkninger: List<MeldekortAnmerkning>, kode: String): Int =
-        anmerkninger.filter { it.kode == kode }.sumOf { it.verdi ?: 0 }
 
     private fun mapMeldekortMetadata(row: ResultSet) = MeldekortMetadata(
         meldekortId = row.getLong("meldekort_id"),
@@ -209,13 +226,23 @@ class MeldekortRepository(
                AND vf.vedtakfaktakode IN ('DAGSMBT', 'DAGS', 'DAGSFSAM', 'INSGRAD')
              GROUP BY vf.vedtak_id
         )
-        SELECT p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
+        SELECT p.postering_id, p.posteringtypekode, p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
                p.antall,
                p.tabellnavnalias_kilde, p.objekt_id_kilde,
-               f.dagsats_med_barnetillegg, f.dagsats, f.dagsats_for_samordning, f.ins_grad
+               f.dagsats_med_barnetillegg, f.dagsats, f.dagsats_for_samordning, f.ins_grad,
+               s.spesutbetaling_id AS spes_id, s.begrunnelse AS spes_begrunnelse, s.belop AS spes_belop,
+               s.belopkode AS spes_belopkode, s.dato_utbetaling AS spes_dato_utbetaling,
+               s.dato_fra AS spes_dato_fra, s.dato_til AS spes_dato_til,
+               s.vedtakstatuskode AS spes_vedtakstatuskode, s.posteringtypekode AS spes_posteringtypekode,
+               s.status_bilag AS spes_status_bilag, s.status_anvis_bilag AS spes_status_anvis_bilag,
+               s.kategori AS spes_kategori, s.valgt_utbet_type AS spes_valgt_utbet_type,
+               s.bruker_id_saksbehandler AS spes_saksbehandler, s.bruker_id_beslutter AS spes_beslutter
           FROM postering p
           JOIN vedtak v ON v.vedtak_id = p.vedtak_id
           LEFT JOIN fakta f ON f.vedtak_id = p.vedtak_id
+          -- Aliaset må med i join-betingelsen fordi OBJEKT_ID_KILDE peker på ulike tabeller avhengig av kilde
+          LEFT JOIN spesialutbetaling s ON s.spesutbetaling_id = p.objekt_id_kilde
+                                       AND p.tabellnavnalias_kilde = 'SPESUTB'
          WHERE v.sak_id = ?
          ORDER BY p.dato_periode_fra, p.postering_id
     """.trimIndent()
@@ -271,26 +298,24 @@ class MeldekortRepository(
     }
 
     // Oracle støtter ikke listeparametere i PreparedStatement, så meldekort-IDer interpoleres direkte.
+    // Anmerkninger fra beregninger mot vedtak på andre saker hører ikke til denne saken.
     private fun anmerkningerForMeldekortlisteSql(meldekortIder: List<Long>): String {
         val idListe = meldekortIder.joinToString(",")
         return """
-            SELECT a.objekt_id, a.anmerkningkode, a.verdi, a.verdi2,
+            SELECT a.objekt_id, a.anmerkningkode, a.verdi, a.verdi2, a.vedtak_id,
                    at.anmerkningnavn, at.beskrivelse
               FROM anmerkning a
               LEFT JOIN anmerkningtype at ON at.anmerkningkode = a.anmerkningkode
              WHERE a.tabellnavnalias = 'MKORT'
                AND a.objekt_id IN ($idListe)
+               AND (a.vedtak_id IS NULL
+                    OR a.vedtak_id IN (SELECT v.vedtak_id FROM vedtak v WHERE v.sak_id = ?))
              ORDER BY a.objekt_id, a.anmerkning_id
         """.trimIndent()
     }
 
     private companion object {
         private const val DAGER_PER_UKE = 7
-
-        // Anmerkningkoder som reduserer utbetalingen: for sent levert meldekort, annet fravær og sykdom.
-        private const val KODE_FOR_SENT = "SENN"
-        private const val KODE_ANNET_FRAVAER = "FXNN"
-        private const val KODE_SYKEDAGER = "FSNN"
     }
 }
 
