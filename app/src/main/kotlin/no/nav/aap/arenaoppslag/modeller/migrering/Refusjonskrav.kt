@@ -3,10 +3,8 @@ package no.nav.aap.arenaoppslag.modeller.migrering
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskrav
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakfakta
-import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 data class RefusjonskravForSak(val refusjonskrav: Refusjonskrav?) {
     fun tilKontrakt() = ArenaRefusjonskravResponse(refusjonskrav = refusjonskrav?.tilKontrakt())

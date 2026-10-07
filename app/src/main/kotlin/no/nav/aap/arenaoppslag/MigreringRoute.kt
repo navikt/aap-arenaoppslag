@@ -41,7 +41,7 @@ fun Route.migrering(sakService: SakService, migreringService: MigreringService) 
         val refusjonskravForSak = migreringService.hentRefusjonskravForSak(sakId)
 
         if (refusjonskravForSak == null) {
-            logger.info("Fant ikke gjeldende 11-5-vedtak for sak")
+            logger.info("Fant ikke løpende aap-vedtak for sak")
             return@get call.respond(HttpStatusCode.NotFound)
         }
 
