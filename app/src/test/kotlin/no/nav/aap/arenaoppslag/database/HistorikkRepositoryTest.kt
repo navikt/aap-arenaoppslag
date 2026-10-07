@@ -54,9 +54,9 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
             )
         )
         assertThat(signifikanteVedtak).allMatch { it.aktivitetsfaseKode == "IKKE" }
-        assertThat(signifikanteVedtak).extracting("rettighetkode", "aar", "lopenrvedtak")
+        assertThat(signifikanteVedtak).extracting("rettighetkode", "aar")
             .containsExactlyInAnyOrder(
-                tuple("AAP", 2021, 30),
+                tuple("AAP", 2021),
             )
     }
 
