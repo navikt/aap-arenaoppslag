@@ -46,7 +46,7 @@ class MigreringService(
         sakId: SakId,
         idag: LocalDate = LocalDate.now(),
     ): Sykdomsvurdering? {
-        val vedtak = vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) ?: return null
+        val vedtak = vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) ?: return null
         val vilkårsvurderinger = vilkårsvurderingRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId]
             .orEmpty()
         val diagnoser = medisinskOpplysningRepository.hentForPerson(PersonId(sak.person.personId))
@@ -60,7 +60,7 @@ class MigreringService(
     }
 
     fun hentRefusjonskravForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): RefusjonskravForSak? {
-        val vedtak = vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) ?: return null
+        val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
         val vedtakfakta = vedtakfaktaRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId].orEmpty()
 
         return RefusjonskravForSak(Refusjonskrav.fraVedtakfakta(vedtakfakta))

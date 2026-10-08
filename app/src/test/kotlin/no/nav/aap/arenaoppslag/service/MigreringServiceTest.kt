@@ -11,7 +11,6 @@ import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaDiagnose
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskrav
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
-import no.nav.aap.arenaoppslag.modeller.migrering.Refusjonskrav
 import no.nav.aap.arenaoppslag.modeller.migrering.RefusjonskravForSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
@@ -241,7 +240,7 @@ class MigreringServiceTest {
     fun `henter begrunnelse og vilkår fra gjeldende 11-5-vedtak`() {
         val vedtak115 = vedtak(LocalDate.of(2024, 1, 1))
             .copy(vedtakId = 115, rettighetkode = "AA115", begrunnelse = "Nedsatt arbeidsevne")
-        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak115
+        every { vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) } returns vedtak115
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
             115 to listOf(
                 vilkårsvurdering(1, "SYKSKADLYT", "J", begrunnelse = "Legeerklæring foreligger"),
@@ -265,7 +264,7 @@ class MigreringServiceTest {
 
     @Test
     fun `gir tom vilkårsliste når 11-5-vedtaket mangler vilkårsvurderinger`() {
-        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
         every { medisinskOpplysningRepository.hentForPerson(PersonId(100)) } returns emptyList()
 
@@ -277,7 +276,7 @@ class MigreringServiceTest {
 
     @Test
     fun `sender diagnosene videre med Arena-kodene uendret`() {
-        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
         every { medisinskOpplysningRepository.hentForPerson(PersonId(100)) } returns listOf(
             MedisinskOpplysning(1, "ICPC2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
@@ -297,7 +296,7 @@ class MigreringServiceTest {
 
     @Test
     fun `mapper vedtaksfakta til refusjonskrav`() {
-        every { vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
             115 to listOf(
                 vedtakfakta("UTBETVENTK", "REFKRAVSOS"),
@@ -318,7 +317,7 @@ class MigreringServiceTest {
 
     @Test
     fun `refusjonskrav er null uten UTBETVENTK`() {
-        every { vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
             115 to listOf(vedtakfakta("UTBETVENTF", "01-02-2024"), vedtakfakta("UTBETVENTK", null))
         )
@@ -328,7 +327,7 @@ class MigreringServiceTest {
 
     @Test
     fun `refusjonskrav er null når vedtaket ikke har vedtaksfakta`() {
-        every { vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
 
         assertThat(service.hentRefusjonskravForSak(sakId, idag)).isEqualTo(RefusjonskravForSak(null))
@@ -336,7 +335,7 @@ class MigreringServiceTest {
 
     @Test
     fun `svaret er null og vedtaksfakta hentes ikke når saken mangler løpende aap-vedtak`() {
-        every { vedtakRepository.hentSisteLopendeAapVedtakForSak(sakId, idag) } returns null
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
 
         assertThat(service.hentRefusjonskravForSak(sakId, idag)).isNull()
         verify(exactly = 0) { vedtakfaktaRepository.hentForVedtakIder(any()) }
@@ -344,7 +343,7 @@ class MigreringServiceTest {
 
     @Test
     fun `returnerer null når saken mangler gjeldende 11-5-vedtak`() {
-        every { vedtakRepository.hentGjeldende115VedtakForSak(sakId, idag) } returns null
+        every { vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) } returns null
 
         assertThat(service.hentSykdomsvurderingForSak(sak, sakId, idag)).isNull()
         verify(exactly = 0) { medisinskOpplysningRepository.hentForPerson(any()) }
