@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.tilgangsmaskin
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.toByteArray
@@ -10,7 +11,17 @@ import java.io.IOException
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import no.nav.aap.arenaoppslag.DefaultJsonMapper
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl.TilgangsmaskinException
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
@@ -19,6 +30,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.CountDownLatch
 
 class TilgangmaskinGatewayImplTest {
     companion object {
@@ -67,6 +79,82 @@ class TilgangmaskinGatewayImplTest {
 
         assertThat(gateway.harTilgangTilPerson("12312312312", brukerToken).harTilgang).isFalse()
         assertThat(engine.requestHistory).hasSize(1)
+    }
+
+    @Test
+    fun `avslår ved 403 selv om avslagskroppen ikke kan tolkes`(): Unit = runBlocking {
+        val gyldigResponse = DefaultJsonMapper.objectMapper().createObjectNode()
+            .put("type", "AVVIST_GEOGRAFISK")
+            .put("title", "AVVIST_GEOGRAFISK")
+            .put("status", 403)
+            .put("begrunnelse", "Mangler geografisk tilgang")
+            .put("kanOverstyres", false)
+        val ugyldigeResponser = listOf(
+            "",
+            "ikke JSON",
+            "<html>Forbidden</html>",
+            """{"title":""",
+            """{"title":{"ukjent":"format"}}""",
+            "[]",
+            "null",
+        ) + listOf("type", "title", "status", "begrunnelse", "kanOverstyres").flatMap { felt ->
+            listOf(
+                gyldigResponse.deepCopy().apply { remove(felt) }.toString(),
+                gyldigResponse.deepCopy().putNull(felt).toString(),
+            )
+        }
+        for (body in ugyldigeResponser) {
+            val engine = MockEngine {
+                respond(body, HttpStatusCode.Forbidden, headersOf(HttpHeaders.ContentType, "application/problem+json"))
+            }
+            try {
+                TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider).use { gateway ->
+                    val resultat = gateway.harTilgangTilPerson("12312312312", brukerToken)
+
+                    assertThat(resultat.harTilgang).isFalse()
+                    assertThat(resultat.avvistResponse).isNull()
+                    assertThat(engine.requestHistory).hasSize(1)
+                }
+            } finally {
+                engine.close()
+            }
+        }
+    }
+
+    @Test
+    fun `gir tilgang ved 200 uten å tolke kroppen`(): Unit = runBlocking {
+        val engine = MockEngine { respond("ikke JSON", HttpStatusCode.OK) }
+        try {
+            TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider).use { gateway ->
+                assertThat(gateway.harTilgangTilPerson("12312312312", brukerToken).harTilgang).isTrue()
+                assertThat(engine.requestHistory).hasSize(1)
+            }
+        } finally {
+            engine.close()
+        }
+    }
+
+    @Test
+    fun `propagerer kansellering under tolking av avslagskroppen`(): Unit = runBlocking {
+        val engine = MockEngine { respond("{}", HttpStatusCode.Forbidden) }
+        val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider)
+        val mapper = mockk<ObjectMapper>()
+        val kansellering = CancellationException("Forespørselen er avbrutt")
+        every { mapper.readerFor(TilgangsmaskinAvvistResponse::class.java) } throws kansellering
+        mockkObject(DefaultJsonMapper)
+        try {
+            every { DefaultJsonMapper.objectMapper() } returns mapper
+
+            val feil = assertThrows<CancellationException> {
+                gateway.harTilgangTilPerson("12312312312", brukerToken)
+            }
+            assertThat(feil).isSameAs(kansellering)
+            assertThat(engine.requestHistory).hasSize(1)
+        } finally {
+            unmockkObject(DefaultJsonMapper)
+            gateway.close()
+            engine.close()
+        }
     }
 
     @Test
@@ -195,6 +283,80 @@ class TilgangmaskinGatewayImplTest {
         }
         assertThat(feil.message).contains("OBO-token")
         assertThat(engine.requestHistory).isEmpty()
+    }
+
+    @Test
+    fun `avbryter blokkerende OBO-kall når forespørselen kanselleres`(): Unit = runBlocking {
+        val startet = CompletableDeferred<Unit>()
+        val vent = CountDownLatch(1)
+        val avbrutt = CountDownLatch(1)
+        val blokkerendeTokenProvider = object : TokenProvider {
+            override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken {
+                startet.complete(Unit)
+                try {
+                    vent.await()
+                } catch (e: InterruptedException) {
+                    avbrutt.countDown()
+                    throw e
+                }
+                return oboToken
+            }
+        }
+        val engine = MockEngine { respond("", HttpStatusCode.NoContent) }
+        val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), blokkerendeTokenProvider)
+        val jobb = launch { gateway.harTilgangTilPerson("12312312312", brukerToken) }
+        try {
+            withTimeout(5_000) { startet.await() }
+            jobb.cancel()
+            withTimeout(5_000) { jobb.join() }
+
+            assertThat(avbrutt.count).isZero()
+            assertThat(engine.requestHistory).isEmpty()
+        } finally {
+            vent.countDown()
+            jobb.cancelAndJoin()
+            gateway.close()
+            engine.close()
+        }
+    }
+
+    @Test
+    fun `propagerer kansellering fra OBO-tokenprovideren`(): Unit = runBlocking {
+        val kansellering = CancellationException("Forespørselen er avbrutt")
+        val avbruttTokenProvider = object : TokenProvider {
+            override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken = throw kansellering
+        }
+        val engine = MockEngine { respond("", HttpStatusCode.NoContent) }
+        try {
+            TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), avbruttTokenProvider).use { gateway ->
+                assertThrows<CancellationException> {
+                    gateway.harTilgangTilPerson("12312312312", brukerToken)
+                }
+                assertThat(engine.requestHistory).isEmpty()
+            }
+        } finally {
+            engine.close()
+        }
+    }
+
+    @Test
+    fun `kaster med kontekst når OBO-token mangler`(): Unit = runBlocking {
+        val tomTokenProvider = object : TokenProvider {
+            override fun getToken(scope: String?, currentToken: OidcToken?): OidcToken? = null
+        }
+        val engine = MockEngine { respond("", HttpStatusCode.NoContent) }
+        try {
+            TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), tomTokenProvider).use { gateway ->
+                val feil = assertThrows<TilgangsmaskinException> {
+                    gateway.harTilgangTilPerson("12312312312", brukerToken)
+                }
+                assertThat(feil.message).contains("OBO-token")
+                assertThat(feil.cause).isInstanceOf(IllegalStateException::class.java)
+                assertThat(engine.requestHistory).isEmpty()
+            }
+        } finally {
+            engine.close()
+        }
     }
 
     @Test

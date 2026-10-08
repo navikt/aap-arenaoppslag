@@ -1,12 +1,16 @@
 package no.nav.aap.arenaoppslag.tilgangsmaskin
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withTimeoutOrNull
 import no.nav.aap.arenaoppslag.DefaultJsonMapper
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.komponenter.config.requiredConfigForKey
@@ -15,6 +19,8 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureOBOTokenProvider
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import java.io.IOException
+import java.net.http.HttpTimeoutException
 import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -66,22 +72,34 @@ class TilgangmaskinGatewayImpl(
         }
     }
 
-    // Tilgangsmaskinen svarer med Content-Type application/problem+json, som ikke matcher ContentNegotiation,
-    // så vi deserialiserer manuelt, og gjør det på en defensiv måte
-    @Suppress("TooGenericExceptionCaught")
-    private suspend fun parseAvvistResponse(response: HttpResponse): TilgangsmaskinAvvistResponse? =
-        runCatching {
-            DefaultJsonMapper.objectMapper().readValue(response.bodyAsText(), TilgangsmaskinAvvistResponse::class.java)
-        }.onFailure {
-            logger.warn("Klarte ikke å parse avvistresponse fra Tilgangsmaskinen", it)
-        }.getOrNull()
+    private suspend fun parseAvvistResponse(response: HttpResponse): TilgangsmaskinAvvistResponse? = try {
+        DefaultJsonMapper.objectMapper()
+            .readerFor(TilgangsmaskinAvvistResponse::class.java)
+            .with(
+                DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES,
+                DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES,
+            )
+            .readValue<TilgangsmaskinAvvistResponse>(response.bodyAsText())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: IOException) {
+        currentCoroutineContext().ensureActive()
+        logger.warn("Klarte ikke å parse avvistresponse fra Tilgangsmaskinen ({})", e.javaClass.simpleName)
+        null
+    }
 
     @Suppress("TooGenericExceptionCaught")
     private suspend fun hentOboToken(token: OidcToken): OidcToken = try {
-        // Texas-tokenprovideren gjør et blokkerende HTTP-kall, så vi holder det unna request-trådene
-        withContext(Dispatchers.IO) {
-            checkNotNull(tokenProvider.getToken(scope, token)) { "Tokenprovideren returnerte ikke noe token" }
-        }
+        withTimeoutOrNull(OBO_TOKEN_TIMEOUT_MS) {
+            try {
+                runInterruptible(Dispatchers.IO) {
+                    checkNotNull(tokenProvider.getToken(scope, token)) { "Tokenprovideren returnerte ikke noe token" }
+                }
+            } catch (e: Exception) {
+                currentCoroutineContext().ensureActive()
+                throw e
+            }
+        } ?: throw HttpTimeoutException("Henting av OBO-token tok mer enn $OBO_TOKEN_TIMEOUT_MS ms")
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -95,6 +113,7 @@ class TilgangmaskinGatewayImpl(
     companion object {
         private val logger = LoggerFactory.getLogger(TilgangmaskinGatewayImpl::class.java)
 
+        private const val OBO_TOKEN_TIMEOUT_MS = 2_000L
         private const val NAV_CONSUMER_ID_HEADER = "Nav-Consumer-Id"
         private val consumerId = System.getenv("NAIS_APP_NAME") ?: "arenaoppslag"
     }
