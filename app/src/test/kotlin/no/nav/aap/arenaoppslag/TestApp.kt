@@ -5,6 +5,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayMockImpl
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
 import no.nav.aap.arenaoppslag.util.Fakes
 import no.nav.aap.arenaoppslag.util.port
@@ -27,7 +28,11 @@ fun main() {
     logger.info("Texas port: ${fakes.texas.port()}")
 
     embeddedServer(Netty, port = 8087) {
-        server(config = config, pdlGateway = FakePdlGateway())
+        server(
+            config = config,
+            pdlGateway = FakePdlGateway(),
+            tilgangmaskinGateway = TilgangmaskinGatewayMockImpl(),
+        )
         module(dataSource)
     }.start(wait = true)
 }
