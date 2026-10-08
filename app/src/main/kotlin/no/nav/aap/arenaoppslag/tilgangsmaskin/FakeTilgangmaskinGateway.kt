@@ -5,10 +5,10 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 /**
  * Enkel implementasjon som gir tilgang til alle personer.
  */
-class TilgangmaskinGatewayMockImpl : TilgangmaskinGateway {
+class FakeTilgangmaskinGateway : TilgangsmaskinGateway {
     override suspend fun harTilgangTilPerson(
         personIdentifikator: String, token: OidcToken
-    ): HarTilgangFraTilgangsmaskinen = HarTilgangFraTilgangsmaskinen(harTilgang = true)
+    ): TilgangsmaskinKomplettResponse = TilgangsmaskinKomplettResponse(harTilgang = true)
 
     override fun close() {
         // no op

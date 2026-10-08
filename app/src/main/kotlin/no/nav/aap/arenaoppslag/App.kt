@@ -38,7 +38,7 @@ import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.service.VedtakService
 import no.nav.aap.arenaoppslag.service.VedtakfaktaService
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGateway
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinGateway
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayMockImpl
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
@@ -70,7 +70,7 @@ fun Application.server(
     config: AppConfig = AppConfig(),
     datasource: DataSource = ArenaDatasource.create(config.database),
     pdlGateway: IPdlGateway = PdlGateway(),
-    tilgangmaskinGateway: TilgangmaskinGateway = TilgangmaskinGatewayImpl(),
+    tilgangmaskinGateway: TilgangsmaskinGateway = TilgangmaskinGatewayImpl(),
 ) {
     statusPages()
 
@@ -260,7 +260,7 @@ private fun skapMeldekortService(datasource: DataSource): MeldekortService {
 private fun Application.routes(
     datasource: DataSource,
     pdlGateway: IPdlGateway,
-    tilgangmaskinGateway: TilgangmaskinGateway,
+    tilgangmaskinGateway: TilgangsmaskinGateway,
 ) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 import kotlin.math.min
 
 class TilgangkontrollService(
-    private val tilgangmaskinGateway: TilgangmaskinGateway,
+    private val tilgangmaskinGateway: TilgangsmaskinGateway,
     private val sakService: SakService,
     private val personService: PersonService,
 ) {

@@ -31,14 +31,14 @@ import kotlin.coroutines.cancellation.CancellationException
 class TilgangmaskinGatewayImpl(
     private val httpClient: HttpClient = TilgangMaskinHttpClient.lagHttpClient(),
     private val tokenProvider: TokenProvider = AzureOBOTokenProvider,
-) : TilgangmaskinGateway, AutoCloseable {
+) : TilgangsmaskinGateway {
     private val baseUrl = requiredConfigForKey("integrasjon.tilgangsmaskin.url").trimEnd('/')
     private val scope = requiredConfigForKey("integrasjon.tilgangsmaskin.scope")
 
     override suspend fun harTilgangTilPerson(
         personIdentifikator: String,
         token: OidcToken
-    ): HarTilgangFraTilgangsmaskinen {
+    ): TilgangsmaskinKomplettResponse {
         val oboToken = hentOboToken(token)
         // Propager korrelasjons-id-en fra inngående request (som CallId-pluginen legger i MDC) slik at
         // kallet kan spores på tvers av tjenester. Tilgangsmaskinen leser X-Correlation-ID. Faller
@@ -54,14 +54,14 @@ class TilgangmaskinGatewayImpl(
                 contentType(ContentType.Text.Plain)
                 setBody(personIdentifikator)
             }
-            HarTilgangFraTilgangsmaskinen(harTilgang = true)
+            TilgangsmaskinKomplettResponse(harTilgang = true)
         } catch (e: ResponseException) {
             // Kun 403 betyr avslag fra Tilgangsmaskinen; 401 o.l. er feil i integrasjonen og skal ikke tolkes som avslag
             if (e.response.status == HttpStatusCode.Forbidden) {
                 // Selve avvisningen (nav-ident, årsak, maskert fnr) logges i TilgangkontrollService,
                 // der vi har nav-ident og fødselsnummer tilgjengelig.
                 val avvistResponse = parseAvvistResponse(e.response)
-                HarTilgangFraTilgangsmaskinen(harTilgang = false, avvistResponse = avvistResponse)
+                TilgangsmaskinKomplettResponse(harTilgang = false, avvistResponse = avvistResponse)
             } else {
                 throw TilgangsmaskinException("Kall mot Tilgangsmaskinen feilet med status ${e.response.status}", e)
             }

@@ -10,8 +10,8 @@ import io.mockk.mockk
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
-import no.nav.aap.arenaoppslag.tilgangsmaskin.HarTilgangFraTilgangsmaskinen
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGateway
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinKomplettResponse
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinGateway
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinAvvistResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -55,9 +55,9 @@ class TilgangAvvistApiTest : H2TestBase("flyway/minimumtest") {
         avvistResponse: TilgangsmaskinAvvistResponse?,
         forventetJson: String?,
     ) {
-        val tilgangmaskinGateway = mockk<TilgangmaskinGateway>(relaxed = true)
+        val tilgangmaskinGateway = mockk<TilgangsmaskinGateway>(relaxed = true)
         coEvery { tilgangmaskinGateway.harTilgangTilPerson(any(), any()) } returns
-            HarTilgangFraTilgangsmaskinen(harTilgang = false, avvistResponse = avvistResponse)
+            TilgangsmaskinKomplettResponse(harTilgang = false, avvistResponse = avvistResponse)
 
         withTestServer(h2, tilgangmaskinGateway, navIdent = "Z123456") { gateway ->
             val kall: List<suspend () -> Unit> = listOf(
