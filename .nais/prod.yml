@@ -5,3 +5,5 @@ vault_db_config_path: oracle/data/prod/config/arena
 vault_db_creds_path: oracle/data/prod/creds/arena-arena_tilgang_aap
 pdl_scope: api://prod-fss.pdl.pdl-api/.default
 pdl_url: http://pdl-api.pdl.svc.nais.local/graphql
+tilgangsmaskin_scope: api://prod-gcp.tilgangsmaskin.populasjonstilgangskontroll/.default
+tilgangsmaskin_url: http://populasjonstilgangskontroll.tilgangsmaskin

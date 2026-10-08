@@ -66,7 +66,8 @@ import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
 import no.nav.aap.arenaoppslag.service.MigreringService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayMockImpl
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGateway
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl
 import org.slf4j.LoggerFactory
 
 val logger = LoggerFactory.getLogger("App")
@@ -94,6 +95,7 @@ fun Application.server(
     config: AppConfig = AppConfig(),
     datasource: DataSource = ArenaDatasource.create(config.database),
     pdlGateway: IPdlGateway = PdlGateway(),
+    tilgangmaskinGateway: TilgangmaskinGateway = TilgangmaskinGatewayImpl(),
 ) {
     statusPages()
 
@@ -121,7 +123,7 @@ fun Application.server(
 
     authentication(listOf(IdentityProvider.ENTRA_ID))
 
-    routes(datasource, pdlGateway)
+    routes(datasource, pdlGateway, tilgangmaskinGateway)
 
     warmup(datasource)
 
@@ -152,6 +154,7 @@ fun Application.server(
         } catch (_: Exception) {
             // Ignorert
         }
+        tilgangmaskinGateway.close()
     }
 }
 
@@ -261,7 +264,11 @@ private fun skapOppgaveService(datasource: DataSource): OppgaveService {
     return OppgaveService(oppgaveRepository)
 }
 
-private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
+private fun Application.routes(
+    datasource: DataSource,
+    pdlGateway: IPdlGateway,
+    tilgangmaskinGateway: TilgangmaskinGateway,
+) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
     val telleverkService = skapTelleverkService(datasource)
@@ -274,7 +281,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val oppgaveService = skapOppgaveService(datasource)
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
-    val tilgangService = TilgangkontrollService(TilgangmaskinGatewayMockImpl(), sakListeService, personService)
+    val tilgangService = TilgangkontrollService(tilgangmaskinGateway, sakListeService, personService)
 
     routing {
         actuator(prometheus)
