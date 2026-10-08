@@ -3,6 +3,7 @@ package no.nav.aap.arenaoppslag.tilgangsmaskin
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.TilgangAvvistResponse
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -44,7 +45,7 @@ class TilgangkontrollService(
     suspend fun medVerifisertPersonTilgang(
         routingContext: RoutingContext,
         personidentifikator: String,
-        onAccessDenied: suspend RoutingContext.(PersonTilgangResultat.AccessDenied) -> Unit = { call.respond(HttpStatusCode.Forbidden) },
+        onAccessDenied: suspend RoutingContext.(PersonTilgangResultat.AccessDenied) -> Unit = { svarMedAvvistTilgang(it.avvistResponse) },
         onNotFound: suspend RoutingContext.() -> Unit = {
             call.respond(HttpStatusCode.NotFound, "Fant ikke personen i AAP-Arena")
         },
@@ -77,7 +78,7 @@ class TilgangkontrollService(
     suspend fun medVerifisertSakTilgang(
         routingContext: RoutingContext,
         saksnummer: Saksnummer,
-        onAccessDenied: suspend RoutingContext.(SakTilgangResultat.AccessDenied) -> Unit = { call.respond(HttpStatusCode.Forbidden) },
+        onAccessDenied: suspend RoutingContext.(SakTilgangResultat.AccessDenied) -> Unit = { svarMedAvvistTilgang(it.avvistResponse) },
         onNotFound: suspend RoutingContext.() -> Unit = {
             call.respond(HttpStatusCode.NotFound, "Fant ikke saken i AAP-Arena")
         },
@@ -85,6 +86,21 @@ class TilgangkontrollService(
     ) {
         val tilgang = verifiserTilgangTilSak(saksnummer, routingContext.call.token())
         routingContext.medTilgangKontrollert(tilgang, onAccessDenied, onNotFound, onGranted)
+    }
+
+    private suspend fun RoutingContext.svarMedAvvistTilgang(avvistResponse: TilgangsmaskinAvvistResponse?) {
+        if (avvistResponse == null) {
+            call.respond(HttpStatusCode.Forbidden)
+        } else {
+            call.respond(
+                HttpStatusCode.Forbidden,
+                TilgangAvvistResponse(
+                    title = avvistResponse.title,
+                    begrunnelse = avvistResponse.begrunnelse,
+                    kanOverstyres = avvistResponse.kanOverstyres,
+                ),
+            )
+        }
     }
 
     /**
