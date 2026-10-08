@@ -65,6 +65,8 @@ import no.nav.aap.komponenter.server.authentication
 import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
 import no.nav.aap.arenaoppslag.service.MigreringService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayMockImpl
 import org.slf4j.LoggerFactory
 
 val logger = LoggerFactory.getLogger("App")
@@ -272,6 +274,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val oppgaveService = skapOppgaveService(datasource)
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
+    val tilgangService = TilgangkontrollService(TilgangmaskinGatewayMockImpl(), sakListeService, personService)
 
     routing {
         actuator(prometheus)
@@ -293,8 +296,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 maksdato(sakListeService, personService)
                 samordning(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
-                vedtakForPerson(sakOgVedtakService, personService)
-                sak(sakOgVedtakService)
+                vedtakForPerson(sakOgVedtakService, tilgangService)
+                sak(sakOgVedtakService, tilgangService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
