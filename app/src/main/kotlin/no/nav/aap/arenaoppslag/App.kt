@@ -37,6 +37,8 @@ import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.service.VedtakService
 import no.nav.aap.arenaoppslag.service.VedtakfaktaService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayMockImpl
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
 import org.slf4j.LoggerFactory
@@ -268,6 +270,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
     val meldekortService = skapMeldekortService(datasource)
+    val tilgangService = TilgangkontrollService(TilgangmaskinGatewayMockImpl(), sakListeService, personService)
 
     routing {
         actuator(prometheus)
@@ -291,8 +294,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 maksdato(sakListeService, personService)
                 samordning(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
-                vedtakForPerson(sakOgVedtakService, personService)
-                sak(sakOgVedtakService)
+                vedtakForPerson(sakOgVedtakService, personService, tilgangService)
+                sak(sakOgVedtakService, tilgangService)
                 meldekortStartuke(
                     meldekortService = meldekortService,
                     personService = personService,

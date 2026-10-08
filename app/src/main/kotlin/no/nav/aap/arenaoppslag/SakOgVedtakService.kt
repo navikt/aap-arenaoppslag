@@ -12,8 +12,6 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
-import no.nav.aap.arenaoppslag.service.VedtakfaktaService
-import javax.sql.DataSource
 
 class SakOgVedtakService(
     private val sakRepository: SakRepository,
@@ -21,17 +19,24 @@ class SakOgVedtakService(
     private val vedtakfaktaRepository: VedtakfaktaRepository,
     private val vilkårsvurderingRepository: VilkårsvurderingRepository,
 ) {
+
+    fun hentSakMedVedtak(autorisertSaksnummer: AutorisertSaksnummer): ArenaSakMedVedtak {
+        // Vi vet at saksnummeret er autorisert, og at det derfor finnes i databasen
+        return hentSakMedVedtak(autorisertSaksnummer.toSaksnummer())!!
+    }
+
+    @Deprecated("ikke autorisert")
     fun hentSakMedVedtak(saksnummer: Saksnummer): ArenaSakMedVedtak? {
         val sak = sakRepository.hentSak(saksnummer) ?: return null
         return getArenaSakMedVedtak(sak)
     }
 
-    fun hentVedtakForPerson(personId: PersonId): List<ArenaVedtak> {
-        return vedtakRepository.hentVedtak(personId)
+    fun hentVedtakForPerson(authorized: AuthorisertPersonId): List<ArenaVedtak> {
+        return vedtakRepository.hentVedtak(authorized.personId)
     }
 
-    fun hentVedtakDetaljerForPerson(personId: PersonId): List<ArenaVedtakMedDetaljer> {
-        val saker = sakRepository.hentSakerDetaljerForPerson(personId)
+    fun hentVedtakDetaljerForPerson(authorized: AuthorisertPersonId): List<ArenaVedtakMedDetaljer> {
+        val saker = sakRepository.hentSakerDetaljerForPerson(authorized.personId)
         return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
     }
 
