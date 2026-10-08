@@ -21,6 +21,9 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
 
     // Sak 9007 tilhører samme person som 9006 og eier meldekort 7005.
     private val annenSakForSammePerson = SakId(9007)
+
+    // Sak 9008 har en SPESUTB-postering som peker på en rad som ikke finnes i SPESIALUTBETALING.
+    private val sakMedManglendeSpesialutbetaling = SakId(9008)
     private val ukjentSak = SakId(99999)
 
     @Test
@@ -48,6 +51,8 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.kilde).isEqualTo(PosteringKilde.MELDEKORT)
         assertThat(første.kildeObjektId).isEqualTo(5001)
         assertThat(første.antall).isEqualTo(10.0)
+        assertThat(første.posteringId).isEqualTo(8001)
+        assertThat(første.posteringTypeKode).isEqualTo("ORD")
     }
 
     @Test
@@ -78,6 +83,41 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         val utenAlias = posteringer.first { it.belop == 1200 }
         assertThat(utenAlias.kildeAlias).isNull()
         assertThat(utenAlias.kildeObjektId).isNull()
+    }
+
+    @Test
+    fun `henter spesialutbetaling for postering med kilde SPESUTB`() {
+        val posteringer = repo.hentForSak(sakMedKildevarianter).posteringer
+
+        val spesialutbetaling = posteringer.first { it.kilde == PosteringKilde.SPESIALUTBETALING }.spesialutbetaling
+        assertThat(spesialutbetaling).isNotNull
+        spesialutbetaling!!
+        assertThat(spesialutbetaling.begrunnelse).isEqualTo("etterbetaling")
+        assertThat(spesialutbetaling.belop).isEqualTo(3459.50)
+        assertThat(spesialutbetaling.belopKode).isEqualTo("AAP")
+        assertThat(spesialutbetaling.datoUtbetaling).isEqualTo(LocalDate.of(2023, 2, 20))
+        assertThat(spesialutbetaling.periode.fraOgMedDato).isEqualTo(LocalDate.of(2023, 2, 13))
+        assertThat(spesialutbetaling.periode.tilOgMedDato).isEqualTo(LocalDate.of(2023, 2, 26))
+        assertThat(spesialutbetaling.vedtakStatusKode).isEqualTo("INNST")
+        assertThat(spesialutbetaling.posteringTypeKode).isEqualTo("INIT")
+        assertThat(spesialutbetaling.statusBilag).isTrue()
+        assertThat(spesialutbetaling.statusAnvistBilag).isFalse()
+        assertThat(spesialutbetaling.kategori).isEqualTo("ETTERBET")
+        assertThat(spesialutbetaling.valgtUtbetalingType).isEqualTo("REFKRAVTP")
+        assertThat(spesialutbetaling.saksbehandler).isEqualTo("TEST")
+        assertThat(spesialutbetaling.beslutter).isEqualTo("BESL")
+
+        // Andre kilder skal ikke få spesialutbetaling, selv om OBJEKT_ID_KILDE er satt.
+        assertThat(posteringer.filter { it.kilde != PosteringKilde.SPESIALUTBETALING }.map { it.spesialutbetaling })
+            .containsOnlyNulls()
+    }
+
+    @Test
+    fun `spesialutbetaling er null når raden mangler i SPESIALUTBETALING`() {
+        val postering = repo.hentForSak(sakMedManglendeSpesialutbetaling).posteringer.single()
+
+        assertThat(postering.kilde).isEqualTo(PosteringKilde.SPESIALUTBETALING)
+        assertThat(postering.spesialutbetaling).isNull()
     }
 
     @Test
@@ -184,6 +224,17 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(meldekort.dager.sumOf { it.timerArbeidet }).isEqualTo(15.0)
         assertThat(meldekort.reduksjon.fravar).isEqualTo(10.0f)
         assertThat(meldekort.periode.fraOgMedDato).isEqualTo(LocalDate.of(2023, 3, 27))
+    }
+
+    @Test
+    fun `anmerkninger fra vedtak paa en annen sak tas ikke med`() {
+        // Sak 9009: meldekort 7201 er beregnet mot vedtak 90090 og 90091. Anmerkning SENN er
+        // fra vedtak 90100 på sak 9010 og hører ikke til denne saken.
+        val meldekort = repo.hentForSak(SakId(9009)).meldekort.single { it.meldekortId == 7201L }
+
+        assertThat(meldekort.anmerkninger.map { it.kode to it.vedtakId })
+            .containsExactly("FSNN" to 90090, "FXNN" to 90091, "MAXAA" to null)
+        assertThat(meldekort.reduksjon.dagerForSent).isEqualTo(0)
     }
 
     @Test
