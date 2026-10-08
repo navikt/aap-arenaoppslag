@@ -113,12 +113,11 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService, tilgangService: Tilgangkon
         val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
 
         if (saksnummer == null) {
-            logger.info("saksnummer er på et ugyldig format")
+            logger.info("Saksnummer er på et ugyldig format")
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val tilgang = tilgangService.verifiserTilgangTilSak(saksnummer, call.token())
-        medTilgangKontrollert(tilgang) { godkjent ->
+        tilgangService.medVerifisertSakTilgang(this, saksnummer) { godkjent ->
             logger.info("Henter sak med vedtak")
             val sak = sakOgVedtakService.hentSakMedVedtak(godkjent.autorisertSaksnummer)
 
@@ -133,8 +132,7 @@ fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, tilgangService
         val request: VedtakForPersonRequest = call.receive()
         val personidentifikator = request.personidentifikator
 
-        val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
-        medTilgangKontrollert(tilgang) { godkjent ->
+        tilgangService.medVerifisertPersonTilgang(this, personidentifikator) { godkjent ->
             val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson(godkjent.autorisertPerson)
                 .map { it.tilKontrakt() }
 
@@ -147,10 +145,9 @@ fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, tilgangService
         val request: VedtakForPersonRequest = call.receive()
         val personidentifikator = request.personidentifikator
 
-        val tilgang = tilgangService.verifiserTilgangTilPerson(personidentifikator, call.token())
-        medTilgangKontrollert(tilgang) { godkjent ->
+        tilgangService.medVerifisertPersonTilgang(this, personidentifikator) { godkjent ->
             val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(godkjent.autorisertPerson)
-                    .map { it.tilKontrakt() }
+                .map { it.tilKontrakt() }
 
             call.respond(HttpStatusCode.OK, vedtak)
         }

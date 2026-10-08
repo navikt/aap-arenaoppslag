@@ -1,15 +1,11 @@
 package no.nav.aap.arenaoppslag.tilgangsmaskin
 
-import io.ktor.http.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 suspend fun RoutingContext.medTilgangKontrollert(
     tilgang: PersonTilgangResultat,
-    onAccessDenied: suspend RoutingContext.() -> Unit = { call.respond(HttpStatusCode.Forbidden) },
-    onNotFound: suspend RoutingContext.() -> Unit = {
-        call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
-    },
+    onAccessDenied: suspend RoutingContext.() -> Unit,
+    onNotFound: suspend RoutingContext.() -> Unit,
     onGranted: suspend RoutingContext.(PersonTilgangResultat.Granted) -> Unit,
 ) {
     when (tilgang) {
@@ -21,10 +17,8 @@ suspend fun RoutingContext.medTilgangKontrollert(
 
 suspend fun RoutingContext.medTilgangKontrollert(
     tilgang: SakTilgangResultat,
-    onAccessDenied: suspend RoutingContext.() -> Unit = { call.respond(HttpStatusCode.Forbidden) },
-    onNotFound: suspend RoutingContext.() -> Unit = {
-        call.respond(HttpStatusCode.NotFound, "Fant ikke saken i Arena")
-    },
+    onAccessDenied: suspend RoutingContext.() -> Unit,
+    onNotFound: suspend RoutingContext.() -> Unit,
     onGranted: suspend RoutingContext.(SakTilgangResultat.Granted) -> Unit,
 ) {
     when (tilgang) {

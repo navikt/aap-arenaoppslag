@@ -1,38 +1,14 @@
 package no.nav.aap.arenaoppslag.tilgangsmaskin
 
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import io.ktor.http.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.SakService
+import no.nav.aap.arenaoppslag.util.token
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import org.slf4j.LoggerFactory
-
-/**
- * Bevis på at kalleren er autorisert for tilgang til data om en bestemt person, og inneholder den oppslåtte
- * interne [PersonId]-en som brukes ved videre kall til tjenester og repositorier.
- * Private constructor slik at det ikke opprettes instanser uten at det er gjennomtenkt av utvikleren.
- */
-class AuthorisertPersonId private constructor(val personId: PersonId) {
-    companion object {
-        fun createInstance(personId: PersonId): AuthorisertPersonId {
-            return AuthorisertPersonId(personId)
-        }
-    }
-}
-
-/**
- * Bevis på at kalleren er autorisert for tilgang til en bestemt sak.
- * Private constructor slik at det ikke opprettes instanser uten at det er gjennomtenkt av utvikleren.
- */
-data class AutorisertSaksnummer private constructor(val saksnummer: String) {
-    companion object {
-        fun createInstance(saksnummer: String): AutorisertSaksnummer {
-            return AutorisertSaksnummer(saksnummer)
-        }
-    }
-
-    fun toSaksnummer() = Saksnummer.fromString(saksnummer)!!
-}
 
 class TilgangkontrollService(
     private val tilgangmaskinGateway: TilgangmaskinGateway,
@@ -42,7 +18,6 @@ class TilgangkontrollService(
     companion object {
         private val logger = LoggerFactory.getLogger("TilgangkontrollService")
     }
-
 
     /**
      * Tilgang først: Hvis tokenet ikke gir lesetilgang til denne identifikatoren, returneres
@@ -64,6 +39,19 @@ class TilgangkontrollService(
         return PersonTilgangResultat.Granted(AuthorisertPersonId.createInstance(personId))
     }
 
+    suspend fun medVerifisertPersonTilgang(
+        routingContext: RoutingContext,
+        personidentifikator: String,
+        onAccessDenied: suspend RoutingContext.() -> Unit = { call.respond(HttpStatusCode.Forbidden) },
+        onNotFound: suspend RoutingContext.() -> Unit = {
+            call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+        },
+        onGranted: suspend RoutingContext.(PersonTilgangResultat.Granted) -> Unit,
+    ) {
+        val tilgang = verifiserTilgangTilPerson(personidentifikator, routingContext.call.token())
+        routingContext.medTilgangKontrollert(tilgang, onAccessDenied, onNotFound, onGranted)
+    }
+
     /**
      * Finner personen bak [saksnummer] og kontrollerer deretter om tokenet gir tilgang til personen.
      * Returnerer et sealed result slik at kallere kan skille mellom `NotFound` og `AccessDenied`.
@@ -81,6 +69,19 @@ class TilgangkontrollService(
             return SakTilgangResultat.AccessDenied
         }
         return SakTilgangResultat.Granted(AutorisertSaksnummer.createInstance(saksnummer.toString()))
+    }
+
+    suspend fun medVerifisertSakTilgang(
+        routingContext: RoutingContext,
+        saksnummer: Saksnummer,
+        onAccessDenied: suspend RoutingContext.() -> Unit = { call.respond(HttpStatusCode.Forbidden) },
+        onNotFound: suspend RoutingContext.() -> Unit = {
+            call.respond(HttpStatusCode.NotFound, "Fant ikke saken i Arena")
+        },
+        onGranted: suspend RoutingContext.(SakTilgangResultat.Granted) -> Unit,
+    ) {
+        val tilgang = verifiserTilgangTilSak(saksnummer, routingContext.call.token())
+        routingContext.medTilgangKontrollert(tilgang, onAccessDenied, onNotFound, onGranted)
     }
 
 }
