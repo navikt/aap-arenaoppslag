@@ -32,12 +32,12 @@ class SakOgVedtakService(
         return getArenaSakMedVedtak(sak)
     }
 
-    fun hentVedtakForPerson(authorized: AuthorisertPersonId): List<ArenaVedtak> {
-        return vedtakRepository.hentVedtak(authorized.personId)
+    fun hentVedtakForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtak> {
+        return vedtakRepository.hentVedtak(autorisert.personId)
     }
 
-    fun hentVedtakDetaljerForPerson(authorized: AuthorisertPersonId): List<ArenaVedtakMedDetaljer> {
-        val saker = sakRepository.hentSakerDetaljerForPerson(authorized.personId)
+    fun hentVedtakDetaljerForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtakMedDetaljer> {
+        val saker = sakRepository.hentSakerDetaljerForPerson(autorisert.personId)
         return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
     }
 

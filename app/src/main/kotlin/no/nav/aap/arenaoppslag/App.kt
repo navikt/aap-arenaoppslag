@@ -66,7 +66,7 @@ import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
 import no.nav.aap.arenaoppslag.service.MigreringService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGateway
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinGateway
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl
 import org.slf4j.LoggerFactory
 
@@ -95,7 +95,7 @@ fun Application.server(
     config: AppConfig = AppConfig(),
     datasource: DataSource = ArenaDatasource.create(config.database),
     pdlGateway: IPdlGateway = PdlGateway(),
-    tilgangmaskinGateway: TilgangmaskinGateway = TilgangmaskinGatewayImpl(),
+    tilgangmaskinGateway: TilgangsmaskinGateway = TilgangmaskinGatewayImpl(),
 ) {
     statusPages()
 
@@ -267,7 +267,7 @@ private fun skapOppgaveService(datasource: DataSource): OppgaveService {
 private fun Application.routes(
     datasource: DataSource,
     pdlGateway: IPdlGateway,
-    tilgangmaskinGateway: TilgangmaskinGateway,
+    tilgangmaskinGateway: TilgangsmaskinGateway,
 ) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
