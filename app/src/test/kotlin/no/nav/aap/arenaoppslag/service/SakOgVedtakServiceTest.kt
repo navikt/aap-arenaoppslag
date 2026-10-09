@@ -12,6 +12,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorisertPersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -42,7 +43,8 @@ class SakOgVedtakServiceTest {
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(101, 102)) } returns emptyMap()
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(201)) } returns emptyMap()
 
-        val vedtak = service.hentVedtakDetaljerForPerson(personId)
+        val autorisertPersonId = AuthorisertPersonId.createInstance(personId)
+        val vedtak = service.hentVedtakDetaljerForPerson(autorisertPersonId)
 
         assertThat(vedtak).hasSize(3)
         assertThat(vedtak.map { it.vedtakId }).containsExactlyInAnyOrder(101, 102, 201)
@@ -53,7 +55,8 @@ class SakOgVedtakServiceTest {
         val personId = PersonId(99)
         every { sakRepository.hentSakerDetaljerForPerson(personId) } returns emptyList()
 
-        val vedtak = service.hentVedtakDetaljerForPerson(personId)
+        val autorisertPersonId = AuthorisertPersonId.createInstance(personId)
+        val vedtak = service.hentVedtakDetaljerForPerson(autorisertPersonId)
 
         assertThat(vedtak).isEmpty()
     }

@@ -65,6 +65,9 @@ import no.nav.aap.komponenter.server.authentication
 import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
 import no.nav.aap.arenaoppslag.service.MigreringService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinGateway
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl
 import org.slf4j.LoggerFactory
 
 val logger = LoggerFactory.getLogger("App")
@@ -92,6 +95,7 @@ fun Application.server(
     config: AppConfig = AppConfig(),
     datasource: DataSource = ArenaDatasource.create(config.database),
     pdlGateway: IPdlGateway = PdlGateway(),
+    tilgangmaskinGateway: TilgangsmaskinGateway = TilgangmaskinGatewayImpl(),
 ) {
     statusPages()
 
@@ -119,7 +123,7 @@ fun Application.server(
 
     authentication(listOf(IdentityProvider.ENTRA_ID))
 
-    routes(datasource, pdlGateway)
+    routes(datasource, pdlGateway, tilgangmaskinGateway)
 
     warmup(datasource)
 
@@ -150,6 +154,7 @@ fun Application.server(
         } catch (_: Exception) {
             // Ignorert
         }
+        tilgangmaskinGateway.close()
     }
 }
 
@@ -261,7 +266,11 @@ private fun skapOppgaveService(datasource: DataSource): OppgaveService {
     return OppgaveService(oppgaveRepository)
 }
 
-private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
+private fun Application.routes(
+    datasource: DataSource,
+    pdlGateway: IPdlGateway,
+    tilgangmaskinGateway: TilgangsmaskinGateway,
+) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
     val telleverkService = skapTelleverkService(datasource)
@@ -274,6 +283,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val oppgaveService = skapOppgaveService(datasource)
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
+    val tilgangService = TilgangkontrollService(tilgangmaskinGateway, sakListeService, personService)
 
     routing {
         actuator(prometheus)
@@ -295,8 +305,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 maksdato(sakListeService, personService)
                 samordning(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
-                vedtakForPerson(sakOgVedtakService, personService)
-                sak(sakOgVedtakService)
+                vedtakForPerson(sakOgVedtakService, tilgangService)
+                sak(sakOgVedtakService, tilgangService)
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner

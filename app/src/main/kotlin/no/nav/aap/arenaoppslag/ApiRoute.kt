@@ -25,6 +25,7 @@ import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
@@ -105,53 +106,49 @@ fun Route.samordning(sakService: SakService, personService: PersonService) {
     }
 }
 
-fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
+fun Route.sak(sakOgVedtakService: SakOgVedtakService, tilgangService: TilgangkontrollService) {
     get("/sak/{saksnummer}") {
         val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
 
         if (saksnummer == null) {
-            logger.info("saksnummer er på et ugyldig format")
+            logger.info("Saksnummer er på et ugyldig format")
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val sak = sakOgVedtakService.hentSakMedVedtak(saksnummer)
+        tilgangService.medVerifisertSakTilgang(this, saksnummer) { godkjent ->
+            logger.info("Henter sak med vedtak")
+            val sak = sakOgVedtakService.hentSakMedVedtak(godkjent.autorisertSaksnummer)
 
-        if (sak == null) {
-            logger.info("Klarte ikke hente sak for saksnummer $saksnummer")
-            return@get call.respond(HttpStatusCode.NotFound)
+            call.respond(status = HttpStatusCode.OK, message = sak.tilKontrakt())
         }
-
-        logger.info("Henter sak med vedtak")
-        call.respond(status = HttpStatusCode.OK, message = sak.tilKontrakt())
     }
 }
 
-
-fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
+fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, tilgangService: TilgangkontrollService) {
     post("/person/vedtak") {
         logger.info("Henter alle vedtak for person")
         val request: VedtakForPersonRequest = call.receive()
+        val personidentifikator = request.personidentifikator
 
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+        tilgangService.medVerifisertPersonTilgang(this, personidentifikator) { godkjent ->
+            val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson(godkjent.autorisertPerson)
+                .map { it.tilKontrakt() }
 
-        val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson(personId)
-            .map { it.tilKontrakt() }
-
-        call.respond(HttpStatusCode.OK, vedtak)
+            call.respond(HttpStatusCode.OK, vedtak)
+        }
     }
 
     post("/person/vedtak/detaljert") {
         logger.info("Henter alle vedtak med detalj for person")
         val request: VedtakForPersonRequest = call.receive()
+        val personidentifikator = request.personidentifikator
 
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+        tilgangService.medVerifisertPersonTilgang(this, personidentifikator) { godkjent ->
+            val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(godkjent.autorisertPerson)
+                .map { it.tilKontrakt() }
 
-        val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(personId)
-            .map { it.tilKontrakt() }
-
-        call.respond(HttpStatusCode.OK, vedtak)
+            call.respond(HttpStatusCode.OK, vedtak)
+        }
     }
 }
 
