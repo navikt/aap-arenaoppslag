@@ -153,6 +153,8 @@ data class ArenaVedtakfakta(
         registrertDato = registrertDato,
     )
 
+    fun somIkkeTomVerdi() = verdi?.takeIf { it.isNotBlank() }
+
     fun somDatoVerdi() = verdi?.let { parseDato(it) }
 
     fun somBooleanVerdi() = when (verdi) {

@@ -49,9 +49,15 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentGjeldende115VedtakForSak(saksId: SakId, idag: LocalDate): ArenaVedtakRad? {
+    fun hentGjeldende115VedtakForSakPåDato(saksId: SakId, dato: LocalDate): ArenaVedtakRad? {
         return dataSource.connection.use { con ->
-            selectGjeldende115VedtakForSak(saksId, idag, con)
+            selectGjeldende115VedtakPåDato(saksId, dato, con)
+        }
+    }
+
+    fun hentGjeldendeAapVedtakForSakPåDato(saksId: SakId, dato: LocalDate): ArenaVedtakRad? {
+        return dataSource.connection.use { con ->
+            selectGjeldendeAapVedtakPåDato(saksId, dato, con)
         }
     }
 
@@ -180,9 +186,8 @@ class VedtakRepository(private val dataSource: DataSource) {
             }
         }
 
-        // Kun iverksatte, innvilgede 11-5-vedtak som dekker dagens dato. Ved overlapp vinner det nyeste.
         @Language("OracleSql")
-        private val selectGjeldende115VedtakForSak = """
+        private val selectGjeldende115VedtakPåDato = """
         SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
                v.fra_dato, v.til_dato, v.rettighetkode, rt.rettighetnavn, v.utfallkode, v.begrunnelse,
                v.brukerid_ansvarlig, v.brukerid_beslutter, v.vedtak_id_relatert,
@@ -203,16 +208,54 @@ class VedtakRepository(private val dataSource: DataSource) {
          FETCH FIRST 1 ROW ONLY
         """.trimIndent()
 
-        private fun selectGjeldende115VedtakForSak(
+        private fun selectGjeldende115VedtakPåDato(
             sakId: SakId,
-            idag: LocalDate,
+            dato: LocalDate,
             connection: Connection,
         ): ArenaVedtakRad? {
-            connection.createParameterizedQuery(selectGjeldende115VedtakForSak).use { preparedStatement ->
-                val dato = Date.valueOf(idag)
+            connection.createParameterizedQuery(selectGjeldende115VedtakPåDato).use { preparedStatement ->
+                val datoAsDate = Date.valueOf(dato)
                 preparedStatement.setInt(1, sakId.id)
-                preparedStatement.setDate(2, dato)
-                preparedStatement.setDate(3, dato)
+                preparedStatement.setDate(2, datoAsDate)
+                preparedStatement.setDate(3, datoAsDate)
+                val resultSet = preparedStatement.executeQuery()
+                return if (resultSet.next()) mapperForArenaVedtakRad(resultSet) else null
+            }
+        }
+
+        @Language("OracleSql")
+        private val selectGjeldendeAapVedtakPåDato = """
+        SELECT v.vedtak_id, v.lopenrvedtak, v.vedtakstatuskode, vs.vedtakstatusnavn, v.vedtaktypekode, vt.vedtaktypenavn,
+               v.fra_dato, v.til_dato, v.rettighetkode, rt.rettighetnavn, v.utfallkode, v.begrunnelse,
+               v.brukerid_ansvarlig, v.brukerid_beslutter, v.vedtak_id_relatert,
+               a.aktfasekode, a.aktfasenavn
+          FROM vedtak v
+          LEFT JOIN vedtaktype vt ON vt.vedtaktypekode = v.vedtaktypekode
+          LEFT JOIN vedtakstatus vs ON v.vedtakstatuskode = vs.vedtakstatuskode
+          LEFT JOIN aktivitetfase a ON a.aktfasekode = v.aktfasekode
+          LEFT JOIN rettighettype rt ON rt.rettighetkode = v.rettighetkode
+         WHERE v.sak_id = ?
+           AND v.rettighetkode = 'AAP'
+           AND v.vedtaktypekode IN ('O', 'E', 'G')
+           AND v.utfallkode = 'JA'
+           AND v.vedtakstatuskode = 'IVERK'
+           AND v.aktfasekode IN ('UA', 'AU')
+           AND v.fra_dato <= ?
+           AND (v.til_dato IS NULL OR v.til_dato >= ?)
+         ORDER BY v.fra_dato DESC, v.vedtak_id DESC
+         FETCH FIRST 1 ROW ONLY
+        """.trimIndent()
+
+        private fun selectGjeldendeAapVedtakPåDato(
+            sakId: SakId,
+            dato: LocalDate,
+            connection: Connection,
+        ): ArenaVedtakRad? {
+            connection.createParameterizedQuery(selectGjeldendeAapVedtakPåDato).use { preparedStatement ->
+                val datoAsDate = Date.valueOf(dato)
+                preparedStatement.setInt(1, sakId.id)
+                preparedStatement.setDate(2, datoAsDate)
+                preparedStatement.setDate(3, datoAsDate)
                 val resultSet = preparedStatement.executeQuery()
                 return if (resultSet.next()) mapperForArenaVedtakRad(resultSet) else null
             }
