@@ -186,7 +186,7 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         req: MeldekortStartukeRequest
     ): MeldekortStartukeResponse =
         gjørArenaOppslag<MeldekortStartukeResponse, MeldekortStartukeRequest>(
-            "/api/intern/person/meldekort/startuke", req
+            "/api/intern/samordning/meldekort/startuke", req
         ).getOrThrow()
 
     suspend fun hentRefusjonskrav(saksnummer: String): ArenaRefusjonskravResponse =
