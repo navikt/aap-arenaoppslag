@@ -4,6 +4,9 @@ import java.time.LocalDate
 
 // Domeneobjekt: én posteringslinje for en sak — tilsvarer én rad i tilkjent-ytelse-tabellen.
 data class MeldekortPostering(
+    // POSTERING_ID + POSTERINGTYPEKODE er primærnøkkelen i POSTERING. ID-en alene er ikke garantert unik.
+    val posteringId: Long? = null,
+    val posteringTypeKode: String? = null,
     val vedtakId: Int,
     val personId: Int,
     // null betyr utbetaling uten tilknyttet meldekort (f.eks. spesialutbetaling)
@@ -26,6 +29,27 @@ data class MeldekortPostering(
     val kildeAlias: String? = null,
     // POSTERING.OBJEKT_ID_KILDE — peker på forekomsten i kildetabellen. Brukes internt, eksponeres ikke.
     val kildeObjektId: Long? = null,
+    // Kun satt når kilden er SPESUTB og raden finnes i SPESIALUTBETALING
+    val spesialutbetaling: Spesialutbetaling? = null,
+)
+
+// Domeneobjekt: én rad fra SPESIALUTBETALING. Alle kolonner kan mangle i Arena, så alt er nullable.
+data class Spesialutbetaling(
+    val begrunnelse: String?,
+    // DECIMAL(12,2) i Arena — kan inneholde øre, i motsetning til POSTERING.BELOP
+    val belop: Double?,
+    val belopKode: String?,
+    val datoUtbetaling: LocalDate?,
+    val periode: Periode,
+    val vedtakStatusKode: String?,
+    val posteringTypeKode: String?,
+    val statusBilag: Boolean?,
+    val statusAnvistBilag: Boolean?,
+    val kategori: String?,
+    // Ventebetingelse når utbetalingen er satt på vent (f.eks. REFKRAVSOS, REFKRAVTP, AVREGNAYT)
+    val valgtUtbetalingType: String?,
+    val saksbehandler: String?,
+    val beslutter: String?,
 )
 
 data class MeldekortReduksjon(
@@ -43,7 +67,28 @@ data class MeldekortAnmerkning(
     // Substitusjonsparameter 1 og 2 som flettes inn i beskrivelsen (&1 og &2)
     val verdi: Int?,
     val verdi2: Int?,
+    // Vedtaket meldekortet ble beregnet mot da anmerkningen ble laget. null betyr at anmerkningen
+    // gjelder selve meldekortet og ikke en bestemt beregning.
+    val vedtakId: Int? = null,
 )
+
+// Reduksjonstallene er summen av verdiene på de tre anmerkningkodene som påvirker utbetalingen:
+// for sent levert meldekort, annet fravær og sykdom.
+fun reduksjonFra(anmerkninger: List<MeldekortAnmerkning>) = MeldekortReduksjon(
+    dagerForSent = summerVerdi(anmerkninger, "SENN"),
+    fravar = summerVerdi(anmerkninger, "FXNN").toFloat(),
+    sykedager = summerVerdi(anmerkninger, "FSNN").toFloat(),
+)
+
+private fun summerVerdi(anmerkninger: List<MeldekortAnmerkning>, kode: String): Int =
+    anmerkninger.filter { it.kode == kode }.sumOf { it.verdi ?: 0 }
+
+// Et meldekort kan beregnes mot flere vedtak, og hver beregning legger igjen egne anmerkninger.
+// Reduksjonen regnes på nytt slik at den bare bygger på anmerkningene som er beholdt.
+fun Meldekort.medAnmerkninger(behold: (MeldekortAnmerkning) -> Boolean): Meldekort {
+    val beholdte = anmerkninger.filter(behold)
+    return copy(anmerkninger = beholdte, reduksjon = reduksjonFra(beholdte))
+}
 
 // Domeneobjekt: ett meldekort med tilhørende dager og anmerkninger.
 data class Meldekort(

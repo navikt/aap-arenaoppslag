@@ -69,6 +69,33 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
     }
 
     @Test
+    fun `spesialutbetaling-rader har spesialutbetalingsdetaljer`() {
+        withTestServer(h2) { gateway ->
+            val rader = gateway.hentTilkjentYtelse("2023-9004").rader
+
+            val spesialutbetaling = rader.first { it.kilde == PosteringKilde.SPESIALUTBETALING }.spesialutbetaling
+            assertThat(spesialutbetaling?.begrunnelse).isEqualTo("etterbetaling")
+            assertThat(spesialutbetaling?.belop).isEqualTo(3459.50)
+            assertThat(spesialutbetaling?.kategori).isEqualTo("ETTERBET")
+            assertThat(spesialutbetaling?.datoUtbetaling).isEqualTo(LocalDate.of(2023, 2, 20))
+            assertThat(spesialutbetaling?.statusBilag).isTrue()
+            assertThat(rader.filter { it.kilde != PosteringKilde.SPESIALUTBETALING }.map { it.spesialutbetaling })
+                .containsOnlyNulls()
+        }
+    }
+
+    @Test
+    fun `spesialutbetaling-rad uten rad i SPESIALUTBETALING vises uten detaljer`() {
+        withTestServer(h2) { gateway ->
+            val rad = gateway.hentTilkjentYtelse("2023-9008").rader.single()
+
+            assertThat(rad.kilde).isEqualTo(PosteringKilde.SPESIALUTBETALING)
+            assertThat(rad.beregnetBrutto).isEqualTo(1800)
+            assertThat(rad.spesialutbetaling).isNull()
+        }
+    }
+
+    @Test
     fun `meldekort uten postering kommer med i responsen`() {
         withTestServer(h2) { gateway ->
             val rader = gateway.hentTilkjentYtelse("2023-9006").rader

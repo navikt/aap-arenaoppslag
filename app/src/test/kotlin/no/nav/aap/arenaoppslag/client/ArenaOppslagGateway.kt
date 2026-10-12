@@ -19,6 +19,8 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
@@ -28,6 +30,8 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaSykdomsvurderingResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
@@ -74,6 +78,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): MaksdatoMedVedtakResponse =
         gjørArenaOppslag<MaksdatoMedVedtakResponse, MaksdatoRequest>(
             "/api/v1/person/maksdato", req
+        ).getOrThrow()
+
+    suspend fun hentMaksdatoSamordningByPerson(
+        req: MaksdatoSamordningRequest
+    ): MaksdatoSamordningResponse =
+        gjørArenaOppslag<MaksdatoSamordningResponse, MaksdatoSamordningRequest>(
+            "/api/v1/samordning/person/maksdato", req
         ).getOrThrow()
 
     suspend fun hentSisteUtbetalingISaker(
@@ -178,6 +189,14 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
         gjørArenaOppslag<MeldekortStartukeResponse, MeldekortStartukeRequest>(
             "/api/intern/person/meldekort/startuke", req
         ).getOrThrow()
+
+    suspend fun hentRefusjonskrav(saksnummer: String): ArenaRefusjonskravResponse =
+        gjørArenaOppslagGet<ArenaRefusjonskravResponse>(
+            "/api/migrering/$saksnummer/refusjonskrav"
+        ).getOrThrow()
+
+    suspend fun hentRefusjonskravStatus(saksnummer: String): HttpStatusCode =
+        hentStatus("/api/migrering/$saksnummer/refusjonskrav")
 
     private suspend fun hentStatus(endepunkt: String): HttpStatusCode {
         val token = tokenProvider.generate()

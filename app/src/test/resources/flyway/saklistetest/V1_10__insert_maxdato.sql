@@ -28,8 +28,8 @@ values
     (1100, 1102, 'IVERK', 'O', 'JA', 'AAP', 100, DATE '2009-01-01', DATE '2025-05-30',
      '4402', 1102, 2022, 0, 'IKKE', DATE '2009-01-01'),
     -- stanset vedtak
-    (1109, 1102, 'IVERK', 'S', 'JA', 'AAP', 100, DATE '2024-01-01', DATE '2024-12-31',
-     '4402', 1102, 2022, 9, 'IKKE', DATE '2024-01-01');
+    (1109, 1102, 'IVERK', 'S', 'JA', 'AAP', 100, DATE '2024-01-01', NULL,
+     '4402', 1102, 2022, 9, 'UA', DATE '2024-01-01');
 
 -- Sak 1103 — ett relevant vedtak (1103) + ett ikke-AAP-vedtak som skal filtreres bort
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,

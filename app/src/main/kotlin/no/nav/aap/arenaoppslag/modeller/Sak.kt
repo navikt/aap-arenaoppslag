@@ -49,6 +49,7 @@ data class Maksdatolinje(
     val vedtakId: Int,
     val aktfaseKode: String,
     val vedtaktypeKode: String,
+    val vedtakstatuskode: String,
     val til: LocalDate?,
     val fra: LocalDate?,
     val maxdatoUnntak: LocalDate?,
@@ -67,6 +68,7 @@ data class Maksdatolinje(
                 vedtakId,
                 aktfaseKode,
                 vedtaktypeKode,
+                vedtakstatuskode,
                 fra,
                 til,
                 maxdatoOrdinaer,
@@ -74,7 +76,6 @@ data class Maksdatolinje(
                 maxdatoUnntak ?: maxdatoOrdinaer,
             )
         )
-
 }
 
 data class ArenaSakMedVedtak(

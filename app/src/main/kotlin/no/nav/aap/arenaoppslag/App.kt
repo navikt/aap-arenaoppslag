@@ -224,12 +224,14 @@ private fun skapMigreringService(datasource: DataSource, telleverkService: Telle
     val meldekortperiodeRepository = MeldekortperiodeRepository(datasource)
     val vilkårsvurderingRepository = VilkårsvurderingRepository(datasource)
     val medisinskOpplysningRepository = MedisinskOpplysningRepository(datasource)
+    val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
     return MigreringService(
         vedtakRepository,
         meldekortperiodeRepository,
         telleverkService,
         vilkårsvurderingRepository,
         medisinskOpplysningRepository,
+        vedtakfaktaRepository
     )
 }
 
@@ -298,6 +300,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 telleverk(telleverkService, personService)
                 sakerForPerson(sakListeService, personService)
                 maksdato(sakListeService, personService)
+                samordning(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
                 sak(sakOgVedtakService)

@@ -15,7 +15,7 @@ class ManuellFordelingsgrunnlagService(
         personId: PersonId,
         iDag: LocalDate = LocalDate.now(),
     ): ManuellFordelingsgrunnlagResponse? {
-        val sak = sakService.hentMaksdatoAapMedVedtakOgSak(personId) ?: return null
+        val sak = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId) ?: return null
 
         val sisteUtbetaling = posteringService.hentSisteAapUtbetalingForPerson(personId)
         val telleverk = telleverkService.hentTelleverkForPerson(personId)

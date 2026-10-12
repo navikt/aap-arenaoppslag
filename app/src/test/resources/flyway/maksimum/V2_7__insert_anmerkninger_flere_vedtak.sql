@@ -1,0 +1,46 @@
+-- Meldekort som er beregnet mot to vedtak på samme sak (vedtaksskifte midt i perioden), og som i
+-- tillegg har en anmerkning fra et vedtak på en annen sak. Uke 48 er postert mot vedtak 90090
+-- og uke 49 mot vedtak 90091.
+
+insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
+values (109, '99999999999', 'Flere', 'Vedtak');
+
+Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR,
+                 LOPENRSAK, DATO_AVSLUTTET, SAKSTATUSKODE, AETATENHET_ANSVARLIG, PARTISJON, ER_UTLAND)
+values (9009, 'AA', DATE '2025-11-01', 'TEST', DATE '2025-11-01', 'TEST', 'PERS', 109, 2025, 9009, null, 'AKTIV',
+        '4402', null, 'N'),
+       (9010, 'AA', DATE '2025-01-01', 'TEST', DATE '2025-01-01', 'TEST', 'PERS', 109, 2025, 9010, null, 'INAKT',
+        '4402', null, 'N');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE,
+                    PERSON_ID, FRA_DATO, TIL_DATO, AETATENHET_BEHANDLER, LOPENRSAK, AAR, LOPENRVEDTAK,
+                    AKTFASEKODE, DATO_MOTTATT)
+values (90090, 9009, 'IVERK', 'O', 'JA', 'AAP', 109,
+        DATE '2025-11-01', DATE '2025-11-30', '4402', 9009, 2025, 1, 'IKKE', DATE '2025-11-01'),
+       (90091, 9009, 'IVERK', 'E', 'JA', 'AAP', 109,
+        DATE '2025-12-01', DATE '2025-12-31', '4402', 9009, 2025, 2, 'IKKE', DATE '2025-12-01'),
+       (90100, 9010, 'IVERK', 'O', 'JA', 'AAP', 109,
+        DATE '2025-01-01', DATE '2025-03-31', '4402', 9010, 2025, 1, 'IKKE', DATE '2025-01-01');
+
+insert into MELDEKORTPERIODE (AAR, PERIODEKODE, UKENR_UKE1, UKENR_UKE2, DATO_FRA, DATO_TIL)
+values (2025, '24', 48, 49, DATE '2025-11-24', DATE '2025-12-07');
+
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
+values (7201, 109, 2025, '24', 'E1', 'FERDI', 'AT');
+
+-- 7301: beregning mot vedtak 90090 (uke 48). 7302: beregning mot vedtak 90091 (uke 49).
+-- 7303: fra vedtak på sak 9010, skal ikke vises på sak 9009. 7304: uten vedtak, gjelder meldekortet.
+insert into ANMERKNING (ANMERKNING_ID, ANMERKNINGKODE, TABELLNAVNALIAS, OBJEKT_ID, VEDTAK_ID, VERDI)
+values (7301, 'FSNN', 'MKORT', 7201, 90090, 2),
+       (7302, 'FXNN', 'MKORT', 7201, 90091, 3),
+       (7303, 'SENN', 'MKORT', 7201, 90100, 1),
+       (7304, 'MAXAA', 'MKORT', 7201, null, null);
+
+insert into POSTERING (POSTERING_ID, BELOP, BELOPKODE, DATO_PERIODE_FRA, DATO_PERIODE_TIL, DATO_POSTERT, AAR,
+                       PERSON_ID, POSTERINGTYPEKODE, TRANSAKSJONSKODE, DATO_GRUNNLAG, VEDTAK_ID, ARTKODE,
+                       KAPITTEL, POST, UNDERPOST, BRUKER_ID_SAKSBEHANDLER, AETATENHET_ANSVARLIG, MELDEKORT_ID,
+                       TABELLNAVNALIAS_KILDE, OBJEKT_ID_KILDE)
+values (8901, 1461, 'AAP', DATE '2025-11-24', DATE '2025-11-30', DATE '2025-12-10', 2025, 109,
+        'ORD', 'AA00', DATE '2025-11-24', 90090, 'ART', '2900', '01', '001', 'TEST', '4402', 7201, 'MKORT', 7201),
+       (8902, 731, 'AAP', DATE '2025-12-01', DATE '2025-12-07', DATE '2025-12-10', 2025, 109,
+        'ORD', 'AA00', DATE '2025-12-01', 90091, 'ART', '2900', '01', '001', 'TEST', '4402', 7201, 'MKORT', 7201);

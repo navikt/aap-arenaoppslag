@@ -12,7 +12,7 @@ class Gjeldende115VedtakRepositoryTest : H2TestBase("flyway/migrering") {
 
     @Test
     fun `velger siste iverksatte og innvilgede 11-5-vedtak som dekker dagens dato`() {
-        val vedtak = repo.hentGjeldende115VedtakForSak(SakId(9104), idag)
+        val vedtak = repo.hentGjeldende115VedtakForSakPåDato(SakId(9104), idag)
 
         assertThat(vedtak).isNotNull
         assertThat(vedtak!!.vedtakId).isEqualTo(91045)
@@ -23,25 +23,25 @@ class Gjeldende115VedtakRepositoryTest : H2TestBase("flyway/migrering") {
     @Test
     fun `velger ikke stansvedtak selv om det er nyere`() {
         // 91048 er et iverksatt stansvedtak med fra_dato etter 91045 og uten til_dato
-        val vedtak = repo.hentGjeldende115VedtakForSak(SakId(9104), idag)
+        val vedtak = repo.hentGjeldende115VedtakForSakPåDato(SakId(9104), idag)
 
         assertThat(vedtak?.vedtakId).isEqualTo(91045)
     }
 
     @Test
     fun `velger fremtidig vedtak når det har blitt gjeldende`() {
-        val vedtak = repo.hentGjeldende115VedtakForSak(SakId(9104), idag.plusDays(40))
+        val vedtak = repo.hentGjeldende115VedtakForSakPåDato(SakId(9104), idag.plusDays(40))
 
         assertThat(vedtak?.vedtakId).isEqualTo(91046)
     }
 
     @Test
     fun `returnerer null når saken ikke har noe 11-5-vedtak`() {
-        assertThat(repo.hentGjeldende115VedtakForSak(SakId(9101), idag)).isNull()
+        assertThat(repo.hentGjeldende115VedtakForSakPåDato(SakId(9101), idag)).isNull()
     }
 
     @Test
     fun `returnerer null når ingen 11-5-vedtak dekker datoen`() {
-        assertThat(repo.hentGjeldende115VedtakForSak(SakId(9104), idag.minusDays(1000))).isNull()
+        assertThat(repo.hentGjeldende115VedtakForSakPåDato(SakId(9104), idag.minusDays(1000))).isNull()
     }
 }

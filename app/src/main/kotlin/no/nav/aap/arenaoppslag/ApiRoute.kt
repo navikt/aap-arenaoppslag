@@ -10,7 +10,8 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
@@ -73,22 +74,6 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
 }
 
 fun Route.maksdato(sakService: SakService, personService: PersonService) {
-    // TODO deprekert - fjern når kallere er oppdatert
-    post("/maksdato") {
-        logger.info("Henter maksdato-AAP for saksliste")
-        val request: MaksdatoRequest = call.receive()
-        val personidentifikator = request.personidentifikator
-        val personId = personService.hentPersonId(personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
-
-        val saker = sakService.hentMaksdatoAapMedVedtakOgSak(personId)?.let {
-            listOf(it)
-        } ?: emptyList()
-
-        // dersom personen finnes i Arena men ikke har AAP-vedtak utenfor Stans blir listen tom
-        call.respond(HttpStatusCode.OK, MaksdatoResponse(saker))
-    }
-
     post("/person/maksdato") {
         logger.info("Henter maksdato-AAP for person")
         val request: MaksdatoRequest = call.receive()
@@ -96,13 +81,29 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         val personId = personService.hentPersonId(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
-        val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSak(personId)
+        val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
 
         // dersom personen finnes i Arena men ikke har aktuelle AAP-vedtak blir ingen sak returnert
         call.respond(HttpStatusCode.OK, MaksdatoMedVedtakResponse(sakMedSisteVedtakOgMaksdato))
     }
+
 }
 
+fun Route.samordning(sakService: SakService, personService: PersonService) {
+    post("/samordning/person/maksdato") {
+        logger.info("Henter maksdato-AAP for samordning på person")
+        val request: MaksdatoSamordningRequest = call.receive()
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator)
+
+        val response = personId?.let {
+            val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
+            MaksdatoSamordningResponse.from(sakMedSisteVedtakOgMaksdato)
+        } ?: MaksdatoSamordningResponse.INGEN // personen finnes ikke i Arena
+
+        call.respond(HttpStatusCode.OK, response)
+    }
+}
 
 fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     get("/sak/{saksnummer}") {
@@ -112,7 +113,6 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
             logger.info("saksnummer er på et ugyldig format")
             return@get call.respond(HttpStatusCode.BadRequest)
         }
-
 
         val sak = sakOgVedtakService.hentSakMedVedtak(saksnummer)
 
