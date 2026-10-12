@@ -1,7 +1,5 @@
 package no.nav.aap.arenaoppslag
 
-import io.ktor.client.plugins.*
-import io.ktor.http.*
 import no.nav.aap.arenaoppslag.client.ArenaOppslagGateway.Companion.withTestServer
 import no.nav.aap.arenaoppslag.database.H2TestBase
 import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeRequest
@@ -30,14 +28,11 @@ class MeldekortStartukeApiTest : H2TestBase("flyway/meldekort") {
     }
 
     @Test
-    fun `gir 404 for ukjent person`() {
+    fun `gir tomme felter for person som ikke finnes i Arena`() {
         withTestServer(h2) { gateway ->
-            val result = runCatching {
-                gateway.hentMeldekortStartuke(MeldekortStartukeRequest("007"))
-            }
-            val error = result.exceptionOrNull() as? ClientRequestException
-            assertThat(error).isNotNull
-            assertThat(error!!.response.status).isEqualTo(HttpStatusCode.NotFound)
+            val response = gateway.hentMeldekortStartuke(MeldekortStartukeRequest("007"))
+
+            assertThat(response).isEqualTo(MeldekortStartukeResponse.ingen)
         }
     }
 }

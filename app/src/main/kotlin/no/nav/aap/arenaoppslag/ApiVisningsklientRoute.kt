@@ -127,12 +127,12 @@ fun Route.oppgaverForSak(sakService: SakService, oppgaveService: OppgaveService)
 }
 
 fun Route.meldekortStartuke(meldekortService: MeldekortService, personService: PersonService) {
-    post("/person/meldekort/startuke") {
+    post("/samordning/meldekort/startuke") {
         logger.info("Henter startuke for siste meldekort for person")
         val request: MeldekortStartukeRequest = call.receive()
 
         val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
+            ?: return@post call.respond(HttpStatusCode.OK, MeldekortStartukeResponse.ingen)
 
         val response = meldekortService.hentStartukeForSisteMeldekort(personId)?.tilResponse()
             ?: MeldekortStartukeResponse.ingen
