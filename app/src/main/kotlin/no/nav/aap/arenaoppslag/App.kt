@@ -304,6 +304,10 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
                 sak(sakOgVedtakService)
+                meldekortStartuke(
+                    meldekortService = meldekortService,
+                    personService = personService,
+                )
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
@@ -329,10 +333,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     posteringService = utbetalingService,
                     telleverkService = telleverkService,
                 )
-                meldekortStartuke(
-                    meldekortService = meldekortService,
-                    personService = personService,
-                )
+
             }
             route("/api/migrering") {
                 migrering(
