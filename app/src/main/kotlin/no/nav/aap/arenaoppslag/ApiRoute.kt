@@ -3,6 +3,7 @@ package no.nav.aap.arenaoppslag
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
+import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
@@ -19,8 +20,11 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeRequest
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.HistorikkService
+import no.nav.aap.arenaoppslag.service.MeldekortService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -87,6 +91,21 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
         call.respond(HttpStatusCode.OK, MaksdatoMedVedtakResponse(sakMedSisteVedtakOgMaksdato))
     }
 
+}
+
+fun Route.meldekortStartuke(meldekortService: MeldekortService, personService: PersonService) {
+    post("/samordning/meldekort/startuke") {
+        logger.info("Henter startuke for siste meldekort for person")
+        val request: MeldekortStartukeRequest = call.receive()
+
+        val personId = personService.hentPersonId(request.personidentifikator)
+            ?: return@post call.respond(HttpStatusCode.OK, MeldekortStartukeResponse.ingen)
+
+        val response = meldekortService.hentStartukeForSisteMeldekort(personId)?.tilResponse()
+            ?: MeldekortStartukeResponse.ingen
+
+        call.respond(status = HttpStatusCode.OK, message = response)
+    }
 }
 
 fun Route.samordning(sakService: SakService, personService: PersonService) {

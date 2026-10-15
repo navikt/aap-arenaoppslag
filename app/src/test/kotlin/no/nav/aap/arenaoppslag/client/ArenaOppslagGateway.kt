@@ -39,6 +39,8 @@ import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeRequest
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
 import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.server
@@ -179,6 +181,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     suspend fun hentSykdomsvurderingStatus(saksnummer: String): HttpStatusCode =
         hentStatus("/api/migrering/$saksnummer/sykdom")
+
+    suspend fun hentMeldekortStartuke(
+        req: MeldekortStartukeRequest
+    ): MeldekortStartukeResponse =
+        gjørArenaOppslag<MeldekortStartukeResponse, MeldekortStartukeRequest>(
+            "/api/v1/samordning/meldekort/startuke", req
+        ).getOrThrow()
 
     suspend fun hentRefusjonskrav(saksnummer: String): ArenaRefusjonskravResponse =
         gjørArenaOppslagGet<ArenaRefusjonskravResponse>(

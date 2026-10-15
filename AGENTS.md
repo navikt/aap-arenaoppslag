@@ -195,16 +195,17 @@ class MinRepoTest : H2TestBase("flyway/minimumtest") { ... }
 
 Available Flyway migration sets (all automatically include `flyway/common`):
 
-| Location | Contents |
-|---|---|
-| `flyway/common` | Schema DDL, constants, base data (always included) |
-| `flyway/minimumtest` | Standard test data with one known person (`12312312312`) and vedtak |
-| `flyway/eksisterer` | Historikk-focused test data |
-| `flyway/telleverk` | Telleverk (`BEREGNINGSLEDD`) test data |
-| `flyway/dsop` | DSOP-specific schema |
-| `flyway/saklistetest` | Sak-list test data (multiple saker for person lookups) |
-| `flyway/maksimum` | Maksimum/utbetaling test data |
-| `flyway/oppgave` | Oppgave test data (`V_OPPGAVE`) |
+| Location | Contents                                                                     |
+|---|------------------------------------------------------------------------------|
+| `flyway/common` | Schema DDL, constants, base data (always included)                           |
+| `flyway/minimumtest` | Standard test data with one known person (`12312312312`) and vedtak          |
+| `flyway/eksisterer` | Historikk-focused test data                                                  |
+| `flyway/telleverk` | Telleverk (`BEREGNINGSLEDD`) test data                                       |
+| `flyway/dsop` | DSOP-specific schema                                                         |
+| `flyway/saklistetest` | Sak-list test data (multiple saker for person lookups)                       |
+| `flyway/maksimum` | Maksimum/utbetaling test data                                                |
+| `flyway/oppgave` | Oppgave test data (`V_OPPGAVE`)                                              |
+| `flyway/meldekort` | Meldekort med `MELDEGRUPPEKODE` (ATTF vs. other groups) for startuke lookups |
 
 ### Integration tests
 

@@ -54,6 +54,7 @@ import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.MeldekortService
 import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
@@ -261,6 +262,11 @@ private fun skapOppgaveService(datasource: DataSource): OppgaveService {
     return OppgaveService(oppgaveRepository)
 }
 
+private fun skapMeldekortService(datasource: DataSource): MeldekortService {
+    val meldekortRepository = MeldekortRepository(datasource)
+    return MeldekortService(meldekortRepository)
+}
+
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
@@ -274,6 +280,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val oppgaveService = skapOppgaveService(datasource)
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
+    val meldekortService = skapMeldekortService(datasource)
 
     routing {
         actuator(prometheus)
@@ -297,6 +304,10 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
                 sak(sakOgVedtakService)
+                meldekortStartuke(
+                    meldekortService = meldekortService,
+                    personService = personService,
+                )
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
@@ -322,6 +333,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     posteringService = utbetalingService,
                     telleverkService = telleverkService,
                 )
+
             }
             route("/api/migrering") {
                 migrering(
