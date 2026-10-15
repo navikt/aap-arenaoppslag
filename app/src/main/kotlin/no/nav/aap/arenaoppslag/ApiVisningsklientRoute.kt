@@ -126,20 +126,7 @@ fun Route.oppgaverForSak(sakService: SakService, oppgaveService: OppgaveService)
     }
 }
 
-fun Route.meldekortStartuke(meldekortService: MeldekortService, personService: PersonService) {
-    post("/samordning/meldekort/startuke") {
-        logger.info("Henter startuke for siste meldekort for person")
-        val request: MeldekortStartukeRequest = call.receive()
 
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.OK, MeldekortStartukeResponse.ingen)
-
-        val response = meldekortService.hentStartukeForSisteMeldekort(personId)?.tilResponse()
-            ?: MeldekortStartukeResponse.ingen
-
-        call.respond(status = HttpStatusCode.OK, message = response)
-    }
-}
 
 fun Route.telleverkForSak(sakService: SakService, posteringService: PosteringService, telleverkService: TelleverkService) {
     get("/sak/{saksnummer}/telleverk") {

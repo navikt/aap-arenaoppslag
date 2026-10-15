@@ -139,7 +139,6 @@ data class MeldekortStartukeRequest(
     val personidentifikator: String,
 )
 
-// Feltene er null når personen finnes i Arena, men ikke har AAP-meldekort
 data class MeldekortStartukeResponse(
     val aar: Int?,
     val ukenummer: Int?,
