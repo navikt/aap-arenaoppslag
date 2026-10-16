@@ -45,7 +45,7 @@ data class ArenaSak(
 data class Maksdatolinje(
     val sakId: Int,
     val opprettetAar: Int,
-    val lopenr: Int,
+    val lopenrSak: Int,
     val vedtakId: Int,
     val aktfaseKode: String,
     val vedtaktypeKode: String,
@@ -60,7 +60,7 @@ data class Maksdatolinje(
 ) {
     fun tilKontrakt() =
         no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato(
-            sakId, "${opprettetAar}-${lopenr}",
+            sakId, "${opprettetAar}-${lopenrSak}",
             sakStatus, sakRegistrert, sakAvsluttet,
             null,
             null,
