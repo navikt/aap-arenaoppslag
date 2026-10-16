@@ -148,7 +148,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
         const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
-        const val ankerMaksimalAlderMåneder = 24L // maksimal behandlingstid for anker
+        const val ankerMaksimalAlderMåneder = 36L // maksimal behandlingstid for anker
         const val klagerMaksimalAlderMåneder = 12L // maksimal behandlingstid for klager
         const val behandletKlageAnkeForMerEnnMåneder = 3L // maksimal buffertid etter klagen/anken er behandlet
 
