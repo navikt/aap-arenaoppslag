@@ -106,7 +106,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             v.person_id = ?
-            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+            AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'AVVIST', 'TRUKK' ))
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
             AND vf.vedtakfaktakode = 'INNVF'
@@ -137,7 +137,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             v.person_id = ?
-            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+            AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'AVVIST', 'TRUKK' ))
             AND rettighetkode = 'ANKE'
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
