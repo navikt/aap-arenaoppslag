@@ -195,7 +195,7 @@ class SakServiceTest {
     ) = Maksdatolinje(
         sakId = sakId,
         opprettetAar = 2025,
-        lopenr = 12,
+        lopenrSak = 12,
         vedtakId = sakId * 10,
         aktfaseKode = "FA",
         vedtaktypeKode = vedtaktypeKode,
