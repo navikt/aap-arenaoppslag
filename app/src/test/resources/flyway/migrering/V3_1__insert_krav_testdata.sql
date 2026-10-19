@@ -35,6 +35,11 @@ values (91013, 9101, 'IVERK', 'E', 'JA', 'AAP', 200,
 insert into MELDEKORTPERIODE (AAR, PERIODEKODE, UKENR_UKE1, UKENR_UKE2, DATO_FRA, DATO_TIL)
 values (9999, '99', 1, 2, DATEADD('DAY', -7, CURRENT_DATE), DATEADD('DAY', 7, CURRENT_DATE));
 
+-- Migreringsdatoen utledes fra brukerens egne meldekort, så personene med kvote trenger et meldekort
+-- for den gjeldende perioden
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
+values (92001, 200, 9999, '99', 'E1', 'FERDI', 'AT');
+
 -- Kvotebevegelser for person 200:
 -- INIT (60 dager før i dag) gir saldo 260 (full ordinær kvote), en bevegelse (20 dager før i dag,
 -- altså før migreringsdatoen som er 7 dager før i dag) trekker ned til 150, og en bevegelse etter
@@ -95,6 +100,9 @@ insert into VEDTAK (VEDTAK_ID, SAK_ID, VEDTAKSTATUSKODE, VEDTAKTYPEKODE, UTFALLK
                     AKTFASEKODE, DATO_MOTTATT)
 values (91033, 9103, 'IVERK', 'E', 'JA', 'AAP', 202,
         DATE '2023-08-01', null, '4402', 503, 2023, 3, 'IKKE', DATE '2023-08-01');
+
+insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
+values (92002, 202, 9999, '99', 'E1', 'FERDI', 'AT');
 
 -- Kvotebevegelser for person 202: startsaldo 20, fire meldekorttrekk à 5 dager fram til migreringsdatoen
 -- (7 dager før i dag) bruker opp hele kvoten (20 -> 15 -> 10 -> 5 -> 0). En bevegelse etter
