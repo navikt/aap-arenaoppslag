@@ -149,7 +149,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val klageTidsbufferUker = 12L // buffertid etter klagen er behandlet
         const val ankeTidsbufferUker = 52L // buffertid etter anken er behandlet
         const val maksimalTidUbehandletAA115Uker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
-        const val maksimalTidUbehandletAAPUker = 2 * 52L + 1 // maksimal tid uten utfall for AAP-vedtak, TODO reduser
+        const val maksimalTidUbehandletAAPUker = vanligTidsbufferUker + 52L // maksimal tid uten utfall for AAP-vedtak, TODO reduser?
         const val maksimalTidUbehandletKlageAnkeUker = 52L // maksimal tid uten utfall for klager og anker
 
         fun hentAlleSignifikanteVedtakForPerson(
