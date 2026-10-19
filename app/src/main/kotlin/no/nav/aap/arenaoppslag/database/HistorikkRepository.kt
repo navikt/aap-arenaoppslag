@@ -111,9 +111,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
-            AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
-            -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
-            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ? AND v.utfallkode IN ('JA', 'DELVIS' ) )
+            AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         // S4: Hent alle AAP-anker med relevant historikk for personen
@@ -145,20 +144,23 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
+
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
         const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
-        const val modnedGrenseVedtak = 72L
-        const val modnedGrenseKlageInnvilget = 6L
+        const val ankerMaksimalAlderMåneder = 36L // maksimal behandlingstid for anker
+        const val klagerMaksimalAlderMåneder = 12L // maksimal behandlingstid for klager
+        const val behandletKlageAnkeForMerEnnMåneder = 3L // maksimal buffertid etter klagen/anken er behandlet
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val vanligTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(vanligTidsbufferUker))
             val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(stansTidsbufferUker))
-            val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
-            val klageInnvilgetGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseKlageInnvilget))
             val aa115BehandlingUkerGrense = Date.valueOf(søknadMottattPå.minusWeeks(aa115BehandlingUker))
+            val maksimalAlderAnker = Date.valueOf(søknadMottattPå.minusMonths(ankerMaksimalAlderMåneder))
+            val maksimalAlderKlager = Date.valueOf(søknadMottattPå.minusMonths(klagerMaksimalAlderMåneder))
+            val maksimalTidsbufferBehandledeKlagerAnker = Date.valueOf(søknadMottattPå.minusMonths(behandletKlageAnkeForMerEnnMåneder))
 
             val query =
                 listOf(
@@ -172,7 +174,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 var p = 1 // parameter-indeks
                 // S1: AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, vedtakModnedGrense)
+                preparedStatement.setDate(p++, maksimalAlderAnker)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, stansTidsbuffer)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
@@ -181,12 +183,12 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(p++, aa115BehandlingUkerGrense)
                 // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, vanligTidsbuffer)
-                preparedStatement.setDate(p++, klageInnvilgetGrense)
+                preparedStatement.setDate(p++, maksimalTidsbufferBehandledeKlagerAnker)
+                preparedStatement.setDate(p++, maksimalAlderKlager)
                 // S4: anker
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, vedtakModnedGrense)
+                preparedStatement.setDate(p++, maksimalTidsbufferBehandledeKlagerAnker)
+                preparedStatement.setDate(p++, maksimalAlderAnker)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }

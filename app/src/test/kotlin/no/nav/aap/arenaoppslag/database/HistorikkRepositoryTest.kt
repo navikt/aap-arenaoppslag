@@ -12,7 +12,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     private lateinit var historikkRepository: HistorikkRepository
     private lateinit var vedtakRepository: VedtakRepository
-    private val testDato = LocalDate.parse("2025-12-15")
+    private val testDato = LocalDate.parse("2025-06-15")
 
     @BeforeEach
     fun setUp() {
@@ -58,6 +58,56 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
             .containsExactlyInAnyOrder(
                 tuple("AAP", 2021, 30),
             )
+    }
+
+    @Test
+    fun `finner signifikante KLAG1 KLAG2 og ANKE vedtak`() {
+        val testPersonFnr = "klager_anke"
+        val testPersonId = PersonId(998)
+        // Sjekk først at vedtakene finnes i databasen og har forventede verdier
+        val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
+        assertThat(alleVedtak).hasSize(3)
+
+        // Sjekk deretter at de regnes som signifikante
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        assertThat(signifikanteVedtak.map { it.rettighetkode })
+            .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")
+    }
+
+    @Test
+    fun `finner ikke KLAG1 KLAG2 og ANKE eldre enn maksimal behandlingstid`() {
+        val testPersonId = PersonId(999)
+        // Sjekk først at vedtakene finnes i databasen og har forventede verdier
+        assertThat(vedtakRepository.hentVedtak(testPersonId).map { it.rettighetkode })
+            .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")
+        // Sjekk at ingen av dem regnes som signifikante
+        assertThat(historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)).isEmpty()
+    }
+
+    @Test
+    fun `finner ikke KLAG1 KLAG2 og ANKE med utfall TRUKK`() {
+        val testPersonId = PersonId(1000)
+        val alleVedtak = vedtakRepository.hentVedtak(testPersonId)
+        // Sjekk først at vedtakene finnes i databasen og har forventede verdier
+        assertThat(alleVedtak.map { it.rettighetkode })
+            .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")
+        assertThat(alleVedtak).allMatch { it.utfallkode == "TRUKK" }
+
+        // Sjekk at ingen av dem regnes som signifikante
+        assertThat(historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)).isEmpty()
+    }
+
+    @Test
+    fun `finner ikke KLAG1 KLAG2 og ANKE behandlet for mer enn tre måneder siden`() {
+        val testPersonId = PersonId(1001)
+        val alleVedtak = vedtakRepository.hentVedtak(testPersonId)
+        // Sjekk først at vedtakene finnes i databasen og har forventede verdier
+        assertThat(alleVedtak.map { it.rettighetkode })
+            .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")
+        assertThat(alleVedtak).allMatch { it.utfallkode == "NEI" }
+
+        // Sjekk at ingen av dem regnes som signifikante
+        assertThat(historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)).isEmpty()
     }
 
     @Test
