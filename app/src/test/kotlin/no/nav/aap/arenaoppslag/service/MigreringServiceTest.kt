@@ -22,7 +22,9 @@ import no.nav.aap.arenaoppslag.modeller.MedisinskOpplysning
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.komponenter.httpklient.exception.VerdiIkkeFunnetException
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -113,7 +115,7 @@ class MigreringServiceTest {
     @Test
     fun `henter soknadsdato, migreringsdato og gjenstaaende ordinaer kvote`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
-        every { meldekortperiodeRepository.hentGjeldendePeriode(idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } returns
             mapOf(5001L to Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3)))
@@ -142,7 +144,7 @@ class MigreringServiceTest {
         val idag = LocalDate.of(2026, 10, 1)
         val migreringsdato = LocalDate.of(2026, 9, 21)
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2026, 4, 23))
-        every { meldekortperiodeRepository.hentGjeldendePeriode(idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
             Periode(migreringsdato, LocalDate.of(2026, 10, 4))
         // Alle meldekortene gjelder perioder før migreringsdatoen.
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } answers {
@@ -184,7 +186,7 @@ class MigreringServiceTest {
         val behandlet = onsdagUke4.plusMonths(1)
 
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2026, 4, 23))
-        every { meldekortperiodeRepository.hentGjeldendePeriode(onsdagUke4) } returns meldeperiode2
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), onsdagUke4) } returns meldeperiode2
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } returns mapOf(
             101L to meldeperiode1,
             102L to meldeperiode2,
@@ -212,13 +214,25 @@ class MigreringServiceTest {
     @Test
     fun `soknadsdato er null når saken ikke har noe innvilget vedtak`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns null
-        every { meldekortperiodeRepository.hentGjeldendePeriode(idag) } returns null
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+            Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
 
         val krav = service.hentKravForSak(sak, sakId, idag)
 
         assertThat(krav.soknadsdato).isNull()
-        assertThat(krav.migreringsdato).isNull()
+        assertThat(krav.migreringsdato).isEqualTo(LocalDate.of(2024, 3, 4))
         assertThat(krav.gjenstaaendeOrdinaerKvote).isNull()
+    }
+
+    @Test
+    fun `kaster feil når brukeren ikke har noen meldekortperiode som dekker dagens dato`() {
+        every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns null
+
+        assertThatThrownBy { service.hentKravForSak(sak, sakId, idag) }
+            .isInstanceOf(VerdiIkkeFunnetException::class.java)
+            .hasMessageContaining("Fant ingen meldekortperiode")
     }
 
     private fun vilkårsvurdering(id: Long, kode: String, statuskode: String, begrunnelse: String? = null) =

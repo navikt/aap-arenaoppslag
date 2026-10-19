@@ -1,16 +1,18 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.Periode
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import org.intellij.lang.annotations.Language
 import java.sql.Date
 import java.time.LocalDate
 import javax.sql.DataSource
 
 class MeldekortperiodeRepository(private val dataSource: DataSource) {
-    fun hentGjeldendePeriode(idag: LocalDate): Periode? = dataSource.connection.use { con ->
-        con.createParameterizedQuery(selectGjeldendePeriode).use { preparedStatement ->
-            preparedStatement.setDate(1, Date.valueOf(idag))
+    fun hentGjeldendePeriodeForPerson(personId: PersonId, idag: LocalDate): Periode? = dataSource.connection.use { con ->
+        con.createParameterizedQuery(selectGjeldendePeriodeForPerson).use { preparedStatement ->
+            preparedStatement.setInt(1, personId.id)
             preparedStatement.setDate(2, Date.valueOf(idag))
+            preparedStatement.setDate(3, Date.valueOf(idag))
             val resultSet = preparedStatement.executeQuery()
             if (resultSet.next()) {
                 Periode(
@@ -50,11 +52,17 @@ class MeldekortperiodeRepository(private val dataSource: DataSource) {
              WHERE m.meldekort_id IN (${meldekortIder.joinToString(",")})
         """.trimIndent()
 
+        // MELDEKORTPERIODE overlapper (uke 1-2, 2-3, ...), så hver dato dekkes av to perioder.
+        // Brukerens egne meldekort avgjør om brukeren følger oddetalls- eller partallssyklusen.
         @Language("OracleSql")
-        private val selectGjeldendePeriode = """
-            SELECT dato_fra, dato_til
-              FROM meldekortperiode
-             WHERE dato_fra <= ? AND dato_til >= ?
+        private val selectGjeldendePeriodeForPerson = """
+            SELECT mkp.dato_fra, mkp.dato_til
+              FROM meldekort m
+              JOIN meldekortperiode mkp ON mkp.aar = m.aar AND mkp.periodekode = m.periodekode
+             WHERE m.person_id = ?
+               AND mkp.dato_fra <= ? AND mkp.dato_til >= ?
+             ORDER BY mkp.dato_fra DESC
+             FETCH FIRST 1 ROWS ONLY
         """.trimIndent()
     }
 }
