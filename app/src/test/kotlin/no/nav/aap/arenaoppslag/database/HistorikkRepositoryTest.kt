@@ -13,6 +13,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     private lateinit var historikkRepository: HistorikkRepository
     private lateinit var vedtakRepository: VedtakRepository
     private val testDato = LocalDate.parse("2025-06-15")
+    private val aapTestDato = LocalDate.parse("2024-01-15")
 
     @BeforeEach
     fun setUp() {
@@ -47,7 +48,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(3) // antall i vedtak-tabellen
 
-        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, aapTestDato)
         assertThat(signifikanteVedtak.map { it.rettighetkode }.sorted()).isEqualTo(
             listOf(
                 "AAP"
@@ -98,7 +99,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     }
 
     @Test
-    fun `finner ikke KLAG1 KLAG2 og ANKE behandlet for mer enn tre måneder siden`() {
+    fun `finner ikke klager behandlet for mer enn tre måneder siden eller anker behandlet for mer enn tolv måneder siden`() {
         val testPersonId = PersonId(1001)
         val alleVedtak = vedtakRepository.hentVedtak(testPersonId)
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
@@ -117,7 +118,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(6)
 
-        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, aapTestDato)
         assertThat(signifikanteVedtak).hasSize(1)
     }
 

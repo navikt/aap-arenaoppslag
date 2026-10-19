@@ -17,7 +17,7 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
         const val kjentPerson = "kun_nye"
     }
 
-    private val testDato = LocalDate.parse("2025-06-15")
+    private val testDato = LocalDate.parse("2024-01-15")
 
     @Test
     fun `Person har signifikant historikk for AAP i AAP-Arena`() {

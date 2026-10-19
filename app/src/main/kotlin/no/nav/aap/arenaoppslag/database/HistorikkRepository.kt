@@ -56,7 +56,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
           AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
-          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+          AND v.MOD_DATO >= ? -- ikke utdatert
         """.trimIndent()
 
 
@@ -112,7 +112,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= ? -- ikke utdatert
         """.trimIndent()
 
         // S4: Hent alle AAP-anker med relevant historikk for personen
@@ -141,14 +141,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Vi regner anker med null INNVF som åpne. Anker med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny anke etter at anken er behandlet og avslått. 
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND v.MOD_DATO >= ? -- ikke utdatert
         """.trimIndent()
-
 
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
         const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
-        const val maksimalTidUbehandletAAPUker = vanligTidsbufferUker // maksimal tid uten utfall for AAP-vedtak
+        const val maksimalTidUbehandletAAPUker = 114L // maksimal tid uten utfall for AAP-vedtak
         const val maksimalTidUbehandletKlageAnkeMåneder = 12L // maksimal tid uten utfall for klager og anker
         const val behandletKlageForMerEnnMåneder = 3L // buffertid etter klagen er behandlet
         const val behandletAnkeForMerEnnMåneder = 12L // buffertid etter anken er behandlet
