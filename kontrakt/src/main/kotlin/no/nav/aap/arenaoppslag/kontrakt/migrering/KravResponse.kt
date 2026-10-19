@@ -6,7 +6,7 @@ public data class KravResponse(
     val lopenr: Int,
     val aar: Int,
     val soknadsdato: LocalDate?,
-    val migreringsdato: LocalDate?,
+    val migreringsdato: LocalDate,
     val gjenstaaendeKvote: GjenstaaendeKvote,
 )
 

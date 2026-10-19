@@ -8,7 +8,7 @@ data class Krav(
     val lopenr: Int,
     val aar: Int,
     val soknadsdato: LocalDate?,
-    val migreringsdato: LocalDate?,
+    val migreringsdato: LocalDate,
     val gjenstaaendeOrdinaerKvote: Int?,
 ) {
     fun tilKontrakt() = KravResponse(

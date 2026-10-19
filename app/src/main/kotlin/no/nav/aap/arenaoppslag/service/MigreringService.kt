@@ -12,6 +12,7 @@ import no.nav.aap.arenaoppslag.modeller.migrering.Krav
 import no.nav.aap.arenaoppslag.modeller.migrering.Refusjonskrav
 import no.nav.aap.arenaoppslag.modeller.migrering.RefusjonskravForSak
 import no.nav.aap.arenaoppslag.modeller.migrering.Sykdomsvurdering
+import no.nav.aap.komponenter.httpklient.exception.VerdiIkkeFunnetException
 import java.time.LocalDate
 
 class MigreringService(
@@ -25,12 +26,12 @@ class MigreringService(
 
     fun hentKravForSak(sak: ArenaSak, sakId: SakId, idag: LocalDate = LocalDate.now()): Krav {
         val forsteInnvilgedeVedtak = vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId)
-        val gjeldendeMeldekortperiode = meldekortperiodeRepository.hentGjeldendePeriode(idag)
+        val personId = PersonId(sak.person.personId)
+        val gjeldendeMeldekortperiode = meldekortperiodeRepository.hentGjeldendePeriodeForPerson(personId, idag)
         val migreringsdato = gjeldendeMeldekortperiode?.fraOgMedDato
+            ?: throw VerdiIkkeFunnetException("Fant ingen meldekortperiode for brukeren som dekker $idag for sak ${sakId.id}")
 
-        val gjenstaaendeOrdinaerKvote = migreringsdato?.let {
-            hentGjenstaaendeOrdinaerKvote(PersonId(sak.person.personId), it)
-        }
+        val gjenstaaendeOrdinaerKvote = hentGjenstaaendeOrdinaerKvote(personId, migreringsdato)
 
         return Krav(
             lopenr = sak.lopenr,
