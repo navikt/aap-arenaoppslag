@@ -12,7 +12,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     private lateinit var historikkRepository: HistorikkRepository
     private lateinit var vedtakRepository: VedtakRepository
-    private val testDato = LocalDate.parse("2025-06-15")
+    private val testDato = LocalDate.parse("2026-09-27") // simulerer dagens dato for testene
     private val aapTestDato = LocalDate.parse("2024-01-15")
 
     @BeforeEach

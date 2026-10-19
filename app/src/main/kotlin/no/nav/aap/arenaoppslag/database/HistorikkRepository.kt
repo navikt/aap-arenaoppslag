@@ -146,22 +146,22 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
         const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
-        const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
+        const val klageTidsbufferUker = 12L // buffertid etter klagen er behandlet
+        const val ankeTidsbufferUker = 52L // buffertid etter anken er behandlet
+        const val maksimalTidUbehandletAA115Uker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
         const val maksimalTidUbehandletAAPUker = 114L // maksimal tid uten utfall for AAP-vedtak
-        const val maksimalTidUbehandletKlageAnkeMåneder = 12L // maksimal tid uten utfall for klager og anker
-        const val behandletKlageForMerEnnMåneder = 3L // buffertid etter klagen er behandlet
-        const val behandletAnkeForMerEnnMåneder = 12L // buffertid etter anken er behandlet
+        const val maksimalTidUbehandletKlageAnkeUker = 52L // maksimal tid uten utfall for klager og anker
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val vanligTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(vanligTidsbufferUker))
             val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(stansTidsbufferUker))
-            val maksimalTidUbehandletAA115 = Date.valueOf(søknadMottattPå.minusWeeks(aa115BehandlingUker))
+            val klageTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(klageTidsbufferUker))
+            val ankeTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(ankeTidsbufferUker))
+            val maksimalTidUbehandletAA115 = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletAA115Uker))
             val maksimalTidUbehandletAAP = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletAAPUker))
-            val maksimalTidUbehandletKlageAnke = Date.valueOf(søknadMottattPå.minusMonths(maksimalTidUbehandletKlageAnkeMåneder))
-            val tidsbufferBehandledeKlager = Date.valueOf(søknadMottattPå.minusMonths(behandletKlageForMerEnnMåneder))
-            val tidsbufferBehandledeAnker = Date.valueOf(søknadMottattPå.minusMonths(behandletAnkeForMerEnnMåneder))
+            val maksimalTidUbehandletKlageAnke = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletKlageAnkeUker))
 
             val query =
                 listOf(
@@ -184,11 +184,11 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(p++, maksimalTidUbehandletAA115)
                 // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, tidsbufferBehandledeKlager)
+                preparedStatement.setDate(p++, klageTidsbuffer)
                 preparedStatement.setDate(p++, maksimalTidUbehandletKlageAnke)
                 // S4: anker
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, tidsbufferBehandledeAnker)
+                preparedStatement.setDate(p++, ankeTidsbuffer)
                 preparedStatement.setDate(p++, maksimalTidUbehandletKlageAnke)
 
                 val resultSet = preparedStatement.executeQuery()
