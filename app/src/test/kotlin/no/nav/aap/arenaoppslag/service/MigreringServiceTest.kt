@@ -11,6 +11,7 @@ import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaDiagnose
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskrav
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaVilkar
 import no.nav.aap.arenaoppslag.modeller.migrering.RefusjonskravForSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
@@ -361,5 +362,40 @@ class MigreringServiceTest {
 
         assertThat(service.hentSykdomsvurderingForSak(sak, sakId, idag)).isNull()
         verify(exactly = 0) { medisinskOpplysningRepository.hentForPerson(any()) }
+    }
+
+    @Test
+    fun `velger kun AOINORGE3 blant vilkårene på gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(
+                vilkårsvurdering(1, "AOINORGE2", "N"),
+                vilkårsvurdering(2, "AOINORGE3", "J"),
+            )
+        )
+
+        val respons = service.hentOppholdskravForSak(sakId, idag)!!.tilKontrakt()
+
+        assertThat(respons.vedtakId).isEqualTo(115)
+        assertThat(respons.vilkar).isEqualTo(ArenaVilkar(2L, "AOINORGE3", "J", null))
+    }
+
+    @Test
+    fun `gir oppholdskrav uten vilkår når vedtaket ikke har AOINORGE3`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+
+        val oppholdskrav = service.hentOppholdskravForSak(sakId, idag)
+
+        assertThat(oppholdskrav?.vedtakId).isEqualTo(115)
+        assertThat(oppholdskrav?.vilkar).isNull()
+    }
+
+    @Test
+    fun `returnerer null for oppholdskrav når saken mangler gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
+
+        assertThat(service.hentOppholdskravForSak(sakId, idag)).isNull()
+        verify(exactly = 0) { vilkårsvurderingRepository.hentForVedtakIder(any()) }
     }
 }

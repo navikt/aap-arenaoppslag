@@ -30,6 +30,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaOppholdskravResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaSykdomsvurderingResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
@@ -187,6 +188,14 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     suspend fun hentRefusjonskravStatus(saksnummer: String): HttpStatusCode =
         hentStatus("/api/migrering/$saksnummer/refusjonskrav")
+
+    suspend fun hentOppholdskrav(saksnummer: String): ArenaOppholdskravResponse =
+        gjørArenaOppslagGet<ArenaOppholdskravResponse>(
+            "/api/migrering/$saksnummer/oppholdskrav"
+        ).getOrThrow()
+
+    suspend fun hentOppholdskravStatus(saksnummer: String): HttpStatusCode =
+        hentStatus("/api/migrering/$saksnummer/oppholdskrav")
 
     private suspend fun hentStatus(endepunkt: String): HttpStatusCode {
         val token = tokenProvider.generate()
