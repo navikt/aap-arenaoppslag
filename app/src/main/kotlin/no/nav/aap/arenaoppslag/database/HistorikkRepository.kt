@@ -42,7 +42,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             til_dato, 
             rettighetkode, 
             aktfasekode,
-            utfallkode
+            v.utfallkode, 
+            v.reg_dato,
+            v.mod_dato,
+            v.vedtak_id
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -75,7 +78,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             til_dato, 
             rettighetkode, 
             aktfasekode,
-            utfallkode
+            v.utfallkode, 
+            v.reg_dato,
+            v.mod_dato,
+            v.vedtak_id
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -101,7 +107,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode,
             v.aktfasekode,
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato,
+            v.mod_dato,
+            v.vedtak_id
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -131,7 +140,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode,
             v.aktfasekode,
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato,
+            v.mod_dato,
+            v.vedtak_id
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
