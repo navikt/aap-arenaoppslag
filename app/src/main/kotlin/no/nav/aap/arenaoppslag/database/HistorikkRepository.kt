@@ -55,8 +55,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
-          AND v.MOD_DATO >= ? -- ikke utdatert
+          AND NOT (v.utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+          AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- ikke utdatert ubehandlet
         """.trimIndent()
 
 
@@ -149,7 +149,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val klageTidsbufferUker = 12L // buffertid etter klagen er behandlet
         const val ankeTidsbufferUker = 52L // buffertid etter anken er behandlet
         const val maksimalTidUbehandletAA115Uker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
-        const val maksimalTidUbehandletAAPUker = vanligTidsbufferUker + 52L // maksimal tid uten utfall for AAP-vedtak, TODO reduser?
+        const val maksimalTidUbehandletAAPUker = 52L // maksimal behandlingstid vi regner for AAP-vedtak
         const val maksimalTidUbehandletKlageAnkeUker = 52L // maksimal tid uten utfall for klager og anker
 
         fun hentAlleSignifikanteVedtakForPerson(
