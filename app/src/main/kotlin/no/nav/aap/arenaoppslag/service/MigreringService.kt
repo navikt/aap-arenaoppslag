@@ -13,6 +13,7 @@ import no.nav.aap.arenaoppslag.modeller.migrering.Oppholdskrav
 import no.nav.aap.arenaoppslag.modeller.migrering.Refusjonskrav
 import no.nav.aap.arenaoppslag.modeller.migrering.RefusjonskravForSak
 import no.nav.aap.arenaoppslag.modeller.migrering.Sykdomsvurdering
+import no.nav.aap.arenaoppslag.modeller.migrering.Vedtaksperiode
 import no.nav.aap.komponenter.httpklient.exception.VerdiIkkeFunnetException
 import java.time.LocalDate
 
@@ -73,6 +74,16 @@ class MigreringService(
         return Oppholdskrav(
             vedtakId = vedtak.vedtakId,
             vilkar = vilkårsvurderinger.firstOrNull { it.vilkårkode == VILKÅRKODE_OPPHOLD_I_NORGE },
+        )
+    }
+
+    fun hentVedtaksperiodeForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): Vedtaksperiode? {
+        val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
+
+        return Vedtaksperiode(
+            vedtakId = vedtak.vedtakId,
+            fraDato = vedtak.fraOgMed,
+            tilDato = vedtak.tilDato,
         )
     }
 
