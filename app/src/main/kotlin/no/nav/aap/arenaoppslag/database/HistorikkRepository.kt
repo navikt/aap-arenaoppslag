@@ -55,8 +55,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   OR
                 (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
               )
-          AND NOT (v.utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
-          AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- ikke utdatert ubehandlet
+          AND NOT (v.utfallkode IS NOT NULL AND v.utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+          AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+          AND v.MOD_DATO >= ? -- ikke utdatert
         """.trimIndent()
 
 
@@ -112,6 +113,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
+            AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
             AND v.MOD_DATO >= ? -- ikke utdatert
         """.trimIndent()
 
@@ -141,16 +143,19 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Vi regner anker med null INNVF som åpne. Anker med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny anke etter at anken er behandlet og avslått. 
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
+            AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
             AND v.MOD_DATO >= ? -- ikke utdatert
         """.trimIndent()
 
-        const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
+        const val vanligTidsbufferUker = 78L // 52 uker gjenopptak + 6 måneder tilbakejustering
         const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
         const val klageTidsbufferUker = 12L // buffertid etter klagen er behandlet
         const val ankeTidsbufferUker = 52L // buffertid etter anken er behandlet
         const val maksimalTidUbehandletAA115Uker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
         const val maksimalTidUbehandletAAPUker = 52L // maksimal behandlingstid vi regner for AAP-vedtak
         const val maksimalTidUbehandletKlageAnkeUker = 52L // maksimal tid uten utfall for klager og anker
+        const val nedreGrenseModifisertSidenAAPUker = 52 * 3L // uendret AAP-vedtak over særlig lang tid
+        const val nedreGrenseModifisertSidenKlageAnkeUker = 52 * 6L // uendret KLAN-vedtak over særlig lang tid
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
@@ -162,6 +167,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             val maksimalTidUbehandletAA115 = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletAA115Uker))
             val maksimalTidUbehandletAAP = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletAAPUker))
             val maksimalTidUbehandletKlageAnke = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletKlageAnkeUker))
+            val maksimalTidUendretAAP = Date.valueOf(søknadMottattPå.minusWeeks(nedreGrenseModifisertSidenAAPUker))
+            val maksimalTidUendretKlageAnke = Date.valueOf(søknadMottattPå.minusWeeks(nedreGrenseModifisertSidenKlageAnkeUker))
 
             val query =
                 listOf(
@@ -179,6 +186,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setDate(p++, stansTidsbuffer)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, maksimalTidUbehandletAAP)
+                preparedStatement.setDate(p++, maksimalTidUendretAAP)
                 // S2: 11-5-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, maksimalTidUbehandletAA115)
@@ -186,10 +194,13 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, klageTidsbuffer)
                 preparedStatement.setDate(p++, maksimalTidUbehandletKlageAnke)
+                preparedStatement.setDate(p++, maksimalTidUendretKlageAnke)
+
                 // S4: anker
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, ankeTidsbuffer)
                 preparedStatement.setDate(p++, maksimalTidUbehandletKlageAnke)
+                preparedStatement.setDate(p++, maksimalTidUendretKlageAnke)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }
