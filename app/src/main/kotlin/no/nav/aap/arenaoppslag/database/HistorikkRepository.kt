@@ -57,7 +57,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
               )
           AND NOT (v.utfallkode IS NOT NULL AND v.utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
           AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
-          AND v.MOD_DATO >= ? -- ikke utdatert
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
 
@@ -81,7 +81,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE v.person_id = ?
           AND v.rettighetkode = 'AA115'
           AND v.utfallkode IS NULL -- ikke behandlet enda 
-          AND v.MOD_DATO >= ? -- ikke utdatert
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         // S3: Hent alle AAP-klager med relevant historikk for personen
@@ -114,7 +114,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
             AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
-            AND v.MOD_DATO >= ? -- ikke utdatert
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         // S4: Hent alle AAP-anker med relevant historikk for personen
@@ -144,7 +144,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             -- Og at det kan komme en ny anke etter at anken er behandlet og avslått. 
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
             AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
-            AND v.MOD_DATO >= ? -- ikke utdatert
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         const val vanligTidsbufferUker = 78L // 52 uker gjenopptak + 6 måneder tilbakejustering
@@ -155,7 +155,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val maksimalTidUbehandletAAPUker = 52L // maksimal behandlingstid vi regner for AAP-vedtak
         const val maksimalTidUbehandletKlageAnkeUker = 52L // maksimal tid uten utfall for klager og anker
         const val nedreGrenseModifisertSidenAAPUker = 52 * 3L // uendret AAP-vedtak over særlig lang tid
-        const val nedreGrenseModifisertSidenKlageAnkeUker = 52 * 6L // uendret KLAN-vedtak over særlig lang tid
+        const val nedreGrenseModifisertSidenKlageAnkeUker = 52 * 3L // uendret KLAN-vedtak over særlig lang tid
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
