@@ -48,6 +48,20 @@ fun Route.migrering(sakService: SakService, migreringService: MigreringService) 
         call.respond(status = HttpStatusCode.OK, message = oppholdskrav.tilKontrakt())
     }
 
+    get("/{saksnummer}/vedtaksperiode") {
+        val (_, sakId) = hentSakFraSaksnummer(sakService) ?: return@get
+
+        logger.info("Henter ut vedtaksperiode for gjeldende aap-vedtak for sak")
+        val vedtaksperiode = migreringService.hentVedtaksperiodeForSak(sakId)
+
+        if (vedtaksperiode == null) {
+            logger.info("Fant ikke løpende aap-vedtak for sak")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        call.respond(status = HttpStatusCode.OK, message = vedtaksperiode.tilKontrakt())
+    }
+
     get("/{saksnummer}/refusjonskrav") {
         val (_, sakId) = hentSakFraSaksnummer(sakService) ?: return@get
 
