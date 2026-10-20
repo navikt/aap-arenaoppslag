@@ -166,7 +166,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         const val maksimalTidUbehandletAA115Uker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
         const val maksimalTidUbehandletAAPUker = 52L // maksimal behandlingstid vi regner for AAP-vedtak
         const val maksimalTidUbehandletKlageAnkeUker = 52L // maksimal tid uten utfall for klager og anker
-        const val nedreGrenseModifisertSidenAAPUker = 52 * 3L // uendret AAP-vedtak over særlig lang tid
+        const val nedreGrenseModifisertSidenAAPUker = 52 * 4L // uendret AAP-vedtak over særlig lang tid
         const val nedreGrenseModifisertSidenKlageAnkeUker = 52 * 3L // uendret KLAN-vedtak over særlig lang tid
 
         fun hentAlleSignifikanteVedtakForPerson(
