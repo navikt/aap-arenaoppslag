@@ -45,7 +45,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.utfallkode, 
             v.reg_dato,
             v.mod_dato,
-            v.vedtak_id
+            v.vedtak_id,
+            v.person_id
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -81,7 +82,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.utfallkode, 
             v.reg_dato,
             v.mod_dato,
-            v.vedtak_id
+            v.vedtak_id,
+            v.person_id
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -110,7 +112,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.utfallkode, 
             v.reg_dato,
             v.mod_dato,
-            v.vedtak_id
+            v.vedtak_id,
+            v.person_id
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -143,7 +146,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
             v.utfallkode, 
             v.reg_dato,
             v.mod_dato,
-            v.vedtak_id
+            v.vedtak_id,
+            v.person_id
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
