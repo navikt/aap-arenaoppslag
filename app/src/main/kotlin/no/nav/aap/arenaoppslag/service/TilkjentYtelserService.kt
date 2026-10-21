@@ -65,8 +65,7 @@ class TilkjentYtelserService(
                 byggReduksjon(it, snitt(it.periode, postering.periode), timerArbeidetEtterStraff ?: 0.0, postering)
             }
 
-            val antallYtelsesDager = meldekort?.periode?.antallHverdager()
-
+            val antallYtelsesDager = meldekort?.let { snitt(it.periode, postering.periode).antallHverdager() }
             val effektivDagsats = antallYtelsesDager
                 ?.takeIf { it > 0 }
                 ?.let { postering.belop / it }
