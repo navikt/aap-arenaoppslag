@@ -9,6 +9,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
+import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
@@ -76,4 +77,6 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
     }
 
 
+    fun hentPersonForSak(saksnummer: Saksnummer): ArenaSakPerson? =
+        sakRepository.hentSak(saksnummer)?.person
 }

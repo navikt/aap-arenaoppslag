@@ -71,6 +71,9 @@ spec:
         - application: pdl-api
           namespace: pdl
           cluster: {{cluster}}-fss
+        - application: populasjonstilgangskontroll
+          namespace: tilgangsmaskin
+          cluster: {{cluster}}-gcp
   webproxy: true
   ingresses:
     - {{ingress}}
@@ -92,3 +95,7 @@ spec:
       value: {{pdl_scope}}
     - name: INTEGRASJON_PDL_URL
       value: {{pdl_url}}
+    - name: INTEGRASJON_TILGANGSMASKIN_SCOPE
+      value: {{tilgangsmaskin_scope}}
+    - name: INTEGRASJON_TILGANGSMASKIN_URL
+      value: {{tilgangsmaskin_url}}
