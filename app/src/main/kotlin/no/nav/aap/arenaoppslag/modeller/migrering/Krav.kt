@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.modeller.migrering
 
 import no.nav.aap.arenaoppslag.kontrakt.migrering.GjenstaaendeKvote
 import no.nav.aap.arenaoppslag.kontrakt.migrering.KravResponse
+import no.nav.aap.arenaoppslag.modeller.Periode
 import java.time.LocalDate
 
 data class Krav(
@@ -10,6 +11,7 @@ data class Krav(
     val soknadsdato: LocalDate?,
     val migreringsdato: LocalDate,
     val gjenstaaendeOrdinaerKvote: Int?,
+    val sisteFerdigBehandledeMeldekortperiode: Periode?,
 ) {
     fun tilKontrakt() = KravResponse(
         lopenr = lopenr,
@@ -17,5 +19,6 @@ data class Krav(
         soknadsdato = soknadsdato,
         migreringsdato = migreringsdato,
         gjenstaaendeKvote = GjenstaaendeKvote(ordinaer = gjenstaaendeOrdinaerKvote),
+        sisteFerdigBehandledeMeldekortperiode = sisteFerdigBehandledeMeldekortperiode?.tilKontrakt(),
     )
 }

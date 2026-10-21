@@ -67,6 +67,7 @@ All routes except `/actuator/*` require Azure AD JWT authentication.
 | `/intern/*` | Old API used by Kelvin and aap-api-intern. Avoid adding new endpoints here unless explicitly stated. | Breaking changes only allowed through expand-contract pattern. |
 | `/api/v1/*` | External API — consumers depend on a stable contract. Default for new endpoints.                     | No breaking changes without versioning                                                                                    |
 | `/api/intern/*` | Internal API for frontends — "backend for frontend"                                                  | Breaking changes are allowed                                                                                              |
+| `/api/migrering/*` | API only to be used for migrering from Arena to Kelvin. Returns specific data for migrering.   | Breaking changes are allowed                                                                                              |
 
 ### Personal identifiers in routes
 
