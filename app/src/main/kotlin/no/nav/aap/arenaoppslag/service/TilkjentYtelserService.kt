@@ -64,6 +64,14 @@ class TilkjentYtelserService(
             val reduksjon = meldekort?.let {
                 byggReduksjon(it, snitt(it.periode, postering.periode), timerArbeidetEtterStraff ?: 0.0, postering)
             }
+
+            val antallYtelsesDager = meldekort?.periode?.antallHverdager()
+
+            val effektivDagsats = antallYtelsesDager
+                ?.takeIf { it > 0 }
+                ?.let { postering.belop / it }
+                ?: postering.dagsats
+
             TilkjentYtelseRad(
                 posteringId = postering.posteringId,
                 posteringTypeKode = postering.posteringTypeKode,
@@ -72,7 +80,9 @@ class TilkjentYtelserService(
                 uke = meldekort?.let { "${it.ukenrUke1}-${it.ukenrUke2}" },
                 kilde = postering.kilde,
                 dagsatsMedBarnetillegg = postering.dagsatsMedBarnetillegg,
+                dagsatsMedBarnetilleggForSamordning = postering.dagsatsMedBarnetilleggForSamordning,
                 dagsats = postering.dagsats,
+                effektivDagsats = effektivDagsats,
                 beregnetBrutto = postering.belop,
                 timerArbeidet = timerArbeidetEtterStraff,
                 reduksjon = reduksjon,
@@ -113,7 +123,9 @@ class TilkjentYtelserService(
             uke = "${meldekort.ukenrUke1}-${meldekort.ukenrUke2}",
             kilde = PosteringKilde.MELDEKORT,
             dagsatsMedBarnetillegg = null,
+            dagsatsMedBarnetilleggForSamordning = null,
             dagsats = null,
+            effektivDagsats = null,
             beregnetBrutto = null,
             timerArbeidet = timerArbeidetEtterStraff,
             reduksjon = byggReduksjon(

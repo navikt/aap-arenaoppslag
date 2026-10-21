@@ -23,6 +23,8 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rad.kilde).isEqualTo(PosteringKilde.MELDEKORT)
             assertThat(rad.uke).isEqualTo("1-2")
             assertThat(rad.beregnetBrutto).isEqualTo(7700)
+            assertThat(rad.dagsatsMedBarnetillegg).isEqualTo(550)
+            assertThat(rad.dagsatsMedBarnetilleggForSamordning).isEqualTo(600)
             assertThat(rad.fraOgMedDato).isEqualTo(LocalDate.of(2023, 1, 2))
             assertThat(rad.meldekort?.uker).isNotEmpty()
 
