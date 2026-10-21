@@ -404,6 +404,26 @@ class MigreringServiceTest {
     }
 
     @Test
+    fun `mapper gjeldende aap-vedtak til vedtaksperiode`() {
+        val tilDato = idag.plusMonths(3)
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns
+            vedtak(idag.minusDays(10)).copy(vedtakId = 115, tilDato = tilDato)
+
+        val respons = service.hentVedtaksperiodeForSak(sakId, idag)!!.tilKontrakt()
+
+        assertThat(respons.vedtakId).isEqualTo(115)
+        assertThat(respons.fraDato).isEqualTo(idag.minusDays(10))
+        assertThat(respons.tilDato).isEqualTo(tilDato)
+    }
+
+    @Test
+    fun `returnerer null for vedtaksperiode når saken mangler gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
+
+        assertThat(service.hentVedtaksperiodeForSak(sakId, idag)).isNull()
+    }
+
+    @Test
     fun `velger kun AOINORGE3 blant vilkårene på gjeldende aap-vedtak`() {
         every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
