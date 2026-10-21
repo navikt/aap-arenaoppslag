@@ -118,6 +118,8 @@ class MigreringServiceTest {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
         every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+            Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3))
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } returns
             mapOf(5001L to Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3)))
         every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
@@ -136,6 +138,9 @@ class MigreringServiceTest {
         assertThat(krav.soknadsdato).isEqualTo(LocalDate.of(2023, 1, 1))
         assertThat(krav.migreringsdato).isEqualTo(LocalDate.of(2024, 3, 4))
         assertThat(krav.gjenstaaendeOrdinaerKvote).isEqualTo(717)
+        assertThat(krav.tilKontrakt().sisteFerdigBehandledeMeldekortperiode).isEqualTo(
+            no.nav.aap.arenaoppslag.kontrakt.modeller.Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3))
+        )
     }
 
     @Test
@@ -147,6 +152,8 @@ class MigreringServiceTest {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2026, 4, 23))
         every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
             Periode(migreringsdato, LocalDate.of(2026, 10, 4))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+            Periode(LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 20))
         // Alle meldekortene gjelder perioder før migreringsdatoen.
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } answers {
             firstArg<Collection<Long>>().associateWith { id ->
@@ -188,6 +195,7 @@ class MigreringServiceTest {
 
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2026, 4, 23))
         every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), onsdagUke4) } returns meldeperiode2
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns meldeperiode1
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } returns mapOf(
             101L to meldeperiode1,
             102L to meldeperiode2,
@@ -217,6 +225,8 @@ class MigreringServiceTest {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns null
         every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+            Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3))
         every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
 
         val krav = service.hentKravForSak(sak, sakId, idag)
@@ -234,6 +244,35 @@ class MigreringServiceTest {
         assertThatThrownBy { service.hentKravForSak(sak, sakId, idag) }
             .isInstanceOf(VerdiIkkeFunnetException::class.java)
             .hasMessageContaining("Fant ingen meldekortperiode")
+    }
+
+    @Test
+    fun `returnerer siste ferdig behandlede meldekortperiode også når den ikke grenser til migreringsdatoen`() {
+        every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+            Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+            Periode(LocalDate.of(2024, 2, 5), LocalDate.of(2024, 2, 18))
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+
+        val krav = service.hentKravForSak(sak, sakId, idag)
+
+        assertThat(krav.sisteFerdigBehandledeMeldekortperiode)
+            .isEqualTo(Periode(LocalDate.of(2024, 2, 5), LocalDate.of(2024, 2, 18)))
+    }
+
+    @Test
+    fun `siste ferdig behandlede meldekortperiode er null når brukeren ikke har noen`() {
+        every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+            Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns null
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+
+        val krav = service.hentKravForSak(sak, sakId, idag)
+
+        assertThat(krav.sisteFerdigBehandledeMeldekortperiode).isNull()
+        assertThat(krav.tilKontrakt().sisteFerdigBehandledeMeldekortperiode).isNull()
     }
 
     private fun vilkårsvurdering(id: Long, kode: String, statuskode: String, begrunnelse: String? = null) =
