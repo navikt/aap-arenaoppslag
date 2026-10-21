@@ -42,6 +42,21 @@ class MeldekortperiodeRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentSisteLevertePeriodeForPerson(personId: PersonId): Periode? = dataSource.connection.use { con ->
+        con.createParameterizedQuery(selectSisteLevertePeriodeForPerson).use { preparedStatement ->
+            preparedStatement.setInt(1, personId.id)
+            val resultSet = preparedStatement.executeQuery()
+            if (resultSet.next()) {
+                Periode(
+                    fraOgMedDato = resultSet.getDate("dato_fra").toLocalDate(),
+                    tilOgMedDato = resultSet.getDate("dato_til").toLocalDate(),
+                )
+            } else {
+                null
+            }
+        }
+    }
+
     companion object {
         // Oracle støtter ikke listeparametere i PreparedStatement, så meldekort-IDer interpoleres direkte.
         // IDene er Long-verdier fra databasen, så det er ingen risiko for SQL-injeksjon.
@@ -62,6 +77,17 @@ class MeldekortperiodeRepository(private val dataSource: DataSource) {
              WHERE m.person_id = ?
                AND mkp.dato_fra <= ? AND mkp.dato_til >= ?
              ORDER BY mkp.dato_fra DESC
+             FETCH FIRST 1 ROWS ONLY
+        """.trimIndent()
+
+        @Language("OracleSql")
+        private val selectSisteLevertePeriodeForPerson = """
+            SELECT mkp.dato_fra, mkp.dato_til
+              FROM meldekort m
+              JOIN meldekortperiode mkp ON mkp.aar = m.aar AND mkp.periodekode = m.periodekode
+             WHERE m.person_id = ?
+               AND m.beregningstatuskode = 'FERDI'
+             ORDER BY mkp.dato_til DESC
              FETCH FIRST 1 ROWS ONLY
         """.trimIndent()
     }

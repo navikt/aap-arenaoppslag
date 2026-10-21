@@ -30,7 +30,9 @@ class MigreringService(
         val personId = PersonId(sak.person.personId)
         val gjeldendeMeldekortperiode = meldekortperiodeRepository.hentGjeldendePeriodeForPerson(personId, idag)
         val migreringsdato = gjeldendeMeldekortperiode?.fraOgMedDato
-            ?: throw VerdiIkkeFunnetException("Fant ingen meldekortperiode for brukeren som dekker $idag for sak ${sakId.id}")
+            ?: throw VerdiIkkeFunnetException("Fant ingen meldekortperiode for brukeren som dekker $idag for sak ${sakId.id}, saken kan derfor ikke migreres.")
+
+        val sisteFerdigBehandledeMeldekortperiode = meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(personId)
 
         val gjenstaaendeOrdinaerKvote = hentGjenstaaendeOrdinaerKvote(personId, migreringsdato)
 
@@ -40,6 +42,7 @@ class MigreringService(
             soknadsdato = forsteInnvilgedeVedtak?.fraOgMed,
             migreringsdato = migreringsdato,
             gjenstaaendeOrdinaerKvote = gjenstaaendeOrdinaerKvote,
+            sisteFerdigBehandledeMeldekortperiode = sisteFerdigBehandledeMeldekortperiode,
         )
     }
 
