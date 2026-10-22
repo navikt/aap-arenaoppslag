@@ -29,3 +29,13 @@ public data class SignifikantHistorikkResponse(
     }
     public fun saker(): List<Int> = signifikanteVedtak.map { it.sakId }
 }
+
+public data class HistorikkStatusDetaljResponse(
+    val telleverk: TelleverkForPerson?,
+    val sisteVedtakDetalj: SakMedSisteVedtakOgMaksdato?,
+    val sisteUtbetalingDato: LocalDate?,
+) {
+    public companion object {
+        public val ingen: HistorikkStatusDetaljResponse = HistorikkStatusDetaljResponse(null, null, null)
+    }
+}

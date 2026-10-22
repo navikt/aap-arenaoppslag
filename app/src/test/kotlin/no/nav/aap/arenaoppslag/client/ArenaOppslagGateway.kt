@@ -17,6 +17,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.HistorikkStatusDetaljResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningRequest
@@ -142,6 +143,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     ): SignifikantHistorikkResponse =
         gjørArenaOppslag<SignifikantHistorikkResponse, SignifikantHistorikkRequest>(
             "/api/v1/person/historikk/signifikant", req
+        ).getOrThrow()
+
+    suspend fun hentHistorikkStatusDetalj(
+        req: SignifikantHistorikkRequest
+    ): HistorikkStatusDetaljResponse =
+        gjørArenaOppslag<HistorikkStatusDetaljResponse, SignifikantHistorikkRequest>(
+            "/api/v1/person/historikk/status/detalj", req
         ).getOrThrow()
 
     suspend fun hentTilkjentYtelse(sakid: String): TilkjentYtelseResponse =
