@@ -75,6 +75,20 @@ fun Route.migrering(sakService: SakService, migreringService: MigreringService) 
 
         call.respond(status = HttpStatusCode.OK, message = refusjonskravForSak.tilKontrakt())
     }
+
+    get("/{saksnummer}/beregningstidspunkt") {
+        val (_, sakId) = hentSakFraSaksnummer(sakService) ?: return@get
+
+        logger.info("Henter ut beregningstidspunkt for gjeldende aap-vedtak for sak")
+        val beregningstidspunkt = migreringService.hentBeregningstidspunktForSak(sakId)
+
+        if (beregningstidspunkt == null) {
+            logger.info("Fant ikke løpende aap-vedtak for sak")
+            return@get call.respond(HttpStatusCode.NotFound)
+        }
+
+        call.respond(status = HttpStatusCode.OK, message = beregningstidspunkt.tilKontrakt())
+    }
 }
 
 // Svarer selv med 400/404 og returnerer null når saken ikke kan slås opp, så route-en bare avbryter
