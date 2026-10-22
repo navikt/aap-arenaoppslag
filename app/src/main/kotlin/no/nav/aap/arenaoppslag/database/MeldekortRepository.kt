@@ -67,6 +67,8 @@ class MeldekortRepository(
                     belop = row.getInt("belop"),
                     antall = row.getDoubleOrNull("antall"),
                     dagsatsMedBarnetillegg = row.getString("dagsats_med_barnetillegg")?.toIntOrNull(),
+                    dagsatsMedBarnetilleggForSamordning = row.getString("dagsats_med_barnetillegg_for_samordning")
+                        ?.toIntOrNull(),
                     dagsats = row.getString("dagsats")?.toIntOrNull(),
                     dagsatsForSamordning = row.getString("dagsats_for_samordning")?.toIntOrNull(),
                     insGrad = row.getString("ins_grad")?.toIntOrNull(),
@@ -232,19 +234,20 @@ class MeldekortRepository(
     private val posteringerForSakSql = """
         WITH fakta AS (
             SELECT vf.vedtak_id,
-                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSMBT'  THEN vf.vedtakverdi END) AS dagsats_med_barnetillegg,
-                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGS'     THEN vf.vedtakverdi END) AS dagsats,
-                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSFSAM' THEN vf.vedtakverdi END) AS dagsats_for_samordning,
-                   MAX(CASE WHEN vf.vedtakfaktakode = 'INSGRAD'  THEN vf.vedtakverdi END) AS ins_grad
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSMBT'    THEN vf.vedtakverdi END) AS dagsats_med_barnetillegg,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSMBFSAM' THEN vf.vedtakverdi END) AS dagsats_med_barnetillegg_for_samordning,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGS'       THEN vf.vedtakverdi END) AS dagsats,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSFSAM'   THEN vf.vedtakverdi END) AS dagsats_for_samordning,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'INSGRAD'    THEN vf.vedtakverdi END) AS ins_grad
               FROM vedtakfakta vf
              WHERE vf.vedtak_id IN (SELECT v.vedtak_id FROM vedtak v WHERE v.sak_id = ?)
-               AND vf.vedtakfaktakode IN ('DAGSMBT', 'DAGS', 'DAGSFSAM', 'INSGRAD')
+               AND vf.vedtakfaktakode IN ('DAGSMBT', 'DAGSMBFSAM', 'DAGS', 'DAGSFSAM', 'INSGRAD')
              GROUP BY vf.vedtak_id
         )
         SELECT p.postering_id, p.posteringtypekode, p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
                p.antall,
                p.tabellnavnalias_kilde, p.objekt_id_kilde,
-               f.dagsats_med_barnetillegg, f.dagsats, f.dagsats_for_samordning, f.ins_grad,
+               f.dagsats_med_barnetillegg, f.dagsats_med_barnetillegg_for_samordning, f.dagsats, f.dagsats_for_samordning, f.ins_grad,
                s.spesutbetaling_id AS spes_id, s.begrunnelse AS spes_begrunnelse, s.belop AS spes_belop,
                s.belopkode AS spes_belopkode, s.dato_utbetaling AS spes_dato_utbetaling,
                s.dato_fra AS spes_dato_fra, s.dato_til AS spes_dato_til,
