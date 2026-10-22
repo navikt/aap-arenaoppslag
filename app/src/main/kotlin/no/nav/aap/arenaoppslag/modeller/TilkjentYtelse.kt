@@ -33,7 +33,9 @@ data class TilkjentYtelseRad(
     val uke: String?,
     val kilde: PosteringKilde,
     val dagsatsMedBarnetillegg: Int?,
+    val dagsatsMedBarnetilleggForSamordning: Int?,
     val dagsats: Int?,
+    val effektivDagsats: Int?,
     // null betyr at det ikke finnes en postering for raden — ikke det samme som utbetalt 0 kroner
     val beregnetBrutto: Int?,
     val timerArbeidet: Double?,

@@ -59,6 +59,7 @@ class TilkjentYtelserServiceTest {
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
                     belop = 4970, dagsatsMedBarnetillegg = 1812, dagsats = 1500, dagsatsForSamordning = 1500,
+                    dagsatsMedBarnetilleggForSamordning = 1900,
                     insGrad = null, kilde = PosteringKilde.MELDEKORT, kildeAlias = "MKORT", kildeObjektId = 5001,
                     antall = 4.75,
                 ),
@@ -100,6 +101,11 @@ class TilkjentYtelserServiceTest {
         val meldekortRad = response.rader.first { it.kilde == PosteringKilde.MELDEKORT }
         assertThat(meldekortRad.uke).isEqualTo("10-11")
         assertThat(meldekortRad.dagsatsMedBarnetillegg).isEqualTo(1812)
+        assertThat(meldekortRad.dagsatsMedBarnetilleggForSamordning).isEqualTo(1900)
+        assertThat(response.rader.first { it.kilde == PosteringKilde.SPESIALUTBETALING }
+            .dagsatsMedBarnetilleggForSamordning).isNull()
+        // Effektiv dagsats: 4970 kr fordelt på 10 hverdager i meldekortperioden, ingen dager for sent.
+        assertThat(meldekortRad.effektivDagsats).isEqualTo(497)
         assertThat(meldekortRad.dagsats).isEqualTo(1500)
         assertThat(meldekortRad.beregnetBrutto).isEqualTo(4970)
         assertThat(meldekortRad.timerArbeidet).isEqualTo(7.5)
@@ -355,6 +361,7 @@ class TilkjentYtelserServiceTest {
         assertThat(utenPostering.uke).isEqualTo("13-14")
         assertThat(utenPostering.dagsats).isNull()
         assertThat(utenPostering.dagsatsMedBarnetillegg).isNull()
+        assertThat(utenPostering.dagsatsMedBarnetilleggForSamordning).isNull()
         assertThat(utenPostering.timerArbeidet).isEqualTo(7.5)
         assertThat(utenPostering.reduksjon?.timerArbeidetProsent).isEqualTo(10)
         assertThat(utenPostering.reduksjon?.samordningsProsent).isEqualTo(0)

@@ -45,6 +45,7 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.vedtakId).isEqualTo(90010)
         assertThat(første.periode.tilOgMedDato).isEqualTo(LocalDate.of(2023, 1, 15))
         assertThat(første.dagsatsMedBarnetillegg).isEqualTo(550)
+        assertThat(første.dagsatsMedBarnetilleggForSamordning).isEqualTo(600)
         assertThat(første.dagsats).isEqualTo(520)
         assertThat(første.dagsatsForSamordning).isEqualTo(520)
         assertThat(første.insGrad).isEqualTo(33)
@@ -53,6 +54,15 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.antall).isEqualTo(10.0)
         assertThat(første.posteringId).isEqualTo(8001)
         assertThat(første.posteringTypeKode).isEqualTo("ORD")
+    }
+
+    @Test
+    fun `dagsats med barnetillegg foer samordning er null naar vedtaket mangler DAGSMBFSAM`() {
+        val posteringer = repo.hentForSak(sakMedKildevarianter).posteringer
+
+        assertThat(posteringer).isNotEmpty
+        assertThat(posteringer.map { it.dagsatsMedBarnetilleggForSamordning }).containsOnlyNulls()
+        assertThat(posteringer.first { it.belop == 7700 }.dagsatsMedBarnetillegg).isEqualTo(550)
     }
 
     @Test

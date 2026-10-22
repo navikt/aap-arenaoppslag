@@ -21,6 +21,9 @@ data class MeldekortPostering(
     val dagsats: Int?,
     // Dagsats uten barnetillegg FØR samordning (vedtakfakta DAGSFSAM) — brukes til å beregne samordningsprosent
     val dagsatsForSamordning: Int?,
+    // Dagsats med barnetillegg FØR samordning (vedtakfakta DAGSMBFSAM). DAGSMBT er beløpet etter samordning,
+    // så denne trengs for å vise hva bruker hadde fått uten samordning. null hvis ikke registrert på vedtaket.
+    val dagsatsMedBarnetilleggForSamordning: Int? = null,
     // Graderingsprosent for reduksjon pga. institusjonsopphold (vedtakfakta INSGRAD) — null hvis ikke registrert
     val insGrad: Int?,
     // Utledet av POSTERING.TABELLNAVNALIAS_KILDE. UKJENT når aliaset mangler eller ikke er kjent for oss.
