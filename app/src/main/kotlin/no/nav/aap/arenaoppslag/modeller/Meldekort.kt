@@ -124,3 +124,27 @@ data class MeldekortForSak(
     val meldekort: List<Meldekort>,
 )
 
+// Domeneobjekt: år og startuke for personens siste AAP-meldekort (meldegruppe ATTF).
+data class MeldekortStartuke(
+    val aar: Int,
+    val ukenummer: Int,
+) {
+    fun tilResponse(): MeldekortStartukeResponse = MeldekortStartukeResponse(
+        aar = aar,
+        ukenummer = ukenummer,
+    )
+}
+
+data class MeldekortStartukeRequest(
+    val personidentifikator: String,
+)
+
+data class MeldekortStartukeResponse(
+    val aar: Int?,
+    val ukenummer: Int?,
+) {
+    companion object {
+        val ingen = MeldekortStartukeResponse(aar = null, ukenummer = null)
+    }
+}
+
