@@ -94,6 +94,7 @@ class VedtakRepository(private val dataSource: DataSource) {
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
                         AND v.vedtaktypekode IN ('O', 'E', 'G')
                         AND v.aktfasekode IN ('UA', 'AU')
+                        -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato)
                 ) WHERE rn = 1
