@@ -32,6 +32,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaOppholdskravResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaVedtaksperiodeResponse
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaBeregningstidspunktResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaSykdomsvurderingResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
@@ -198,6 +199,14 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     suspend fun hentRefusjonskravStatus(saksnummer: String): HttpStatusCode =
         hentStatus("/api/migrering/$saksnummer/refusjonskrav")
+
+    suspend fun hentBeregningstidspunkt(saksnummer: String): ArenaBeregningstidspunktResponse =
+        gjørArenaOppslagGet<ArenaBeregningstidspunktResponse>(
+            "/api/migrering/$saksnummer/beregningstidspunkt"
+        ).getOrThrow()
+
+    suspend fun hentBeregningstidspunktStatus(saksnummer: String): HttpStatusCode =
+        hentStatus("/api/migrering/$saksnummer/beregningstidspunkt")
 
     suspend fun hentOppholdskrav(saksnummer: String): ArenaOppholdskravResponse =
         gjørArenaOppslagGet<ArenaOppholdskravResponse>(

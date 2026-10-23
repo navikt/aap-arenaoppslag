@@ -8,6 +8,7 @@ import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.migrering.Beregningstidspunkt
 import no.nav.aap.arenaoppslag.modeller.migrering.Krav
 import no.nav.aap.arenaoppslag.modeller.migrering.Oppholdskrav
 import no.nav.aap.arenaoppslag.modeller.migrering.Refusjonskrav
@@ -95,6 +96,13 @@ class MigreringService(
         val vedtakfakta = vedtakfaktaRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId].orEmpty()
 
         return RefusjonskravForSak(Refusjonskrav.fraVedtakfakta(vedtakfakta))
+    }
+
+    fun hentBeregningstidspunktForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): Beregningstidspunkt? {
+        val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
+        val vedtakfakta = vedtakfaktaRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId].orEmpty()
+
+        return Beregningstidspunkt.fraVedtakfakta(vedtakfakta)
     }
 
     private fun hentGjenstaaendeOrdinaerKvote(personId: PersonId, migreringsdato: LocalDate): Int? {
