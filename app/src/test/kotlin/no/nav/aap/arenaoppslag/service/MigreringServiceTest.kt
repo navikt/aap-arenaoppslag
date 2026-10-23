@@ -497,4 +497,39 @@ class MigreringServiceTest {
         assertThat(service.hentOppholdskravForSak(sakId, idag)).isNull()
         verify(exactly = 0) { vilkårsvurderingRepository.hentForVedtakIder(any()) }
     }
+
+    @Test
+    fun `velger kun MEDLSKAP5 blant vilkårene på gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(
+                vilkårsvurdering(1, "MEDLSKAP1", "N"),
+                vilkårsvurdering(2, "MEDLSKAP5", "J"),
+            )
+        )
+
+        val respons = service.hentForutgaaendeMedlemskapForSak(sakId, idag)!!.tilKontrakt()
+
+        assertThat(respons.vedtakId).isEqualTo(115)
+        assertThat(respons.vilkar).isEqualTo(ArenaVilkar(2L, "MEDLSKAP5", "J", null))
+    }
+
+    @Test
+    fun `gir forutgående medlemskap uten vilkår når vedtaket ikke har MEDLSKAP5`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+
+        val forutgaaendeMedlemskap = service.hentForutgaaendeMedlemskapForSak(sakId, idag)
+
+        assertThat(forutgaaendeMedlemskap?.vedtakId).isEqualTo(115)
+        assertThat(forutgaaendeMedlemskap?.vilkar).isNull()
+    }
+
+    @Test
+    fun `returnerer null for forutgående medlemskap når saken mangler gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
+
+        assertThat(service.hentForutgaaendeMedlemskapForSak(sakId, idag)).isNull()
+        verify(exactly = 0) { vilkårsvurderingRepository.hentForVedtakIder(any()) }
+    }
 }
