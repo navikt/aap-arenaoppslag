@@ -61,6 +61,7 @@ import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.service.VedtakService
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
 import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
@@ -183,8 +184,12 @@ private fun skapInternService(datasource: DataSource): InternService {
 
 private fun skapHistorikkService(datasource: DataSource): HistorikkService {
     val historikkRepository = HistorikkRepository(datasource)
-
-    return HistorikkService(historikkRepository)
+    return HistorikkService(
+        historikkRepository,
+        VedtakService(VedtakRepository(datasource), VedtakfaktaRepository(datasource)),
+        skapUtbetalingService(datasource),
+        skapTelleverkService(datasource)
+    )
 }
 
 private fun skapSakOgVedtakService(datasource: DataSource): SakOgVedtakService {

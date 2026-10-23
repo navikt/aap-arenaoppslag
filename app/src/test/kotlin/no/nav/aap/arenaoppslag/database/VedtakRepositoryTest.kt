@@ -12,7 +12,30 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class VedtakRepositoryTest : H2TestBase("flyway/minimumtest") {
+class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepository") {
+
+    @Test
+    fun `hentSisteLøpendeVedtakDetalj støtter null for begge maksdatoer`() {
+        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1201))
+
+        assertThat(sak?.vedtakId).isEqualTo(12011)
+        assertThat(sak?.maxdatoOrdinaer).isNull()
+        assertThat(sak?.maxdatoUnntak).isNull()
+    }
+
+    @Test
+    fun `hentSisteLøpendeVedtakDetalj finner ikke vedtak med utfall NEI`() {
+        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1202))
+
+        assertThat(sak).isNull()
+    }
+
+    @Test
+    fun `hentSisteLøpendeVedtakDetalj finner ikke vedtak med aktfase UVUP`() {
+        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1203))
+
+        assertThat(sak).isNull()
+    }
 
     @Test
     fun `hente aktfasePerioder`() {
