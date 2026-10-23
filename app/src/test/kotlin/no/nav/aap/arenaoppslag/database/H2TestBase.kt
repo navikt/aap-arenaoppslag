@@ -38,6 +38,7 @@ abstract class H2TestBase(private vararg val migrationLocations: String = emptyA
             val config = DbConfig(
                 username = TestConfig.oracleH2InMem.username,
                 password = TestConfig.oracleH2InMem.password,
+                // Bruk TRACE_LEVEL_SYSTEM_OUT=2 for å logge SQL til konsollen
                 url = "jdbc:h2:mem:$dbName;MODE=Oracle;DB_CLOSE_DELAY=-1;TRACE_LEVEL_SYSTEM_OUT=1",
                 driver = TestConfig.oracleH2InMem.driver
             )
