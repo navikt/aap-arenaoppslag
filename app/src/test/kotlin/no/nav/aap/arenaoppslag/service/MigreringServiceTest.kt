@@ -8,10 +8,12 @@ import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaBeregningstidspunktResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaDiagnose
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskrav
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaVilkar
+import no.nav.aap.arenaoppslag.modeller.migrering.Beregningstidspunkt
 import no.nav.aap.arenaoppslag.modeller.migrering.RefusjonskravForSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
@@ -392,6 +394,44 @@ class MigreringServiceTest {
         every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
 
         assertThat(service.hentRefusjonskravForSak(sakId, idag)).isNull()
+        verify(exactly = 0) { vedtakfaktaRepository.hentForVedtakIder(any()) }
+    }
+
+    @Test
+    fun `mapper AAPBERDATO til beregningstidspunkt`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(vedtakfakta("AAPBERREGL", "REGELVERK1"), vedtakfakta("AAPBERDATO", "15-03-2024"))
+        )
+
+        assertThat(service.hentBeregningstidspunktForSak(sakId, idag)?.tilKontrakt()).isEqualTo(
+            ArenaBeregningstidspunktResponse(LocalDate.of(2024, 3, 15))
+        )
+    }
+
+    @Test
+    fun `beregningstidspunkt er null uten gyldig AAPBERDATO`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(vedtakfakta("AAPBERDATO", null))
+        )
+
+        assertThat(service.hentBeregningstidspunktForSak(sakId, idag)).isEqualTo(Beregningstidspunkt(null))
+    }
+
+    @Test
+    fun `beregningstidspunkt er null når vedtaket ikke har vedtaksfakta`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+
+        assertThat(service.hentBeregningstidspunktForSak(sakId, idag)).isEqualTo(Beregningstidspunkt(null))
+    }
+
+    @Test
+    fun `beregningstidspunkt er null og vedtaksfakta hentes ikke når saken mangler løpende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
+
+        assertThat(service.hentBeregningstidspunktForSak(sakId, idag)).isNull()
         verify(exactly = 0) { vedtakfaktaRepository.hentForVedtakIder(any()) }
     }
 
