@@ -5,6 +5,7 @@ title AAP-systemene etter migreringen
 System(joark, "Joark")
 System(altinn, "Altinn")
 System(pensjonkasser, "Pensjonskasser", "pensjonsamhandling, feks. DSOP")
+System(modia, "Modia", "")
 Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
 
 System_Boundary(kelvin, "Kelvin <GCP>") {
@@ -20,6 +21,7 @@ System_Boundary(kelvin, "Kelvin <GCP>") {
     Rel(api_ekstern, api_intern, "videresender oppslag")
     Rel(saksbehandling_kelvin, behandlingsflyt, "api-kall")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
+    Rel(modia, api_intern, "AAP-saksinformasjon")
 
     Rel(postmottak, behandlingsflyt, "opprett sak")
 }
@@ -56,4 +58,6 @@ Rel(saksbehandling_kelvin, visningsklient, "inkluderer")
 
 Lay_L(postmottak, saksbehandling_kelvin)
 Lay_U(kelvin_db, behandlingsflyt)
+Lay_U(api_intern, api_ekstern)
+Lay_R(visningsklient, api_intern)
 @enduml
