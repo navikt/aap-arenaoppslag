@@ -50,7 +50,7 @@ fun Route.historikk(
     }
 
     post("/person/historikk/status/detalj") {
-        logger.info("Henter siste vedtak-detalj for person")
+        logger.info("Henter siste arena-status for person")
         val request: SignifikantHistorikkRequest = call.receive()
         val personidentifikator = request.personidentifikator
         val personId = personService.hentPersonId(personidentifikator) ?: return@post call.respond(
