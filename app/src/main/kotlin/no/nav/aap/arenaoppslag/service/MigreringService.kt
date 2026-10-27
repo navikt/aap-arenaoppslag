@@ -9,6 +9,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.migrering.Beregningstidspunkt
+import no.nav.aap.arenaoppslag.modeller.migrering.ForutgaaendeMedlemskap
 import no.nav.aap.arenaoppslag.modeller.migrering.Krav
 import no.nav.aap.arenaoppslag.modeller.migrering.Oppholdskrav
 import no.nav.aap.arenaoppslag.modeller.migrering.Refusjonskrav
@@ -81,6 +82,17 @@ class MigreringService(
         )
     }
 
+    fun hentForutgaaendeMedlemskapForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): ForutgaaendeMedlemskap? {
+        val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
+        val vilkårsvurderinger = vilkårsvurderingRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId]
+            .orEmpty()
+
+        return ForutgaaendeMedlemskap(
+            vedtakId = vedtak.vedtakId,
+            vilkar = vilkårsvurderinger.firstOrNull { it.vilkårkode == VILKÅRKODE_FORUTGAENDE_MEDLEMSKAP },
+        )
+    }
+
     fun hentVedtaksperiodeForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): Vedtaksperiode? {
         val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
 
@@ -127,6 +139,7 @@ class MigreringService(
 
     private companion object {
         private const val VILKÅRKODE_OPPHOLD_I_NORGE = "AOINORGE3"
+        private const val VILKÅRKODE_FORUTGAENDE_MEDLEMSKAP = "MEDLSKAP5"
         private const val VILKÅRKODE_INNTEKT_NEDSATT = "INNTNEDS"
         private const val VILKÅRKODE_SYKDOM_SKADE_LYTE = "SYKSKADLYT"
         private const val VILKÅRKODE_ARBEIDSEVNE = "AAARBEVNE"
