@@ -136,10 +136,17 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
 
         assertThat(resultat.meldekort).hasSize(2)
         val meldekort = resultat.meldekort.first { it.meldekortId == 5001L }
-        assertThat(meldekort.meldeform).isEqualTo("E1")
+        assertThat(meldekort.meldeform).isEqualTo("Elektronisk (test)")
         assertThat(meldekort.periode.fraOgMedDato).isEqualTo(LocalDate.of(2023, 1, 2))
         assertThat(meldekort.ukenrUke1).isEqualTo(1)
         assertThat(meldekort.ukenrUke2).isEqualTo(2)
+    }
+
+    @Test
+    fun `meldeform faller tilbake til koden naar den mangler i MKSKORTTYPE`() {
+        val meldekort = repo.hentForSak(sakMedMeldekort).meldekort.first { it.meldekortId == 5002L }
+
+        assertThat(meldekort.meldeform).isEqualTo("XX")
     }
 
     @Test

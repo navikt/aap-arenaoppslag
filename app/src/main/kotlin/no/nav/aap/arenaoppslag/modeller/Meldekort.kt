@@ -102,6 +102,8 @@ data class Meldekort(
     val ukenrUke1: Int,
     val ukenrUke2: Int,
     val meldedato: LocalDate?,
+    // Navnet fra MKSKORTTYPE, fordi frontend viser verdien direkte. Faller tilbake til MKSKORTKODE
+    // når koden mangler i kodetabellen, så informasjonen ikke går tapt.
     val meldeform: String?,
     val fortsattRegistrertArbeidssoker: Boolean?,
     val kommentar: String?,

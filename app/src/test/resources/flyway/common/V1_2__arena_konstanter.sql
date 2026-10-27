@@ -7,6 +7,10 @@ Insert into "AKTIVITETFASE" (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL,REG_DATO,
 Insert into "AKTIVITETFASE" (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL,REG_DATO,MOD_DATO,REG_USER,MOD_USER) values ('AU','Arbeidsutprøving',DATE '2010-01-29',DATE '1999-12-31',DATE '2010-01-29',DATE '2010-01-29','SIAMO','SIAMO');
 Insert into "AKTIVITETFASE" (AKTFASEKODE,AKTFASENAVN,DATO_FRA,DATO_TIL,REG_DATO,MOD_DATO,REG_USER,MOD_USER) values ('FA','Ferdig avklart',DATE '2010-01-29',DATE '1999-12-31',DATE '2010-01-29',DATE '2010-01-29','SIAMO','SIAMO');
 
+-- Navnene er oppdiktede testverdier, ikke hentet fra Arena
+Insert into "MKSKORTTYPE" (MKSKORTKODE,MKSKORTTYPENAVN) values ('E1','Elektronisk (test)');
+Insert into "MKSKORTTYPE" (MKSKORTKODE,MKSKORTTYPENAVN) values ('P1','Papir (test)');
+
 Insert into "ANMERKNINGTYPE" (ANMERKNINGKODE,ANMERKNINGNAVN,BESKRIVELSE,HENDELSETYPEKODE) values ('MAXP','Maks dagpengeperiode','Maksimal stønadsperiode er nådd','SOPPHR');
 Insert into "ANMERKNINGTYPE" (ANMERKNINGKODE,ANMERKNINGNAVN,BESKRIVELSE,HENDELSETYPEKODE) values ('MAXT','Sanksjon avspasert','Sanksjonsperiode er avspasert','SUTBANM');
 Insert into "ANMERKNINGTYPE" (ANMERKNINGKODE,ANMERKNINGNAVN,BESKRIVELSE,HENDELSETYPEKODE) values ('MELD','Frammøtelisten skal ikke beregnes fordi personen leverer meldekort','Frammøtelisten skal ikke beregnes fordi personen leverer meldekort','SMUFEIL');
