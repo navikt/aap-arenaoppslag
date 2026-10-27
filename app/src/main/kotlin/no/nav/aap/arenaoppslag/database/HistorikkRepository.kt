@@ -50,22 +50,23 @@ class HistorikkRepository(private val dataSource: DataSource) {
         FROM 
               vedtak v 
         WHERE v.person_id = ?
-          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+          AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') -- kun vedtak som er innvilget eller under behandling
           AND v.rettighetkode = 'AAP'
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
                 ((vedtaktypekode IN ('O','E','G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
-              )
-          -- Ekskluder også vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
-          AND NOT (
-              reg_user IS NOT NULL AND reg_user = 'GRENSESN'
-              AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
-          )
-          -- Ekskluder også avslag som er gamle nok til at det ikke er sannsynlig at det opprettes nye AAP-vedtak i samme sak:
-          AND NOT (utfallkode = 'NEI' AND mod_dato <= ?) -- TODO gjør noe her
+                 -- Bruk ekstra tidsbuffer for Stans. Ignorer stanser som har fått en til_dato. 
+                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?) 
+                  -- Ekskluder stansede vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
+                  AND NOT (
+                      reg_user IS NOT NULL AND reg_user = 'GRENSESN'
+                      AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
+                  )
+                ) 
+              ) 
+          AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
           AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
@@ -205,7 +206,6 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, stansTidsbuffer)
-                preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, maksimalTidUbehandletAAP)
                 preparedStatement.setDate(p++, maksimalTidUendretAAP)
                 // S2: 11-5-vedtak
