@@ -61,7 +61,7 @@ fun Route.historikk(
 
         val response = HistorikkStatusDetaljResponse(
             telleverk = detaljer.telleverk,
-            sisteSakDetalj = detaljer.sisteSakDetalj,
+            sisteSakOgVedtak = detaljer.sisteSakOgVedtak,
             sisteUtbetalingDato = detaljer.sisteUtbetalingDato
         )
 

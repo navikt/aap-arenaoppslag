@@ -32,7 +32,7 @@ public data class SignifikantHistorikkResponse(
 
 public data class HistorikkStatusDetaljResponse(
     val telleverk: TelleverkForPerson?,
-    val sisteSakDetalj: SisteSakDetaljer?,
+    val sisteSakOgVedtak: SisteSakDetaljer?,
     val sisteUtbetalingDato: LocalDate?
 ) {
     public companion object {

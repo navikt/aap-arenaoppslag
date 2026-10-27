@@ -73,7 +73,7 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "
             assertThat(response).isEqualTo(
                 HistorikkStatusDetaljResponse(
                     telleverk = TelleverkForPerson(7460, null),
-                    sisteSakDetalj = null,
+                    sisteSakOgVedtak = null,
                     sisteUtbetalingDato = null
                 )
             )
