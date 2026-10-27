@@ -132,6 +132,20 @@ COMMENT ON COLUMN "PERSON"."SPERRET_AV" IS 'Saksbeh. ident for den som etablerte
 COMMENT ON TABLE "PERSON" IS 'Tabellen omfatter alle personer som NAV har et forhold til';
 
 --------------------------------------------------------------------------------
+-- MKSKORTTYPE
+--------------------------------------------------------------------------------
+CREATE TABLE "MKSKORTTYPE"
+(
+    "MKSKORTKODE"     VARCHAR2(2)  NOT NULL,
+    "MKSKORTTYPENAVN" VARCHAR2(30) NOT NULL,
+    CONSTRAINT "MKSKORTTYP_PK" PRIMARY KEY ("MKSKORTKODE")
+);
+
+COMMENT ON COLUMN "MKSKORTTYPE"."MKSKORTKODE" IS 'Entydlig kode som identifiserer en mkskorttype';
+COMMENT ON COLUMN "MKSKORTTYPE"."MKSKORTTYPENAVN" IS 'Navn på meldekorttype';
+COMMENT ON TABLE "MKSKORTTYPE" IS 'Lovlige meldekorttyper (elektronisk, papir, manuelt osv)';
+
+--------------------------------------------------------------------------------
 -- MELDEKORT
 --------------------------------------------------------------------------------
 CREATE TABLE "MELDEKORT"
