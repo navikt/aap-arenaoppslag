@@ -42,21 +42,32 @@ class HistorikkRepository(private val dataSource: DataSource) {
             til_dato, 
             rettighetkode, 
             aktfasekode,
-            utfallkode
+            v.utfallkode, 
+            v.reg_dato,
+            v.mod_dato,
+            v.vedtak_id,
+            v.person_id
         FROM 
               vedtak v 
         WHERE v.person_id = ?
-          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+          AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') -- kun vedtak som er innvilget eller under behandling
           AND v.rettighetkode = 'AAP'
-          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND ( 
                 ((vedtaktypekode IN ('O','E','G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
                   OR
-                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
-              )
-          AND NOT (utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
+                 -- Bruk ekstra tidsbuffer for Stans. Ignorer stanser som har fått en til_dato. 
+                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?) 
+                  -- Ekskluder stansede vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
+                  AND NOT (
+                      reg_user IS NOT NULL AND reg_user = 'GRENSESN'
+                      AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
+                  )
+                ) 
+              ) 
+          AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
 
@@ -74,13 +85,17 @@ class HistorikkRepository(private val dataSource: DataSource) {
             til_dato, 
             rettighetkode, 
             aktfasekode,
-            utfallkode
+            v.utfallkode, 
+            v.reg_dato,
+            v.mod_dato,
+            v.vedtak_id,
+            v.person_id
         FROM 
               vedtak v 
         WHERE v.person_id = ?
           AND v.rettighetkode = 'AA115'
           AND v.utfallkode IS NULL -- ikke behandlet enda 
-          AND v.MOD_DATO >= ? -- ikke utdatert
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         // S3: Hent alle AAP-klager med relevant historikk for personen
@@ -100,21 +115,24 @@ class HistorikkRepository(private val dataSource: DataSource) {
             TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
             v.rettighetkode,
             v.aktfasekode,
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato,
+            v.mod_dato,
+            v.vedtak_id,
+            v.person_id
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             v.person_id = ?
-            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+            AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'TRUKK' ))
             AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
-            AND ( vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ? )
-            -- Dersom klagen ble innvilget for mer enn 6 mnd siden, regnes den som ikke relevant lenger. Ekskluder disse.
-            AND NOT ( vf.vedtakverdi IS NOT NULL AND TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') <= ? AND v.utfallkode IN ('JA', 'DELVIS' ) )
+            AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
+            AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         // S4: Hent alle AAP-anker med relevant historikk for personen
@@ -131,31 +149,48 @@ class HistorikkRepository(private val dataSource: DataSource) {
             CAST(NULL AS DATE)                    AS til_dato,
             v.rettighetkode,
             v.aktfasekode,
-            v.utfallkode
+            v.utfallkode, 
+            v.reg_dato,
+            v.mod_dato,
+            v.vedtak_id,
+            v.person_id
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
         WHERE
             v.person_id = ?
-            AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
             AND rettighetkode = 'ANKE'
+            AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'TRUKK' ))
+            AND vf.vedtakfaktakode = 'INNVF'
+            -- Vi regner anker med null INNVF som åpne. Anker med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
+            -- Og at det kan komme en ny anke etter at anken er behandlet og avslått. 
+            AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
+            AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
-        const val vanligTidsbufferUker = 78L // 52 uker + 6 måneder tilbakejustering
+        const val vanligTidsbufferUker = 78L // 52 uker gjenopptak + 6 måneder tilbakejustering
         const val stansTidsbufferUker = 119L // foreldrepenger med 80% utbetalt, trillinger, alenemor
-        const val aa115BehandlingUker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
-        const val modnedGrenseVedtak = 72L
-        const val modnedGrenseKlageInnvilget = 6L
+        const val klageTidsbufferUker = 12L // buffertid etter klagen er behandlet
+        const val ankeTidsbufferUker = 52L // buffertid etter anken er behandlet
+        const val maksimalTidUbehandletAA115Uker = 26L // maksimal behandlingstid vi regner for AA115-vedtak
+        const val maksimalTidUbehandletAAPUker = 52L // maksimal behandlingstid vi regner for AAP-vedtak
+        const val maksimalTidUbehandletKlageAnkeUker = 52L // maksimal tid uten utfall for klager og anker
+        const val nedreGrenseModifisertSidenAAPUker = 52 * 4L // uendret AAP-vedtak over særlig lang tid
+        const val nedreGrenseModifisertSidenKlageAnkeUker = 52 * 3L // uendret KLAN-vedtak over særlig lang tid
 
         fun hentAlleSignifikanteVedtakForPerson(
             arenaPersonId: Int, søknadMottattPå: LocalDate, connection: Connection
         ): List<ArenaVedtak> {
             val vanligTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(vanligTidsbufferUker))
             val stansTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(stansTidsbufferUker))
-            val vedtakModnedGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseVedtak))
-            val klageInnvilgetGrense = Date.valueOf(søknadMottattPå.minusMonths(modnedGrenseKlageInnvilget))
-            val aa115BehandlingUkerGrense = Date.valueOf(søknadMottattPå.minusWeeks(aa115BehandlingUker))
+            val klageTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(klageTidsbufferUker))
+            val ankeTidsbuffer = Date.valueOf(søknadMottattPå.minusWeeks(ankeTidsbufferUker))
+            val maksimalTidUbehandletAA115 = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletAA115Uker))
+            val maksimalTidUbehandletAAP = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletAAPUker))
+            val maksimalTidUbehandletKlageAnke = Date.valueOf(søknadMottattPå.minusWeeks(maksimalTidUbehandletKlageAnkeUker))
+            val maksimalTidUendretAAP = Date.valueOf(søknadMottattPå.minusWeeks(nedreGrenseModifisertSidenAAPUker))
+            val maksimalTidUendretKlageAnke = Date.valueOf(søknadMottattPå.minusWeeks(nedreGrenseModifisertSidenKlageAnkeUker))
 
             val query =
                 listOf(
@@ -169,21 +204,24 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 var p = 1 // parameter-indeks
                 // S1: AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, vedtakModnedGrense)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, stansTidsbuffer)
-                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, maksimalTidUbehandletAAP)
+                preparedStatement.setDate(p++, maksimalTidUendretAAP)
                 // S2: 11-5-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, aa115BehandlingUkerGrense)
+                preparedStatement.setDate(p++, maksimalTidUbehandletAA115)
                 // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, vedtakModnedGrense)
-                preparedStatement.setDate(p++, vanligTidsbuffer)
-                preparedStatement.setDate(p++, klageInnvilgetGrense)
+                preparedStatement.setDate(p++, klageTidsbuffer)
+                preparedStatement.setDate(p++, maksimalTidUbehandletKlageAnke)
+                preparedStatement.setDate(p++, maksimalTidUendretKlageAnke)
+
                 // S4: anker
                 preparedStatement.setInt(p++, arenaPersonId)
-                preparedStatement.setDate(p++, vedtakModnedGrense)
+                preparedStatement.setDate(p++, ankeTidsbuffer)
+                preparedStatement.setDate(p++, maksimalTidUbehandletKlageAnke)
+                preparedStatement.setDate(p++, maksimalTidUendretKlageAnke)
 
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaVedtak(row) }
