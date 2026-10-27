@@ -9,16 +9,18 @@ System(modia, "Modia", "")
 Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
 
 System_Boundary(kelvin, "Kelvin <GCP>") {
-    Container(postmottak, "postmottak", "Fordeler innkommende søknader")
-    Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling, produksjonsstyring, oppgaver, og Arena-omgjøring")
-    Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
-    Container(api_intern, "api-intern", "API")
-    Container(api_ekstern, "api-ekstern", "API for eksterne")
-    ContainerDb(kelvin_db, "Database", "Postgres")
-
-    Container(visningsklient, "Visningsklient", "AAP-saker i Arena")
-
-    Rel(api_ekstern, api_intern, "videresender oppslag")
+    together {
+        Container(postmottak, "postmottak", "Fordeler innkommende søknader")
+        Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling, produksjonsstyring, oppgaver, og Arena-omgjøring")
+        Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
+        ContainerDb(kelvin_db, "Database", "Postgres")
+        Container(visningsklient, "Visningsklient", "AAP-saker i Arena")
+    }
+    together {
+        Container(api_ekstern, "api-ekstern", "API for eksterne")
+        Container(api_intern, "api-intern", "API")
+    }
+    Rel_D(api_ekstern, api_intern, "videresender oppslag")
     Rel(saksbehandling_kelvin, behandlingsflyt, "api-kall")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
     Rel(modia, api_intern, "AAP-saksinformasjon")
@@ -58,6 +60,6 @@ Rel(saksbehandling_kelvin, visningsklient, "inkluderer")
 
 Lay_L(postmottak, saksbehandling_kelvin)
 Lay_U(kelvin_db, behandlingsflyt)
-Lay_U(api_intern, api_ekstern)
 Lay_R(visningsklient, api_intern)
+Lay_R(saksbehandling_kelvin, api_ekstern)
 @enduml
