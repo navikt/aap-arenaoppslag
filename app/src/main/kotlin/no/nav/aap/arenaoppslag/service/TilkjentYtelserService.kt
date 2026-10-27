@@ -164,15 +164,18 @@ class TilkjentYtelserService(
     ): ReduksjonRespons {
         val insGrad = postering?.insGrad
         val dagerForSent = meldekort.reduksjon.dagerForSent
-        val aktiveDager = arbeidsdagerIGrunnlaget(meldekort, delperiode) -
-            straffedagerIDelperiode(meldekort, delperiode)
+        val arbeidsdager = arbeidsdagerIGrunnlaget(meldekort, delperiode)
+        val aktiveDager = arbeidsdager - straffedagerIDelperiode(meldekort, delperiode)
 
         val timerArbeidetProsent = if (aktiveDager > 0) {
             (timerArbeidet / (aktiveDager * TIMER_PER_DAG) * 100).roundToInt()
         } else {
             0
         }
+
         val samordningsProsent = beregnSamordningsProsent(postering?.dagsats, postering?.dagsatsForSamordning)
+        // ANTALL er dagene Arena faktisk utbetalte for. Mangler den, faller vi tilbake til arbeidsdagene.
+        val ytelsesdager = postering?.antall ?: arbeidsdager.toDouble()
         return ReduksjonRespons(
             levertForSentDager = dagerForSent,
             timerArbeidetProsent = timerArbeidetProsent,
@@ -182,7 +185,20 @@ class TilkjentYtelserService(
             sykedager = meldekort.reduksjon.sykedager,
             institusjonsProsent = insGrad,
             anvistProsent = postering?.antall?.let { (it * PROSENT_PER_ANVIST_DAG).roundToInt() },
+            samordningReduksjonKroner = postering?.let { beregnSamordningReduksjonKroner(it, ytelsesdager) },
+            totalReduksjonKroner = postering?.let { beregnTotalReduksjonKroner(it, arbeidsdager) },
         )
+    }
+
+    private fun beregnSamordningReduksjonKroner(postering: MeldekortPostering, ytelsesdager: Double): Int? {
+        val etterSamordning = postering.dagsatsMedBarnetillegg ?: return null
+        val foerSamordning = postering.dagsatsMedBarnetilleggForSamordning ?: return null
+        return ((foerSamordning - etterSamordning) * ytelsesdager).roundToInt()
+    }
+
+    private fun beregnTotalReduksjonKroner(postering: MeldekortPostering, arbeidsdager: Int): Int? {
+        val foerSamordning = postering.dagsatsMedBarnetilleggForSamordning ?: return null
+        return (foerSamordning * arbeidsdager - postering.belop).coerceAtLeast(0)
     }
 
     private fun arbeidsdagerIGrunnlaget(meldekort: Meldekort, delperiode: Periode): Int {
