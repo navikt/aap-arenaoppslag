@@ -11,7 +11,7 @@ Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
 System_Boundary(kelvin, "Kelvin <GCP>") {
     together {
         Container(postmottak, "postmottak", "Fordeler innkommende søknader")
-        Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling, produksjonsstyring, oppgaver, og Arena-omgjøring")
+        Container(saksbehandling_kelvin, "Saksbehandling", "Frontend for saksbehandling, produksjonsstyring, og oppgaver")
         Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
         ContainerDb(kelvin_db, "Database", "Postgres")
         Container(visningsklient, "Visningsklient", "AAP-saker i Arena")
