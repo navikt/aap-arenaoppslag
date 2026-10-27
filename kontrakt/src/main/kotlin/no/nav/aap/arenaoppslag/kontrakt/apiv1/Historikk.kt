@@ -32,8 +32,8 @@ public data class SignifikantHistorikkResponse(
 
 public data class HistorikkStatusDetaljResponse(
     val telleverk: TelleverkForPerson?,
-    val sisteVedtakDetalj: SakMedSisteVedtakOgMaksdato?,
-    val sisteUtbetalingDato: LocalDate?,
+    val sisteSakDetalj: SisteSakDetaljer?,
+    val sisteUtbetalingDato: LocalDate?
 ) {
     public companion object {
         public val ingen: HistorikkStatusDetaljResponse = HistorikkStatusDetaljResponse(null, null, null)

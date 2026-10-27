@@ -7,6 +7,7 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteSakDetaljer
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.PersonId
@@ -45,15 +46,15 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
     private fun ArenaSak.tilSakId(): SakId? = sakId.toIntOrNull()?.let { SakId(it) }
 
     fun hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId: PersonId): SakMedSisteVedtakOgMaksdato? {
-        val sakMedVedtak = sakRepository.hentMaxdatoForSisteVedtak(personId)
+        val sisteVedtak = sakRepository.hentMaxdatoForSisteVedtak(personId)
 
-        val vedtakfakta = sakMedVedtak?.vedtakId?.let { vedtakId ->
+        val vedtakfakta = sisteVedtak?.vedtakId?.let { vedtakId ->
             vedtakfaktaRepository.hentForVedtakIder(listOf(vedtakId))[vedtakId]
         }
         val unntakInnvilget = vedtakfakta?.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
         val unntaksdato = vedtakfakta?.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
 
-        return sakMedVedtak?.tilKontrakt()?.copy(
+        return sisteVedtak?.tilKontrakt()?.copy(
             unntaksvilkaarGjelderFra = unntaksdato,
             unntaksvilkaarInnvilget = unntakInnvilget,
         )

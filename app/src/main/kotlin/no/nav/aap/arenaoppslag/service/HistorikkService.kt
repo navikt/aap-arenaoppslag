@@ -7,19 +7,23 @@ import no.nav.aap.arenaoppslag.Metrics.registrerAntallSignifikanteVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerEnsligSignifikantVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerNyesteSignifikanteVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
+import no.nav.aap.arenaoppslag.SakOgVedtakService
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.HistorikkStatusDetaljResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteSakDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.TelleverkForPerson
-import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
-import no.nav.aap.arenaoppslag.modeller.HistorikkStatusDetaljer
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import java.time.LocalDate
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtak as ArenaVedtakModell
 
 class HistorikkService(
     private val historikkRepository: HistorikkRepository,
     private val vedtakService: VedtakService,
     private val utbetalingService: PosteringService,
-    private val telleverkService: TelleverkService
+    private val telleverkService: TelleverkService,
+    private val sakOgVedtakService: SakOgVedtakService
 ) {
 
     // Lagrer mappingen fødselsnr -> arena-personId. Bare treff i databasen lagres.
@@ -37,7 +41,7 @@ class HistorikkService(
         personId: PersonId,
         virkningstidspunkt: LocalDate
     ): SignifikantHistorikkResponse {
-        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
+        val signifikanteVedtak: List<ArenaVedtakModell> = historikkRepository.hentAlleSignifikanteVedtakForPerson(
             personId,
             virkningstidspunkt
         )
@@ -50,7 +54,7 @@ class HistorikkService(
         })
     }
 
-    private fun rapporterMetrikker(vedtakene: List<ArenaVedtak>) {
+    private fun rapporterMetrikker(vedtakene: List<ArenaVedtakModell>) {
         if (vedtakene.isEmpty()) return
 
         vedtakene.forEach {
@@ -66,15 +70,40 @@ class HistorikkService(
         }
     }
 
-    fun hentHistorikkStatusDetalj(personId: PersonId): HistorikkStatusDetaljer {
-        val sakMedSisteVedtakOgMaksdato = vedtakService.hentSisteLøpendeVedtakDetalj(personId)
+    fun hentHistorikkStatusDetalj(personId: PersonId): HistorikkStatusDetaljResponse {
+        val sisteVedtakMedMaksdato = vedtakService.hentSisteLøpendeVedtakDetalj(personId)
+        val sisteSakMedVedtak = sisteVedtakMedMaksdato?.saksnummer()?.let { sakOgVedtakService.hentSakMedVedtak(it) }
+        val vedtakISisteSak = sisteSakMedVedtak?.vedtak?.map {
+            ArenaVedtak(
+                sakId = sisteVedtakMedMaksdato.sakId,
+                vedtaktypeKode = it.vedtaktypeKode,
+                statusKode = it.statusKode,
+                tilDato = it.tilDato,
+                fraOgMed = it.fraOgMed,
+                rettighetkode = it.rettighetkode,
+                utfallkode = it.utfallkode
+            )
+        }
+        val sisteSakDetaljer = sisteSakMedVedtak?.let {
+            SisteSakDetaljer(
+                sakId = it.sakId.toInt(),
+                saknummer = "$it.aar-$it.lopenr",
+                sakStatus = it.statuskode,
+                sakRegistrert = it.registrertDato.toLocalDate(),
+                sakAvsluttet = it.avsluttetDato?.toLocalDate(),
+                unntaksvilkaarInnvilget = sisteVedtakMedMaksdato.unntaksvilkaarInnvilget,
+                unntaksvilkaarGjelderFra = sisteVedtakMedMaksdato.unntaksvilkaarGjelderFra,
+                sisteVedtak = sisteVedtakMedMaksdato.toKontrakt(),
+                vedtakene = vedtakISisteSak ?: emptyList()
+            )
 
-        val kvoteTall = telleverkService.hentTelleverkForPerson(personId)
-        val kvote = kvoteTall?.let {
+        }
+
+        val kvote = telleverkService.hentTelleverkForPerson(personId)?.let {
             TelleverkForPerson(
                 // Korriger feilregistreringer i Arena-teller
                 ordineerAAPKvote = if (it.ordineerAAPKvote < 0) 0 else it.ordineerAAPKvote,
-                utvidetAAPKvote = if (sakMedSisteVedtakOgMaksdato?.unntaksvilkaarOppfylt() == true) {
+                utvidetAAPKvote = if (sisteVedtakMedMaksdato?.unntaksvilkaarOppfylt() == true) {
                     it.utvidetAAPKvote
                 } else null
             )
@@ -82,8 +111,11 @@ class HistorikkService(
 
         val sistePosteringsDato = utbetalingService.hentSisteAapUtbetalingForPerson(personId)
 
-
-        return HistorikkStatusDetaljer(kvote, sakMedSisteVedtakOgMaksdato, sistePosteringsDato)
+        return HistorikkStatusDetaljResponse(
+            kvote,
+            sisteSakDetaljer,
+            sistePosteringsDato
+        )
     }
 
 }

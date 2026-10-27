@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.modeller
 
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.intern.Kilde
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import java.time.LocalDate
@@ -81,6 +82,44 @@ data class ArenaVedtakRad(
         fakta = fakta,
         vilkårsvurderinger = vilkårsvurderinger,
     )
+}
+
+data class ArenaVedtakMedMaxdato(
+    val sakId: Int,
+    val vedtakId: Int,
+    val opprettetAar: Int,
+    val lopenrvedtak: Int,
+    val statusKode: String,
+    val vedtaktypeKode: String,
+    val aktivitetsfaseKode: String,
+    val fraOgMed: LocalDate?,
+    val tilDato: LocalDate?,
+    val rettighetkode: String,
+    val utfallkode: String?,
+    val maxdatoUnntak: LocalDate?,
+    val maxdatoOrdinaer: LocalDate?,
+    val unntaksvilkaarGjelderFra: LocalDate? = null,
+    val unntaksvilkaarInnvilget: Boolean? = null,
+) {
+    fun unntaksvilkaarOppfylt(): Boolean = unntaksvilkaarInnvilget == true // eksplisitt Ja til 11-12
+
+    fun saksnummer(): Saksnummer = Saksnummer(lopenrvedtak, opprettetAar)
+
+    fun sakId(): SakId = SakId(sakId)
+
+    fun toKontrakt(): VedtakMedMaksdato =
+        VedtakMedMaksdato(
+            vedtakId = vedtakId,
+            aktfaseKode = aktivitetsfaseKode,
+            vedtaktypeKode = vedtaktypeKode,
+            vedtakstatuskode = statusKode,
+            fra = fraOgMed,
+            til = tilDato,
+            maxdatoOrdinaer = maxdatoOrdinaer,
+            maxdatoUnntak = maxdatoUnntak,
+            maxdatoAap = unntaksvilkaarGjelderFra ?: maxdatoUnntak ?: maxdatoOrdinaer,
+        )
+
 }
 
 data class ArenaVedtakMedDetaljer(
