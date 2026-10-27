@@ -204,7 +204,7 @@ class MeldekortRepository(
         ukenrUke1 = row.getInt("ukenr_uke1"),
         ukenrUke2 = row.getInt("ukenr_uke2"),
         meldedato = row.getDate("dato_innkommet")?.toLocalDate(),
-        meldeform = row.getString("mkskortkode"),
+        meldeform = row.getString("meldeform"),
         fortsattArbeidssoker = tilBoolean(row.getString("status_fortsatt_arbeidsoker")),
         kommentar = row.getString("kommentar"),
         beregningStatusKode = row.getString("beregningstatuskode"),
@@ -269,23 +269,29 @@ class MeldekortRepository(
     // Andre del av unionen henter derfor meldekortene til personen innenfor sakens vedtaksvindu.
     // 'DP' er dagpenge-meldekort og hører ikke til en AAP-sak, og meldekort som allerede er postert
     // på en annen sak filtreres bort slik at et meldekort kun vises på én sak.
+    // Meldeform er navnet fra MKSKORTTYPE. LEFT JOIN og COALESCE gjør at meldekort med en kode som
+    // mangler i kodetabellen ikke faller ut, men viser koden i stedet for et tomt felt.
     @Language("OracleSql")
     private val meldekortForSakSql = """
-        SELECT m.meldekort_id, m.person_id, m.dato_innkommet, m.mkskortkode,
+        SELECT m.meldekort_id, m.person_id, m.dato_innkommet,
+               COALESCE(mt.mkskorttypenavn, m.mkskortkode) AS meldeform,
                m.status_fortsatt_arbeidsoker, m.kommentar, m.beregningstatuskode,
                mkp.dato_fra, mkp.dato_til, mkp.ukenr_uke1, mkp.ukenr_uke2
           FROM meldekort m
           JOIN meldekortperiode mkp ON mkp.aar = m.aar AND mkp.periodekode = m.periodekode
+          LEFT JOIN mkskorttype mt ON mt.mkskortkode = m.mkskortkode
          WHERE m.meldekort_id IN (SELECT p.meldekort_id
                                     FROM postering p
                                     JOIN vedtak v ON v.vedtak_id = p.vedtak_id
                                    WHERE v.sak_id = ?)
         UNION
-        SELECT m.meldekort_id, m.person_id, m.dato_innkommet, m.mkskortkode,
+        SELECT m.meldekort_id, m.person_id, m.dato_innkommet,
+               COALESCE(mt.mkskorttypenavn, m.mkskortkode) AS meldeform,
                m.status_fortsatt_arbeidsoker, m.kommentar, m.beregningstatuskode,
                mkp.dato_fra, mkp.dato_til, mkp.ukenr_uke1, mkp.ukenr_uke2
           FROM meldekort m
           JOIN meldekortperiode mkp ON mkp.aar = m.aar AND mkp.periodekode = m.periodekode
+          LEFT JOIN mkskorttype mt ON mt.mkskortkode = m.mkskortkode
           JOIN (SELECT v.person_id,
                        MIN(v.fra_dato) AS fra_dato,
                        MAX(COALESCE(v.til_dato, ?)) AS til_dato

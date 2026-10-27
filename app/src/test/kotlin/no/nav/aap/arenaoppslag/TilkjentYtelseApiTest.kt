@@ -27,6 +27,7 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rad.dagsatsMedBarnetilleggForSamordning).isEqualTo(600)
             assertThat(rad.fraOgMedDato).isEqualTo(LocalDate.of(2023, 1, 2))
             assertThat(rad.meldekort?.uker).isNotEmpty()
+            assertThat(rad.meldekort?.meldeform).isEqualTo("Elektronisk (test)")
 
             // 5 timer arbeidet av 10 arbeidsdager à 7,5 timer = 75 timer → 7 %. Ingen samordning (DAGS == DAGSFSAM). insGrad = 33 → total = 7 + 0 + 33 = 40 %.
             assertThat(rad.reduksjon?.levertForSentDager).isEqualTo(0)
