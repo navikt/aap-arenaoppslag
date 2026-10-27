@@ -86,6 +86,7 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
 
 fun Route.maksdato(sakService: SakService, personService: PersonService) {
     post("/person/maksdato") {
+        // TODO fjern dette endepunktet når Postmottak har oppgradert til det nye historikk status detalj endepunktet
         logger.info("Henter maksdato-AAP for person")
         val request: MaksdatoRequest = call.receive()
         val personidentifikator = request.personidentifikator
