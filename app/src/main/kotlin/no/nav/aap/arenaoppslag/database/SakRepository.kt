@@ -49,7 +49,7 @@ class SakRepository(private val dataSource: DataSource) {
             Maksdatolinje(
                 sakId = row.getInt("sak_id"),
                 opprettetAar = row.getInt("aar"),
-                lopenr = row.getInt("lopenrsak"),
+                lopenrSak = row.getInt("lopenrsak"),
                 vedtakId = row.getInt("vedtak_id"),
                 aktfaseKode = row.getString("aktfasekode"),
                 vedtaktypeKode = row.getString("vedtaktypekode"),

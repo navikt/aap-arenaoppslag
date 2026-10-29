@@ -55,7 +55,7 @@ public enum class SamordningVedtakStatus {
 public data class SamordningSisteVedtak(
     val vedtakId: Int,
     val saknummer: String,
-    val maksdato: LocalDate?, // null hvis verdien ikke er definert i Arena
+    val maksdato: LocalDate?, // maxdato returneres kun for vedtak med aktivitetsfase UA og AU i Arena, ellers null
     val status: SamordningVedtakStatus,
     val harForlengelseEtter11_12: Boolean
 )
