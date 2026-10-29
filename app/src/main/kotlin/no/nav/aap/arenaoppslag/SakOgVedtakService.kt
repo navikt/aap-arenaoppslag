@@ -12,6 +12,8 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
+import no.nav.aap.arenaoppslag.service.VedtakfaktaService
+import javax.sql.DataSource
 
 class SakOgVedtakService(
     private val sakRepository: SakRepository,
@@ -49,4 +51,7 @@ class SakOgVedtakService(
 
         return sak.toArenaSakMedVedtak(vedtakMedFaktaOgVilkår)
     }
+
+    fun skapVedtakfaktaService(datasource: DataSource) =
+        VedtakfaktaService(VedtakfaktaRepository(datasource))
 }

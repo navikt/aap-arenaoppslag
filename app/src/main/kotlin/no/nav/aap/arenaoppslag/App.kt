@@ -36,6 +36,7 @@ import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.service.VedtakService
+import no.nav.aap.arenaoppslag.service.VedtakfaktaService
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
 import org.slf4j.LoggerFactory
@@ -163,7 +164,8 @@ private fun skapHistorikkService(datasource: DataSource): HistorikkService {
         VedtakService(VedtakRepository(datasource), VedtakfaktaRepository(datasource)),
         skapUtbetalingService(datasource),
         skapTelleverkService(datasource),
-        skapSakOgVedtakService(datasource)
+        skapSakOgVedtakService(datasource),
+        skapVedtakfaktaService(datasource)
     )
 }
 
@@ -173,6 +175,11 @@ private fun skapSakOgVedtakService(datasource: DataSource): SakOgVedtakService {
     val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
     val vilkårsvurderingRepository = VilkårsvurderingRepository(datasource)
     return SakOgVedtakService(sakRepository, vedtakRepository, vedtakfaktaRepository, vilkårsvurderingRepository)
+}
+
+private fun skapVedtakfaktaService(datasource: DataSource): VedtakfaktaService {
+    val vedtakfaktaRepository = VedtakfaktaRepository(datasource)
+    return VedtakfaktaService(vedtakfaktaRepository)
 }
 
 private fun skapSakListeService(datasource: DataSource): SakService {
