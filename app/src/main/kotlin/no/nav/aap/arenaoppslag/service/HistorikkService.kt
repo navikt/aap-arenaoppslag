@@ -172,7 +172,7 @@ class HistorikkService(
         return when {
             faktaPåLøpendeVedtak != null -> faktaPåLøpendeVedtak
             faktaPåEget11_12Vedtak != null -> faktaPåEget11_12Vedtak
-            else -> Pair(null, null)
+            else -> Pair(null, null) // ingen vurdering registrert
         }
     }
 
