@@ -3,22 +3,8 @@ package no.nav.aap.arenaoppslag
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
-import io.ktor.server.response.respond
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerRequest
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteUtbetalingerResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakForPersonRequest
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.*
 import no.nav.aap.arenaoppslag.kontrakt.intern.TellerRequest
 import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeRequest
 import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
@@ -31,7 +17,10 @@ import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
-fun Route.historikk(historikkService: HistorikkService, personService: PersonService) {
+fun Route.historikk(
+    historikkService: HistorikkService,
+    personService: PersonService,
+) {
 
     post("/person/historikk/signifikant") {
         logger.info("Sjekker om personens AAP-Arena-historikk er signifikant for saksbehandling i Kelvin")
@@ -60,6 +49,24 @@ fun Route.historikk(historikkService: HistorikkService, personService: PersonSer
         call.respond(response)
     }
 
+    post("/person/historikk/status/detalj") {
+        logger.info("Henter siste arena-status for person")
+        val request: SignifikantHistorikkRequest = call.receive()
+        val personidentifikator = request.personidentifikator
+        val personId = personService.hentPersonId(personidentifikator) ?: return@post call.respond(
+            HistorikkStatusDetaljResponse.ingen
+        )
+
+        val detaljer = historikkService.hentHistorikkStatusDetalj(personId)
+
+        val response = HistorikkStatusDetaljResponse(
+            telleverk = detaljer.telleverk,
+            sisteSakOgVedtak = detaljer.sisteSakOgVedtak,
+            sisteUtbetalingDato = detaljer.sisteUtbetalingDato
+        )
+
+        call.respond(HttpStatusCode.OK, response)
+    }
 }
 
 fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
@@ -79,6 +86,7 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
 
 fun Route.maksdato(sakService: SakService, personService: PersonService) {
     post("/person/maksdato") {
+        // TODO fjern dette endepunktet når Postmottak har oppgradert til det nye historikk status detalj endepunktet
         logger.info("Henter maksdato-AAP for person")
         val request: MaksdatoRequest = call.receive()
         val personidentifikator = request.personidentifikator
