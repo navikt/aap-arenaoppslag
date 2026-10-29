@@ -30,6 +30,40 @@ public data class ArenaSakOppsummeringKontrakt(
  * Informasjon om siste løpende vedtak i Arena for personen, samt saksinformasjon og maxdato for vedtaket.
  * Maxdato er kun definert for vedtak med aktivitetsfase UA og AU i Arena, ellers null.
  */
+public data class SisteSakDetaljer(
+    val sakId: Int,
+    val saknummer: String,
+    val sakStatus: String,
+    val sakRegistrert: LocalDate,
+    val sakAvsluttet: LocalDate?,
+    val unntaksvilkaarInnvilget: Boolean?,
+    val unntaksvilkaarGjelderFra: LocalDate?,
+    val sisteVedtak: VedtakMedMaksdato,
+    val vedtakene: List<ArenaVedtak>,
+) {
+    public fun medUdefinertMaxsdato(): SisteSakDetaljer {
+        val sisteVedtakKopi = sisteVedtak.copy(maxdatoAap = null, maxdatoUnntak = null, maxdatoOrdinaer = null)
+
+        return this.copy(sisteVedtak = sisteVedtakKopi)
+    }
+
+    public fun erLopende(): Boolean {
+        // Stansede vedtak (vedtaktypeKode=S) har udefinert maxdato.
+        // Vi filtrer også ut vedtak med sjeldne vedtaktypeKode som K (kontroll) for nå.
+        return sisteVedtak.vedtaktypeKode in listOf("O", "E", "G") && sakStatus == "AKTIV"
+    }
+
+    public fun utredesForUfor(): Boolean = sisteVedtak.aktfaseKode == "UVUP" // 11-18
+    public fun erFerdigAvklart(): Boolean = sisteVedtak.aktfaseKode == "FA" // 11-17
+    public fun erSykepengeErstatning(): Boolean = sisteVedtak.aktfaseKode == "SPE" // 11-13
+
+    @Deprecated("Bruk unntaksvilkaarOppfylt() eller unntaksvilkaarIkkeOppfylt()")
+    public fun harInnvilget11_12(): Boolean = unntaksvilkaarInnvilget == true // eksplisitt Ja til 11-12
+
+    public fun unntaksvilkaarOppfylt(): Boolean = unntaksvilkaarInnvilget == true // eksplisitt Ja til 11-12
+    public fun unntaksvilkaarIkkeOppfylt(): Boolean = unntaksvilkaarInnvilget == false // eksplisitt Nei til 11-12
+}
+
 public data class SakMedSisteVedtakOgMaksdato(
     val sakId: Int,
     val saknummer: String,

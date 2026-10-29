@@ -23,8 +23,11 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rad.kilde).isEqualTo(PosteringKilde.MELDEKORT)
             assertThat(rad.uke).isEqualTo("1-2")
             assertThat(rad.beregnetBrutto).isEqualTo(7700)
+            assertThat(rad.dagsatsMedBarnetillegg).isEqualTo(550)
+            assertThat(rad.dagsatsMedBarnetilleggForSamordning).isEqualTo(600)
             assertThat(rad.fraOgMedDato).isEqualTo(LocalDate.of(2023, 1, 2))
             assertThat(rad.meldekort?.uker).isNotEmpty()
+            assertThat(rad.meldekort?.meldeform).isEqualTo("Elektronisk (test)")
 
             // 5 timer arbeidet av 10 arbeidsdager à 7,5 timer = 75 timer → 7 %. Ingen samordning (DAGS == DAGSFSAM). insGrad = 33 → total = 7 + 0 + 33 = 40 %.
             assertThat(rad.reduksjon?.levertForSentDager).isEqualTo(0)
@@ -34,6 +37,9 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
             assertThat(rad.reduksjon?.sykedager).isEqualTo(1.0f)
             assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(33)
+            // (600 - 550) kr × 10 anviste dager = 500 kr. Totalt: 600 × 10 - 7700 er negativt → 0.
+            assertThat(rad.reduksjon?.samordningReduksjonKroner).isEqualTo(500)
+            assertThat(rad.reduksjon?.totalReduksjonKroner).isEqualTo(0)
 
             // Anmerkningene ligger på meldekortet, også de som ikke gir reduksjon (MAXAA).
             assertThat(rad.meldekort?.anmerkninger?.map { it.kode }).containsExactly("FSNN", "MAXAA")
@@ -48,6 +54,9 @@ class TilkjentYtelseApiTest : H2TestBase("flyway/maksimum") {
             val radMeldekortTo = tilkjentYtelse.rader.first { it.meldekort?.meldekortId == 5002L }
             assertThat(radMeldekortTo.gjenstaaendeOrdinaerDager).isEqualTo(4)
             assertThat(radMeldekortTo.gjenstaaendeUnntakDager).isEqualTo(25)
+            // ANTALL mangler, så de 10 arbeidsdagene brukes: (600 - 550) × 10 = 500 kr.
+            assertThat(radMeldekortTo.reduksjon?.samordningReduksjonKroner).isEqualTo(500)
+            assertThat(radMeldekortTo.reduksjon?.totalReduksjonKroner).isEqualTo(0)
         }
     }
 

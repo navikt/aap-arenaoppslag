@@ -38,7 +38,7 @@ class TilkjentYtelserServiceTest {
             ukenrUke1 = 10,
             ukenrUke2 = 11,
             meldedato = null,
-            meldeform = "E1",
+            meldeform = "Elektronisk",
             fortsattRegistrertArbeidssoker = true,
             kommentar = null,
             dager = listOf(MeldekortDag(10, 1, LocalDate.of(2023, 1, 2), 7.5, false)),
@@ -59,6 +59,7 @@ class TilkjentYtelserServiceTest {
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
                     belop = 4970, dagsatsMedBarnetillegg = 1812, dagsats = 1500, dagsatsForSamordning = 1500,
+                    dagsatsMedBarnetilleggForSamordning = 1900,
                     insGrad = null, kilde = PosteringKilde.MELDEKORT, kildeAlias = "MKORT", kildeObjektId = 5001,
                     antall = 4.75,
                 ),
@@ -100,6 +101,11 @@ class TilkjentYtelserServiceTest {
         val meldekortRad = response.rader.first { it.kilde == PosteringKilde.MELDEKORT }
         assertThat(meldekortRad.uke).isEqualTo("10-11")
         assertThat(meldekortRad.dagsatsMedBarnetillegg).isEqualTo(1812)
+        assertThat(meldekortRad.dagsatsMedBarnetilleggForSamordning).isEqualTo(1900)
+        assertThat(response.rader.first { it.kilde == PosteringKilde.SPESIALUTBETALING }
+            .dagsatsMedBarnetilleggForSamordning).isNull()
+        // Effektiv dagsats: 4970 kr fordelt på 10 hverdager i meldekortperioden, ingen dager for sent.
+        assertThat(meldekortRad.effektivDagsats).isEqualTo(497)
         assertThat(meldekortRad.dagsats).isEqualTo(1500)
         assertThat(meldekortRad.beregnetBrutto).isEqualTo(4970)
         assertThat(meldekortRad.timerArbeidet).isEqualTo(7.5)
@@ -114,6 +120,10 @@ class TilkjentYtelserServiceTest {
         assertThat(meldekortRad.reduksjon?.institusjonsProsent).isNull()
         // 4,75 anviste dager à 20 % = 95 %, avrundet til nærmeste hele prosent.
         assertThat(meldekortRad.reduksjon?.anvistProsent).isEqualTo(95)
+        // (1900 - 1812) kr × 4,75 anviste dager = 418 kr.
+        assertThat(meldekortRad.reduksjon?.samordningReduksjonKroner).isEqualTo(418)
+        // 1900 kr × 10 arbeidsdager - 4970 kr utbetalt = 14030 kr.
+        assertThat(meldekortRad.reduksjon?.totalReduksjonKroner).isEqualTo(14030)
         assertThat(meldekortRad.meldekort?.uker).hasSize(1)
         assertThat(meldekortRad.meldekort?.fortsattRegistrertArbeidssoker).isTrue()
         // Anmerkningene følger meldekortet, og beskrivelsen flettes med verdien fra anmerkningen.
@@ -161,7 +171,7 @@ class TilkjentYtelserServiceTest {
             ukenrUke1 = 10,
             ukenrUke2 = 11,
             meldedato = null,
-            meldeform = "E1",
+            meldeform = "Elektronisk",
             fortsattRegistrertArbeidssoker = true,
             kommentar = null,
             dager = listOf(
@@ -211,7 +221,7 @@ class TilkjentYtelserServiceTest {
             ukenrUke1 = 10,
             ukenrUke2 = 11,
             meldedato = null,
-            meldeform = "E1",
+            meldeform = "Elektronisk",
             fortsattRegistrertArbeidssoker = true,
             kommentar = null,
             dager = emptyList(),
@@ -223,6 +233,7 @@ class TilkjentYtelserServiceTest {
                 MeldekortPostering(
                     vedtakId = 90010, personId = 100, meldekortId = 5001, periode = periode,
                     belop = 4970, dagsatsMedBarnetillegg = 1200, dagsats = 800, dagsatsForSamordning = 1000,
+                    dagsatsMedBarnetilleggForSamordning = 1500, antall = 10.0,
                     insGrad = 50,
                 ),
             ),
@@ -239,6 +250,59 @@ class TilkjentYtelserServiceTest {
         assertThat(rad.reduksjon?.fravar).isEqualTo(0.0f)
         assertThat(rad.reduksjon?.sykedager).isEqualTo(0.0f)
         assertThat(rad.reduksjon?.institusjonsProsent).isEqualTo(50)
+        // (1500 - 1200) kr × 10 anviste dager = 3000 kr.
+        assertThat(rad.reduksjon?.samordningReduksjonKroner).isEqualTo(3000)
+        // 1500 kr × 10 arbeidsdager - 4970 kr utbetalt = 10030 kr.
+        assertThat(rad.reduksjon?.totalReduksjonKroner).isEqualTo(10030)
+    }
+
+    @Test
+    fun `kronereduksjon bruker hverdager i delperioden naar antall mangler`() {
+        val sakId = SakId(9010)
+        val meldekortperiode = Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 12, 7))
+        val uke48 = Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 11, 30))
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    vedtakId = 90010, personId = 106, meldekortId = 5020, periode = uke48,
+                    belop = 2000, dagsatsMedBarnetillegg = 500, dagsats = 500, dagsatsForSamordning = 500,
+                    dagsatsMedBarnetilleggForSamordning = 600, antall = null,
+                    insGrad = null, kilde = PosteringKilde.MELDEKORT,
+                ),
+            ),
+            meldekort = listOf(meldekort(meldekortId = 5020, periode = meldekortperiode, ukenrUke1 = 48, ukenrUke2 = 49)),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+
+        val postert = service.hentTilkjenteYtelserForSak(sakId).rader.first { it.posteringId == null && it.beregnetBrutto != null }
+
+        // 5 hverdager i uke 48: (600 - 500) × 5 = 500 kr. Totalt: 600 × 5 - 2000 = 1000 kr.
+        assertThat(postert.reduksjon?.samordningReduksjonKroner).isEqualTo(500)
+        assertThat(postert.reduksjon?.totalReduksjonKroner).isEqualTo(1000)
+    }
+
+    @Test
+    fun `total kronereduksjon blir aldri negativ`() {
+        val sakId = SakId(9011)
+        val periode = Periode(LocalDate.of(2023, 1, 2), LocalDate.of(2023, 1, 15))
+        every { meldekortRepository.hentForSak(sakId) } returns MeldekortForSak(
+            posteringer = listOf(
+                MeldekortPostering(
+                    vedtakId = 90010, personId = 106, meldekortId = 5021, periode = periode,
+                    belop = 9999, dagsatsMedBarnetillegg = 600, dagsats = 600, dagsatsForSamordning = 600,
+                    dagsatsMedBarnetilleggForSamordning = 600, antall = 10.0,
+                    insGrad = null, kilde = PosteringKilde.MELDEKORT,
+                ),
+            ),
+            meldekort = listOf(meldekort(meldekortId = 5021, periode = periode, ukenrUke1 = 1, ukenrUke2 = 2)),
+        )
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+
+        val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
+
+        // 600 × 10 - 9999 er negativt, og klemmes til 0.
+        assertThat(rad.reduksjon?.samordningReduksjonKroner).isEqualTo(0)
+        assertThat(rad.reduksjon?.totalReduksjonKroner).isEqualTo(0)
     }
 
     @Test
@@ -355,9 +419,12 @@ class TilkjentYtelserServiceTest {
         assertThat(utenPostering.uke).isEqualTo("13-14")
         assertThat(utenPostering.dagsats).isNull()
         assertThat(utenPostering.dagsatsMedBarnetillegg).isNull()
+        assertThat(utenPostering.dagsatsMedBarnetilleggForSamordning).isNull()
         assertThat(utenPostering.timerArbeidet).isEqualTo(7.5)
         assertThat(utenPostering.reduksjon?.timerArbeidetProsent).isEqualTo(10)
         assertThat(utenPostering.reduksjon?.samordningsProsent).isEqualTo(0)
+        assertThat(utenPostering.reduksjon?.samordningReduksjonKroner).isNull()
+        assertThat(utenPostering.reduksjon?.totalReduksjonKroner).isNull()
         assertThat(utenPostering.meldekort?.beregningStatusKode).isEqualTo("FERDI")
 
         assertThat(rader.first { it.meldekort?.meldekortId == 7003L }.meldekort?.beregningStatusKode)
@@ -622,7 +689,7 @@ class TilkjentYtelserServiceTest {
         ukenrUke1 = ukenrUke1,
         ukenrUke2 = ukenrUke2,
         meldedato = null,
-        meldeform = "E1",
+        meldeform = "Elektronisk",
         fortsattRegistrertArbeidssoker = true,
         kommentar = null,
         dager = dager,

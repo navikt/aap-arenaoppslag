@@ -5,7 +5,10 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortAnmerkning
 import no.nav.aap.arenaoppslag.modeller.MeldekortDag
 import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
+import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartuke
 import no.nav.aap.arenaoppslag.modeller.Periode
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Spesialutbetaling
@@ -30,6 +33,18 @@ class MeldekortRepository(
         )
     }
 
+    fun hentStartukeForSisteMeldekort(personId: PersonId): MeldekortStartuke? = dataSource.connection.use { con ->
+        con.createParameterizedQuery(startukeForSisteMeldekortSql).use { preparedStatement ->
+            preparedStatement.setInt(1, personId.id)
+            preparedStatement.executeQuery().map { row ->
+                MeldekortStartuke(
+                    aar = row.getInt("aar"),
+                    ukenummer = row.getString("periodekode").toInt(),
+                )
+            }.firstOrNull()
+        }
+    }
+
     private fun selectPosteringer(sakId: SakId, connection: Connection): List<MeldekortPostering> =
         connection.createParameterizedQuery(posteringerForSakSql).use { preparedStatement ->
             preparedStatement.setInt(1, sakId.id)
@@ -52,6 +67,8 @@ class MeldekortRepository(
                     belop = row.getInt("belop"),
                     antall = row.getDoubleOrNull("antall"),
                     dagsatsMedBarnetillegg = row.getString("dagsats_med_barnetillegg")?.toIntOrNull(),
+                    dagsatsMedBarnetilleggForSamordning = row.getString("dagsats_med_barnetillegg_for_samordning")
+                        ?.toIntOrNull(),
                     dagsats = row.getString("dagsats")?.toIntOrNull(),
                     dagsatsForSamordning = row.getString("dagsats_for_samordning")?.toIntOrNull(),
                     insGrad = row.getString("ins_grad")?.toIntOrNull(),
@@ -187,7 +204,7 @@ class MeldekortRepository(
         ukenrUke1 = row.getInt("ukenr_uke1"),
         ukenrUke2 = row.getInt("ukenr_uke2"),
         meldedato = row.getDate("dato_innkommet")?.toLocalDate(),
-        meldeform = row.getString("mkskortkode"),
+        meldeform = row.getString("meldeform"),
         fortsattArbeidssoker = tilBoolean(row.getString("status_fortsatt_arbeidsoker")),
         kommentar = row.getString("kommentar"),
         beregningStatusKode = row.getString("beregningstatuskode"),
@@ -217,19 +234,20 @@ class MeldekortRepository(
     private val posteringerForSakSql = """
         WITH fakta AS (
             SELECT vf.vedtak_id,
-                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSMBT'  THEN vf.vedtakverdi END) AS dagsats_med_barnetillegg,
-                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGS'     THEN vf.vedtakverdi END) AS dagsats,
-                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSFSAM' THEN vf.vedtakverdi END) AS dagsats_for_samordning,
-                   MAX(CASE WHEN vf.vedtakfaktakode = 'INSGRAD'  THEN vf.vedtakverdi END) AS ins_grad
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSMBT'    THEN vf.vedtakverdi END) AS dagsats_med_barnetillegg,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSMBFSAM' THEN vf.vedtakverdi END) AS dagsats_med_barnetillegg_for_samordning,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGS'       THEN vf.vedtakverdi END) AS dagsats,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'DAGSFSAM'   THEN vf.vedtakverdi END) AS dagsats_for_samordning,
+                   MAX(CASE WHEN vf.vedtakfaktakode = 'INSGRAD'    THEN vf.vedtakverdi END) AS ins_grad
               FROM vedtakfakta vf
              WHERE vf.vedtak_id IN (SELECT v.vedtak_id FROM vedtak v WHERE v.sak_id = ?)
-               AND vf.vedtakfaktakode IN ('DAGSMBT', 'DAGS', 'DAGSFSAM', 'INSGRAD')
+               AND vf.vedtakfaktakode IN ('DAGSMBT', 'DAGSMBFSAM', 'DAGS', 'DAGSFSAM', 'INSGRAD')
              GROUP BY vf.vedtak_id
         )
         SELECT p.postering_id, p.posteringtypekode, p.vedtak_id, p.person_id, p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.belop,
                p.antall,
                p.tabellnavnalias_kilde, p.objekt_id_kilde,
-               f.dagsats_med_barnetillegg, f.dagsats, f.dagsats_for_samordning, f.ins_grad,
+               f.dagsats_med_barnetillegg, f.dagsats_med_barnetillegg_for_samordning, f.dagsats, f.dagsats_for_samordning, f.ins_grad,
                s.spesutbetaling_id AS spes_id, s.begrunnelse AS spes_begrunnelse, s.belop AS spes_belop,
                s.belopkode AS spes_belopkode, s.dato_utbetaling AS spes_dato_utbetaling,
                s.dato_fra AS spes_dato_fra, s.dato_til AS spes_dato_til,
@@ -251,23 +269,29 @@ class MeldekortRepository(
     // Andre del av unionen henter derfor meldekortene til personen innenfor sakens vedtaksvindu.
     // 'DP' er dagpenge-meldekort og hører ikke til en AAP-sak, og meldekort som allerede er postert
     // på en annen sak filtreres bort slik at et meldekort kun vises på én sak.
+    // Meldeform er navnet fra MKSKORTTYPE. LEFT JOIN og COALESCE gjør at meldekort med en kode som
+    // mangler i kodetabellen ikke faller ut, men viser koden i stedet for et tomt felt.
     @Language("OracleSql")
     private val meldekortForSakSql = """
-        SELECT m.meldekort_id, m.person_id, m.dato_innkommet, m.mkskortkode,
+        SELECT m.meldekort_id, m.person_id, m.dato_innkommet,
+               COALESCE(mt.mkskorttypenavn, m.mkskortkode) AS meldeform,
                m.status_fortsatt_arbeidsoker, m.kommentar, m.beregningstatuskode,
                mkp.dato_fra, mkp.dato_til, mkp.ukenr_uke1, mkp.ukenr_uke2
           FROM meldekort m
           JOIN meldekortperiode mkp ON mkp.aar = m.aar AND mkp.periodekode = m.periodekode
+          LEFT JOIN mkskorttype mt ON mt.mkskortkode = m.mkskortkode
          WHERE m.meldekort_id IN (SELECT p.meldekort_id
                                     FROM postering p
                                     JOIN vedtak v ON v.vedtak_id = p.vedtak_id
                                    WHERE v.sak_id = ?)
         UNION
-        SELECT m.meldekort_id, m.person_id, m.dato_innkommet, m.mkskortkode,
+        SELECT m.meldekort_id, m.person_id, m.dato_innkommet,
+               COALESCE(mt.mkskorttypenavn, m.mkskortkode) AS meldeform,
                m.status_fortsatt_arbeidsoker, m.kommentar, m.beregningstatuskode,
                mkp.dato_fra, mkp.dato_til, mkp.ukenr_uke1, mkp.ukenr_uke2
           FROM meldekort m
           JOIN meldekortperiode mkp ON mkp.aar = m.aar AND mkp.periodekode = m.periodekode
+          LEFT JOIN mkskorttype mt ON mt.mkskortkode = m.mkskortkode
           JOIN (SELECT v.person_id,
                        MIN(v.fra_dato) AS fra_dato,
                        MAX(COALESCE(v.til_dato, ?)) AS til_dato
@@ -296,6 +320,18 @@ class MeldekortRepository(
              ORDER BY meldekort_id, ukenr, dagnr
         """.trimIndent()
     }
+
+    // Meldekort-ID er stigende sekvens i Arena, så høyeste ID er personens siste meldekort.
+    // Meldegruppe ATTF avgrenser til AAP-meldekort.
+    @Language("OracleSql")
+    private val startukeForSisteMeldekortSql = """
+        SELECT m.aar, m.periodekode
+          FROM meldekort m
+         WHERE m.meldekort_id = (SELECT MAX(meldekort_id)
+                                   FROM meldekort
+                                  WHERE person_id = ?
+                                    AND meldegruppekode = 'ATTF')
+    """.trimIndent()
 
     // Oracle støtter ikke listeparametere i PreparedStatement, så meldekort-IDer interpoleres direkte.
     // Anmerkninger fra beregninger mot vedtak på andre saker hører ikke til denne saken.

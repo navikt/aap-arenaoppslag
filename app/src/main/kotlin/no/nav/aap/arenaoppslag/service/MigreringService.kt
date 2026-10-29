@@ -8,10 +8,15 @@ import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.migrering.Beregningstidspunkt
+import no.nav.aap.arenaoppslag.modeller.migrering.ForutgaaendeMedlemskap
 import no.nav.aap.arenaoppslag.modeller.migrering.Krav
+import no.nav.aap.arenaoppslag.modeller.migrering.Oppholdskrav
 import no.nav.aap.arenaoppslag.modeller.migrering.Refusjonskrav
 import no.nav.aap.arenaoppslag.modeller.migrering.RefusjonskravForSak
 import no.nav.aap.arenaoppslag.modeller.migrering.Sykdomsvurdering
+import no.nav.aap.arenaoppslag.modeller.migrering.Vedtaksperiode
+import no.nav.aap.komponenter.httpklient.exception.VerdiIkkeFunnetException
 import java.time.LocalDate
 
 class MigreringService(
@@ -25,12 +30,14 @@ class MigreringService(
 
     fun hentKravForSak(sak: ArenaSak, sakId: SakId, idag: LocalDate = LocalDate.now()): Krav {
         val forsteInnvilgedeVedtak = vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId)
-        val gjeldendeMeldekortperiode = meldekortperiodeRepository.hentGjeldendePeriode(idag)
+        val personId = PersonId(sak.person.personId)
+        val gjeldendeMeldekortperiode = meldekortperiodeRepository.hentGjeldendePeriodeForPerson(personId, idag)
         val migreringsdato = gjeldendeMeldekortperiode?.fraOgMedDato
+            ?: throw VerdiIkkeFunnetException("Fant ingen meldekortperiode for brukeren som dekker $idag for sak ${sakId.id}, saken kan derfor ikke migreres.")
 
-        val gjenstaaendeOrdinaerKvote = migreringsdato?.let {
-            hentGjenstaaendeOrdinaerKvote(PersonId(sak.person.personId), it)
-        }
+        val sisteFerdigBehandledeMeldekortperiode = meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(personId)
+
+        val gjenstaaendeOrdinaerKvote = hentGjenstaaendeOrdinaerKvote(personId, migreringsdato)
 
         return Krav(
             lopenr = sak.lopenr,
@@ -38,6 +45,7 @@ class MigreringService(
             soknadsdato = forsteInnvilgedeVedtak?.fraOgMed,
             migreringsdato = migreringsdato,
             gjenstaaendeOrdinaerKvote = gjenstaaendeOrdinaerKvote,
+            sisteFerdigBehandledeMeldekortperiode = sisteFerdigBehandledeMeldekortperiode,
         )
     }
 
@@ -54,8 +62,44 @@ class MigreringService(
         return Sykdomsvurdering(
             vedtakId = vedtak.vedtakId,
             begrunnelse = vedtak.begrunnelse,
-            vilkar = vilkårsvurderinger.filter { it.vilkårkode in setOf("INNTNEDS", "SYKSKADLYT", "AAARBEVNE") },
+            vilkar = vilkårsvurderinger.filter { it.vilkårkode in setOf(
+                VILKÅRKODE_INNTEKT_NEDSATT,
+                VILKÅRKODE_SYKDOM_SKADE_LYTE,
+                VILKÅRKODE_ARBEIDSEVNE)
+            },
             diagnoser = diagnoser,
+        )
+    }
+
+    fun hentOppholdskravForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): Oppholdskrav? {
+        val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
+        val vilkårsvurderinger = vilkårsvurderingRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId]
+            .orEmpty()
+
+        return Oppholdskrav(
+            vedtakId = vedtak.vedtakId,
+            vilkar = vilkårsvurderinger.firstOrNull { it.vilkårkode == VILKÅRKODE_OPPHOLD_I_NORGE },
+        )
+    }
+
+    fun hentForutgaaendeMedlemskapForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): ForutgaaendeMedlemskap? {
+        val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
+        val vilkårsvurderinger = vilkårsvurderingRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId]
+            .orEmpty()
+
+        return ForutgaaendeMedlemskap(
+            vedtakId = vedtak.vedtakId,
+            vilkar = vilkårsvurderinger.firstOrNull { it.vilkårkode == VILKÅRKODE_FORUTGAENDE_MEDLEMSKAP },
+        )
+    }
+
+    fun hentVedtaksperiodeForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): Vedtaksperiode? {
+        val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
+
+        return Vedtaksperiode(
+            vedtakId = vedtak.vedtakId,
+            fraDato = vedtak.fraOgMed,
+            tilDato = vedtak.tilDato,
         )
     }
 
@@ -64,6 +108,13 @@ class MigreringService(
         val vedtakfakta = vedtakfaktaRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId].orEmpty()
 
         return RefusjonskravForSak(Refusjonskrav.fraVedtakfakta(vedtakfakta))
+    }
+
+    fun hentBeregningstidspunktForSak(sakId: SakId, idag: LocalDate = LocalDate.now()): Beregningstidspunkt? {
+        val vedtak = vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) ?: return null
+        val vedtakfakta = vedtakfaktaRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId].orEmpty()
+
+        return Beregningstidspunkt.fraVedtakfakta(vedtakfakta)
     }
 
     private fun hentGjenstaaendeOrdinaerKvote(personId: PersonId, migreringsdato: LocalDate): Int? {
@@ -87,6 +138,11 @@ class MigreringService(
     }
 
     private companion object {
+        private const val VILKÅRKODE_OPPHOLD_I_NORGE = "AOINORGE3"
+        private const val VILKÅRKODE_FORUTGAENDE_MEDLEMSKAP = "MEDLSKAP5"
+        private const val VILKÅRKODE_INNTEKT_NEDSATT = "INNTNEDS"
+        private const val VILKÅRKODE_SYKDOM_SKADE_LYTE = "SYKSKADLYT"
+        private const val VILKÅRKODE_ARBEIDSEVNE = "AAARBEVNE"
         private const val KVOTE_ORDINAER = "AAP"
         private const val GRUNNLAG_MELDEKORT = "MKORT"
         private val NULLSTILLINGSTYPER = setOf("INIT", "NULLE")

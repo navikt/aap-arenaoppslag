@@ -64,6 +64,13 @@ class TilkjentYtelserService(
             val reduksjon = meldekort?.let {
                 byggReduksjon(it, snitt(it.periode, postering.periode), timerArbeidetEtterStraff ?: 0.0, postering)
             }
+
+            val antallYtelsesDager = meldekort?.let { snitt(it.periode, postering.periode).antallHverdager() }
+            val effektivDagsats = antallYtelsesDager
+                ?.takeIf { it > 0 }
+                ?.let { postering.belop / it }
+                ?: postering.dagsats
+
             TilkjentYtelseRad(
                 posteringId = postering.posteringId,
                 posteringTypeKode = postering.posteringTypeKode,
@@ -72,7 +79,9 @@ class TilkjentYtelserService(
                 uke = meldekort?.let { "${it.ukenrUke1}-${it.ukenrUke2}" },
                 kilde = postering.kilde,
                 dagsatsMedBarnetillegg = postering.dagsatsMedBarnetillegg,
+                dagsatsMedBarnetilleggForSamordning = postering.dagsatsMedBarnetilleggForSamordning,
                 dagsats = postering.dagsats,
+                effektivDagsats = effektivDagsats,
                 beregnetBrutto = postering.belop,
                 timerArbeidet = timerArbeidetEtterStraff,
                 reduksjon = reduksjon,
@@ -113,7 +122,9 @@ class TilkjentYtelserService(
             uke = "${meldekort.ukenrUke1}-${meldekort.ukenrUke2}",
             kilde = PosteringKilde.MELDEKORT,
             dagsatsMedBarnetillegg = null,
+            dagsatsMedBarnetilleggForSamordning = null,
             dagsats = null,
+            effektivDagsats = null,
             beregnetBrutto = null,
             timerArbeidet = timerArbeidetEtterStraff,
             reduksjon = byggReduksjon(
@@ -153,15 +164,18 @@ class TilkjentYtelserService(
     ): ReduksjonRespons {
         val insGrad = postering?.insGrad
         val dagerForSent = meldekort.reduksjon.dagerForSent
-        val aktiveDager = arbeidsdagerIGrunnlaget(meldekort, delperiode) -
-            straffedagerIDelperiode(meldekort, delperiode)
+        val arbeidsdager = arbeidsdagerIGrunnlaget(meldekort, delperiode)
+        val aktiveDager = arbeidsdager - straffedagerIDelperiode(meldekort, delperiode)
 
         val timerArbeidetProsent = if (aktiveDager > 0) {
             (timerArbeidet / (aktiveDager * TIMER_PER_DAG) * 100).roundToInt()
         } else {
             0
         }
+
         val samordningsProsent = beregnSamordningsProsent(postering?.dagsats, postering?.dagsatsForSamordning)
+        // ANTALL er dagene Arena faktisk utbetalte for. Mangler den, faller vi tilbake til arbeidsdagene.
+        val ytelsesdager = postering?.antall ?: arbeidsdager.toDouble()
         return ReduksjonRespons(
             levertForSentDager = dagerForSent,
             timerArbeidetProsent = timerArbeidetProsent,
@@ -171,7 +185,20 @@ class TilkjentYtelserService(
             sykedager = meldekort.reduksjon.sykedager,
             institusjonsProsent = insGrad,
             anvistProsent = postering?.antall?.let { (it * PROSENT_PER_ANVIST_DAG).roundToInt() },
+            samordningReduksjonKroner = postering?.let { beregnSamordningReduksjonKroner(it, ytelsesdager) },
+            totalReduksjonKroner = postering?.let { beregnTotalReduksjonKroner(it, arbeidsdager) },
         )
+    }
+
+    private fun beregnSamordningReduksjonKroner(postering: MeldekortPostering, ytelsesdager: Double): Int? {
+        val etterSamordning = postering.dagsatsMedBarnetillegg ?: return null
+        val foerSamordning = postering.dagsatsMedBarnetilleggForSamordning ?: return null
+        return ((foerSamordning - etterSamordning) * ytelsesdager).roundToInt()
+    }
+
+    private fun beregnTotalReduksjonKroner(postering: MeldekortPostering, arbeidsdager: Int): Int? {
+        val foerSamordning = postering.dagsatsMedBarnetilleggForSamordning ?: return null
+        return (foerSamordning * arbeidsdager - postering.belop).coerceAtLeast(0)
     }
 
     private fun arbeidsdagerIGrunnlaget(meldekort: Meldekort, delperiode: Periode): Int {

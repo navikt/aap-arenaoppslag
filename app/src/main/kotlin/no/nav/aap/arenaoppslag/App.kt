@@ -1,51 +1,22 @@
 package no.nav.aap.arenaoppslag
 
 import com.zaxxer.hikari.HikariDataSource
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.serialization.jackson.JacksonConverter
-import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStarted
-import io.ktor.server.application.ApplicationStopPreparing
-import io.ktor.server.application.ApplicationStopped
-import io.ktor.server.application.ApplicationStopping
-import io.ktor.server.application.install
-import io.ktor.server.application.log
-import io.ktor.server.auth.authenticate
-import io.ktor.server.engine.connector
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.metrics.micrometer.MicrometerMetrics
-import io.ktor.server.netty.Netty
-import io.ktor.server.plugins.callid.CallId
-import io.ktor.server.plugins.callid.callIdMdc
-import io.ktor.server.plugins.calllogging.CallLogging
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.request.path
-import io.ktor.server.routing.route
-import io.ktor.server.routing.routing
-import io.ktor.utils.io.CancellationException
+import io.ktor.http.*
+import io.ktor.serialization.jackson.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.engine.*
+import io.ktor.server.metrics.micrometer.*
+import io.ktor.server.netty.*
+import io.ktor.server.plugins.callid.*
+import io.ktor.server.plugins.calllogging.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.request.*
+import io.ktor.server.routing.*
+import io.ktor.utils.io.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
-import java.time.LocalDate
-import java.util.UUID
-import javax.sql.DataSource
 import no.nav.aap.arenaoppslag.Metrics.prometheus
-import no.nav.aap.arenaoppslag.database.ArenaDatasource
-import no.nav.aap.arenaoppslag.database.HistorikkRepository
-import no.nav.aap.arenaoppslag.database.MaksimumRepository
-import no.nav.aap.arenaoppslag.database.MedisinskOpplysningRepository
-import no.nav.aap.arenaoppslag.database.MeldekortRepository
-import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
-import no.nav.aap.arenaoppslag.database.OppgaveRepository
-import no.nav.aap.arenaoppslag.database.PeriodeRepository
-import no.nav.aap.arenaoppslag.database.PersonRepository
-import no.nav.aap.arenaoppslag.database.PosteringRepository
-import no.nav.aap.arenaoppslag.database.SakRepository
-import no.nav.aap.arenaoppslag.database.SaksopplysningRepository
-import no.nav.aap.arenaoppslag.database.TelleverkRepository
-import no.nav.aap.arenaoppslag.database.tilDbDispatcher
-import no.nav.aap.arenaoppslag.database.VedtakRepository
-import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
-import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.database.*
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.pdl.IPdlGateway
 import no.nav.aap.arenaoppslag.pdl.PdlGateway
@@ -54,18 +25,23 @@ import no.nav.aap.arenaoppslag.plugins.bruker
 import no.nav.aap.arenaoppslag.plugins.statusPages
 import no.nav.aap.arenaoppslag.service.HistorikkService
 import no.nav.aap.arenaoppslag.service.InternService
+import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
+import no.nav.aap.arenaoppslag.service.MeldekortService
+import no.nav.aap.arenaoppslag.service.MigreringService
 import no.nav.aap.arenaoppslag.service.OppgaveService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
+import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
+import no.nav.aap.arenaoppslag.service.VedtakService
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
-import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
-import no.nav.aap.arenaoppslag.service.MigreringService
-import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import org.slf4j.LoggerFactory
+import java.time.LocalDate
+import java.util.*
+import javax.sql.DataSource
 
 val logger = LoggerFactory.getLogger("App")
 
@@ -182,8 +158,13 @@ private fun skapInternService(datasource: DataSource): InternService {
 
 private fun skapHistorikkService(datasource: DataSource): HistorikkService {
     val historikkRepository = HistorikkRepository(datasource)
-
-    return HistorikkService(historikkRepository)
+    return HistorikkService(
+        historikkRepository,
+        VedtakService(VedtakRepository(datasource), VedtakfaktaRepository(datasource)),
+        skapUtbetalingService(datasource),
+        skapTelleverkService(datasource),
+        skapSakOgVedtakService(datasource)
+    )
 }
 
 private fun skapSakOgVedtakService(datasource: DataSource): SakOgVedtakService {
@@ -261,6 +242,11 @@ private fun skapOppgaveService(datasource: DataSource): OppgaveService {
     return OppgaveService(oppgaveRepository)
 }
 
+private fun skapMeldekortService(datasource: DataSource): MeldekortService {
+    val meldekortRepository = MeldekortRepository(datasource)
+    return MeldekortService(meldekortRepository)
+}
+
 private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
@@ -274,6 +260,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
     val oppgaveService = skapOppgaveService(datasource)
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
+    val meldekortService = skapMeldekortService(datasource)
 
     routing {
         actuator(prometheus)
@@ -299,6 +286,10 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
                 sak(sakOgVedtakService)
+                meldekortStartuke(
+                    meldekortService = meldekortService,
+                    personService = personService,
+                )
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
@@ -324,6 +315,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                     posteringService = utbetalingService,
                     telleverkService = telleverkService,
                 )
+
             }
             route("/api/migrering") {
                 migrering(

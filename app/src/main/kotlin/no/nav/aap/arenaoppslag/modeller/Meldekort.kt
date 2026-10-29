@@ -21,6 +21,9 @@ data class MeldekortPostering(
     val dagsats: Int?,
     // Dagsats uten barnetillegg FØR samordning (vedtakfakta DAGSFSAM) — brukes til å beregne samordningsprosent
     val dagsatsForSamordning: Int?,
+    // Dagsats med barnetillegg FØR samordning (vedtakfakta DAGSMBFSAM). DAGSMBT er beløpet etter samordning,
+    // så denne trengs for å vise hva bruker hadde fått uten samordning. null hvis ikke registrert på vedtaket.
+    val dagsatsMedBarnetilleggForSamordning: Int? = null,
     // Graderingsprosent for reduksjon pga. institusjonsopphold (vedtakfakta INSGRAD) — null hvis ikke registrert
     val insGrad: Int?,
     // Utledet av POSTERING.TABELLNAVNALIAS_KILDE. UKJENT når aliaset mangler eller ikke er kjent for oss.
@@ -99,6 +102,8 @@ data class Meldekort(
     val ukenrUke1: Int,
     val ukenrUke2: Int,
     val meldedato: LocalDate?,
+    // Navnet fra MKSKORTTYPE, fordi frontend viser verdien direkte. Faller tilbake til MKSKORTKODE
+    // når koden mangler i kodetabellen, så informasjonen ikke går tapt.
     val meldeform: String?,
     val fortsattRegistrertArbeidssoker: Boolean?,
     val kommentar: String?,
@@ -123,4 +128,28 @@ data class MeldekortForSak(
     val posteringer: List<MeldekortPostering>,
     val meldekort: List<Meldekort>,
 )
+
+// Domeneobjekt: år og startuke for personens siste AAP-meldekort (meldegruppe ATTF).
+data class MeldekortStartuke(
+    val aar: Int,
+    val ukenummer: Int,
+) {
+    fun tilResponse(): MeldekortStartukeResponse = MeldekortStartukeResponse(
+        aar = aar,
+        ukenummer = ukenummer,
+    )
+}
+
+data class MeldekortStartukeRequest(
+    val personidentifikator: String,
+)
+
+data class MeldekortStartukeResponse(
+    val aar: Int?,
+    val ukenummer: Int?,
+) {
+    companion object {
+        val ingen = MeldekortStartukeResponse(aar = null, ukenummer = null)
+    }
+}
 

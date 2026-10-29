@@ -17,6 +17,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HarHistorikkResponse
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.HistorikkStatusDetaljResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.MaksdatoSamordningRequest
@@ -30,6 +31,10 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.InternVedtakRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagRequest
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderMed11_17Response
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaForutgaaendeMedlemskapResponse
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaOppholdskravResponse
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaVedtaksperiodeResponse
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaBeregningstidspunktResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaSykdomsvurderingResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
@@ -39,6 +44,8 @@ import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
 import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
 import no.nav.aap.arenaoppslag.modeller.ArenaSakDetaljert
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeRequest
+import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
 import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.server
@@ -140,6 +147,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
             "/api/v1/person/historikk/signifikant", req
         ).getOrThrow()
 
+    suspend fun hentHistorikkStatusDetalj(
+        req: SignifikantHistorikkRequest
+    ): HistorikkStatusDetaljResponse =
+        gjørArenaOppslag<HistorikkStatusDetaljResponse, SignifikantHistorikkRequest>(
+            "/api/v1/person/historikk/status/detalj", req
+        ).getOrThrow()
+
     suspend fun hentTilkjentYtelse(sakid: String): TilkjentYtelseResponse =
         gjørArenaOppslagGet<TilkjentYtelseResponse>(
             "/api/intern/sak/$sakid/tilkjent-ytelse"
@@ -180,6 +194,13 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     suspend fun hentSykdomsvurderingStatus(saksnummer: String): HttpStatusCode =
         hentStatus("/api/migrering/$saksnummer/sykdom")
 
+    suspend fun hentMeldekortStartuke(
+        req: MeldekortStartukeRequest
+    ): MeldekortStartukeResponse =
+        gjørArenaOppslag<MeldekortStartukeResponse, MeldekortStartukeRequest>(
+            "/api/v1/samordning/meldekort/startuke", req
+        ).getOrThrow()
+
     suspend fun hentRefusjonskrav(saksnummer: String): ArenaRefusjonskravResponse =
         gjørArenaOppslagGet<ArenaRefusjonskravResponse>(
             "/api/migrering/$saksnummer/refusjonskrav"
@@ -187,6 +208,38 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
 
     suspend fun hentRefusjonskravStatus(saksnummer: String): HttpStatusCode =
         hentStatus("/api/migrering/$saksnummer/refusjonskrav")
+
+    suspend fun hentBeregningstidspunkt(saksnummer: String): ArenaBeregningstidspunktResponse =
+        gjørArenaOppslagGet<ArenaBeregningstidspunktResponse>(
+            "/api/migrering/$saksnummer/beregningstidspunkt"
+        ).getOrThrow()
+
+    suspend fun hentBeregningstidspunktStatus(saksnummer: String): HttpStatusCode =
+        hentStatus("/api/migrering/$saksnummer/beregningstidspunkt")
+
+    suspend fun hentOppholdskrav(saksnummer: String): ArenaOppholdskravResponse =
+        gjørArenaOppslagGet<ArenaOppholdskravResponse>(
+            "/api/migrering/$saksnummer/oppholdskrav"
+        ).getOrThrow()
+
+    suspend fun hentOppholdskravStatus(saksnummer: String): HttpStatusCode =
+        hentStatus("/api/migrering/$saksnummer/oppholdskrav")
+
+    suspend fun hentForutgaaendeMedlemskap(saksnummer: String): ArenaForutgaaendeMedlemskapResponse =
+        gjørArenaOppslagGet<ArenaForutgaaendeMedlemskapResponse>(
+            "/api/migrering/$saksnummer/forutgaaende-medlemskap"
+        ).getOrThrow()
+
+    suspend fun hentForutgaaendeMedlemskapStatus(saksnummer: String): HttpStatusCode =
+        hentStatus("/api/migrering/$saksnummer/forutgaaende-medlemskap")
+
+    suspend fun hentVedtaksperiode(saksnummer: String): ArenaVedtaksperiodeResponse =
+        gjørArenaOppslagGet<ArenaVedtaksperiodeResponse>(
+            "/api/migrering/$saksnummer/vedtaksperiode"
+        ).getOrThrow()
+
+    suspend fun hentVedtaksperiodeStatus(saksnummer: String): HttpStatusCode =
+        hentStatus("/api/migrering/$saksnummer/vedtaksperiode")
 
     private suspend fun hentStatus(endepunkt: String): HttpStatusCode {
         val token = tokenProvider.generate()

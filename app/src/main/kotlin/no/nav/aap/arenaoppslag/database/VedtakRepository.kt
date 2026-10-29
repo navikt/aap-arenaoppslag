@@ -3,6 +3,7 @@ package no.nav.aap.arenaoppslag.database
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedMaxdato
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
@@ -17,6 +18,16 @@ import java.time.LocalDate
 import javax.sql.DataSource
 
 class VedtakRepository(private val dataSource: DataSource) {
+
+    fun hentSisteLøpendeVedtakDetalj(personId: PersonId): ArenaVedtakMedMaxdato? {
+        return dataSource.connection.use { connection ->
+            connection.prepareStatement(selectSisteVedtakSomIkkeErStansetOgPåvirkerKvote).use { preparedStatement ->
+                preparedStatement.setInt(1, personId.id)
+                val resultSet = preparedStatement.executeQuery()
+                if (resultSet.next()) mapperForArenaVedtakDetalj(resultSet) else null
+            }
+        }
+    }
 
     fun hentVedtakStatuser(fodselsnr: String): List<VedtakStatus> {
         return dataSource.connection.use { con ->
@@ -63,6 +74,41 @@ class VedtakRepository(private val dataSource: DataSource) {
 
     companion object {
 
+        @Language("OracleSql")
+        internal val selectSisteVedtakSomIkkeErStansetOgPåvirkerKvote = """
+            WITH nyeste_vedtak AS (
+                SELECT rettighetkode, utfallkode, aar, sak_id, vedtak_id, lopenrvedtak, vedtaktypekode, aktfasekode, vedtakstatuskode, fra_dato, til_dato FROM (
+                    SELECT v.sak_id,
+                        v.vedtak_id,
+                        v.vedtaktypekode,
+                        v.aktfasekode,
+                        v.fra_dato,
+                        v.til_dato,
+                        v.vedtakstatuskode,
+                        v.lopenrvedtak,
+                        v.aar,
+                        v.rettighetkode,
+                        v.utfallkode,
+                        ROW_NUMBER() OVER (PARTITION BY v.person_id ORDER BY v.til_dato DESC NULLS FIRST, v.vedtak_id DESC) as rn
+                    FROM vedtak v
+                    WHERE v.person_id = ?
+                        AND v.rettighetkode = 'AAP'
+                        AND v.utfallkode = 'JA'
+                        AND v.vedtakstatuskode IN ('IVERK','AVSLU')
+                        AND v.vedtaktypekode IN ('O', 'E', 'G')
+                        AND v.aktfasekode IN ('UA', 'AU')
+                        -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
+                        AND v.fra_dato IS NOT NULL
+                        AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato)
+                ) WHERE rn = 1
+            )
+            SELECT nv.sak_id, nv.aar, nv.vedtak_id, nv.lopenrvedtak, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, 
+            nv.til_dato, nv.vedtakstatuskode, nv.rettighetkode, nv.utfallkode, vmd.max_dato, vmd.max_unntak_dato
+            FROM nyeste_vedtak nv
+                JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
+            FETCH FIRST 1 ROW ONLY
+        """.trimIndent()
+
         @TestOnly
         fun selectVedtak(fodselsnummer: String, connection: Connection): List<ArenaVedtak> {
             connection.prepareStatement(selectAlleVedtakForFnr).use { preparedStatement ->
@@ -89,6 +135,22 @@ class VedtakRepository(private val dataSource: DataSource) {
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
             aktivitetsfaseKode = row.getString("aktfasekode"),
+        )
+
+        fun mapperForArenaVedtakDetalj(row: ResultSet) = ArenaVedtakMedMaxdato(
+            sakId = row.getInt("sak_id"),
+            opprettetAar = row.getInt("aar"),
+            lopenrvedtak = row.getInt("lopenrvedtak"),
+            vedtakId = row.getInt("vedtak_id"),
+            aktivitetsfaseKode = row.getString("aktfasekode"),
+            vedtaktypeKode = row.getString("vedtaktypekode"),
+            statusKode = row.getString("vedtakstatuskode"),
+            rettighetkode = row.getString("rettighetkode"),
+            utfallkode = row.getString("utfallkode"),
+            tilDato = row.getDate("til_dato")?.toLocalDate(),
+            fraOgMed = row.getDate("fra_dato")?.toLocalDate(),
+            maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
+            maxdatoOrdinaer = row.getDate("max_dato")?.toLocalDate(),
         )
 
         @Language("OracleSql")
@@ -282,3 +344,4 @@ class VedtakRepository(private val dataSource: DataSource) {
         )
     }
 }
+

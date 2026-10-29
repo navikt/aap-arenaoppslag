@@ -38,9 +38,9 @@ values (2023, '01', 1, 2, DATE '2023-01-02', DATE '2023-01-15'),
 insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE)
 values (5001, 100, 2023, '01', 'E1', 'FERDI');
 
--- Meldekort 2 (periode 02/2023)
+-- Meldekort 2 (periode 02/2023). MKSKORTKODE 'XX' finnes ikke i MKSKORTTYPE, for å teste fallback til koden.
 insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE)
-values (5002, 100, 2023, '02', 'E1', 'FERDI');
+values (5002, 100, 2023, '02', 'XX', 'FERDI');
 
 -- Meldekortdager for meldekort 5001: 3 + 2 = 5 timer arbeidet
 insert into MELDEKORTDAG (MELDEKORT_ID, UKENR, DAGNR, STATUS_ARBEIDSDAG, STATUS_KURS, STATUS_SYK, TIMER_ARBEIDET)

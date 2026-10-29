@@ -45,6 +45,7 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.vedtakId).isEqualTo(90010)
         assertThat(første.periode.tilOgMedDato).isEqualTo(LocalDate.of(2023, 1, 15))
         assertThat(første.dagsatsMedBarnetillegg).isEqualTo(550)
+        assertThat(første.dagsatsMedBarnetilleggForSamordning).isEqualTo(600)
         assertThat(første.dagsats).isEqualTo(520)
         assertThat(første.dagsatsForSamordning).isEqualTo(520)
         assertThat(første.insGrad).isEqualTo(33)
@@ -53,6 +54,15 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(første.antall).isEqualTo(10.0)
         assertThat(første.posteringId).isEqualTo(8001)
         assertThat(første.posteringTypeKode).isEqualTo("ORD")
+    }
+
+    @Test
+    fun `dagsats med barnetillegg foer samordning er null naar vedtaket mangler DAGSMBFSAM`() {
+        val posteringer = repo.hentForSak(sakMedKildevarianter).posteringer
+
+        assertThat(posteringer).isNotEmpty
+        assertThat(posteringer.map { it.dagsatsMedBarnetilleggForSamordning }).containsOnlyNulls()
+        assertThat(posteringer.first { it.belop == 7700 }.dagsatsMedBarnetillegg).isEqualTo(550)
     }
 
     @Test
@@ -126,10 +136,17 @@ class MeldekortRepositoryTest : H2TestBase("flyway/maksimum") {
 
         assertThat(resultat.meldekort).hasSize(2)
         val meldekort = resultat.meldekort.first { it.meldekortId == 5001L }
-        assertThat(meldekort.meldeform).isEqualTo("E1")
+        assertThat(meldekort.meldeform).isEqualTo("Elektronisk (test)")
         assertThat(meldekort.periode.fraOgMedDato).isEqualTo(LocalDate.of(2023, 1, 2))
         assertThat(meldekort.ukenrUke1).isEqualTo(1)
         assertThat(meldekort.ukenrUke2).isEqualTo(2)
+    }
+
+    @Test
+    fun `meldeform faller tilbake til koden naar den mangler i MKSKORTTYPE`() {
+        val meldekort = repo.hentForSak(sakMedMeldekort).meldekort.first { it.meldekortId == 5002L }
+
+        assertThat(meldekort.meldeform).isEqualTo("XX")
     }
 
     @Test

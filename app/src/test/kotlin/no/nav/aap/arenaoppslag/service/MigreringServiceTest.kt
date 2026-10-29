@@ -8,9 +8,12 @@ import no.nav.aap.arenaoppslag.database.MeldekortperiodeRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaBeregningstidspunktResponse
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaDiagnose
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskrav
 import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaRefusjonskravResponse
+import no.nav.aap.arenaoppslag.kontrakt.migrering.ArenaVilkar
+import no.nav.aap.arenaoppslag.modeller.migrering.Beregningstidspunkt
 import no.nav.aap.arenaoppslag.modeller.migrering.RefusjonskravForSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
@@ -22,7 +25,9 @@ import no.nav.aap.arenaoppslag.modeller.MedisinskOpplysning
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.komponenter.httpklient.exception.VerdiIkkeFunnetException
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -113,8 +118,10 @@ class MigreringServiceTest {
     @Test
     fun `henter soknadsdato, migreringsdato og gjenstaaende ordinaer kvote`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
-        every { meldekortperiodeRepository.hentGjeldendePeriode(idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+            Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3))
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } returns
             mapOf(5001L to Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3)))
         every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
@@ -133,6 +140,9 @@ class MigreringServiceTest {
         assertThat(krav.soknadsdato).isEqualTo(LocalDate.of(2023, 1, 1))
         assertThat(krav.migreringsdato).isEqualTo(LocalDate.of(2024, 3, 4))
         assertThat(krav.gjenstaaendeOrdinaerKvote).isEqualTo(717)
+        assertThat(krav.tilKontrakt().sisteFerdigBehandledeMeldekortperiode).isEqualTo(
+            no.nav.aap.arenaoppslag.kontrakt.modeller.Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3))
+        )
     }
 
     @Test
@@ -142,8 +152,10 @@ class MigreringServiceTest {
         val idag = LocalDate.of(2026, 10, 1)
         val migreringsdato = LocalDate.of(2026, 9, 21)
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2026, 4, 23))
-        every { meldekortperiodeRepository.hentGjeldendePeriode(idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
             Periode(migreringsdato, LocalDate.of(2026, 10, 4))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+            Periode(LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 20))
         // Alle meldekortene gjelder perioder før migreringsdatoen.
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } answers {
             firstArg<Collection<Long>>().associateWith { id ->
@@ -184,7 +196,8 @@ class MigreringServiceTest {
         val behandlet = onsdagUke4.plusMonths(1)
 
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2026, 4, 23))
-        every { meldekortperiodeRepository.hentGjeldendePeriode(onsdagUke4) } returns meldeperiode2
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), onsdagUke4) } returns meldeperiode2
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns meldeperiode1
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } returns mapOf(
             101L to meldeperiode1,
             102L to meldeperiode2,
@@ -212,13 +225,56 @@ class MigreringServiceTest {
     @Test
     fun `soknadsdato er null når saken ikke har noe innvilget vedtak`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns null
-        every { meldekortperiodeRepository.hentGjeldendePeriode(idag) } returns null
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+            Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+            Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3))
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
 
         val krav = service.hentKravForSak(sak, sakId, idag)
 
         assertThat(krav.soknadsdato).isNull()
-        assertThat(krav.migreringsdato).isNull()
+        assertThat(krav.migreringsdato).isEqualTo(LocalDate.of(2024, 3, 4))
         assertThat(krav.gjenstaaendeOrdinaerKvote).isNull()
+    }
+
+    @Test
+    fun `kaster feil når brukeren ikke har noen meldekortperiode som dekker dagens dato`() {
+        every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns null
+
+        assertThatThrownBy { service.hentKravForSak(sak, sakId, idag) }
+            .isInstanceOf(VerdiIkkeFunnetException::class.java)
+            .hasMessageContaining("Fant ingen meldekortperiode")
+    }
+
+    @Test
+    fun `returnerer siste ferdig behandlede meldekortperiode også når den ikke grenser til migreringsdatoen`() {
+        every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+            Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+            Periode(LocalDate.of(2024, 2, 5), LocalDate.of(2024, 2, 18))
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+
+        val krav = service.hentKravForSak(sak, sakId, idag)
+
+        assertThat(krav.sisteFerdigBehandledeMeldekortperiode)
+            .isEqualTo(Periode(LocalDate.of(2024, 2, 5), LocalDate.of(2024, 2, 18)))
+    }
+
+    @Test
+    fun `siste ferdig behandlede meldekortperiode er null når brukeren ikke har noen`() {
+        every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+            Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns null
+        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+
+        val krav = service.hentKravForSak(sak, sakId, idag)
+
+        assertThat(krav.sisteFerdigBehandledeMeldekortperiode).isNull()
+        assertThat(krav.tilKontrakt().sisteFerdigBehandledeMeldekortperiode).isNull()
     }
 
     private fun vilkårsvurdering(id: Long, kode: String, statuskode: String, begrunnelse: String? = null) =
@@ -342,10 +398,138 @@ class MigreringServiceTest {
     }
 
     @Test
+    fun `mapper AAPBERDATO til beregningstidspunkt`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(vedtakfakta("AAPBERREGL", "REGELVERK1"), vedtakfakta("AAPBERDATO", "15-03-2024"))
+        )
+
+        assertThat(service.hentBeregningstidspunktForSak(sakId, idag)?.tilKontrakt()).isEqualTo(
+            ArenaBeregningstidspunktResponse(LocalDate.of(2024, 3, 15))
+        )
+    }
+
+    @Test
+    fun `beregningstidspunkt er null uten gyldig AAPBERDATO`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(vedtakfakta("AAPBERDATO", null))
+        )
+
+        assertThat(service.hentBeregningstidspunktForSak(sakId, idag)).isEqualTo(Beregningstidspunkt(null))
+    }
+
+    @Test
+    fun `beregningstidspunkt er null når vedtaket ikke har vedtaksfakta`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vedtakfaktaRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+
+        assertThat(service.hentBeregningstidspunktForSak(sakId, idag)).isEqualTo(Beregningstidspunkt(null))
+    }
+
+    @Test
+    fun `beregningstidspunkt er null og vedtaksfakta hentes ikke når saken mangler løpende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
+
+        assertThat(service.hentBeregningstidspunktForSak(sakId, idag)).isNull()
+        verify(exactly = 0) { vedtakfaktaRepository.hentForVedtakIder(any()) }
+    }
+
+    @Test
     fun `returnerer null når saken mangler gjeldende 11-5-vedtak`() {
         every { vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) } returns null
 
         assertThat(service.hentSykdomsvurderingForSak(sak, sakId, idag)).isNull()
         verify(exactly = 0) { medisinskOpplysningRepository.hentForPerson(any()) }
+    }
+
+    @Test
+    fun `mapper gjeldende aap-vedtak til vedtaksperiode`() {
+        val tilDato = idag.plusMonths(3)
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns
+            vedtak(idag.minusDays(10)).copy(vedtakId = 115, tilDato = tilDato)
+
+        val respons = service.hentVedtaksperiodeForSak(sakId, idag)!!.tilKontrakt()
+
+        assertThat(respons.vedtakId).isEqualTo(115)
+        assertThat(respons.fraDato).isEqualTo(idag.minusDays(10))
+        assertThat(respons.tilDato).isEqualTo(tilDato)
+    }
+
+    @Test
+    fun `returnerer null for vedtaksperiode når saken mangler gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
+
+        assertThat(service.hentVedtaksperiodeForSak(sakId, idag)).isNull()
+    }
+
+    @Test
+    fun `velger kun AOINORGE3 blant vilkårene på gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(
+                vilkårsvurdering(1, "AOINORGE2", "N"),
+                vilkårsvurdering(2, "AOINORGE3", "J"),
+            )
+        )
+
+        val respons = service.hentOppholdskravForSak(sakId, idag)!!.tilKontrakt()
+
+        assertThat(respons.vedtakId).isEqualTo(115)
+        assertThat(respons.vilkar).isEqualTo(ArenaVilkar(2L, "AOINORGE3", "J", null))
+    }
+
+    @Test
+    fun `gir oppholdskrav uten vilkår når vedtaket ikke har AOINORGE3`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+
+        val oppholdskrav = service.hentOppholdskravForSak(sakId, idag)
+
+        assertThat(oppholdskrav?.vedtakId).isEqualTo(115)
+        assertThat(oppholdskrav?.vilkar).isNull()
+    }
+
+    @Test
+    fun `returnerer null for oppholdskrav når saken mangler gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
+
+        assertThat(service.hentOppholdskravForSak(sakId, idag)).isNull()
+        verify(exactly = 0) { vilkårsvurderingRepository.hentForVedtakIder(any()) }
+    }
+
+    @Test
+    fun `velger kun MEDLSKAP5 blant vilkårene på gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns mapOf(
+            115 to listOf(
+                vilkårsvurdering(1, "MEDLSKAP1", "N"),
+                vilkårsvurdering(2, "MEDLSKAP5", "J"),
+            )
+        )
+
+        val respons = service.hentForutgaaendeMedlemskapForSak(sakId, idag)!!.tilKontrakt()
+
+        assertThat(respons.vedtakId).isEqualTo(115)
+        assertThat(respons.vilkar).isEqualTo(ArenaVilkar(2L, "MEDLSKAP5", "J", null))
+    }
+
+    @Test
+    fun `gir forutgående medlemskap uten vilkår når vedtaket ikke har MEDLSKAP5`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
+        every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
+
+        val forutgaaendeMedlemskap = service.hentForutgaaendeMedlemskapForSak(sakId, idag)
+
+        assertThat(forutgaaendeMedlemskap?.vedtakId).isEqualTo(115)
+        assertThat(forutgaaendeMedlemskap?.vilkar).isNull()
+    }
+
+    @Test
+    fun `returnerer null for forutgående medlemskap når saken mangler gjeldende aap-vedtak`() {
+        every { vedtakRepository.hentGjeldendeAapVedtakForSakPåDato(sakId, idag) } returns null
+
+        assertThat(service.hentForutgaaendeMedlemskapForSak(sakId, idag)).isNull()
+        verify(exactly = 0) { vilkårsvurderingRepository.hentForVedtakIder(any()) }
     }
 }

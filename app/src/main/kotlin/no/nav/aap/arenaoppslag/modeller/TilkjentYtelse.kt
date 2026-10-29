@@ -33,7 +33,9 @@ data class TilkjentYtelseRad(
     val uke: String?,
     val kilde: PosteringKilde,
     val dagsatsMedBarnetillegg: Int?,
+    val dagsatsMedBarnetilleggForSamordning: Int?,
     val dagsats: Int?,
+    val effektivDagsats: Int?,
     // null betyr at det ikke finnes en postering for raden — ikke det samme som utbetalt 0 kroner
     val beregnetBrutto: Int?,
     val timerArbeidet: Double?,
@@ -87,7 +89,12 @@ data class ReduksjonRespons(
     val fravar: Float,
     val sykedager: Float,
     val institusjonsProsent: Int?,
-    val anvistProsent: Int?
+    val anvistProsent: Int?,
+    // Kroner tapt pga. samordning, regnet med barnetillegg. null når posteringen eller dagsatsene mangler.
+    val samordningReduksjonKroner: Int? = null,
+    // Full sats før samordning over arbeidsdagene, minus faktisk utbetalt beløp. Aldri under 0, fordi
+    // beløpet kan inneholde etterbetalinger som ville gitt en meningsløs negativ reduksjon.
+    val totalReduksjonKroner: Int? = null,
 )
 
 data class MeldekortRespons(
