@@ -128,6 +128,7 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         fun mapperForArenaVedtak(row: ResultSet) = ArenaVedtak(
             sakId = row.getString("sak_id"),
+            vedtakId = row.getInt("vedtak_id"),
             statusKode = row.getString("vedtakstatuskode"),
             vedtaktypeKode = row.getString("vedtaktypekode"),
             fraOgMed = fraDato(row.getDate("fra_dato")),
@@ -155,7 +156,7 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         internal val selectAlleVedtakForFnr = """
-        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, aktfasekode, utfallkode
+        SELECT vedtak_id, vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, aktfasekode, utfallkode
           FROM vedtak
          WHERE person_id = 
                (SELECT person_id 
@@ -165,14 +166,14 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         internal val selectAlleVedtakForPerson = """
-        SELECT vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, aktfasekode, utfallkode
+        SELECT vedtak_id, vedtakstatuskode, vedtaktypekode, sak_id, fra_dato, til_dato, rettighetkode, aktfasekode, utfallkode
           FROM vedtak
          WHERE person_id = ? 
         """.trimIndent()
 
         @Language("OracleSql")
         private val selectVedtakForFnr = """
-        SELECT vedtakstatuskode, sak_id, fra_dato, til_dato
+        SELECT vedtak_id, vedtakstatuskode, sak_id, fra_dato, til_dato
           FROM vedtak
          WHERE person_id = 
                (SELECT person_id 

@@ -33,6 +33,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevanteAapVedtak = """
         SELECT 
             sak_id, 
+            v.vedtak_id,
             aar,
             lopenrvedtak,
             lopenrsak,
@@ -65,6 +66,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevante11_5Vedtak = """
         SELECT 
             sak_id, 
+            v.vedtak_id,
             aar,
             lopenrvedtak,
             lopenrsak,
@@ -91,6 +93,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         -- Dersom den er null, er klagen fortsatt under behandling.
         SELECT
             v.sak_id,
+            v.vedtak_id,
             v.aar,
             v.lopenrvedtak,
             v.lopenrsak,
@@ -122,6 +125,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunRelevanteAnker = """
         SELECT
             v.sak_id,
+            v.vedtak_id,
             v.aar,
             v.lopenrvedtak,
             v.lopenrsak,
@@ -192,6 +196,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
         fun mapperForArenaVedtak(row: ResultSet) = ArenaVedtak(
             sakId = row.getString("sak_id"),
+            vedtakId = row.getInt("vedtak_id"),
             aar = row.getInt("aar"),
             lopenrvedtak = row.getInt("lopenrvedtak"),
             statusKode = row.getString("vedtakstatuskode"),
