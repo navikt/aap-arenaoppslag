@@ -5,21 +5,26 @@ title AAP-systemene etter migreringen
 System(joark, "Joark")
 System(altinn, "Altinn")
 System(pensjonkasser, "Pensjonskasser", "pensjonsamhandling, feks. DSOP")
+System(modia, "Modia", "")
 Person(saksbehandler, "Saksbehandler", "NAV-ansatt")
 
 System_Boundary(kelvin, "Kelvin <GCP>") {
-    Container(postmottak, "postmottak", "Fordeler innkommende søknader")
-    Container(saksbehandling_kelvin, "saksbehandling", "Frontend for saksbehandling, produksjonsstyring, oppgaver, og Arena-omgjøring")
-    Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
-    Container(api_intern, "api-intern", "API")
-    Container(api_ekstern, "api-ekstern", "API for eksterne")
-    ContainerDb(kelvin_db, "Database", "Postgres")
-
-    Container(visningsklient, "Visningsklient", "AAP-saker i Arena")
-
-    Rel(api_ekstern, api_intern, "videresender oppslag")
+    together {
+        Container(postmottak, "postmottak", "Fordeler innkommende søknader")
+        Container(saksbehandling_kelvin, "Saksbehandling", "Frontend for saksbehandling, produksjonsstyring, og oppgaver")
+        Container(behandlingsflyt, "Behandlingsflyt", "Backend for saksbehandling")
+        ContainerDb(kelvin_db, "Database", "Postgres")
+        Container(visningsklient, "Visningsklient", "AAP-saker i Arena")
+    }
+    together {
+        Container(api_ekstern, "api-ekstern", "API for eksterne")
+        Container(api_intern, "api-intern", "API")
+    }
+    Rel_D(api_ekstern, api_intern, "videresender oppslag")
     Rel(saksbehandling_kelvin, behandlingsflyt, "api-kall")
     Rel(behandlingsflyt, kelvin_db, "spørringer")
+    Rel(modia, api_intern, "AAP-saksinformasjon")
+
     Rel(postmottak, behandlingsflyt, "opprett sak")
 }
 
@@ -32,9 +37,15 @@ System_Boundary(arena, "Arena <FSS>") {
 System_Boundary(kelvin_fss, "Kelvin <FSS>") {
     Container(arena_oppslag, "Arena-oppslag", "Database-klient")
 
+
     Rel(arena_oppslag, aap_tilgangsview, "spørringer")
 
     Rel(api_intern, arena_oppslag, "api-kall")
+}
+
+System_Boundary(tilgangsmaskin_gcp, "Populasjonstilgangskontroll <GCP>") {
+    Container(tilgangsmaskin, "Tilgangsmaskin", "Autorisasjon")
+    Rel(arena_oppslag, tilgangsmaskin, "adgangskontroll")
 }
 
 Rel(pensjonkasser, api_ekstern, "oppslag")
@@ -42,11 +53,13 @@ Rel(joark, postmottak, "AAP-søknader")
 Rel(altinn, api_ekstern, "oppslag")
 
 Rel(visningsklient, arena_oppslag, "saksinformasjon")
-
+Rel(behandlingsflyt, arena_oppslag, "oppslag")
 
 Rel(saksbehandler, saksbehandling_kelvin, "Bruker")
 Rel(saksbehandling_kelvin, visningsklient, "inkluderer")
 
 Lay_L(postmottak, saksbehandling_kelvin)
 Lay_U(kelvin_db, behandlingsflyt)
+Lay_R(visningsklient, api_intern)
+Lay_R(saksbehandling_kelvin, api_ekstern)
 @enduml
