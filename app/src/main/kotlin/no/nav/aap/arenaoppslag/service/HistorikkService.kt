@@ -169,11 +169,16 @@ class HistorikkService(
             )
         }
 
-        return when {
+        val resultat = when {
             faktaPåLøpendeVedtak != null -> faktaPåLøpendeVedtak
             faktaPåEget11_12Vedtak != null -> faktaPåEget11_12Vedtak
             else -> Pair(null, null) // ingen vurdering registrert
         }
+        if (resultat.first == true && resultat.second == null) {
+            logger.warn("Fant 11-12 vurdering som er innvilget, men ingen dato for når unntaksvilkåret gjelder fra. Returnerer null for dato.")
+        }
+
+        return resultat
     }
 
 }
