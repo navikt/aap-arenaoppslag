@@ -19,17 +19,19 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "
         const val kjentPerson = "kun_nye"
     }
 
+    private val testDato = LocalDate.parse("2025-12-15")
+
     @Test
-    fun `Person har signifikant historikk i AAP-Arena`() {
+    fun `Person har signifikant historikk for AAP i AAP-Arena`() {
         withTestServer(h2) { gateway ->
-            val ukjentPerson: SignifikantHistorikkResponse = gateway.harSignifikantHistorikk(
+            val response: SignifikantHistorikkResponse = gateway.harSignifikantHistorikk(
                 SignifikantHistorikkRequest(
                     kjentPerson,
-                    LocalDateTime.now().minusDays(1).toLocalDate()
+                    testDato
                 )
             )
 
-            assertThat(ukjentPerson.harSignifikantHistorikk).isTrue
+            assertThat(response.harSignifikantHistorikk).isTrue
         }
     }
 

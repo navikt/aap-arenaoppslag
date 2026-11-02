@@ -26,6 +26,10 @@ public data class ArenaSakOppsummeringKontrakt(
     val avsluttetDato: LocalDate?,
 )
 
+/**
+ * Informasjon om siste løpende vedtak i Arena for personen, samt saksinformasjon og maxdato for vedtaket.
+ * Maxdato er kun definert for vedtak med aktivitetsfase UA og AU i Arena, ellers null.
+ */
 public data class SisteSakDetaljer(
     val sakId: Int,
     val saknummer: String,
