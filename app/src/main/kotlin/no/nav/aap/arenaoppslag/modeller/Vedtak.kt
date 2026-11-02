@@ -17,6 +17,7 @@ data class VedtakStatus(
 )
 
 data class ArenaVedtak(
+    val vedtakId: Int,
     val sakId: String,
     val statusKode: String,
     val vedtaktypeKode: String?,
@@ -36,6 +37,8 @@ data class ArenaVedtak(
         tilDato = tilDato,
         rettighetkode = rettighetkode,
         utfallkode = utfallkode,
+        vedtakId = vedtakId,
+        aktivitetsfaseKode = aktivitetsfaseKode,
     )
 }
 
