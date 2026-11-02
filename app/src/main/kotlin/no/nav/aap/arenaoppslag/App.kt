@@ -272,6 +272,8 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 perioder(internService)
                 maksimum(internService)
                 saker(internService)
+
+                // Nye routes
                 manuellFordelingsgrunnlag(manuellFordelingsgrunnlagService, personService)
             }
             route("/api/v1") {
