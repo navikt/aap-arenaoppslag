@@ -53,6 +53,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') -- kun vedtak som er innvilget eller under behandling
           AND v.rettighetkode = 'AAP'
+          AND aktfasekode IN ('UA','AU') -- kun vedtak i aktivitetsfase UA eller AU
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND vedtaktypekode IN ('O','E','G')
