@@ -75,7 +75,15 @@ class HistorikkService(
 
     fun hentHistorikkStatusDetalj(personId: PersonId): HistorikkStatusDetaljResponse {
         val sisteVedtakMedMaksdato = vedtakService.hentSisteLøpendeVedtakDetalj(personId)
-        val sisteSakMedVedtak = sisteVedtakMedMaksdato?.saksnummer()?.let { sakOgVedtakService.hentSakMedVedtak(it) }
+        val sisteSakMedVedtak = sisteVedtakMedMaksdato?.saksnummer()
+            ?.let { sakOgVedtakService.hentSakMedVedtak(it) }
+            ?.let { sak ->
+                sak.copy(
+                    vedtak = sak.vedtak.filter { vedtaket ->
+                        !vedtaket.erUgyldiggjort()
+                    }
+                )
+            }
 
         val sisteSakDetaljer = if (sisteVedtakMedMaksdato != null && sisteSakMedVedtak != null) {
             val (unntaksvilkaarInnvilget, unntaksvilkaarGjelderFra) = hent11_12StatusForSaken(
@@ -128,7 +136,6 @@ class HistorikkService(
                     && it.rettighetkode == "AAP"
                     && it.aktivitetsfaseKode in listOf("AU", "UA")
                     && it.statusKode in listOf("IVERK", "AVSLU")
-                    && it.tilDato?.isBefore(it.fraOgMed) == false
         }
         val faktaPåEget11_12Vedtak = hentUnntakFraVedtakfakta(eget11_12vedtak, sakId)
 
@@ -141,7 +148,6 @@ class HistorikkService(
                     && it.rettighetkode == "AAP"
                     && it.aktivitetsfaseKode in listOf("AU", "UA")
                     && it.statusKode in listOf("IVERK", "AVSLU")
-                    && it.tilDato?.isBefore(it.fraOgMed) == false
         }
         val faktaPåStanset11_12Vedtak = hentUnntakFraVedtakfakta(stansvedtakMed11_12, sakId)
 

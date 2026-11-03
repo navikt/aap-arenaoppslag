@@ -3,10 +3,10 @@ package no.nav.aap.arenaoppslag.modeller
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakOppsummeringKontrakt
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteSakDetaljer
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakPerson as ArenaSakPersonKontrakt
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak as ArenaVedtakKontrakt
 import java.time.LocalDate
 import java.time.LocalDateTime
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakPerson as ArenaSakPersonKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak as ArenaVedtakKontrakt
 
 
 data class ArenaSakOppsummering(
@@ -62,7 +62,8 @@ data class Maksdatolinje(
 ) {
     fun tilKontrakt() =
         no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato(
-            sakId, "${opprettetAar}-${lopenrSak}",
+            sakId,
+            Saksnummer(lopenrSak, opprettetAar).toString(),
             sakStatus, sakRegistrert, sakAvsluttet,
             null,
             null,

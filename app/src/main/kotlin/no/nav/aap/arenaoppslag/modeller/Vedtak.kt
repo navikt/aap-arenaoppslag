@@ -91,7 +91,8 @@ data class ArenaVedtakMedMaxdato(
     val sakId: Int,
     val vedtakId: Int,
     val opprettetAar: Int,
-    val lopenrvedtak: Int,
+    val lopenrVedtak: Int,
+    val lopenrSak: Int,
     val statusKode: String,
     val vedtaktypeKode: String,
     val aktivitetsfaseKode: String,
@@ -104,9 +105,8 @@ data class ArenaVedtakMedMaxdato(
     val unntaksvilkaarGjelderFra: LocalDate? = null,
     val unntaksvilkaarInnvilget: Boolean? = null,
 ) {
-    fun unntaksvilkaarOppfylt(): Boolean = unntaksvilkaarInnvilget == true // eksplisitt Ja til 11-12
 
-    fun saksnummer(): Saksnummer = Saksnummer(lopenrvedtak, opprettetAar)
+    fun saksnummer(): Saksnummer = Saksnummer(lopenrSak, opprettetAar)
 
     fun sakId(): SakId = SakId(sakId)
 
@@ -148,6 +148,11 @@ data class ArenaVedtakMedDetaljer(
     val institusjonOpphold: InstitusjonOpphold? = null,
     val andreYtelser: List<AnnenYtelse> = emptyList(),
 ) {
+
+    fun erUgyldiggjort(): Boolean {
+        return fraOgMed != null && tilDato != null && tilDato.isBefore(fraOgMed)
+    }
+
     fun medSamordning(samordning: SamordningMedInstitusjon?) = copy(
         institusjonOpphold = samordning?.institusjonOpphold,
         andreYtelser = samordning?.andreYtelser ?: emptyList(),

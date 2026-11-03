@@ -15,8 +15,10 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedMaxdato
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -38,6 +40,7 @@ class HistorikkServiceTest {
         vedtakfaktaService,
     )
     private val personId = PersonId(1)
+    private val saksnummer = Saksnummer(lopenummerSak = 17, aar = 2026)
     private val sluttdato = LocalDate.of(2026, 1, 31)
     private val unntaksdato = sluttdato.plusDays(1)
     private val logger = LoggerFactory.getLogger(HistorikkService::class.java) as Logger
@@ -49,7 +52,7 @@ class HistorikkServiceTest {
         every { utbetalingService.hentSisteAapUtbetalingForPerson(personId) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns null
         every { vedtakfaktaService.hentForVedtakliste(emptyList()) } returns emptyMap()
-        klargjørSak(emptyList())
+        klargjørSak()
         logg.start()
         logger.level = Level.WARN
         logger.addAppender(logg)
@@ -60,6 +63,36 @@ class HistorikkServiceTest {
         logger.detachAppender(logg)
         logger.level = opprinneligLoggnivå
         logg.stop()
+    }
+
+    @Test
+    fun `historikkstatus henter saken med sakens løpenummer og ikke vedtakets`() {
+        val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+
+        assertThat(detaljer.sakId).isEqualTo(42)
+        assertThat(detaljer.saknummer).isEqualTo("2026-17")
+        assertThat(detaljer.sisteVedtak.vedtakId).isEqualTo(1)
+        verify(exactly = 1) { sakOgVedtakService.hentSakMedVedtak(saksnummer) }
+    }
+
+    @Test
+    fun `historikkstatus bevarer bare vedtak med gyldige eller manglende datoer`() {
+        val vedtak = egetVedtak().copy(aktivitetsfaseKode = "AKT")
+        val vedtakMedUlikeDatoer = listOf(
+            vedtak,
+            vedtak.copy(vedtakId = 3, tilDato = unntaksdato),
+            vedtak.copy(vedtakId = 4, fraOgMed = null),
+            vedtak.copy(vedtakId = 5, tilDato = null),
+            vedtak.copy(vedtakId = 6, fraOgMed = null, tilDato = null),
+            vedtak.copy(vedtakId = 7, tilDato = unntaksdato.minusDays(1)),
+        )
+        klargjørSak(vedtakMedUlikeDatoer)
+        val opprinneligSak = requireNotNull(sakOgVedtakService.hentSakMedVedtak(saksnummer))
+
+        val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+
+        assertThat(detaljer.vedtakene.map { it.vedtakId }).containsExactly(2, 3, 4, 5, 6)
+        assertThat(opprinneligSak.vedtak).containsExactlyElementsOf(vedtakMedUlikeDatoer)
     }
 
     @Test
@@ -186,10 +219,10 @@ class HistorikkServiceTest {
     }
 
     @Test
-    fun `bruker iverksatte og avsluttede vedtak med sluttdato lik eller etter startdato`() {
+    fun `bruker iverksatte og avsluttede vedtak med gyldig eller manglende sluttdato`() {
         for (grunnlag in listOf(egetVedtak(), stansvedtak())) {
             for (status in listOf("IVERK", "AVSLU")) {
-                for (sluttdato in listOf(unntaksdato, unntaksdato.plusDays(1))) {
+                for (sluttdato in listOf(unntaksdato, unntaksdato.plusDays(1), null)) {
                     val vedtak = grunnlag.copy(statusKode = status, tilDato = sluttdato)
                     klargjørSak(listOf(vedtak))
                     every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
@@ -223,11 +256,10 @@ class HistorikkServiceTest {
                 vedtak.copy(statusKode = "KONT"),
                 vedtak.copy(statusKode = "INNST"),
                 vedtak.copy(tilDato = unntaksdato.minusDays(1)),
-                vedtak.copy(tilDato = null),
             )
 
             for ((indeks, ugyldigVedtak) in ugyldigeVedtak.withIndex()) {
-                klargjørSak(listOf(ugyldigVedtak))
+                klargjørSak(listOf(ordinærtVedtak(), ugyldigVedtak))
 
                 val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
 
@@ -279,7 +311,7 @@ class HistorikkServiceTest {
         every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
             mapOf(vedtak.vedtakId to fakta("J"))
 
-        for (vedtakene in listOf(emptyList(), listOf(vedtak))) {
+        for (vedtakene in listOf(listOf(ordinærtVedtak()), listOf(vedtak))) {
             klargjørSak(vedtakene)
 
             service.hentHistorikkStatusDetalj(personId)
@@ -346,13 +378,24 @@ class HistorikkServiceTest {
     }
 
     @Test
-    fun `ingen vedtak gir ukjent 11-12-status`() {
-        val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+    fun `historikkstatus avviser tom vedtaksliste`() {
+        klargjørSak(emptyList())
 
-        assertThat(detaljer.unntaksvilkaarInnvilget).isNull()
-        assertThat(detaljer.unntaksvilkaarGjelderFra).isNull()
+        assertThatIllegalArgumentException().isThrownBy {
+            service.hentHistorikkStatusDetalj(personId)
+        }.withMessage("SisteSakDetaljer må logisk sett inneholde minst ett vedtak")
+
         verify(exactly = 0) { vedtakfaktaService.hentForVedtakliste(match { it.isNotEmpty() }) }
         assertThat(logg.list).isEmpty()
+    }
+
+    @Test
+    fun `historikkstatus avviser sak der alle vedtak er ugyldiggjort`() {
+        klargjørSak(listOf(egetVedtak().copy(tilDato = unntaksdato.minusDays(1))))
+
+        assertThatIllegalArgumentException().isThrownBy {
+            service.hentHistorikkStatusDetalj(personId)
+        }.withMessage("SisteSakDetaljer må logisk sett inneholde minst ett vedtak")
     }
 
     @Test
@@ -360,7 +403,7 @@ class HistorikkServiceTest {
         every { telleverkService.hentTelleverkForPerson(personId) } returns TelleverkForPerson(100, 25)
 
         for (innvilget in listOf(true, false, null)) {
-            klargjørSak(emptyList(), løpendeVedtak().copy(unntaksvilkaarInnvilget = innvilget))
+            klargjørSak(løpende = løpendeVedtak().copy(unntaksvilkaarInnvilget = innvilget))
 
             val telleverk = requireNotNull(service.hentHistorikkStatusDetalj(personId).telleverk)
 
@@ -449,14 +492,14 @@ class HistorikkServiceTest {
     }
 
     private fun klargjørSak(
-        vedtakene: List<ArenaVedtakMedDetaljer>,
+        vedtakene: List<ArenaVedtakMedDetaljer> = listOf(ordinærtVedtak()),
         løpende: ArenaVedtakMedMaxdato = løpendeVedtak(),
     ) {
         every { vedtakService.hentSisteLøpendeVedtakDetalj(personId) } returns løpende
-        every { sakOgVedtakService.hentSakMedVedtak(løpende.saksnummer()) } returns ArenaSakMedVedtak(
+        every { sakOgVedtakService.hentSakMedVedtak(saksnummer) } returns ArenaSakMedVedtak(
             sakId = "42",
-            opprettetAar = 2026,
-            lopenr = 1,
+            opprettetAar = saksnummer.aar,
+            lopenr = saksnummer.lopenummerSak,
             person = ArenaSakPerson(personId.id, "testperson", "Test", "Person"),
             statuskode = "AKTIV",
             statusnavn = "Aktiv",
@@ -466,11 +509,20 @@ class HistorikkServiceTest {
         )
     }
 
+    private fun ordinærtVedtak() = egetVedtak().copy(
+        vedtakId = 1,
+        fraOgMed = sluttdato.minusMonths(1),
+        tilDato = sluttdato,
+        utfallkode = "JA",
+        aktivitetsfaseKode = "AAP",
+    )
+
     private fun løpendeVedtak() = ArenaVedtakMedMaxdato(
         sakId = 42,
         vedtakId = 1,
         opprettetAar = 2026,
-        lopenrvedtak = 1,
+        lopenrVedtak = 1,
+        lopenrSak = 17,
         statusKode = "IVERK",
         vedtaktypeKode = "O",
         aktivitetsfaseKode = "AKT",

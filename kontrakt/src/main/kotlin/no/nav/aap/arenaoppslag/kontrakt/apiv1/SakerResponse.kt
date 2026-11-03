@@ -41,6 +41,10 @@ public data class SisteSakDetaljer(
     val sisteVedtak: VedtakMedMaksdato,
     val vedtakene: List<ArenaVedtak>,
 ) {
+    init {
+        require(vedtakene.isNotEmpty()) { "SisteSakDetaljer må logisk sett inneholde minst ett vedtak" }
+        require(vedtakene.all { it.sakId == sakId }) { "Vedtakene må høre til samme sak" }
+    }
 
     public fun unntaksvilkaarOppfylt(): Boolean = unntaksvilkaarInnvilget == true // eksplisitt Ja til 11-12
     public fun unntaksvilkaarIkkeOppfylt(): Boolean = unntaksvilkaarInnvilget == false // eksplisitt Nei til 11-12
