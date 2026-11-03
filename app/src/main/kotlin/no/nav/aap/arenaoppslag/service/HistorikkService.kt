@@ -121,21 +121,27 @@ class HistorikkService(
 
         // Er 11-12 vurderingen registrert etter ny prosedyre?
         val eget11_12vedtak = vedtakeneISisteSak.filter {
-            it.fraOgMed?.isAfter(sisteLøpendeVedtak?.tilDato) == true
+            it.fraOgMed != null
+                    && it.fraOgMed.isAfter(sisteLøpendeVedtak?.tilDato)
                     && it.vedtaktypeKode == "O"
-                    && it.rettighetkode == "AAP"
                     && it.utfallkode == "NEI"
+                    && it.rettighetkode == "AAP"
                     && it.aktivitetsfaseKode in listOf("AU", "UA")
+                    && it.statusKode in listOf("IVERK", "AVSLU")
+                    && it.tilDato?.isBefore(it.fraOgMed) == false
         }
         val faktaPåEget11_12Vedtak = hentUnntakFraVedtakfakta(eget11_12vedtak, sakId)
 
         // Er 11-12 vurderingen registrert på et Stans-vedtak?
         val stansvedtakMed11_12 = vedtakeneISisteSak.filter {
-            it.fraOgMed?.isAfter(sisteLøpendeVedtak?.tilDato) == true
+            it.fraOgMed != null
+                    && it.fraOgMed.isAfter(sisteLøpendeVedtak?.tilDato)
                     && it.vedtaktypeKode == "S"
-                    && it.rettighetkode == "AAP"
                     && it.utfallkode == "JA"
+                    && it.rettighetkode == "AAP"
                     && it.aktivitetsfaseKode in listOf("AU", "UA")
+                    && it.statusKode in listOf("IVERK", "AVSLU")
+                    && it.tilDato?.isBefore(it.fraOgMed) == false
         }
         val faktaPåStanset11_12Vedtak = hentUnntakFraVedtakfakta(stansvedtakMed11_12, sakId)
 

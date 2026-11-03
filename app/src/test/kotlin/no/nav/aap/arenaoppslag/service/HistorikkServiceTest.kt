@@ -186,6 +186,27 @@ class HistorikkServiceTest {
     }
 
     @Test
+    fun `bruker iverksatte og avsluttede vedtak med sluttdato lik eller etter startdato`() {
+        for (grunnlag in listOf(egetVedtak(), stansvedtak())) {
+            for (status in listOf("IVERK", "AVSLU")) {
+                for (sluttdato in listOf(unntaksdato, unntaksdato.plusDays(1))) {
+                    val vedtak = grunnlag.copy(statusKode = status, tilDato = sluttdato)
+                    klargjørSak(listOf(vedtak))
+                    every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
+                        mapOf(vedtak.vedtakId to fakta("J"))
+
+                    val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+
+                    assertThat(detaljer.unntaksvilkaarInnvilget)
+                        .describedAs("${vedtak.vedtaktypeKode}/$status/$sluttdato").isTrue()
+                    assertThat(detaljer.unntaksvilkaarGjelderFra)
+                        .describedAs("${vedtak.vedtaktypeKode}/$status/$sluttdato").isEqualTo(unntaksdato)
+                }
+            }
+        }
+    }
+
+    @Test
     fun `filtrerer bort egne vedtak og stansvedtak som ikke oppfyller alle kriteriene`() {
         for (vedtak in listOf(egetVedtak(), stansvedtak())) {
             val ugyldigeVedtak = listOf(
@@ -198,6 +219,11 @@ class HistorikkServiceTest {
                 vedtak.copy(utfallkode = if (vedtak.utfallkode == "JA") "NEI" else "JA"),
                 vedtak.copy(utfallkode = null),
                 vedtak.copy(aktivitetsfaseKode = "AKT"),
+                vedtak.copy(statusKode = "REGIS"),
+                vedtak.copy(statusKode = "KONT"),
+                vedtak.copy(statusKode = "INNST"),
+                vedtak.copy(tilDato = unntaksdato.minusDays(1)),
+                vedtak.copy(tilDato = null),
             )
 
             for ((indeks, ugyldigVedtak) in ugyldigeVedtak.withIndex()) {
@@ -466,7 +492,7 @@ class HistorikkServiceTest {
         aktivitetsfaseKode = "AU",
         aktivitetsfaseNavn = "AU",
         fraOgMed = unntaksdato,
-        tilDato = null,
+        tilDato = unntaksdato.plusMonths(1),
         rettighetkode = "AAP",
         rettighetnavn = "AAP",
         utfallkode = "NEI",
