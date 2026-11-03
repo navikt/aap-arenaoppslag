@@ -2,7 +2,9 @@ package no.nav.aap.arenaoppslag.modeller
 
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakMedVedtakResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakOppsummeringKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteSakDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaSakPerson as ArenaSakPersonKontrakt
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak as ArenaVedtakKontrakt
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -99,6 +101,34 @@ data class ArenaSakMedVedtak(
         registrertDato = registrertDato,
         avsluttetDato = avsluttetDato,
         vedtak = vedtak.map { it.tilKontrakt() },
+    )
+
+    fun tilSisteSakDetaljer(
+        sisteVedtak: ArenaVedtakMedMaxdato,
+        unntaksvilkaarInnvilget: Boolean?,
+        unntaksvilkaarGjelderFra: LocalDate?,
+    ) = SisteSakDetaljer(
+        sakId = sakId.toInt(),
+        saknummer = "$opprettetAar-$lopenr",
+        sakStatus = statuskode,
+        sakRegistrert = registrertDato.toLocalDate(),
+        sakAvsluttet = avsluttetDato?.toLocalDate(),
+        unntaksvilkaarInnvilget = unntaksvilkaarInnvilget,
+        unntaksvilkaarGjelderFra = unntaksvilkaarGjelderFra,
+        sisteVedtak = sisteVedtak.toKontrakt(),
+        vedtakene = vedtak.map {
+            ArenaVedtakKontrakt(
+                sakId = sisteVedtak.sakId,
+                vedtaktypeKode = it.vedtaktypeKode,
+                statusKode = it.statusKode,
+                tilDato = it.tilDato,
+                fraOgMed = it.fraOgMed,
+                rettighetkode = it.rettighetkode,
+                utfallkode = it.utfallkode,
+                vedtakId = it.vedtakId,
+                aktivitetsfaseKode = it.aktivitetsfaseKode,
+            )
+        },
     )
 
     fun tilDetaljert() = ArenaSakDetaljert(
