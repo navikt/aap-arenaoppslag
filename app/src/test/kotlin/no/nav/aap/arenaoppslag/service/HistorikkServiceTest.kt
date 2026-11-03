@@ -295,7 +295,7 @@ class HistorikkServiceTest {
                     assertThat(logg.list).hasSize(1)
                     assertThat(logg.list.single().level).isEqualTo(Level.WARN)
                     assertThat(logg.list.single().formattedMessage).isEqualTo(
-                        "Fant flere vedtakfakta for 11-12 for sak 42. Bruker den første."
+                        "Fant flere aktuelle vedtak med vedtakfakta for 11-12 for sak 42. Bruker den første."
                     )
                 }
             }

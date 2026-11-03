@@ -41,10 +41,11 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
     }
 
     @Test
-    fun `hentSisteLøpendeVedtakDetalj finner ikke vedtak med aktfase UVUP`() {
-        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1203))
+    fun `hentSisteLøpendeVedtakDetalj finner vedtak med aktfase UVUP`() {
+        val vedtak = requireNotNull(VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1203)))
 
-        assertThat(sak).isNull()
+        assertThat(vedtak.vedtakId).isEqualTo(12031)
+        assertThat(vedtak.aktivitetsfaseKode).isEqualTo("UVUP")
     }
 
     @Test
