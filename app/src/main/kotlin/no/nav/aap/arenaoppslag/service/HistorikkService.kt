@@ -200,7 +200,7 @@ class HistorikkService(
         }
 
         if (faktaene.size > 1) {
-            logger.warn("Fant flere vedtakfakta for 11-12 for sak {}. Bruker den første.", sakId)
+            logger.warn("Fant flere aktuelle vedtak med vedtakfakta for 11-12 for sak {}. Bruker den første.", sakId)
         }
 
         return faktaene.firstOrNull() // de er sortert etter fraOgMed, så første er den nyeste
