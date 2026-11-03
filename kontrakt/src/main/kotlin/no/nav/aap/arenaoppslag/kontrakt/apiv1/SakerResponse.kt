@@ -46,6 +46,10 @@ public data class SisteSakDetaljer(
         require(vedtakene.all { it.sakId == sakId }) { "Vedtakene må høre til samme sak" }
     }
 
+    public fun utredesForUfor(): Boolean = sisteVedtak.aktfaseKode == "UVUP" // 11-18
+    public fun erFerdigAvklart(): Boolean = sisteVedtak.aktfaseKode == "FA" // 11-17
+    public fun erSykepengeErstatning(): Boolean = sisteVedtak.aktfaseKode == "SPE" // 11-13
+
     public fun unntaksvilkaarOppfylt(): Boolean = unntaksvilkaarInnvilget == true // eksplisitt Ja til 11-12
     public fun unntaksvilkaarIkkeOppfylt(): Boolean = unntaksvilkaarInnvilget == false // eksplisitt Nei til 11-12
 }
