@@ -85,7 +85,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         WHERE v.person_id = ?
           AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') -- kun vedtak som er innvilget eller under behandling
           AND v.rettighetkode = 'AAP'
-          AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
+          AND NOT ((til_dato IS NOT NULL AND fra_dato IS NOT NULL) AND fra_dato > til_dato) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND vedtaktypekode = 'S' -- kun stanser
           AND ( 
@@ -94,7 +94,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                  -- Bruk ekstra tidsbuffer for åpne Stanser.  
                 (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?) 
                   -- Ekskluder stansede vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
-                  AND NOT (
+                  AND NOT ( til_dato IS NULL AND 
                       reg_user IS NOT NULL AND reg_user = 'GRENSESN'
                       AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
                   )
