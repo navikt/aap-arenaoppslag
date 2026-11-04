@@ -37,13 +37,13 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 etternavn = "Bestesen",
             )
         )
-        val sak = sakRepository.hentSak(Saksnummer(lopenummer = 1, aar = 2021))
+        val sak = sakRepository.hentSak(Saksnummer(lopenummerSak = 1, aar = 2021))
         assertThat(sak).isEqualTo(forventetSak)
     }
 
     @Test
     fun `returnerer NULL om saken ikke finnes i databasen`() {
-        val sak = sakRepository.hentSak(Saksnummer(lopenummer = 1919191919, aar = 1919))
+        val sak = sakRepository.hentSak(Saksnummer(lopenummerSak = 1919191919, aar = 1919))
         assertThat(sak).isNull()
     }
 

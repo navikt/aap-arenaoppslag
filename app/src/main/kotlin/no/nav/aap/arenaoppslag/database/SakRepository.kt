@@ -81,7 +81,7 @@ class SakRepository(private val dataSource: DataSource) {
 
         fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
             connection.prepareStatement(selectSakMedSaksnummer).use { preparedStatement ->
-                preparedStatement.setInt(1, saksnummer.lopenummer)
+                preparedStatement.setInt(1, saksnummer.lopenummerSak)
                 preparedStatement.setInt(2, saksnummer.aar)
                 val resultSet = preparedStatement.executeQuery()
                 val saker = resultSet.map { row -> mapperForArenaSak(row) }

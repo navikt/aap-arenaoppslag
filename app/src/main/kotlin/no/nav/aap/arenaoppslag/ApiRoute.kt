@@ -59,13 +59,7 @@ fun Route.historikk(
 
         val detaljer = historikkService.hentHistorikkStatusDetalj(personId)
 
-        val response = HistorikkStatusDetaljResponse(
-            telleverk = detaljer.telleverk,
-            sisteSakOgVedtak = detaljer.sisteSakOgVedtak,
-            sisteUtbetalingDato = detaljer.sisteUtbetalingDato
-        )
-
-        call.respond(HttpStatusCode.OK, response)
+        call.respond(HttpStatusCode.OK, detaljer)
     }
 }
 

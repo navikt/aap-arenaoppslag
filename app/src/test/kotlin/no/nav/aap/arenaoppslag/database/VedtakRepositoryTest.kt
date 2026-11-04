@@ -5,6 +5,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.groups.Tuple.tuple
@@ -13,6 +14,15 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepository") {
+
+    @Test
+    fun `hentSisteLøpendeVedtakDetalj mapper sakens løpenummer uavhengig av vedtakets`() {
+        val vedtak = requireNotNull(VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1201)))
+
+        assertThat(vedtak.lopenrVedtak).isEqualTo(1)
+        assertThat(vedtak.lopenrSak).isEqualTo(17)
+        assertThat(vedtak.saksnummer()).isEqualTo(Saksnummer(lopenummerSak = 17, aar = 2025))
+    }
 
     @Test
     fun `hentSisteLøpendeVedtakDetalj støtter null for begge maksdatoer`() {
@@ -31,10 +41,11 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
     }
 
     @Test
-    fun `hentSisteLøpendeVedtakDetalj finner ikke vedtak med aktfase UVUP`() {
-        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1203))
+    fun `hentSisteLøpendeVedtakDetalj finner vedtak med aktfase UVUP`() {
+        val vedtak = requireNotNull(VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1203)))
 
-        assertThat(sak).isNull()
+        assertThat(vedtak.vedtakId).isEqualTo(12031)
+        assertThat(vedtak.aktivitetsfaseKode).isEqualTo("UVUP")
     }
 
     @Test
