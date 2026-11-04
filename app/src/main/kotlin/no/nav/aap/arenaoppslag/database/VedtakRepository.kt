@@ -77,7 +77,7 @@ class VedtakRepository(private val dataSource: DataSource) {
         @Language("OracleSql")
         internal val selectSisteVedtakSomIkkeErStansetOgPåvirkerKvote = """
             WITH nyeste_vedtak AS (
-                SELECT rettighetkode, utfallkode, aar, sak_id, vedtak_id, lopenrvedtak, vedtaktypekode, aktfasekode, vedtakstatuskode, fra_dato, til_dato FROM (
+                SELECT rettighetkode, utfallkode, aar, sak_id, vedtak_id, lopenrvedtak, lopenrsak, vedtaktypekode, aktfasekode, vedtakstatuskode, fra_dato, til_dato FROM (
                     SELECT v.sak_id,
                         v.vedtak_id,
                         v.vedtaktypekode,
@@ -86,6 +86,7 @@ class VedtakRepository(private val dataSource: DataSource) {
                         v.til_dato,
                         v.vedtakstatuskode,
                         v.lopenrvedtak,
+                        v.lopenrsak,
                         v.aar,
                         v.rettighetkode,
                         v.utfallkode,
@@ -96,14 +97,14 @@ class VedtakRepository(private val dataSource: DataSource) {
                         AND v.utfallkode = 'JA'
                         AND v.vedtakstatuskode IN ('IVERK','AVSLU')
                         AND v.vedtaktypekode IN ('O', 'E', 'G')
-                        AND v.aktfasekode IN ('UA', 'AU')
                         -- ignorer ugyldiggjorte vedtak og etterregistrerte vedtak:
                         AND v.fra_dato IS NOT NULL
                         AND NOT ((v.fra_dato IS NOT NULL and v.til_dato IS NOT NULL) AND v.fra_dato > v.til_dato)
                 ) WHERE rn = 1
             )
-            SELECT nv.sak_id, nv.aar, nv.vedtak_id, nv.lopenrvedtak, nv.aktfasekode, nv.vedtaktypekode, nv.fra_dato, 
-            nv.til_dato, nv.vedtakstatuskode, nv.rettighetkode, nv.utfallkode, vmd.max_dato, vmd.max_unntak_dato
+            SELECT nv.sak_id, nv.aar, nv.vedtak_id, nv.lopenrvedtak, nv.lopenrsak, nv.aktfasekode, nv.vedtaktypekode, 
+            nv.fra_dato, nv.til_dato, nv.vedtakstatuskode, nv.rettighetkode, nv.utfallkode, 
+            vmd.max_dato, vmd.max_unntak_dato
             FROM nyeste_vedtak nv
                 JOIN v_vedtak_maxdato vmd ON vmd.vedtak_id = nv.vedtak_id
             FETCH FIRST 1 ROW ONLY
@@ -140,16 +141,17 @@ class VedtakRepository(private val dataSource: DataSource) {
 
         fun mapperForArenaVedtakDetalj(row: ResultSet) = ArenaVedtakMedMaxdato(
             sakId = row.getInt("sak_id"),
-            opprettetAar = row.getInt("aar"),
-            lopenrvedtak = row.getInt("lopenrvedtak"),
             vedtakId = row.getInt("vedtak_id"),
-            aktivitetsfaseKode = row.getString("aktfasekode"),
-            vedtaktypeKode = row.getString("vedtaktypekode"),
+            opprettetAar = row.getInt("aar"),
+            lopenrVedtak = row.getInt("lopenrvedtak"),
+            lopenrSak = row.getInt("lopenrsak"),
             statusKode = row.getString("vedtakstatuskode"),
+            vedtaktypeKode = row.getString("vedtaktypekode"),
+            aktivitetsfaseKode = row.getString("aktfasekode"),
+            fraOgMed = row.getDate("fra_dato")?.toLocalDate(),
+            tilDato = row.getDate("til_dato")?.toLocalDate(),
             rettighetkode = row.getString("rettighetkode"),
             utfallkode = row.getString("utfallkode"),
-            tilDato = row.getDate("til_dato")?.toLocalDate(),
-            fraOgMed = row.getDate("fra_dato")?.toLocalDate(),
             maxdatoUnntak = row.getDate("max_unntak_dato")?.toLocalDate(),
             maxdatoOrdinaer = row.getDate("max_dato")?.toLocalDate(),
         )

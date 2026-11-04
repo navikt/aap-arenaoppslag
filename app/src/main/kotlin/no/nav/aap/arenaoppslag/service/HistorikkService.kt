@@ -9,10 +9,8 @@ import no.nav.aap.arenaoppslag.Metrics.registrerNyesteSignifikanteVedtak
 import no.nav.aap.arenaoppslag.Metrics.registrerSignifikantVedtak
 import no.nav.aap.arenaoppslag.SakOgVedtakService
 import no.nav.aap.arenaoppslag.database.HistorikkRepository
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.HistorikkStatusDetaljResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteSakDetaljer
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.TelleverkForPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedMaxdato
@@ -77,48 +75,35 @@ class HistorikkService(
 
     fun hentHistorikkStatusDetalj(personId: PersonId): HistorikkStatusDetaljResponse {
         val sisteVedtakMedMaksdato = vedtakService.hentSisteLøpendeVedtakDetalj(personId)
-        val sisteSakMedVedtak = sisteVedtakMedMaksdato?.saksnummer()?.let { sakOgVedtakService.hentSakMedVedtak(it) }
+        val sisteSakMedVedtak = sisteVedtakMedMaksdato?.saksnummer()
+            ?.let { sakOgVedtakService.hentSakMedVedtak(it) }
+            ?.let { sak ->
+                sak.copy(
+                    vedtak = sak.vedtak.filter { vedtaket ->
+                        !vedtaket.erUgyldiggjort()
+                    }
+                )
+            }
 
-        val vedtakISisteSak = sisteSakMedVedtak?.vedtak?.map {
-            ArenaVedtak(
-                sakId = sisteVedtakMedMaksdato.sakId,
-                vedtaktypeKode = it.vedtaktypeKode,
-                statusKode = it.statusKode,
-                tilDato = it.tilDato,
-                fraOgMed = it.fraOgMed,
-                rettighetkode = it.rettighetkode,
-                utfallkode = it.utfallkode,
-                vedtakId = it.vedtakId,
-                aktivitetsfaseKode = it.aktivitetsfaseKode,
+        val sisteSakDetaljer = if (sisteVedtakMedMaksdato != null && sisteSakMedVedtak != null) {
+            val (unntaksvilkaarInnvilget, unntaksvilkaarGjelderFra) = hent11_12StatusForSaken(
+                sisteVedtakMedMaksdato,
+                sisteSakMedVedtak.vedtak,
+                sisteVedtakMedMaksdato.sakId // samme sakId på alle vedtakene
             )
-        }
 
-        val (unntaksvilkaarInnvilget, unntaksvilkaarGjelderFra) = hent11_12StatusForSaken(
-            sisteVedtakMedMaksdato,
-            sisteSakMedVedtak?.vedtak
-        )
-
-        val sisteSakDetaljer = sisteSakMedVedtak?.let {
-            SisteSakDetaljer(
-                sakId = it.sakId.toInt(),
-                saknummer = "$it.aar-$it.lopenr",
-                sakStatus = it.statuskode,
-                sakRegistrert = it.registrertDato.toLocalDate(),
-                sakAvsluttet = it.avsluttetDato?.toLocalDate(),
+            sisteSakMedVedtak.tilSisteSakDetaljer(
+                sisteVedtak = sisteVedtakMedMaksdato,
                 unntaksvilkaarInnvilget = unntaksvilkaarInnvilget,
                 unntaksvilkaarGjelderFra = unntaksvilkaarGjelderFra,
-                sisteVedtak = sisteVedtakMedMaksdato.toKontrakt(),
-                vedtakene = vedtakISisteSak ?: emptyList()
             )
-        }
+        } else null
 
         val kvote = telleverkService.hentTelleverkForPerson(personId)?.let {
             TelleverkForPerson(
                 // Korriger feilregistreringer i Arena-teller
                 ordineerAAPKvote = if (it.ordineerAAPKvote < 0) 0 else it.ordineerAAPKvote,
-                utvidetAAPKvote = if (sisteVedtakMedMaksdato?.unntaksvilkaarOppfylt() == true) {
-                    it.utvidetAAPKvote
-                } else null
+                utvidetAAPKvote = if (it.utvidetAAPKvote != null && it.utvidetAAPKvote < 0) 0 else it.utvidetAAPKvote
             )
         }
 
@@ -133,33 +118,38 @@ class HistorikkService(
 
     private fun hent11_12StatusForSaken(
         sisteLøpendeVedtak: ArenaVedtakMedMaxdato?,
-        vedtakeneISisteSak: List<ArenaVedtakMedDetaljer>?
+        vedtakeneISisteSak: List<ArenaVedtakMedDetaljer>?,
+        sakId: Int?
     ): Pair<Boolean?, LocalDate?> {
+        if (vedtakeneISisteSak.isNullOrEmpty()) {
+            logger.info("Fant ingen vedtak for sakId=$sakId, kan ikke hente 11-12 status")
+            return Pair(null, null)
+        }
         // Hvor dataene ligger avhenger av om 11-12 vurderingen er gjort etter gammel eller ny prosedyre.
 
         // Er 11-12 vurderingen registrert etter ny prosedyre?
-        val eget11_12vedtak = vedtakeneISisteSak?.filter {
-            it.fraOgMed?.isAfter(sisteLøpendeVedtak?.tilDato) == true
+        val eget11_12vedtak = vedtakeneISisteSak.filter {
+            it.fraOgMed != null
+                    && it.fraOgMed.isAfter(sisteLøpendeVedtak?.tilDato)
                     && it.vedtaktypeKode == "O"
-                    && it.rettighetkode == "AAP"
                     && it.utfallkode == "NEI"
+                    && it.rettighetkode == "AAP"
                     && it.aktivitetsfaseKode in listOf("AU", "UA")
-        }?.sortedByDescending { it.fraOgMed }
-
-        if (eget11_12vedtak != null && eget11_12vedtak.size > 1) {
-            logger.warn(
-                "Fant {} egne 11-12-vedtak i siste sak. Bruker vedtaket med nyeste fra-og-med-dato.",
-                eget11_12vedtak.size
-            )
+                    && it.statusKode in listOf("IVERK", "AVSLU")
         }
+        val faktaPåEget11_12Vedtak = hentUnntakFraVedtakfakta(eget11_12vedtak, sakId)
 
-        val faktaPåEget11_12Vedtak = eget11_12vedtak?.firstOrNull()?.let {
-            val faktaene = vedtakfaktaService.hentForVedtakliste(listOf(it.vedtakId))
-            val fakta = faktaene.getOrDefault(it.vedtakId, emptyList())
-            val unntakInnvilget = fakta.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
-            val unntaksdato = fakta.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
-            Pair(unntakInnvilget, unntaksdato)
+        // Er 11-12 vurderingen registrert på et Stans-vedtak?
+        val stansvedtakMed11_12 = vedtakeneISisteSak.filter {
+            it.fraOgMed != null
+                    && it.fraOgMed.isAfter(sisteLøpendeVedtak?.tilDato)
+                    && it.vedtaktypeKode == "S"
+                    && it.utfallkode == "JA"
+                    && it.rettighetkode == "AAP"
+                    && it.aktivitetsfaseKode in listOf("AU", "UA")
+                    && it.statusKode in listOf("IVERK", "AVSLU")
         }
+        val faktaPåStanset11_12Vedtak = hentUnntakFraVedtakfakta(stansvedtakMed11_12, sakId)
 
         // Er 11-12 vurderingen registrert etter gammel prosedyre?
         val faktaPåLøpendeVedtak = sisteLøpendeVedtak?.unntaksvilkaarInnvilget?.let {
@@ -172,13 +162,48 @@ class HistorikkService(
         val resultat = when {
             faktaPåLøpendeVedtak != null -> faktaPåLøpendeVedtak
             faktaPåEget11_12Vedtak != null -> faktaPåEget11_12Vedtak
+            faktaPåStanset11_12Vedtak != null -> faktaPåStanset11_12Vedtak
             else -> Pair(null, null) // ingen vurdering registrert
-        }
-        if (resultat.first == true && resultat.second == null) {
-            logger.warn("Fant 11-12 vurdering som er innvilget, men ingen dato for når unntaksvilkåret gjelder fra. Returnerer null for dato.")
         }
 
         return resultat
+    }
+
+    private fun hentUnntakFraVedtakfakta(
+        aktulleVedtak: List<ArenaVedtakMedDetaljer>,
+        sakId: Int?
+    ): Pair<Boolean, LocalDate>? {
+        val vedtakene = aktulleVedtak.sortedByDescending { it.fraOgMed }.map { it.vedtakId }
+        val faktaPerVedtak = vedtakfaktaService.hentForVedtakliste(vedtakene)
+        val faktaene = vedtakene.mapNotNull { vedtakId -> /* må ha en ikke-null mappet verdi for å være relevant */
+            val fakta = faktaPerVedtak[vedtakId].orEmpty()
+            val unntakInnvilget = fakta.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
+            val unntaksdato = fakta.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
+            if (unntakInnvilget != null && unntaksdato != null) {
+                Pair(unntakInnvilget, unntaksdato)
+            } else {
+                if (unntakInnvilget != null || unntaksdato != null) {
+                    logger.warn(
+                        "Fant kun en av vedtakfakta-verdiene for 11-12 for vedtakId=${vedtakId}. " +
+                                "Dette kan være en feil i Arena."
+                    )
+                }
+                null
+            }
+        }
+
+        if (vedtakene.isNotEmpty() && faktaene.isEmpty()) {
+            logger.warn(
+                "Fant relevante vedtak for 11-12 for sak {} , men ingen vedtakfakta. Dette kan være en feil i Arena.",
+                sakId
+            )
+        }
+
+        if (faktaene.size > 1) {
+            logger.warn("Fant flere aktuelle vedtak med vedtakfakta for 11-12 for sak {}. Bruker den første.", sakId)
+        }
+
+        return faktaene.firstOrNull() // de er sortert etter fraOgMed, så første er den nyeste
     }
 
 }

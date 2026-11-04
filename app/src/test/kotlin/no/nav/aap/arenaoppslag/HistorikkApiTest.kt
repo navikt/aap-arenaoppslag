@@ -66,7 +66,7 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "
     }
 
     @Test
-    fun `Henter historikkstatusdetaljer for kjent person`() {
+    fun `Henter telleverk for kjent person uten løpende vedtak`() {
         withTestServer(h2) { gateway ->
             val response = gateway.hentHistorikkStatusDetalj(
                 SignifikantHistorikkRequest("12312312312", LocalDateTime.of(2025, 3, 27, 0, 0).toLocalDate())
@@ -74,23 +74,28 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "
 
             assertThat(response).isEqualTo(
                 HistorikkStatusDetaljResponse(
-                    telleverk = TelleverkForPerson(7460, null),
+                    telleverk = TelleverkForPerson(7460, 460),
                     sisteSakOgVedtak = null,
-                    sisteUtbetalingDato = null
+                    sisteUtbetalingDato = null,
                 )
             )
         }
     }
 
     @Test
-    fun `Henter kvote og siste utbetalingsdato for kjent person`() {
+    fun `Henter kvote og siste utbetalingsdato uten løpende vedtak`() {
         withTestServer(h2) { gateway ->
             val response = gateway.hentHistorikkStatusDetalj(
                 SignifikantHistorikkRequest(kjentPerson, LocalDateTime.now().toLocalDate())
             )
 
-            assertThat(response.telleverk).isEqualTo(TelleverkForPerson(8800, null))
-            assertThat(response.sisteUtbetalingDato).isEqualTo(LocalDate.of(2025, 4, 15))
+            assertThat(response).isEqualTo(
+                HistorikkStatusDetaljResponse(
+                    telleverk = TelleverkForPerson(8800, null),
+                    sisteSakOgVedtak = null,
+                    sisteUtbetalingDato = LocalDate.of(2025, 4, 15),
+                )
+            )
         }
     }
 
