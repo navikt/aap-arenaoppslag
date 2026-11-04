@@ -59,6 +59,9 @@ spec:
         - application: behandlingsflyt
           cluster: {{cluster}}-gcp
           namespace: aap
+        - application: meldekort-backend
+          cluster: {{cluster}}-gcp
+          namespace: aap
         {{#if isdev}}
         - application: azure-token-generator
           cluster: dev-gcp
