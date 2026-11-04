@@ -31,23 +31,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // vedtak i samme periode.
         @Language("OracleSql")
         val selectKunRelevanteAapVedtak = """
-        SELECT 
-            sak_id, 
-            v.vedtak_id,
-            aar,
-            lopenrvedtak,
-            lopenrsak,
-            vedtakstatuskode, 
-            vedtaktypekode, 
-            fra_dato, 
-            til_dato, 
-            rettighetkode, 
-            aktfasekode,
-            v.utfallkode, 
-            v.reg_dato,
-            v.mod_dato,
-            v.vedtak_id,
-            v.person_id
+        SELECT
+            ${vedtakKolonner()}
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -64,23 +49,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // S1b: Hent alle stanser på AAP-vedtak med relevant historikk for personen
         @Language("OracleSql")
         val selectKunStanserPåAAP = """
-        SELECT 
-            sak_id, 
-            v.vedtak_id,
-            aar,
-            lopenrvedtak,
-            lopenrsak,
-            vedtakstatuskode, 
-            vedtaktypekode, 
-            fra_dato, 
-            til_dato, 
-            rettighetkode, 
-            aktfasekode,
-            v.utfallkode, 
-            v.reg_dato,
-            v.mod_dato,
-            v.vedtak_id,
-            v.person_id
+        SELECT
+            ${vedtakKolonner()}
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -89,18 +59,18 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND NOT ((til_dato IS NOT NULL AND fra_dato IS NOT NULL) AND fra_dato > til_dato) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND vedtaktypekode = 'S' -- kun stanser
-          AND ( 
+          AND (
                 (v.til_dato IS NOT NULL AND til_dato >= ?) -- vanlig tidsbuffer, stansen har til_dato
                   OR
-                 -- Bruk ekstra tidsbuffer for åpne Stanser.  
-                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?) 
+                 -- Bruk ekstra tidsbuffer for åpne Stanser.
+                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)
                   -- Ekskluder stansede vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
-                  AND NOT ( til_dato IS NULL AND 
+                  AND NOT ( til_dato IS NULL AND
                       reg_user IS NOT NULL AND reg_user = 'GRENSESN'
                       AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
                   )
-                ) 
-              ) 
+                )
+          )
           AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
           AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
@@ -108,23 +78,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // S2: Hent alle AA115-vedtak med relevant historikk for personen
         @Language("OracleSql")
         val selectKunRelevante11_5Vedtak = """
-        SELECT 
-            sak_id, 
-            v.vedtak_id,
-            aar,
-            lopenrvedtak,
-            lopenrsak,
-            vedtakstatuskode, 
-            vedtaktypekode, 
-            fra_dato, 
-            til_dato, 
-            rettighetkode, 
-            aktfasekode,
-            v.utfallkode, 
-            v.reg_dato,
-            v.mod_dato,
-            v.vedtak_id,
-            v.person_id
+        SELECT
+            ${vedtakKolonner()}
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -140,22 +95,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
         -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres. 
         -- Dersom den er null, er klagen fortsatt under behandling.
         SELECT
-            v.sak_id,
-            v.vedtak_id,
-            v.aar,
-            v.lopenrvedtak,
-            v.lopenrsak,
-            vedtakstatuskode,
-            vedtaktypekode,
-            CAST(NULL AS DATE)                    AS fra_dato,
-            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
-            v.rettighetkode,
-            v.aktfasekode,
-            v.utfallkode, 
-            v.reg_dato,
-            v.mod_dato,
-            v.vedtak_id,
-            v.person_id
+            ${vedtakKolonner(
+                fraDato = "CAST(NULL AS DATE)",
+                tilDato = "TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY')",
+            )}
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -175,22 +118,10 @@ class HistorikkRepository(private val dataSource: DataSource) {
         @Language("OracleSql")
         val selectKunRelevanteAnker = """
         SELECT
-            v.sak_id,
-            v.vedtak_id,
-            v.aar,
-            v.lopenrvedtak,
-            v.lopenrsak,
-            vedtakstatuskode,
-            vedtaktypekode,
-            CAST(NULL AS DATE)                    AS fra_dato,
-            CAST(NULL AS DATE)                    AS til_dato,
-            v.rettighetkode,
-            v.aktfasekode,
-            v.utfallkode, 
-            v.reg_dato,
-            v.mod_dato,
-            v.vedtak_id,
-            v.person_id
+            ${vedtakKolonner(
+                fraDato = "CAST(NULL AS DATE)",
+                tilDato = "CAST(NULL AS DATE)",
+            )}
         FROM
             vedtak v
             JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
@@ -204,6 +135,27 @@ class HistorikkRepository(private val dataSource: DataSource) {
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
             AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+        """.trimIndent()
+
+        private fun vedtakKolonner(
+            fraDato: String = "v.fra_dato",
+            tilDato: String = "v.til_dato",
+        ): String = """
+            v.sak_id,
+            v.vedtak_id,
+            v.aar,
+            v.lopenrvedtak,
+            v.lopenrsak,
+            v.vedtakstatuskode,
+            v.vedtaktypekode,
+            $fraDato AS fra_dato,
+            $tilDato AS til_dato,
+            v.rettighetkode,
+            v.aktfasekode,
+            v.utfallkode,
+            v.reg_dato,
+            v.mod_dato,
+            v.person_id
         """.trimIndent()
 
         const val vanligTidsbufferUker = 78L // 52 uker gjenopptak + 6 måneder tilbakejustering
@@ -236,7 +188,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     selectKunRelevante11_5Vedtak,
                     selectKunRelevanteKlager,
                     selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC"
+                ).joinToString("\nUNION ALL\n") + "\nORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC"
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
