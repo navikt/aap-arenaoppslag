@@ -66,6 +66,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
         val selectKunStanserPåAAP = """
         SELECT 
             sak_id, 
+            v.vedtak_id,
             aar,
             lopenrvedtak,
             lopenrsak,
