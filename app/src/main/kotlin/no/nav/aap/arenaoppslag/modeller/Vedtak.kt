@@ -120,7 +120,7 @@ data class ArenaVedtakMedMaxdato(
             til = tilDato,
             maxdatoOrdinaer = maxdatoOrdinaer,
             maxdatoUnntak = maxdatoUnntak,
-            maxdatoAap = unntaksvilkaarGjelderFra ?: maxdatoUnntak ?: maxdatoOrdinaer,
+            maxdatoAap = maxdatoUnntak ?: maxdatoUnntak ?: maxdatoOrdinaer,
         )
 
 }
