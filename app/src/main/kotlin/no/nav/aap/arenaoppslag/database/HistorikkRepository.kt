@@ -73,15 +73,22 @@ class HistorikkRepository(private val dataSource: DataSource) {
               reg_user IS NOT NULL AND reg_user = 'GRENSESN'
               AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
           )
-          AND EXISTS (
-              SELECT 1
-              FROM siste_lopende_vedtak siste
-              WHERE siste.person_id = v.person_id
-                AND siste.sak_id = v.sak_id
-                AND v.vedtak_id > siste.vedtak_id
-                AND siste.fra_dato IS NOT NULL
-                AND v.fra_dato IS NOT NULL
-                AND v.fra_dato >= siste.fra_dato
+          AND (
+              NOT EXISTS (
+                  SELECT 1
+                  FROM siste_lopende_vedtak siste
+                  WHERE siste.person_id = v.person_id
+              )
+              OR EXISTS (
+                  SELECT 1
+                  FROM siste_lopende_vedtak siste
+                  WHERE siste.person_id = v.person_id
+                    AND siste.sak_id = v.sak_id
+                    AND v.vedtak_id > siste.vedtak_id
+                    AND siste.fra_dato IS NOT NULL
+                    AND v.fra_dato IS NOT NULL
+                    AND v.fra_dato >= siste.fra_dato
+              )
           )
           AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
           AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
