@@ -80,7 +80,8 @@ class HistorikkService(
             ?.let { sak ->
                 sak.copy(
                     vedtak = sak.vedtak.filter { vedtaket ->
-                        !vedtaket.erUgyldiggjort()
+                                !vedtaket.erUgyldiggjort() &&
+                                !vedtaket.erEtterregistrert()
                     }
                 )
             }
