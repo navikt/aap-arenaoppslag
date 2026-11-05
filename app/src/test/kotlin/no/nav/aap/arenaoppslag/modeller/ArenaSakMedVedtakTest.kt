@@ -64,6 +64,32 @@ class ArenaSakMedVedtakTest {
     }
 
     @Test
+    fun `toKontrakt velger maksdato for unntak foran ordinær maksdato uavhengig av unntaksdato`() {
+        val maksdatoUnntak = tilDato.plusYears(1)
+        val unntaksdato = fraOgMed.plusMonths(1)
+
+        for ((unntak, ordinær, forventet) in listOf(
+            Triple(maksdatoUnntak, tilDato, maksdatoUnntak),
+            Triple(maksdatoUnntak, null, maksdatoUnntak),
+            Triple(null, tilDato, tilDato),
+            Triple(null, null, null),
+        )) {
+            for (innvilget in listOf(true, false, null)) {
+                val kontrakt = sisteVedtak.copy(
+                    maxdatoUnntak = unntak,
+                    maxdatoOrdinaer = ordinær,
+                    unntaksvilkaarInnvilget = innvilget,
+                    unntaksvilkaarGjelderFra = unntaksdato,
+                ).toKontrakt()
+
+                assertThat(kontrakt.maxdatoAap).describedAs("$unntak/$ordinær/$innvilget").isEqualTo(forventet)
+                assertThat(kontrakt.maxdatoUnntak).isEqualTo(unntak)
+                assertThat(kontrakt.maxdatoOrdinaer).isEqualTo(ordinær)
+            }
+        }
+    }
+
+    @Test
     fun `tilSisteSakDetaljer mapper sak og vedtak med beregnet unntaksstatus`() {
         val unntaksdato = tilDato.plusDays(1)
 
