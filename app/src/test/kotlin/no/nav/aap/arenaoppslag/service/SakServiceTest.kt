@@ -79,6 +79,36 @@ class SakServiceTest {
     }
 
     @Test
+    fun `hentMaksdatoAapMedVedtakOgSak beholder vurderingen og fjerner unntaksdato ved avslag`() {
+        val sakRepository = mockk<SakRepository>()
+        val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
+        val service = SakService(sakRepository, vedtakfaktaRepository)
+        val maxdato = LocalDate.of(2026, 5, 1)
+        every { sakRepository.hentMaxdatoForSisteVedtak(personId) } returns
+            maksdatolinje(sakId = 1, vedtaktypeKode = "O", sakStatus = "AKTIV", maxdato = maxdato)
+
+        for ((verdi, innvilget) in listOf("J" to true, "N" to false)) {
+            for (dato in listOf(null, "", "01-02-2025")) {
+                every { vedtakfaktaRepository.hentForVedtakIder(listOf(10)) } returns mapOf(
+                    10 to buildList {
+                        add(vedtakfakta(kode = "UNNTAKAAP", verdi = verdi))
+                        if (dato != null) {
+                            add(vedtakfakta(kode = "AAPVILKUNN", verdi = dato))
+                        }
+                    }
+                )
+
+                val resultat = requireNotNull(service.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId))
+
+                assertThat(resultat.unntaksvilkaarInnvilget).isEqualTo(innvilget)
+                assertThat(resultat.unntaksvilkaarGjelderFra)
+                    .isEqualTo(if (innvilget && !dato.isNullOrBlank()) LocalDate.of(2025, 2, 1) else null)
+                assertThat(resultat.sisteVedtak.maxdatoAap).isEqualTo(maxdato)
+            }
+        }
+    }
+
+    @Test
     fun `hentMaksdatoAapMedVedtakOgSak setter unntaksvilkaarInnvilget til null for ukjent UNNTAKAAP-verdi`() {
         val sakRepository = mockk<SakRepository>()
         val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()

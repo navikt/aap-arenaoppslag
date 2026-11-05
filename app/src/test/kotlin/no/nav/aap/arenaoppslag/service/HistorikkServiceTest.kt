@@ -111,16 +111,21 @@ class HistorikkServiceTest {
     }
 
     @Test
-    fun `avslag i eget 11-12-vedtak gir false`() {
-        val vedtak = egetVedtak()
-        klargjørSak(listOf(vedtak))
-        every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
-            mapOf(vedtak.vedtakId to fakta("N"))
+    fun `avslag gir false uten unntaksdato for begge vedtakstyper`() {
+        for (vedtak in listOf(egetVedtak(), stansvedtak())) {
+            klargjørSak(listOf(vedtak))
 
-        val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+            for (dato in listOf(null, "", "01-02-2026")) {
+                every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
+                    mapOf(vedtak.vedtakId to fakta("N", dato))
 
-        assertThat(detaljer.unntaksvilkaarInnvilget).isFalse()
-        assertThat(detaljer.unntaksvilkaarGjelderFra).isEqualTo(unntaksdato)
+                val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+
+                assertThat(detaljer.unntaksvilkaarInnvilget).isFalse()
+                assertThat(detaljer.unntaksvilkaarGjelderFra).isNull()
+                assertThat(logg.list).isEmpty()
+            }
+        }
     }
 
     @Test
@@ -136,7 +141,8 @@ class HistorikkServiceTest {
                 val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
 
                 assertThat(detaljer.unntaksvilkaarInnvilget).describedAs("$fase/$verdi").isEqualTo(innvilget)
-                assertThat(detaljer.unntaksvilkaarGjelderFra).describedAs("$fase/$verdi").isEqualTo(unntaksdato)
+                assertThat(detaljer.unntaksvilkaarGjelderFra).describedAs("$fase/$verdi")
+                    .isEqualTo(if (innvilget) unntaksdato else null)
             }
         }
     }
@@ -155,14 +161,14 @@ class HistorikkServiceTest {
                 listOf(vedtak, stans),
                 løpendeVedtak().copy(
                     unntaksvilkaarInnvilget = innvilget,
-                    unntaksvilkaarGjelderFra = sluttdato,
+                    unntaksvilkaarGjelderFra = if (innvilget) sluttdato else null,
                 )
             )
 
             val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
 
             assertThat(detaljer.unntaksvilkaarInnvilget).isEqualTo(innvilget)
-            assertThat(detaljer.unntaksvilkaarGjelderFra).isEqualTo(sluttdato)
+            assertThat(detaljer.unntaksvilkaarGjelderFra).isEqualTo(if (innvilget) sluttdato else null)
         }
     }
 
@@ -196,18 +202,37 @@ class HistorikkServiceTest {
         val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
 
         assertThat(detaljer.unntaksvilkaarInnvilget).isFalse()
-        assertThat(detaljer.unntaksvilkaarGjelderFra).isEqualTo(unntaksdato)
+        assertThat(detaljer.unntaksvilkaarGjelderFra).isNull()
     }
 
     @Test
-    fun `bruker stansvedtak når eget vedtak mangler komplette fakta`() {
+    fun `eget vedtak med vurdering uten dato har forrang foran stansvedtak`() {
+        val vedtak = egetVedtak()
+        val stans = stansvedtak()
+        klargjørSak(listOf(vedtak, stans))
+
+        for ((verdi, innvilget) in listOf("J" to true, "N" to false)) {
+            every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
+                mapOf(vedtak.vedtakId to fakta(verdi, null))
+            every { vedtakfaktaService.hentForVedtakliste(listOf(stans.vedtakId)) } returns
+                mapOf(stans.vedtakId to fakta(if (innvilget) "N" else "J"))
+
+            val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+
+            assertThat(detaljer.unntaksvilkaarInnvilget).isEqualTo(innvilget)
+            assertThat(detaljer.unntaksvilkaarGjelderFra).isNull()
+        }
+    }
+
+    @Test
+    fun `bruker stansvedtak når eget vedtak mangler en gyldig vurdering`() {
         val vedtak = egetVedtak()
         val stans = stansvedtak()
         klargjørSak(listOf(vedtak, stans))
         every { vedtakfaktaService.hentForVedtakliste(listOf(stans.vedtakId)) } returns
             mapOf(stans.vedtakId to fakta("J"))
 
-        for (ufullstendigeFakta in listOf(emptyList(), fakta("N").take(1), fakta("N").drop(1))) {
+        for (ufullstendigeFakta in listOf(emptyList(), fakta(null), fakta(""), fakta("UKJENT"))) {
             every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
                 mapOf(vedtak.vedtakId to ufullstendigeFakta)
 
@@ -274,7 +299,7 @@ class HistorikkServiceTest {
     }
 
     @Test
-    fun `velger nyeste komplette fakta uavhengig av rekkefølgen på vedtak og fakta`() {
+    fun `velger nyeste vurdering uavhengig av rekkefølgen på vedtak og fakta`() {
         for (eldre in listOf(egetVedtak(), stansvedtak())) {
             val nyere = eldre.copy(vedtakId = 4, fraOgMed = unntaksdato.plusDays(10))
 
@@ -291,7 +316,7 @@ class HistorikkServiceTest {
                     val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
 
                     assertThat(detaljer.unntaksvilkaarInnvilget).isFalse()
-                    assertThat(detaljer.unntaksvilkaarGjelderFra).isEqualTo(unntaksdato)
+                    assertThat(detaljer.unntaksvilkaarGjelderFra).isNull()
                     assertThat(logg.list).hasSize(1)
                     assertThat(logg.list.single().level).isEqualTo(Level.WARN)
                     assertThat(logg.list.single().formattedMessage).isEqualTo(
@@ -321,12 +346,33 @@ class HistorikkServiceTest {
     }
 
     @Test
-    fun `bruker eldre vedtak når nyeste vedtak mangler komplette fakta`() {
+    fun `nyeste vurdering uten dato har forrang foran eldre vedtak`() {
         for (eldre in listOf(egetVedtak(), stansvedtak())) {
             val nyere = eldre.copy(vedtakId = 4, fraOgMed = unntaksdato.plusDays(10))
             klargjørSak(listOf(eldre, nyere))
 
-            for (ufullstendigeFakta in listOf(emptyList(), fakta("N").take(1), fakta("N").drop(1))) {
+            for ((verdi, innvilget) in listOf("J" to true, "N" to false)) {
+                every { vedtakfaktaService.hentForVedtakliste(listOf(nyere.vedtakId, eldre.vedtakId)) } returns
+                    mapOf(
+                        nyere.vedtakId to fakta(verdi, null),
+                        eldre.vedtakId to fakta(if (innvilget) "N" else "J"),
+                    )
+
+                val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+
+                assertThat(detaljer.unntaksvilkaarInnvilget).isEqualTo(innvilget)
+                assertThat(detaljer.unntaksvilkaarGjelderFra).isNull()
+            }
+        }
+    }
+
+    @Test
+    fun `bruker eldre vedtak når nyeste vedtak mangler en gyldig vurdering`() {
+        for (eldre in listOf(egetVedtak(), stansvedtak())) {
+            val nyere = eldre.copy(vedtakId = 4, fraOgMed = unntaksdato.plusDays(10))
+            klargjørSak(listOf(eldre, nyere))
+
+            for (ufullstendigeFakta in listOf(emptyList(), fakta(null), fakta(""), fakta("UKJENT"))) {
                 every { vedtakfaktaService.hentForVedtakliste(listOf(nyere.vedtakId, eldre.vedtakId)) } returns
                     mapOf(nyere.vedtakId to ufullstendigeFakta, eldre.vedtakId to fakta("J"))
 
@@ -356,25 +402,43 @@ class HistorikkServiceTest {
     }
 
     @Test
-    fun `manglende enkeltfakta gir ukjent status og advarsler`() {
+    fun `innvilget unntak uten dato beholder status og logger advarsel`() {
+        for (vedtak in listOf(egetVedtak(), stansvedtak())) {
+            klargjørSak(listOf(vedtak))
+
+            for (dato in listOf(null, "")) {
+                logg.list.clear()
+                every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
+                    mapOf(vedtak.vedtakId to fakta("J", dato))
+
+                val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
+
+                assertThat(detaljer.unntaksvilkaarInnvilget).isTrue()
+                assertThat(detaljer.unntaksvilkaarGjelderFra).isNull()
+                assertThat(logg.list.map { it.level }).containsExactly(Level.WARN)
+                assertThat(logg.list.single().formattedMessage).isEqualTo(
+                    "Mulig datafeil i Arena: fant vedtak med innvilget unntaksvilkår, " +
+                        "men ingen dato for når det gjelder fra. SakId=42, vedtakId=${vedtak.vedtakId}"
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `dato uten vurdering gir ukjent status og advarsel`() {
         val vedtak = egetVedtak()
         klargjørSak(listOf(vedtak))
+        every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
+            mapOf(vedtak.vedtakId to fakta(null))
 
-        for (kode in listOf("UNNTAKAAP", "AAPVILKUNN")) {
-            logg.list.clear()
-            every { vedtakfaktaService.hentForVedtakliste(listOf(vedtak.vedtakId)) } returns
-                mapOf(vedtak.vedtakId to fakta("J").filter { it.kode == kode })
+        val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
 
-            val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
-
-            assertThat(detaljer.unntaksvilkaarInnvilget).describedAs(kode).isNull()
-            assertThat(detaljer.unntaksvilkaarGjelderFra).describedAs(kode).isNull()
-            assertThat(logg.list.map { it.level }).containsExactly(Level.WARN, Level.WARN)
-            assertThat(logg.list.map { it.formattedMessage }).containsExactly(
-                "Fant kun en av vedtakfakta-verdiene for 11-12 for vedtakId=2. Dette kan være en feil i Arena.",
-                "Fant relevante vedtak for 11-12 for sak 42 , men ingen vedtakfakta. Dette kan være en feil i Arena.",
-            )
-        }
+        assertThat(detaljer.unntaksvilkaarInnvilget).isNull()
+        assertThat(detaljer.unntaksvilkaarGjelderFra).isNull()
+        assertThat(logg.list.map { it.level }).containsExactly(Level.WARN)
+        assertThat(logg.list.single().formattedMessage).isEqualTo(
+            "Fant relevante vedtak for 11-12 for sak 42 , men ingen vedtakfakta. Dette kan være en feil i Arena."
+        )
     }
 
     @Test
@@ -562,8 +626,12 @@ class HistorikkServiceTest {
         utfallkode = "JA",
     )
 
-    private fun fakta(innvilget: String) = listOf(
-        ArenaVedtakfakta("UNNTAKAAP", "Unntak", innvilget, unntaksdato),
-        ArenaVedtakfakta("AAPVILKUNN", "Unntaksdato", "01-02-2026", unntaksdato),
-    )
+    private fun fakta(innvilget: String?, dato: String? = "01-02-2026") = buildList {
+        if (innvilget != null) {
+            add(ArenaVedtakfakta("UNNTAKAAP", "Unntak", innvilget, unntaksdato))
+        }
+        if (dato != null) {
+            add(ArenaVedtakfakta("AAPVILKUNN", "Unntaksdato", dato, unntaksdato))
+        }
+    }
 }

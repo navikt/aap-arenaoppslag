@@ -1,0 +1,66 @@
+insert into PERSON (PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
+values (22001, 'gammel_nei', 'Test', 'Gammelt avslag'),
+       (22002, 'gammel_ja', 'Test', 'Gammel innvilgelse uten dato'),
+       (22003, 'eget_nei', 'Test', 'Eget avslag'),
+       (22004, 'eget_ja', 'Test', 'Egen innvilgelse uten dato'),
+       (22005, 'stans_nei', 'Test', 'Stans med avslag'),
+       (22006, 'stans_ja', 'Test', 'Stans innvilget uten dato'),
+       (22007, 'gammel_dato', 'Test', 'Gammel innvilgelse med dato');
+
+insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS,
+                 OBJEKT_ID, AAR, LOPENRSAK, SAKSTATUSKODE)
+values (22001, 'AA', DATE '2025-02-01', 'TEST', DATE '2026-02-01', 'TEST', 'PERS', 22001, 2025, 22001, 'AKTIV'),
+       (22002, 'AA', DATE '2025-02-01', 'TEST', DATE '2026-02-01', 'TEST', 'PERS', 22002, 2025, 22002, 'AKTIV'),
+       (22003, 'AA', DATE '2025-02-01', 'TEST', DATE '2026-02-01', 'TEST', 'PERS', 22003, 2025, 22003, 'AKTIV'),
+       (22004, 'AA', DATE '2025-02-01', 'TEST', DATE '2026-02-01', 'TEST', 'PERS', 22004, 2025, 22004, 'AKTIV'),
+       (22005, 'AA', DATE '2025-02-01', 'TEST', DATE '2026-02-01', 'TEST', 'PERS', 22005, 2025, 22005, 'AKTIV'),
+       (22006, 'AA', DATE '2025-02-01', 'TEST', DATE '2026-02-01', 'TEST', 'PERS', 22006, 2025, 22006, 'AKTIV'),
+       (22007, 'AA', DATE '2025-02-01', 'TEST', DATE '2026-02-01', 'TEST', 'PERS', 22007, 2025, 22007, 'AKTIV');
+
+insert into VEDTAK (VEDTAK_ID, SAK_ID, PERSON_ID, AAR, LOPENRSAK, LOPENRVEDTAK, VEDTAKSTATUSKODE,
+                    VEDTAKTYPEKODE, UTFALLKODE, RETTIGHETKODE, AKTFASEKODE, FRA_DATO, TIL_DATO,
+                    DATO_MOTTATT, AETATENHET_BEHANDLER)
+values (2200101, 22001, 22001, 2025, 22001, 1, 'IVERK', 'O', 'JA', 'AAP', 'UA',
+        DATE '2025-02-01', DATE '2026-01-31', DATE '2025-02-01', '4402'),
+       (2200201, 22002, 22002, 2025, 22002, 1, 'IVERK', 'O', 'JA', 'AAP', 'UA',
+        DATE '2025-02-01', DATE '2026-01-31', DATE '2025-02-01', '4402'),
+       (2200301, 22003, 22003, 2025, 22003, 1, 'IVERK', 'O', 'JA', 'AAP', 'UA',
+        DATE '2025-02-01', DATE '2026-01-31', DATE '2025-02-01', '4402'),
+       (2200401, 22004, 22004, 2025, 22004, 1, 'IVERK', 'O', 'JA', 'AAP', 'AU',
+        DATE '2025-02-01', DATE '2026-01-31', DATE '2025-02-01', '4402'),
+       (2200501, 22005, 22005, 2025, 22005, 1, 'IVERK', 'O', 'JA', 'AAP', 'UA',
+        DATE '2025-02-01', DATE '2026-01-31', DATE '2025-02-01', '4402'),
+       (2200601, 22006, 22006, 2025, 22006, 1, 'IVERK', 'O', 'JA', 'AAP', 'AU',
+        DATE '2025-02-01', DATE '2026-01-31', DATE '2025-02-01', '4402'),
+       (2200701, 22007, 22007, 2025, 22007, 1, 'IVERK', 'O', 'JA', 'AAP', 'UA',
+        DATE '2025-02-01', DATE '2026-01-31', DATE '2025-02-01', '4402'),
+       (2200302, 22003, 22003, 2025, 22003, 2, 'IVERK', 'O', 'NEI', 'AAP', 'UA',
+        DATE '2026-02-01', DATE '2026-02-28', DATE '2026-02-01', '4402'),
+       (2200402, 22004, 22004, 2025, 22004, 2, 'IVERK', 'O', 'NEI', 'AAP', 'AU',
+        DATE '2026-02-01', DATE '2026-02-28', DATE '2026-02-01', '4402'),
+       (2200502, 22005, 22005, 2025, 22005, 2, 'IVERK', 'S', 'JA', 'AAP', 'UA',
+        DATE '2026-02-01', DATE '2026-02-28', DATE '2026-02-01', '4402'),
+       (2200602, 22006, 22006, 2025, 22006, 2, 'IVERK', 'S', 'JA', 'AAP', 'AU',
+        DATE '2026-02-01', DATE '2026-02-28', DATE '2026-02-01', '4402');
+
+insert into V_VEDTAK_MAXDATO (VEDTAK_ID, MAX_DATO, MAX_UNNTAK_DATO)
+values (2200101, DATE '2026-01-31', DATE '2027-01-31'),
+       (2200201, DATE '2026-01-31', DATE '2027-01-31'),
+       (2200301, DATE '2026-01-31', DATE '2027-01-31'),
+       (2200401, DATE '2026-01-31', DATE '2027-01-31'),
+       (2200501, DATE '2026-01-31', DATE '2027-01-31'),
+       (2200601, DATE '2026-01-31', DATE '2027-01-31'),
+       (2200701, DATE '2026-01-31', DATE '2027-01-31');
+
+insert into VEDTAKFAKTA (VEDTAK_ID, VEDTAKFAKTAKODE, VEDTAKVERDI, REG_DATO)
+values (2200101, 'UNNTAKAAP', 'N', DATE '2026-02-01'),
+       (2200101, 'AAPVILKUNN', '01-02-2026', DATE '2026-02-01'),
+       (2200201, 'UNNTAKAAP', 'J', DATE '2026-02-01'),
+       (2200302, 'UNNTAKAAP', 'N', DATE '2026-02-01'),
+       (2200302, 'AAPVILKUNN', '01-02-2026', DATE '2026-02-01'),
+       (2200402, 'UNNTAKAAP', 'J', DATE '2026-02-01'),
+       (2200502, 'UNNTAKAAP', 'N', DATE '2026-02-01'),
+       (2200502, 'AAPVILKUNN', '01-02-2026', DATE '2026-02-01'),
+       (2200602, 'UNNTAKAAP', 'J', DATE '2026-02-01'),
+       (2200701, 'UNNTAKAAP', 'J', DATE '2025-02-01'),
+       (2200701, 'AAPVILKUNN', '01-02-2025', DATE '2025-02-01');

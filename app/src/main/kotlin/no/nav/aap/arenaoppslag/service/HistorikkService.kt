@@ -169,25 +169,40 @@ class HistorikkService(
         return resultat
     }
 
+    /*
+    Hent ut 11-12 status fra vedtakfakta for de aktuelle vedtakene.
+    Når 11-12 vilkårene er vurdert, skrives UNNTAKAAP til vedtakfakta,
+    J hvis unntak er innvilget, N hvis det ikke er innvilget.
+    AAPVILKUNN inneholder datoen unntaksperioden starter fra.
+
+    Det er inkonsistenser i Arena-databasen.
+    For de siste to årene (05.11.26):
+    Antall vedtak UNNTAKAAP=True og manglende AAPVILKUNN: 5 (0.01%)
+    Antall vedtak UNNTAKAAP=False og AAPVILKUNN satt: 11 300 (94.71%)
+    Prosenten gjelder for vedtak med samme verdi satt for UNNTAKAAP, og bare iverksatte/avsluttede vedtak.
+     */
     private fun hentUnntakFraVedtakfakta(
         aktulleVedtak: List<ArenaVedtakMedDetaljer>,
         sakId: Int?
-    ): Pair<Boolean, LocalDate>? {
+    ): Pair<Boolean, LocalDate?>? {
         val vedtakene = aktulleVedtak.sortedByDescending { it.fraOgMed }.map { it.vedtakId }
         val faktaPerVedtak = vedtakfaktaService.hentForVedtakliste(vedtakene)
         val faktaene = vedtakene.mapNotNull { vedtakId -> /* må ha en ikke-null mappet verdi for å være relevant */
             val fakta = faktaPerVedtak[vedtakId].orEmpty()
-            val unntakInnvilget = fakta.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
+            val unntakVilkårsvurderingUtfall = fakta.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
             val unntaksdato = fakta.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
-            if (unntakInnvilget != null && unntaksdato != null) {
-                Pair(unntakInnvilget, unntaksdato)
+            // hvis unntak ikke er innvilget, ignorer datoen
+            val korrigertUnntaksdato = if (unntakVilkårsvurderingUtfall == false) null else unntaksdato
+
+            if (unntakVilkårsvurderingUtfall == true && korrigertUnntaksdato == null) {
+                logger.warn("Mulig datafeil i Arena: fant vedtak med innvilget unntaksvilkår, " +
+                        "men ingen dato for når det gjelder fra. SakId=$sakId, vedtakId=$vedtakId")
+            }
+
+            if (unntakVilkårsvurderingUtfall != null) {
+                Pair(unntakVilkårsvurderingUtfall, korrigertUnntaksdato)
             } else {
-                if (unntakInnvilget != null || unntaksdato != null) {
-                    logger.warn(
-                        "Fant kun en av vedtakfakta-verdiene for 11-12 for vedtakId=${vedtakId}. " +
-                                "Dette kan være en feil i Arena."
-                    )
-                }
+                // vilkårene er ikke vurdert
                 null
             }
         }
