@@ -176,10 +176,10 @@ class HistorikkService(
     AAPVILKUNN inneholder datoen unntaksperioden starter fra.
 
     Det er inkonsistenser i Arena-databasen.
-    For de siste to årene:
-    Antall vedtak med UNNTAKAAP=J og manglende AAPVILKUNN: 8 (0.01%)
-    Antall vedtak med UNNTAKAAP=N og AAPVILKUNN satt: 15 604 (20.55%)
-    Prosenten gjelder for vedtak med verdi satt for UNNTAKAAP
+    For de siste to årene (05.11.26):
+    Antall vedtak UNNTAKAAP=True og manglende AAPVILKUNN: 5 (0.01%)
+    Antall vedtak UNNTAKAAP=False og AAPVILKUNN satt: 11 300 (94.71%)
+    Prosenten gjelder for vedtak med samme verdi satt for UNNTAKAAP, og bare iverksatte/avsluttede vedtak.
      */
     private fun hentUnntakFraVedtakfakta(
         aktulleVedtak: List<ArenaVedtakMedDetaljer>,
