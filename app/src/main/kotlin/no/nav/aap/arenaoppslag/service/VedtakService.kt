@@ -17,9 +17,11 @@ class VedtakService(
         }
         val unntakInnvilget = vedtakfakta?.firstOrNull { it.kode == "UNNTAKAAP" }?.somBooleanVerdi()
         val unntaksdato = vedtakfakta?.firstOrNull { it.kode == "AAPVILKUNN" }?.somDatoVerdi()
+        // forekommer i Arena at unntaket er ikke innvilget, men datoen er likevel satt
+        val korrigertUnntaksdato = if (unntakInnvilget == false) null else unntaksdato
 
         return sakMedVedtak?.copy(
-            unntaksvilkaarGjelderFra = unntaksdato,
+            unntaksvilkaarGjelderFra = korrigertUnntaksdato,
             unntaksvilkaarInnvilget = unntakInnvilget,
         )
     }
