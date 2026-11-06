@@ -14,19 +14,23 @@ data class Maksimum(
     }
 }
 
+/**
+ * @property dagsats Dagsats uten barnetillegg før samordning. Kommer fra dagsmbt i vedtaksfakta.
+ * @property vedtaksdato fra_dato fra vedtaks-tabellen.
+ * @property status vedtakstatuskode
+ */
 data class Vedtak(
     val vedtaksId: String,
     val utbetaling: List<UtbetalingMedMer>,
     val dagsats: Int,
-    // vedtakstatuskode
     val status: String,
     val utfallkode: String?,
-    val saksnummer: String, //hypotese sak_id
+    val saksnummer: String, // hypotese sak_id ouch
     val vedtaksdato: String, //reg_dato
     val vedtaksTypeKode: String,
     val vedtaksTypeNavn: String,
     val periode: Periode,
-    val rettighetsType: String, ////aktivitetsfase //Aktfasekode
+    val rettighetsType: String, ////aktivitetsfase // Aktfasekode
     val beregningsgrunnlag: Int,
     val barnMedStonad: Int,
     val justertG: String?,
@@ -73,7 +77,9 @@ enum class VedtaksType(
     TIDSBEGRENSET_BORTFALL("T", "Tidsbegrenset bortfall")
 }
 
-
+/**
+ * @property dagsats Dagsats med utbetaling for dette vedtaket.
+ */
 data class UtbetalingMedMer(
     val reduksjon: Reduksjon? = null,
     val periode: Periode,
