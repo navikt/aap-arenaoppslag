@@ -25,7 +25,6 @@ public data class SakStatus(
     val sakId: String,
     val statusKode: Status,
     val periode: Periode,
-    val kilde: Kilde = Kilde.ARENA
 )
 
 
@@ -39,10 +38,6 @@ public data class ManuellFordelingsgrunnlagResponse(
     val sisteUtbetaling: LocalDate?,
     val oppgaver: List<Oppgave>,
 )
-
-public enum class Kilde {
-    ARENA,
-}
 
 public enum class Status {
     // Arena:
