@@ -78,7 +78,8 @@ enum class VedtaksType(
 }
 
 /**
- * @property dagsats Dagsats med utbetaling for dette vedtaket.
+ * @property dagsats Dagsats med barnetillegg for dette vedtaket.
+ * @property belop Beløp utbetalt for posteringsperioden. Etter samordning og barnetillegg.
  */
 data class UtbetalingMedMer(
     val reduksjon: Reduksjon? = null,
