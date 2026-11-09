@@ -19,6 +19,7 @@ data class Maksimum(
  * @property vedtaksdato fra_dato fra vedtaks-tabellen.
  * @property status vedtakstatuskode
  * @property saksnummer sak_id fra vedtak-tabellen. Burde egentlig ikke deles.
+ * @property barnetillegg Barnetillegg som er registrert på vedtaket.
  */
 data class Vedtak(
     val vedtaksId: String,

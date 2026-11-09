@@ -9,6 +9,7 @@ public data class Maksimum(
  * @property vedtaksdato fra_dato fra vedtaks-tabellen.
  * @property status vedtakstatuskode
  * @property rettighetsType Aktivitetsfasekode (aktfasekode).
+ * @property barnetillegg Barnetillegg som er registrert på vedtaket. Fra vedtaksfakta-tabellen.
  */
 public data class Vedtak(
     val vedtaksId: String,
