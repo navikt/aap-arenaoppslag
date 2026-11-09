@@ -110,4 +110,35 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "
         }
     }
 
+    @Test
+    fun `henter unntaksstatus og maksdato for gammel prosedyre, eget vedtak og stansvedtak`() {
+        val forventninger = listOf(
+            Triple("gammel_nei", false, null),
+            Triple("gammel_ja", true, null),
+            Triple("eget_nei", false, null),
+            Triple("eget_ja", true, null),
+            Triple("stans_nei", false, null),
+            Triple("stans_ja", true, null),
+            Triple("gammel_dato", true, LocalDate.of(2025, 2, 1)),
+        )
+
+        withTestServer(h2) { gateway ->
+            for ((person, innvilget, unntaksdato) in forventninger) {
+                val response = gateway.hentHistorikkStatusDetalj(
+                    SignifikantHistorikkRequest(person, testDato)
+                )
+                val detaljer = requireNotNull(response.sisteSakOgVedtak) { person }
+
+                assertThat(detaljer.unntaksvilkaarInnvilget).describedAs(person).isEqualTo(innvilget)
+                assertThat(detaljer.unntaksvilkaarGjelderFra).describedAs(person).isEqualTo(unntaksdato)
+                assertThat(detaljer.sisteVedtak.maxdatoOrdinaer).describedAs(person)
+                    .isEqualTo(LocalDate.of(2026, 1, 31))
+                assertThat(detaljer.sisteVedtak.maxdatoUnntak).describedAs(person)
+                    .isEqualTo(LocalDate.of(2027, 1, 31))
+                assertThat(detaljer.sisteVedtak.maxdatoAap).describedAs(person)
+                    .isEqualTo(LocalDate.of(2027, 1, 31))
+            }
+        }
+    }
+
 }
