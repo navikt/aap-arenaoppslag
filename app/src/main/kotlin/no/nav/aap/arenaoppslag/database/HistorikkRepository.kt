@@ -22,7 +22,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
     companion object {
 
-        // S1: Hent alle AAP-vedtak med relevant historikk for personen
+        // S1a: Hent alle AAP-vedtak med relevant historikk for personen, utenom stanser
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
         // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
         // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i
@@ -31,61 +31,77 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // vedtak i samme periode.
         @Language("OracleSql")
         val selectKunRelevanteAapVedtak = """
-        SELECT 
-            sak_id, 
-            v.vedtak_id,
-            aar,
-            lopenrvedtak,
-            lopenrsak,
-            vedtakstatuskode, 
-            vedtaktypekode, 
-            fra_dato, 
-            til_dato, 
-            rettighetkode, 
-            aktfasekode,
-            v.utfallkode, 
-            v.reg_dato,
-            v.mod_dato,
-            v.vedtak_id,
-            v.person_id
+        SELECT
+            ${vedtakKolonner()}
         FROM 
               vedtak v 
         WHERE v.person_id = ?
-          AND (v.utfallkode IS NULL OR v.utfallkode != 'AVBRUTT')
+          AND v.utfallkode = 'JA'
+          AND v.vedtakstatuskode IN ('IVERK', 'AVSLU')
           AND v.rettighetkode = 'AAP'
-          AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
-          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
-          AND ( 
-                ((vedtaktypekode IN ('O','E','G') OR (vedtaktypekode = 'S' and v.til_dato IS NOT NULL)) AND (til_dato IS NULL OR til_dato >= ?)) -- vanlig tidsbuffer
-                  OR
-                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)) -- ekstra tidsbuffer for Stans, som bare har fra_dato
-              )
-          AND NOT (v.utfallkode IS NOT NULL AND v.utfallkode = 'NEI' AND til_dato IS NULL AND (fra_dato IS NOT NULL AND fra_dato <= ?)) -- utfallkode NEI vil ha åpen til_dato, så ekskluder disse når de er gamle
-          AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+          AND fra_dato IS NOT NULL
+          AND til_dato IS NOT NULL
+          AND fra_dato <= til_dato -- filtrer ut ugyldiggjorte vedtak
+          AND vedtaktypekode IN ('O','E','G')
+          AND til_dato >= ? -- vanlig tidsbuffer
           AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
 
+        // S1b: Hent alle AAP-vedtak med relevant historikk for personen, som er under behandling
+        @Language("OracleSql")
+        val selectKunRelevanteAapVedtakUnderBehandling = """
+        SELECT
+            ${vedtakKolonner()}
+        FROM
+              vedtak v
+        WHERE v.person_id = ?
+          AND v.rettighetkode = 'AAP'
+          AND v.vedtaktypekode IN ('O', 'E', 'G')
+          AND NOT ((til_dato IS NOT NULL AND fra_dato IS NOT NULL) AND fra_dato > til_dato) -- filtrer ut ugyldiggjorte vedtak
+          AND v.vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')
+          AND (v.til_dato IS NULL OR v.til_dato >= ?)
+          AND (
+              (v.utfallkode IS NULL AND v.mod_dato > ?) -- er ubehandlet, men rimelig nye
+              OR
+              (v.utfallkode = 'JA' AND v.mod_dato >= ?) -- er ikke for gamle til å være relevante
+          )
+        """.trimIndent()
+
+        // S1c: Hent alle stanser på AAP-vedtak med relevant historikk for personen
+        @Language("OracleSql")
+        val selectKunStanserPåAAP = """
+        SELECT
+            ${vedtakKolonner()}
+        FROM 
+              vedtak v 
+        WHERE v.person_id = ?
+          AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') -- kun vedtak som er innvilget eller under behandling
+          AND v.rettighetkode = 'AAP'
+          AND NOT ((til_dato IS NOT NULL AND fra_dato IS NOT NULL) AND fra_dato > til_dato) -- filtrer ut ugyldiggjorte vedtak
+          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
+          AND vedtaktypekode = 'S' -- kun stanser
+          AND (
+                (v.til_dato IS NOT NULL AND til_dato >= ?) -- vanlig tidsbuffer, stansen har til_dato
+                  OR
+                 -- Bruk ekstra tidsbuffer for åpne Stanser.
+                (til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)
+                  -- Ekskluder stansede vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
+                  AND NOT ( til_dato IS NULL AND
+                      reg_user IS NOT NULL AND reg_user = 'GRENSESN'
+                      AND begrunnelse IS NOT NULL AND begrunnelse = 'Arbeidsavklaringspenger er stanset da til-dato for vedtaket er passert.'
+                  )
+                )
+          )
+          AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+        """.trimIndent()
+
         // S2: Hent alle AA115-vedtak med relevant historikk for personen
         @Language("OracleSql")
         val selectKunRelevante11_5Vedtak = """
-        SELECT 
-            sak_id, 
-            v.vedtak_id,
-            aar,
-            lopenrvedtak,
-            lopenrsak,
-            vedtakstatuskode, 
-            vedtaktypekode, 
-            fra_dato, 
-            til_dato, 
-            rettighetkode, 
-            aktfasekode,
-            v.utfallkode, 
-            v.reg_dato,
-            v.mod_dato,
-            v.vedtak_id,
-            v.person_id
+        SELECT
+            ${vedtakKolonner()}
         FROM 
               vedtak v 
         WHERE v.person_id = ?
@@ -98,37 +114,26 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // Forbedringsmulighet: Vi kan se bort i fra klag1 for de som har klag2, angitt ved vedtak.vedtak_id_relatert
         @Language("OracleSql")
         val selectKunRelevanteKlager = """
-        -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres. 
-        -- Dersom den er null, er klagen fortsatt under behandling.
+        -- INNVF får alltid en dato-verdi når utfallet av klagen registreres.
+        -- Dersom INNVF mangler eller er null, er klagen fortsatt under behandling.
         SELECT
-            v.sak_id,
-            v.vedtak_id,
-            v.aar,
-            v.lopenrvedtak,
-            v.lopenrsak,
-            vedtakstatuskode,
-            vedtaktypekode,
-            CAST(NULL AS DATE)                    AS fra_dato,
-            TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') AS til_dato,
-            v.rettighetkode,
-            v.aktfasekode,
-            v.utfallkode, 
-            v.reg_dato,
-            v.mod_dato,
-            v.vedtak_id,
-            v.person_id
+            ${vedtakKolonner(
+                fraDato = "CAST(NULL AS DATE)",
+                tilDato = "TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY')",
+            )}
         FROM
             vedtak v
-            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
+            LEFT JOIN vedtakfakta vf
+                ON vf.vedtak_id = v.vedtak_id
+               AND vf.vedtakfaktakode = 'INNVF'
         WHERE
             v.person_id = ?
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
             AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'TRUKK' ))
-            AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
-            AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+            AND (v.utfallkode IS NOT NULL OR v.mod_dato > ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
@@ -136,35 +141,45 @@ class HistorikkRepository(private val dataSource: DataSource) {
         @Language("OracleSql")
         val selectKunRelevanteAnker = """
         SELECT
+            ${vedtakKolonner(
+                fraDato = "CAST(NULL AS DATE)",
+                tilDato = "CAST(NULL AS DATE)",
+            )}
+        FROM
+            vedtak v
+            LEFT JOIN vedtakfakta vf
+                ON vf.vedtak_id = v.vedtak_id
+               AND vf.vedtakfaktakode = 'INNVF'
+        WHERE
+            v.person_id = ?
+            AND v.rettighetkode = 'ANKE'
+            AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'TRUKK' ))
+            -- Vi regner anker med null INNVF som åpne. Anker med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
+            -- Og at det kan komme en ny anke etter at anken er behandlet og avslått. 
+            AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
+            AND (v.utfallkode IS NOT NULL OR v.mod_dato > ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+        """.trimIndent()
+
+        private fun vedtakKolonner(
+            fraDato: String = "v.fra_dato",
+            tilDato: String = "v.til_dato",
+        ): String = """
             v.sak_id,
             v.vedtak_id,
             v.aar,
             v.lopenrvedtak,
             v.lopenrsak,
-            vedtakstatuskode,
-            vedtaktypekode,
-            CAST(NULL AS DATE)                    AS fra_dato,
-            CAST(NULL AS DATE)                    AS til_dato,
+            v.vedtakstatuskode,
+            v.vedtaktypekode,
+            $fraDato AS fra_dato,
+            $tilDato AS til_dato,
             v.rettighetkode,
             v.aktfasekode,
-            v.utfallkode, 
+            v.utfallkode,
             v.reg_dato,
             v.mod_dato,
-            v.vedtak_id,
             v.person_id
-        FROM
-            vedtak v
-            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
-        WHERE
-            v.person_id = ?
-            AND rettighetkode = 'ANKE'
-            AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'TRUKK' ))
-            AND vf.vedtakfaktakode = 'INNVF'
-            -- Vi regner anker med null INNVF som åpne. Anker med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
-            -- Og at det kan komme en ny anke etter at anken er behandlet og avslått. 
-            AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
-            AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
-            AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
         const val vanligTidsbufferUker = 78L // 52 uker gjenopptak + 6 måneder tilbakejustering
@@ -190,26 +205,63 @@ class HistorikkRepository(private val dataSource: DataSource) {
             val maksimalTidUendretAAP = Date.valueOf(søknadMottattPå.minusWeeks(nedreGrenseModifisertSidenAAPUker))
             val maksimalTidUendretKlageAnke = Date.valueOf(søknadMottattPå.minusWeeks(nedreGrenseModifisertSidenKlageAnkeUker))
 
-            val query =
-                listOf(
-                    selectKunRelevanteAapVedtak,
-                    selectKunRelevante11_5Vedtak,
-                    selectKunRelevanteKlager,
-                    selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n") + "ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC"
+            val query = """
+                WITH relevante_aap_vedtak AS (
+                    $selectKunRelevanteAapVedtak
+                ),
+                relevante_aap_vedtak_under_behandling AS (
+                    $selectKunRelevanteAapVedtakUnderBehandling
+                ),
+                stanser_paa_aap AS (
+                    $selectKunStanserPåAAP
+                ),
+                relevante_11_5_vedtak AS (
+                    $selectKunRelevante11_5Vedtak
+                ),
+                relevante_klager AS (
+                    $selectKunRelevanteKlager
+                ),
+                relevante_anker AS (
+                    $selectKunRelevanteAnker
+                )
+                SELECT * FROM relevante_aap_vedtak
+                UNION ALL
+                SELECT * FROM relevante_aap_vedtak_under_behandling
+                UNION ALL
+                SELECT * FROM stanser_paa_aap
+                UNION ALL
+                SELECT * FROM relevante_11_5_vedtak
+                UNION ALL
+                SELECT * FROM relevante_klager
+                UNION ALL
+                SELECT * FROM relevante_anker
+                ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC
+            """.trimIndent()
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
-                // S1: AAP-vedtak
+                // S1a: AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
-                preparedStatement.setDate(p++, stansTidsbuffer)
+                preparedStatement.setDate(p++, maksimalTidUendretAAP)
+
+                // S1b: AAP-vedtak under behandling
+                preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, maksimalTidUbehandletAAP)
                 preparedStatement.setDate(p++, maksimalTidUendretAAP)
+
+                // S1c: Stansede AAP-vedtak
+                preparedStatement.setInt(p++, arenaPersonId)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, stansTidsbuffer)
+                preparedStatement.setDate(p++, maksimalTidUbehandletAAP)
+                preparedStatement.setDate(p++, maksimalTidUendretAAP)
+
                 // S2: 11-5-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, maksimalTidUbehandletAA115)
+
                 // S3: klager
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, klageTidsbuffer)
