@@ -21,10 +21,16 @@ public data class PeriodeMed11_17(
     val aktivitetsfaseNavn: String
 )
 
+// TODO, fjern
+public enum class Kilde {
+    ARENA,
+}
+
 public data class SakStatus(
     val sakId: String,
     val statusKode: Status,
     val periode: Periode,
+    val kilde: Kilde? = Kilde.ARENA
 )
 
 
