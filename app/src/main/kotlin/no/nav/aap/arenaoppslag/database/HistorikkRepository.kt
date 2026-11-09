@@ -36,17 +36,36 @@ class HistorikkRepository(private val dataSource: DataSource) {
         FROM 
               vedtak v 
         WHERE v.person_id = ?
-          AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') -- kun vedtak som er innvilget eller under behandling
+          AND v.utfallkode = 'JA'
+          AND v.rettighetkode = 'AAP'
+          AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
+          AND (fra_dato IS NOT NULL OR til_dato IS NOT NULL) -- filtrer ut etterregistrerte vedtak
+          AND vedtaktypekode IN ('O','E','G')
+          AND (til_dato IS NULL OR til_dato >= ?) -- vanlig tidsbuffer
+          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+        """.trimIndent()
+
+
+        // S1b: Hent alle AAP-vedtak med relevant historikk for personen, som er under behandling
+        @Language("OracleSql")
+        val selectKunRelevanteAapVedtakUnderBehandling = """
+        SELECT
+            ${vedtakKolonner()}
+        FROM
+              vedtak v
+        WHERE v.person_id = ?
           AND v.rettighetkode = 'AAP'
           AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND vedtaktypekode IN ('O','E','G')
           AND (til_dato IS NULL OR til_dato >= ?) -- vanlig tidsbuffer
-          AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
-          AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
+          AND (
+              (v.utfallkode IS NULL AND v.mod_dato > ?)
+              OR (v.utfallkode = 'JA' AND fra_dato IS NULL AND til_dato IS NULL AND v.mod_dato >= ?)
+          )
         """.trimIndent()
 
-        // S1b: Hent alle stanser på AAP-vedtak med relevant historikk for personen
+        // S1c: Hent alle stanser på AAP-vedtak med relevant historikk for personen
         @Language("OracleSql")
         val selectKunStanserPåAAP = """
         SELECT
@@ -57,7 +76,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') -- kun vedtak som er innvilget eller under behandling
           AND v.rettighetkode = 'AAP'
           AND NOT ((til_dato IS NOT NULL AND fra_dato IS NOT NULL) AND fra_dato > til_dato) -- filtrer ut ugyldiggjorte vedtak
-          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
+          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
           AND vedtaktypekode = 'S' -- kun stanser
           AND (
                 (v.til_dato IS NOT NULL AND til_dato >= ?) -- vanlig tidsbuffer, stansen har til_dato
@@ -185,6 +204,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 WITH relevante_aap_vedtak AS (
                     $selectKunRelevanteAapVedtak
                 ),
+                relevante_aap_vedtak_under_behandling AS (
+                    $selectKunRelevanteAapVedtakUnderBehandling
+                ),
                 stanser_paa_aap AS (
                     $selectKunStanserPåAAP
                 ),
@@ -198,6 +220,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
                     $selectKunRelevanteAnker
                 )
                 SELECT * FROM relevante_aap_vedtak
+                UNION ALL
+                SELECT * FROM relevante_aap_vedtak_under_behandling
                 UNION ALL
                 SELECT * FROM stanser_paa_aap
                 UNION ALL
@@ -214,10 +238,15 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 // S1a: AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, maksimalTidUendretAAP)
+
+                // S1b: AAP-vedtak under behandling
+                preparedStatement.setInt(p++, arenaPersonId)
+                preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, maksimalTidUbehandletAAP)
                 preparedStatement.setDate(p++, maksimalTidUendretAAP)
 
-                // S1b: Stansede AAP-vedtak
+                // S1c: Stansede AAP-vedtak
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
                 preparedStatement.setDate(p++, stansTidsbuffer)

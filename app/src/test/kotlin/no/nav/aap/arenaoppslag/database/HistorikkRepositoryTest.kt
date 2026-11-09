@@ -6,6 +6,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.groups.Tuple.tuple
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.sql.Date
 import java.time.LocalDate
 
 class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
@@ -130,6 +131,127 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
         val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)
         assertThat(signifikanteVedtak).hasSize(0)
+    }
+
+    @Test
+    fun `oppdelte AAP-spørringer bevarer resultatet uten overlapp`() {
+        val vanligTidsbuffer = testDato.minusWeeks(HistorikkRepository.vanligTidsbufferUker)
+        val maksimalTidUbehandlet = testDato.minusWeeks(HistorikkRepository.maksimalTidUbehandletAAPUker)
+        val maksimalTidUendret = testDato.minusWeeks(HistorikkRepository.nedreGrenseModifisertSidenAAPUker)
+
+        h2.connection.use { connection ->
+            connection.autoCommit = false
+            try {
+                connection.createStatement().use { statement ->
+                    statement.executeUpdate(
+                        """
+                        INSERT INTO vedtak (
+                            vedtak_id, sak_id, vedtakstatuskode, vedtaktypekode, utfallkode,
+                            rettighetkode, person_id, fra_dato, til_dato, aetatenhet_behandler,
+                            lopenrsak, aar, lopenrvedtak, aktfasekode, dato_mottatt, mod_dato
+                        )
+                        SELECT
+                            2000000 + ROW_NUMBER() OVER (), 13, status.kode, type.kode, utfall.kode,
+                            'AAP', 992, periode.fra_dato, periode.til_dato, '4402',
+                            13, 2021, 2000000 + ROW_NUMBER() OVER (), 'IKKE', DATE '$testDato', endret.dato
+                        FROM (VALUES (CAST(NULL AS VARCHAR(10))), ('JA'), ('NEI'), ('AVBRUTT')) utfall(kode)
+                        CROSS JOIN (VALUES ('OPPRE'), ('MOTAT'), ('REGIS'), ('INNST'), ('IVERK'), ('AVSLU'), ('KONT')) status(kode)
+                        CROSS JOIN (VALUES ('O'), ('E'), ('G'), ('N')) type(kode)
+                        CROSS JOIN (VALUES
+                            (CAST(NULL AS DATE), CAST(NULL AS DATE)),
+                            (DATE '$testDato', NULL),
+                            (NULL, DATE '$testDato'),
+                            (DATE '$testDato', DATE '$testDato'),
+                            (DATE '${testDato.plusDays(1)}', DATE '$testDato'),
+                            (DATE '${vanligTidsbuffer.minusDays(1)}', DATE '${vanligTidsbuffer.minusDays(1)}'),
+                            (DATE '$vanligTidsbuffer', DATE '$vanligTidsbuffer'),
+                            (DATE '$vanligTidsbuffer', DATE '${vanligTidsbuffer.plusDays(1)}')
+                        ) periode(fra_dato, til_dato)
+                        CROSS JOIN (VALUES
+                            (CAST(NULL AS DATE)),
+                            (DATE '$testDato'),
+                            (DATE '${maksimalTidUbehandlet.minusDays(1)}'),
+                            (DATE '$maksimalTidUbehandlet'),
+                            (DATE '${maksimalTidUbehandlet.plusDays(1)}'),
+                            (DATE '${maksimalTidUendret.minusDays(1)}'),
+                            (DATE '$maksimalTidUendret'),
+                            (DATE '${maksimalTidUendret.plusDays(1)}')
+                        ) endret(dato)
+                        WHERE status.kode NOT IN ('OPPRE', 'MOTAT') OR utfall.kode IS NULL
+                        """.trimIndent()
+                    )
+                }
+
+                val opprinneligSpørring = """
+                    SELECT v.*
+                    FROM vedtak v
+                    WHERE v.person_id = ?
+                      AND (v.utfallkode IS NULL OR v.utfallkode = 'JA')
+                      AND v.rettighetkode = 'AAP'
+                      AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL))
+                      AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST'))
+                      AND vedtaktypekode IN ('O','E','G')
+                      AND (til_dato IS NULL OR til_dato >= ?)
+                      AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?)
+                      AND v.MOD_DATO >= ?
+                    ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC
+                """.trimIndent()
+
+                val forventedeVedtak = connection.createParameterizedQuery(opprinneligSpørring).use { statement ->
+                    statement.setInt(1, 992)
+                    statement.setDate(2, Date.valueOf(vanligTidsbuffer))
+                    statement.setDate(3, Date.valueOf(maksimalTidUbehandlet))
+                    statement.setDate(4, Date.valueOf(maksimalTidUendret))
+                    statement.executeQuery().use { resultSet ->
+                        resultSet.map { HistorikkRepository.mapperForArenaVedtak(it) }
+                    }
+                }
+                val innvilgedeVedtak = connection.createParameterizedQuery(
+                    HistorikkRepository.selectKunRelevanteAapVedtak
+                ).use { statement ->
+                    statement.setInt(1, 992)
+                    statement.setDate(2, Date.valueOf(vanligTidsbuffer))
+                    statement.setDate(3, Date.valueOf(maksimalTidUendret))
+                    statement.executeQuery().use { resultSet ->
+                        resultSet.map { HistorikkRepository.mapperForArenaVedtak(it) }
+                    }
+                }
+                val vedtakUnderBehandling = connection.createParameterizedQuery(
+                    HistorikkRepository.selectKunRelevanteAapVedtakUnderBehandling
+                ).use { statement ->
+                    statement.setInt(1, 992)
+                    statement.setDate(2, Date.valueOf(vanligTidsbuffer))
+                    statement.setDate(3, Date.valueOf(maksimalTidUbehandlet))
+                    statement.setDate(4, Date.valueOf(maksimalTidUendret))
+                    statement.executeQuery().use { resultSet ->
+                        resultSet.map { HistorikkRepository.mapperForArenaVedtak(it) }
+                    }
+                }
+                val signifikanteVedtak = HistorikkRepository.hentAlleSignifikanteVedtakForPerson(
+                    992, testDato, connection
+                )
+
+                assertThat(innvilgedeVedtak).isNotEmpty().containsExactlyInAnyOrderElementsOf(
+                    forventedeVedtak.filter {
+                        it.utfallkode == "JA" && (it.fraOgMed != null || it.tilDato != null)
+                    }
+                )
+                assertThat(vedtakUnderBehandling).isNotEmpty().containsExactlyInAnyOrderElementsOf(
+                    forventedeVedtak.filter {
+                        it.utfallkode == null || (it.fraOgMed == null && it.tilDato == null)
+                    }
+                )
+                assertThat(vedtakUnderBehandling.filter { it.utfallkode == "JA" })
+                    .extracting("statusKode", "fraOgMed", "tilDato")
+                    .containsOnly(tuple("REGIS", null, null), tuple("INNST", null, null))
+                assertThat(vedtakUnderBehandling.filter { it.statusKode in setOf("OPPRE", "MOTAT") })
+                    .extracting("statusKode", "utfallkode")
+                    .containsOnly(tuple("OPPRE", null), tuple("MOTAT", null))
+                assertThat(signifikanteVedtak).containsExactlyElementsOf(forventedeVedtak)
+            } finally {
+                connection.rollback()
+            }
+        }
     }
 
 }
