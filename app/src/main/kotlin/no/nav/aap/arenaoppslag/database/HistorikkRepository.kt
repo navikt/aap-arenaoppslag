@@ -181,14 +181,33 @@ class HistorikkRepository(private val dataSource: DataSource) {
             val maksimalTidUendretAAP = Date.valueOf(søknadMottattPå.minusWeeks(nedreGrenseModifisertSidenAAPUker))
             val maksimalTidUendretKlageAnke = Date.valueOf(søknadMottattPå.minusWeeks(nedreGrenseModifisertSidenKlageAnkeUker))
 
-            val query =
-                listOf(
-                    selectKunRelevanteAapVedtak,
-                    selectKunStanserPåAAP,
-                    selectKunRelevante11_5Vedtak,
-                    selectKunRelevanteKlager,
-                    selectKunRelevanteAnker,
-                ).joinToString("\nUNION ALL\n") + "\nORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC"
+            val query = """
+                WITH relevante_aap_vedtak AS (
+                    $selectKunRelevanteAapVedtak
+                ),
+                stanser_paa_aap AS (
+                    $selectKunStanserPåAAP
+                ),
+                relevante_11_5_vedtak AS (
+                    $selectKunRelevante11_5Vedtak
+                ),
+                relevante_klager AS (
+                    $selectKunRelevanteKlager
+                ),
+                relevante_anker AS (
+                    $selectKunRelevanteAnker
+                )
+                SELECT * FROM relevante_aap_vedtak
+                UNION ALL
+                SELECT * FROM stanser_paa_aap
+                UNION ALL
+                SELECT * FROM relevante_11_5_vedtak
+                UNION ALL
+                SELECT * FROM relevante_klager
+                UNION ALL
+                SELECT * FROM relevante_anker
+                ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC
+            """.trimIndent()
 
             connection.createParameterizedQuery(query).use { preparedStatement ->
                 var p = 1 // parameter-indeks
