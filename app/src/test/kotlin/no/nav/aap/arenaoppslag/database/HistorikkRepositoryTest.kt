@@ -233,15 +233,19 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
                 assertThat(innvilgedeVedtak).isNotEmpty().containsExactlyInAnyOrderElementsOf(
                     forventedeVedtak.filter {
-                        it.utfallkode == "JA" && (it.fraOgMed != null || it.tilDato != null)
+                        it.utfallkode == "JA" && it.statusKode in setOf("IVERK", "AVSLU")
+                                && it.fraOgMed != null && it.tilDato != null
                     }
                 )
                 assertThat(vedtakUnderBehandling).isNotEmpty().containsExactlyInAnyOrderElementsOf(
                     forventedeVedtak.filter {
-                        it.utfallkode == null || (it.fraOgMed == null && it.tilDato == null)
+                        it.utfallkode == null || it.statusKode !in setOf("IVERK", "AVSLU")
+                                || it.fraOgMed == null || it.tilDato == null
                     }
                 )
-                assertThat(vedtakUnderBehandling.filter { it.utfallkode == "JA" })
+                assertThat(vedtakUnderBehandling.filter {
+                    it.utfallkode == "JA" && it.fraOgMed == null && it.tilDato == null
+                })
                     .extracting("statusKode", "fraOgMed", "tilDato")
                     .containsOnly(tuple("REGIS", null, null), tuple("INNST", null, null))
                 assertThat(vedtakUnderBehandling.filter { it.statusKode in setOf("OPPRE", "MOTAT") })
