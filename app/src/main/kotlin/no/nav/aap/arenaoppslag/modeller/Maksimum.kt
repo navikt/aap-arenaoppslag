@@ -15,7 +15,7 @@ data class Maksimum(
 }
 
 /**
- * @property dagsats Dagsats uten barnetillegg før samordning. Kommer fra dagsmbt i vedtaksfakta.
+ * @property dagsats Dagsats uten barnetillegg før samordning. Kommer fra dagsfsam i vedtaksfakta.
  * @property vedtaksdato fra_dato fra vedtaks-tabellen.
  * @property status vedtakstatuskode
  * @property saksnummer sak_id fra vedtak-tabellen. Burde egentlig ikke deles.
