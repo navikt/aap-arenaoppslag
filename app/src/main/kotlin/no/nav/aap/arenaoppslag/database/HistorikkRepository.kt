@@ -57,17 +57,14 @@ class HistorikkRepository(private val dataSource: DataSource) {
               vedtak v
         WHERE v.person_id = ?
           AND v.rettighetkode = 'AAP'
-          AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL)) -- filtrer ut ugyldiggjorte vedtak
-          AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
-          AND vedtaktypekode IN ('O','E','G')
-          AND (til_dato IS NULL OR til_dato >= ?) -- vanlig tidsbuffer
+          AND v.vedtaktypekode IN ('O', 'E', 'G')
+          AND NOT ((til_dato IS NOT NULL AND fra_dato IS NOT NULL) AND fra_dato > til_dato) -- filtrer ut ugyldiggjorte vedtak
+          AND v.vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')
+          AND (v.til_dato IS NULL OR v.til_dato >= ?)
           AND (
               (v.utfallkode IS NULL AND v.mod_dato > ?)
-              OR (
-                  v.utfallkode = 'JA'
-                  AND (v.vedtakstatuskode NOT IN ('IVERK', 'AVSLU') OR fra_dato IS NULL OR til_dato IS NULL)
-                  AND v.mod_dato >= ?
-              )
+              OR
+              (v.utfallkode = 'JA' AND v.mod_dato >= ?)
           )
         """.trimIndent()
 

@@ -135,6 +135,15 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     @Test
     fun `oppdelte AAP-spørringer bevarer resultatet uten overlapp`() {
+        // Testdataene bygger på observasjoner i AAP-uttrekket og forutsetninger for sammenligningen:
+        // - GODKJ og KONT forekommer ikke i databasen lenger for rettighetkode AAP.
+        // - For type O/E/G har IVERK med utfall JA både fra_dato og til_dato.
+        //   Andre vedtakstyper kan mangle til_dato.
+        // - INNST har alltid fra_dato i uttrekket. til_dato kan mangle.
+        // - For type O/E/G har AVSLU med utfall JA enten begge datoene eller ingen av dem.
+        // - AVSLU/JA uten datoer er etterregistrerte vedtak og skal ikke tas med i resultatet.
+        // - For type O/E/G forekommer ikke IVERK/AVSLU med null utfall og minst én dato.
+        // Dette er forutsetninger for testen, ikke garantier fra databaseskjemaet.
         val vanligTidsbuffer = testDato.minusWeeks(HistorikkRepository.vanligTidsbufferUker)
         val maksimalTidUbehandlet = testDato.minusWeeks(HistorikkRepository.maksimalTidUbehandletAAPUker)
         val maksimalTidUendret = testDato.minusWeeks(HistorikkRepository.nedreGrenseModifisertSidenAAPUker)
@@ -155,7 +164,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
                             'AAP', 992, periode.fra_dato, periode.til_dato, '4402',
                             13, 2021, 2000000 + ROW_NUMBER() OVER (), 'IKKE', DATE '$testDato', endret.dato
                         FROM (VALUES (CAST(NULL AS VARCHAR(10))), ('JA'), ('NEI'), ('AVBRUTT')) utfall(kode)
-                        CROSS JOIN (VALUES ('OPPRE'), ('MOTAT'), ('REGIS'), ('INNST'), ('IVERK'), ('AVSLU'), ('KONT')) status(kode)
+                        CROSS JOIN (VALUES ('OPPRE'), ('MOTAT'), ('REGIS'), ('INNST'), ('IVERK'), ('AVSLU')) status(kode)
                         CROSS JOIN (VALUES ('O'), ('E'), ('G'), ('N')) type(kode)
                         CROSS JOIN (VALUES
                             (CAST(NULL AS DATE), CAST(NULL AS DATE)),
@@ -177,7 +186,22 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
                             (DATE '$maksimalTidUendret'),
                             (DATE '${maksimalTidUendret.plusDays(1)}')
                         ) endret(dato)
-                        WHERE status.kode NOT IN ('OPPRE', 'MOTAT') OR utfall.kode IS NULL
+                        WHERE (status.kode NOT IN ('OPPRE', 'MOTAT') OR utfall.kode IS NULL)
+                          AND NOT (
+                              type.kode IN ('O', 'E', 'G')
+                              AND status.kode IN ('IVERK', 'AVSLU')
+                              AND utfall.kode IS NULL
+                              AND (periode.fra_dato IS NOT NULL OR periode.til_dato IS NOT NULL)
+                          )
+                          AND (
+                              utfall.kode IS NULL
+                              OR utfall.kode <> 'JA'
+                              OR type.kode NOT IN ('O', 'E', 'G')
+                              OR status.kode NOT IN ('IVERK', 'AVSLU')
+                              OR (periode.fra_dato IS NOT NULL AND periode.til_dato IS NOT NULL)
+                              OR (status.kode = 'AVSLU' AND periode.fra_dato IS NULL AND periode.til_dato IS NULL)
+                          )
+                          AND (status.kode <> 'INNST' OR periode.fra_dato IS NOT NULL)
                         """.trimIndent()
                     )
                 }
@@ -247,7 +271,11 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
                     it.utfallkode == "JA" && it.fraOgMed == null && it.tilDato == null
                 })
                     .extracting("statusKode", "fraOgMed", "tilDato")
-                    .containsOnly(tuple("REGIS", null, null), tuple("INNST", null, null))
+                    .containsOnly(tuple("REGIS", null, null))
+                assertThat(vedtakUnderBehandling.filter { it.statusKode == "INNST" })
+                    .isNotEmpty()
+                    .allMatch { it.fraOgMed != null }
+                    .anyMatch { it.tilDato == null }
                 assertThat(vedtakUnderBehandling.filter { it.statusKode in setOf("OPPRE", "MOTAT") })
                     .extracting("statusKode", "utfallkode")
                     .containsOnly(tuple("OPPRE", null), tuple("MOTAT", null))
