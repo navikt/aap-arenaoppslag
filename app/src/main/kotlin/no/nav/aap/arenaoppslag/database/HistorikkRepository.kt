@@ -85,7 +85,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 (v.til_dato IS NOT NULL AND til_dato >= ?) -- vanlig tidsbuffer, stansen har til_dato
                   OR
                  -- Bruk ekstra tidsbuffer for åpne Stanser.
-                (vedtaktypekode = 'S' AND til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)
+                (til_dato IS NULL AND (fra_dato IS NULL OR fra_dato >= ?)
                   -- Ekskluder stansede vedtak som er automatisk stanset kun pga. at til-dato for vedtaket er passert:
                   AND NOT ( til_dato IS NULL AND
                       reg_user IS NOT NULL AND reg_user = 'GRENSESN'
