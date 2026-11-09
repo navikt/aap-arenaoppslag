@@ -137,6 +137,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     fun `oppdelte AAP-spørringer bevarer resultatet uten overlapp`() {
         // Testdataene bygger på observasjoner i AAP-uttrekket og forutsetninger for sammenligningen:
         // - GODKJ og KONT forekommer ikke i databasen lenger for rettighetkode AAP.
+        // - Vedtak av type S kan ikke ha status MOTAT.
         // - For type O/E/G har IVERK med utfall JA både fra_dato og til_dato.
         //   Andre vedtakstyper kan mangle til_dato.
         // - INNST har alltid fra_dato i uttrekket. til_dato kan mangle.

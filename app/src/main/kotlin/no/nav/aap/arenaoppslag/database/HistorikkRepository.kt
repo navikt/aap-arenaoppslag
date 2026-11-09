@@ -62,9 +62,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND v.vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST')
           AND (v.til_dato IS NULL OR v.til_dato >= ?)
           AND (
-              (v.utfallkode IS NULL AND v.mod_dato > ?)
+              (v.utfallkode IS NULL AND v.mod_dato > ?) -- er ubehandlet, men rimelig nye
               OR
-              (v.utfallkode = 'JA' AND v.mod_dato >= ?)
+              (v.utfallkode = 'JA' AND v.mod_dato >= ?) -- er ikke for gamle til å være relevante
           )
         """.trimIndent()
 
