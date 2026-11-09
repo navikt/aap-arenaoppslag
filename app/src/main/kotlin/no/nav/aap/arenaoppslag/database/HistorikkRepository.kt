@@ -114,8 +114,8 @@ class HistorikkRepository(private val dataSource: DataSource) {
         // Forbedringsmulighet: Vi kan se bort i fra klag1 for de som har klag2, angitt ved vedtak.vedtak_id_relatert
         @Language("OracleSql")
         val selectKunRelevanteKlager = """
-        -- INNVF er satt for alle klager. Den får alltid en dato-verdi når utfallet av klagen registreres. 
-        -- Dersom den er null, er klagen fortsatt under behandling.
+        -- INNVF får alltid en dato-verdi når utfallet av klagen registreres.
+        -- Dersom INNVF mangler eller er null, er klagen fortsatt under behandling.
         SELECT
             ${vedtakKolonner(
                 fraDato = "CAST(NULL AS DATE)",
@@ -123,16 +123,17 @@ class HistorikkRepository(private val dataSource: DataSource) {
             )}
         FROM
             vedtak v
-            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
+            LEFT JOIN vedtakfakta vf
+                ON vf.vedtak_id = v.vedtak_id
+               AND vf.vedtakfaktakode = 'INNVF'
         WHERE
             v.person_id = ?
             AND v.rettighetkode IN ( 'KLAG1', 'KLAG2' )
             AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'TRUKK' ))
-            AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner klager med null INNVF som åpne. Klager med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny klage eller anke etter at klagen er behandlet og avslått. Anker sjekkes for seg selv.
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
-            AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+            AND (v.utfallkode IS NOT NULL OR v.mod_dato > ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
@@ -146,16 +147,17 @@ class HistorikkRepository(private val dataSource: DataSource) {
             )}
         FROM
             vedtak v
-            JOIN vedtakfakta vf ON vf.vedtak_id = v.vedtak_id
+            LEFT JOIN vedtakfakta vf
+                ON vf.vedtak_id = v.vedtak_id
+               AND vf.vedtakfaktakode = 'INNVF'
         WHERE
             v.person_id = ?
-            AND rettighetkode = 'ANKE'
+            AND v.rettighetkode = 'ANKE'
             AND (v.utfallkode IS NULL OR v.utfallkode NOT IN ( 'AVBRUTT', 'TRUKK' ))
-            AND vf.vedtakfaktakode = 'INNVF'
             -- Vi regner anker med null INNVF som åpne. Anker med fersk INNVF-dato regnes også som åpne, pga. det tar tid før AAP-vedtakene registreres.  
             -- Og at det kan komme en ny anke etter at anken er behandlet og avslått. 
             AND (vf.vedtakverdi IS NULL OR TO_DATE(vf.vedtakverdi, 'DD-MM-YYYY') >= ?)
-            AND NOT (v.utfallkode IS NULL AND v.MOD_DATO <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+            AND (v.utfallkode IS NOT NULL OR v.mod_dato > ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
             AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 

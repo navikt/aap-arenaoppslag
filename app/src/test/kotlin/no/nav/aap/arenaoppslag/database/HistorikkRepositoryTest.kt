@@ -76,6 +76,95 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     }
 
     @Test
+    fun `finner klager og anker uten INNVF med eller uten andre vedtakfakta`() {
+        h2.connection.use { connection ->
+            connection.autoCommit = false
+            try {
+                connection.createStatement().use { statement ->
+                    statement.executeUpdate(
+                        "DELETE FROM vedtakfakta WHERE vedtak_id IN (998001, 998002, 998003)"
+                    )
+
+                    val utenVedtakfakta = HistorikkRepository.hentAlleSignifikanteVedtakForPerson(
+                        998, testDato, connection
+                    )
+                    assertThat(utenVedtakfakta.map { it.vedtakId })
+                        .containsExactly(998003, 998002, 998001)
+
+                    statement.executeUpdate(
+                        """
+                        INSERT INTO vedtakfakta (vedtak_id, vedtakfaktakode, vedtakverdi)
+                        VALUES
+                            (998001, 'K_INNVF', 'ikke en dato'),
+                            (998002, 'K_INNVF', 'ikke en dato'),
+                            (998003, 'K_INNVF', 'ikke en dato')
+                        """.trimIndent()
+                    )
+
+                    val medAndreVedtakfakta = HistorikkRepository.hentAlleSignifikanteVedtakForPerson(
+                        998, testDato, connection
+                    )
+                    assertThat(medAndreVedtakfakta.map { it.vedtakId })
+                        .containsExactly(998003, 998002, 998001)
+                }
+            } finally {
+                connection.rollback()
+            }
+        }
+    }
+
+    @Test
+    fun `bruker riktige tidsbuffere for klager og anker med INNVF`() {
+        val klageTidsbuffer = testDato.minusWeeks(HistorikkRepository.klageTidsbufferUker)
+        val ankeTidsbuffer = testDato.minusWeeks(HistorikkRepository.ankeTidsbufferUker)
+        val maksimalTidUendret = testDato.minusWeeks(HistorikkRepository.nedreGrenseModifisertSidenKlageAnkeUker)
+
+        h2.connection.use { connection ->
+            connection.autoCommit = false
+            try {
+                connection.createStatement().use { statement ->
+                    statement.executeUpdate(
+                        """
+                        UPDATE vedtak
+                        SET utfallkode = 'NEI', mod_dato = DATE '$maksimalTidUendret'
+                        WHERE person_id = 998
+                        """.trimIndent()
+                    )
+
+                    for (dagerEtterTidsbuffer in listOf(0L, -1L)) {
+                        statement.executeUpdate(
+                            """
+                            UPDATE vedtakfakta
+                            SET vedtakverdi = TO_CHAR(
+                                CASE WHEN vedtak_id = 998003
+                                    THEN DATE '${ankeTidsbuffer.plusDays(dagerEtterTidsbuffer)}'
+                                    ELSE DATE '${klageTidsbuffer.plusDays(dagerEtterTidsbuffer)}'
+                                END,
+                                'DD-MM-YYYY'
+                            )
+                            WHERE vedtak_id IN (998001, 998002, 998003)
+                              AND vedtakfaktakode = 'INNVF'
+                            """.trimIndent()
+                        )
+
+                        val signifikanteVedtak = HistorikkRepository.hentAlleSignifikanteVedtakForPerson(
+                            998, testDato, connection
+                        )
+                        if (dagerEtterTidsbuffer == 0L) {
+                            assertThat(signifikanteVedtak.map { it.vedtakId })
+                                .containsExactly(998003, 998002, 998001)
+                        } else {
+                            assertThat(signifikanteVedtak).isEmpty()
+                        }
+                    }
+                }
+            } finally {
+                connection.rollback()
+            }
+        }
+    }
+
+    @Test
     fun `finner ikke KLAG1 KLAG2 og ANKE eldre enn maksimal behandlingstid`() {
         val testPersonId = PersonId(999)
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
