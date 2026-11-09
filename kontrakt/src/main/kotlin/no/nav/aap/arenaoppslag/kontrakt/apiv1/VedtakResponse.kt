@@ -62,9 +62,9 @@ public data class ArenaVedtakfakta(
             verdi?.takeIf { it.isNotBlank() }?.let { LocalDate.parse(it, DATO_FORMAT) }
     }
 
-    public fun somDatoVerdi() = verdi?.let { parseDato(it) }
+    public fun somDatoVerdi(): LocalDate? = verdi?.let { parseDato(it) }
 
-    public fun somBooleanVerdi() = when (verdi) {
+    public fun somBooleanVerdi(): Boolean? = when (verdi) {
         "J" -> true
         "N" -> false
         else -> null
