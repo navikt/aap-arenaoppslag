@@ -1,7 +1,6 @@
 package no.nav.aap.arenaoppslag.modeller
 
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato
-import no.nav.aap.arenaoppslag.kontrakt.intern.Kilde
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -12,8 +11,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.ArenaVedtakfakta as ArenaVedtakfak
 data class VedtakStatus(
     val sakId: String,
     val statusKode: Status,
-    val periode: Periode,
-    val kilde: Kilde = Kilde.ARENA
+    val periode: Periode
 )
 
 data class ArenaVedtak(
