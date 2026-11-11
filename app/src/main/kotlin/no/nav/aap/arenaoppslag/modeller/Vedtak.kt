@@ -151,6 +151,10 @@ data class ArenaVedtakMedDetaljer(
         return fraOgMed != null && tilDato != null && tilDato.isBefore(fraOgMed)
     }
 
+    fun erEtterregistrert(): Boolean {
+        return fraOgMed == null && tilDato == null && utfallkode == "JA" && statusKode in listOf("IVERK", "AVSLU")
+    }
+
     fun medSamordning(samordning: SamordningMedInstitusjon?) = copy(
         institusjonOpphold = samordning?.institusjonOpphold,
         andreYtelser = samordning?.andreYtelser ?: emptyList(),
