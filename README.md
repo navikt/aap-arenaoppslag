@@ -28,6 +28,15 @@ Metoden for å ta inn tabeller og data fra Arena er slik:
 3. De nye tabellene legges inn i [V1_1__arena_schema.sql](app/src/test/resources/flyway/common/V1_1__arena_schema.sql)
 4. Dersom de nye tabellene har type-data (enum/definisjoner/statiske data) legges det inn i [V1_3__arena_data.sql](app/src/test/resources/flyway/common/V1_3__arena_data.sql)
 
+## Autoriserte oppslag
+
+`SakOgVedtakService` og de tilhørende repository-inngangene krever autoriserte typer
+for sak og person. Bare `TilgangkontrollService` oppretter disse etter tilgangskontroll.
+Historikk og den eksisterende detaljvisningen bruker en separat inngang med
+`UtenTilgangskontroll` i navnet, uten å opprette autorisasjonsbevis.
+`AutorisasjonArkitekturTest` begrenser hvem som kan bruke denne inngangen og
+kontrollerer implementasjonene av de autoriserte typene.
+
 ## Kode generert av GitHub Copilot
 
 Dette repoet bruker GitHub Copilot til å generere kode.

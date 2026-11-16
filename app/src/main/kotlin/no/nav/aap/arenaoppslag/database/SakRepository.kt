@@ -6,13 +6,21 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
+import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorisertPersonId
+import no.nav.aap.arenaoppslag.tilgangsmaskin.AutorisertSaksnummer
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
 
 class SakRepository(private val dataSource: DataSource) {
-    fun hentSak(saksnummer: Saksnummer): ArenaSak? {
+    fun hentSak(autorisert: AutorisertSaksnummer): ArenaSak? {
+        return dataSource.connection.use { con ->
+            selectSakMedSaksnummer(autorisert.saksnummer, con)
+        }
+    }
+
+    internal fun hentSakUtenTilgangskontroll(saksnummer: Saksnummer): ArenaSak? {
         return dataSource.connection.use { con ->
             selectSakMedSaksnummer(saksnummer, con)
         }
@@ -30,9 +38,9 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentSakerDetaljerForPerson(personId: PersonId): List<ArenaSak> {
+    fun hentSakerDetaljerForPerson(autorisert: AuthorisertPersonId): List<ArenaSak> {
         return dataSource.connection.use { con ->
-            selectSakerDetaljerForPersonId(personId, con)
+            selectSakerDetaljerForPersonId(autorisert.personId, con)
         }
     }
 
@@ -71,7 +79,7 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectSakerDetaljerForPersonId(personId: PersonId, connection: Connection): List<ArenaSak> {
+        private fun selectSakerDetaljerForPersonId(personId: PersonId, connection: Connection): List<ArenaSak> {
             connection.prepareStatement(selectSakerDetaljerForPersonId).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
@@ -79,7 +87,7 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
+        private fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
             connection.prepareStatement(selectSakMedSaksnummer).use { preparedStatement ->
                 preparedStatement.setInt(1, saksnummer.lopenummerSak)
                 preparedStatement.setInt(2, saksnummer.aar)

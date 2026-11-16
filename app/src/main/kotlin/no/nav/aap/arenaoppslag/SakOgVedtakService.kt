@@ -6,16 +6,13 @@ import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
-import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
-import no.nav.aap.arenaoppslag.service.VedtakfaktaService
 import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorisertPersonId
 import no.nav.aap.arenaoppslag.tilgangsmaskin.AutorisertSaksnummer
-import javax.sql.DataSource
 
 class SakOgVedtakService(
     private val sakRepository: SakRepository,
@@ -25,34 +22,24 @@ class SakOgVedtakService(
 ) {
 
     fun hentSakMedVedtak(autorisertSaksnummer: AutorisertSaksnummer): ArenaSakMedVedtak {
-        // Vi vet at saksnummeret er autorisert, og at det derfor finnes i databasen
-        return hentSakMedVedtak(autorisertSaksnummer.toSaksnummer())!!
-    }
-
-    fun hentVedtakForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtak> {
-        return vedtakRepository.hentVedtak(autorisert.personId)
-    }
-
-    fun hentVedtakDetaljerForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtakMedDetaljer> {
-        val saker = sakRepository.hentSakerDetaljerForPerson(autorisert.personId)
-        return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
-    }
-
-    @Deprecated("ikke autorisert")
-    fun hentSakMedVedtak(saksnummer: Saksnummer): ArenaSakMedVedtak? {
-        val sak = sakRepository.hentSak(saksnummer) ?: return null
+        val sak = checkNotNull(sakRepository.hentSak(autorisertSaksnummer)) {
+            "Fant ikke den autoriserte saken i AAP-Arena"
+        }
         return getArenaSakMedVedtak(sak)
     }
 
-    @Deprecated("ikke autorisert")
-    fun hentVedtakForPerson(personId: PersonId): List<ArenaVedtak> {
-        return vedtakRepository.hentVedtak(personId)
+    fun hentVedtakForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtak> {
+        return vedtakRepository.hentVedtak(autorisert)
     }
 
-    @Deprecated("ikke autorisert")
-    fun hentVedtakDetaljerForPerson(personId: PersonId): List<ArenaVedtakMedDetaljer> {
-        val saker = sakRepository.hentSakerDetaljerForPerson(personId)
+    fun hentVedtakDetaljerForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtakMedDetaljer> {
+        val saker = sakRepository.hentSakerDetaljerForPerson(autorisert)
         return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
+    }
+
+    internal fun hentSakMedVedtakUtenTilgangskontroll(saksnummer: Saksnummer): ArenaSakMedVedtak? {
+        val sak = sakRepository.hentSakUtenTilgangskontroll(saksnummer) ?: return null
+        return getArenaSakMedVedtak(sak)
     }
 
     private fun getArenaSakMedVedtak(sak: ArenaSak): ArenaSakMedVedtak {

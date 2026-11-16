@@ -39,10 +39,10 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
 
 
     fun hentSakId(saksnummer: Saksnummer): SakId? =
-        sakRepository.hentSak(saksnummer)?.tilSakId()
+        sakRepository.hentSakUtenTilgangskontroll(saksnummer)?.tilSakId()
 
     fun hentSak(saksnummer: Saksnummer): ArenaSak? =
-        sakRepository.hentSak(saksnummer)
+        sakRepository.hentSakUtenTilgangskontroll(saksnummer)
 
     private fun ArenaSak.tilSakId(): SakId? = sakId.toIntOrNull()?.let { SakId(it) }
 
@@ -81,5 +81,5 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
 
 
     fun hentPersonForSak(saksnummer: Saksnummer): ArenaSakPerson? =
-        sakRepository.hentSak(saksnummer)?.person
+        sakRepository.hentSakUtenTilgangskontroll(saksnummer)?.person
 }

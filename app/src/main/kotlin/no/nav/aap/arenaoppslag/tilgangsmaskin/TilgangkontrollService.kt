@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.TilgangAvvistResponse
+import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -20,6 +21,9 @@ class TilgangkontrollService(
     companion object {
         private val logger = LoggerFactory.getLogger("TilgangkontrollService")
     }
+
+    private class VerifisertPerson(override val personId: PersonId) : AuthorisertPersonId
+    private class VerifisertSak(override val saksnummer: Saksnummer) : AutorisertSaksnummer
 
     /**
      * Tilgang først: Hvis tokenet ikke gir lesetilgang til denne identifikatoren, returneres
@@ -39,7 +43,7 @@ class TilgangkontrollService(
             return PersonTilgangResultat.NotFound
         }
 
-        return PersonTilgangResultat.Granted(AuthorisertPersonId.createInstance(personId))
+        return PersonTilgangResultat.Granted(VerifisertPerson(personId))
     }
 
     suspend fun medVerifisertPersonTilgang(
@@ -72,7 +76,7 @@ class TilgangkontrollService(
             loggAvvisning(token, response.avvistResponse, person.fodselsnummer, saksnummer)
             return SakTilgangResultat.AccessDenied(response.avvistResponse)
         }
-        return SakTilgangResultat.Granted(AutorisertSaksnummer.createInstance(saksnummer.toString()))
+        return SakTilgangResultat.Granted(VerifisertSak(saksnummer))
     }
 
     suspend fun medVerifisertSakTilgang(

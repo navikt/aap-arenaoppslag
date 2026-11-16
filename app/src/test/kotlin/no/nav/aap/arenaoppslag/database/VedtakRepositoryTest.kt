@@ -7,6 +7,7 @@ import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
+import no.nav.aap.arenaoppslag.util.autorisertPerson
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.groups.Tuple.tuple
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -115,7 +116,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
     fun `hentVedtak for person returnerer forventet vedtak`() {
         val vedtakRepository = VedtakRepository(h2)
 
-        val vedtak = vedtakRepository.hentVedtak(PersonId(1))
+        val vedtak = vedtakRepository.hentVedtak(autorisertPerson(PersonId(1)))
         val enesteVedtak = vedtak.single()
 
         assertThat(enesteVedtak.sakId).isEqualTo("1")
@@ -132,7 +133,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
     fun `hentVedtak for person returnerer tom liste når person ikke har vedtak`() {
         val vedtakRepository = VedtakRepository(h2)
 
-        val vedtak = vedtakRepository.hentVedtak(PersonId(3))
+        val vedtak = vedtakRepository.hentVedtak(autorisertPerson(PersonId(3)))
 
         assertThat(vedtak).isEmpty()
     }
@@ -162,7 +163,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
     fun `hentVedtak for person returnerer alle vedtak for person uten filtrering`() {
         val vedtakRepository = VedtakRepository(h2)
 
-        val vedtak = vedtakRepository.hentVedtak(PersonId(5))
+        val vedtak = vedtakRepository.hentVedtak(autorisertPerson(PersonId(5)))
 
         assertThat(vedtak).hasSize(5)
         assertThat(vedtak).extracting(

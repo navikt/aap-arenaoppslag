@@ -9,6 +9,7 @@ import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
+import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorisertPersonId
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
@@ -42,13 +43,13 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentVedtak(personId: PersonId): List<ArenaVedtak> {
+    fun hentVedtak(autorisert: AuthorisertPersonId): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            selectAlleVedtakForPerson(personId, con)
+            selectAlleVedtakForPerson(autorisert.personId, con)
         }
     }
 
-    fun hentVedtakForSak(saksId: SakId): List<ArenaVedtakRad> {
+    internal fun hentVedtakForSak(saksId: SakId): List<ArenaVedtakRad> {
         return dataSource.connection.use { con ->
             selectVedtakForSak(saksId, con)
         }
@@ -119,7 +120,7 @@ class VedtakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectAlleVedtakForPerson(personId: PersonId, connection: Connection): List<ArenaVedtak> {
+        private fun selectAlleVedtakForPerson(personId: PersonId, connection: Connection): List<ArenaVedtak> {
             connection.prepareStatement(selectAlleVedtakForPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
@@ -347,4 +348,3 @@ class VedtakRepository(private val dataSource: DataSource) {
         )
     }
 }
-
