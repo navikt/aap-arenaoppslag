@@ -87,6 +87,13 @@ app/        Main application: server, routes, services, repositories, models
 kontrakt/   Shared API contract types, published as a Maven package to GitHub Packages
 ```
 
+## Person lookups
+
+`PersonService.hentPersonId()` resolves a personal identifier to Arena's internal `PersonId`.
+On a cache miss, it uses `IPdlGateway.hentAlleIdenterForPerson()` to fetch the person's identifiers
+from PDL, then passes them to `PersonRepository.hentPersonIdHvisEksisterer()`.
+Only successful lookups are cached, keyed by the original input identifier.
+
 ---
 
 ## Language and naming
