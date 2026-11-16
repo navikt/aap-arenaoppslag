@@ -38,8 +38,10 @@ import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.service.VedtakService
 import no.nav.aap.arenaoppslag.service.VedtakfaktaService
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinGateway
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayMockImpl
+import no.nav.aap.komponenter.server.auth.IdentityProvider
+import no.nav.aap.komponenter.server.authentication
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.util.*
@@ -299,7 +301,7 @@ private fun Application.routes(
                 maksdato(sakListeService, personService)
                 samordning(sakListeService, personService)
                 utbetalinger(utbetalingService, personService)
-                vedtakForPerson(sakOgVedtakService, personService, tilgangService)
+                vedtakForPerson(sakOgVedtakService, tilgangService)
                 sak(sakOgVedtakService, tilgangService)
                 meldekortStartuke(
                     meldekortService = meldekortService,

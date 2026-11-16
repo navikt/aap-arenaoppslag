@@ -509,7 +509,7 @@ class HistorikkServiceTest {
         assertThat(respons.telleverk?.utvidetAAPKvote).isEqualTo(25)
         assertThat(respons.sisteUtbetalingDato).isEqualTo(sluttdato)
 
-        verify(exactly = 0) { sakOgVedtakService.hentSakMedVedtak(any()) }
+        verify(exactly = 0) { sakOgVedtakService.hentSakMedVedtak(any<Saksnummer>()) }
         verify(exactly = 0) { vedtakfaktaService.hentForVedtakliste(any()) }
         verify(exactly = 1) { telleverkService.hentTelleverkForPerson(personId) }
         verify(exactly = 1) { utbetalingService.hentSisteAapUtbetalingForPerson(personId) }
@@ -517,7 +517,7 @@ class HistorikkServiceTest {
 
     @Test
     fun `manglende sak beholder telleverk og siste utbetaling`() {
-        every { sakOgVedtakService.hentSakMedVedtak(any()) } returns null
+        every { sakOgVedtakService.hentSakMedVedtak(any<Saksnummer>()) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns TelleverkForPerson(100, 25)
         every { utbetalingService.hentSisteAapUtbetalingForPerson(personId) } returns sluttdato
 
