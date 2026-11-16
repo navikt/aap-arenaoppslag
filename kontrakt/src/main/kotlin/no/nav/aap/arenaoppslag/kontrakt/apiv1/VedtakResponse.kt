@@ -15,6 +15,7 @@ public data class ArenaVedtak(
     val utfallkode: String?,
     val vedtakId: Int,
     val aktivitetsfaseKode: String,
+    val saksnummer: String? = null,
 ) {
     public fun erStans(): Boolean {
         return vedtaktypeKode == "S"
