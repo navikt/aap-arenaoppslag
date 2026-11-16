@@ -35,7 +35,7 @@ It has two runtime environments: Prod and Dev.
 
 | Concern | Choice |
 |---|---|
-| Language | Kotlin 2.2, JVM 21 |
+| Language | Kotlin 2.4.20, JVM 25 |
 | Server framework | Ktor (Netty engine) |
 | Database (prod) | Oracle via HikariCP |
 | Database (tests) | H2 in Oracle-compatibility mode |
@@ -44,6 +44,39 @@ It has two runtime environments: Prod and Dev.
 | Cache | Caffeine |
 | Build | Gradle (Kotlin DSL), multi-module |
 | Deployment | NAIS / Kubernetes on FSS cluster |
+
+Dependency versions are defined in `gradle/libs.versions.toml`.
+The shared `aap.conventions` Gradle plugin in
+`build-logic/src/main/kotlin/aap.conventions.gradle.kts` configures the JVM toolchain,
+Kotlin compiler and test tasks.
+
+---
+
+## Build, test and lint
+
+Run commands from the repository root using the Gradle wrapper:
+
+```bash
+# Build all modules
+./gradlew build
+
+# Run the full application test suite
+./gradlew :app:test
+
+# Run one test class
+./gradlew :app:test --tests 'no.nav.aap.arenaoppslag.SakApiTest'
+
+# Run one test method
+./gradlew :app:test --tests 'no.nav.aap.arenaoppslag.SakApiTest.Henter sak med vedtak via saksnummer'
+
+# Run static analysis
+./gradlew :app:detekt
+```
+
+Detekt is configured in `app/build.gradle.kts` with `autoCorrect = true`, so it can
+modify source files. It also has `ignoreFailures = true`: a successful task does
+not mean there are no findings. Review its reports and any file changes.
+Targeted tests do not replace the required full `:app:test` run after code changes.
 
 ---
 
