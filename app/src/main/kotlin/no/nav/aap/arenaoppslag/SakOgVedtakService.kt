@@ -29,18 +29,29 @@ class SakOgVedtakService(
         return hentSakMedVedtak(autorisertSaksnummer.toSaksnummer())!!
     }
 
-    @Deprecated("ikke autorisert")
-    fun hentSakMedVedtak(saksnummer: Saksnummer): ArenaSakMedVedtak? {
-        val sak = sakRepository.hentSak(saksnummer) ?: return null
-        return getArenaSakMedVedtak(sak)
-    }
-
     fun hentVedtakForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtak> {
         return vedtakRepository.hentVedtak(autorisert.personId)
     }
 
     fun hentVedtakDetaljerForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtakMedDetaljer> {
         val saker = sakRepository.hentSakerDetaljerForPerson(autorisert.personId)
+        return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
+    }
+
+    @Deprecated("ikke autorisert")
+    fun hentSakMedVedtak(saksnummer: Saksnummer): ArenaSakMedVedtak? {
+        val sak = sakRepository.hentSak(saksnummer) ?: return null
+        return getArenaSakMedVedtak(sak)
+    }
+
+    @Deprecated("ikke autorisert")
+    fun hentVedtakForPerson(personId: PersonId): List<ArenaVedtak> {
+        return vedtakRepository.hentVedtak(personId)
+    }
+
+    @Deprecated("ikke autorisert")
+    fun hentVedtakDetaljerForPerson(personId: PersonId): List<ArenaVedtakMedDetaljer> {
+        val saker = sakRepository.hentSakerDetaljerForPerson(personId)
         return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
     }
 

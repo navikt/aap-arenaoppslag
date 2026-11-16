@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.service
 
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import no.nav.aap.arenaoppslag.SakOgVedtakService
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
@@ -9,6 +10,7 @@ import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
@@ -30,6 +32,42 @@ class SakOgVedtakServiceTest {
     )
 
     @Test
+    fun `hentVedtakForPerson bruker person-id fra autorisert person og returnerer vedtakene`() {
+        val personId = PersonId(42)
+        val autorisert = AuthorisertPersonId.createInstance(personId)
+        val førsteVedtak = ArenaVedtak(
+            vedtakId = 101,
+            sakId = "1",
+            statusKode = "IVERK",
+            vedtaktypeKode = "O",
+            fraOgMed = LocalDate.of(2024, 1, 1),
+            tilDato = LocalDate.of(2025, 1, 1),
+            rettighetkode = "AAP",
+            utfallkode = "JA",
+            aktivitetsfaseKode = "IKKE",
+        )
+        val andreVedtak = førsteVedtak.copy(vedtakId = 201, sakId = "2")
+        every { vedtakRepository.hentVedtak(personId) } returns listOf(førsteVedtak, andreVedtak)
+
+        val vedtak = service.hentVedtakForPerson(autorisert)
+
+        assertThat(vedtak).containsExactly(førsteVedtak, andreVedtak)
+        verify(exactly = 1) { vedtakRepository.hentVedtak(personId) }
+    }
+
+    @Test
+    fun `hentVedtakForPerson returnerer tom liste når autorisert person ikke har vedtak`() {
+        val personId = PersonId(99)
+        val autorisert = AuthorisertPersonId.createInstance(personId)
+        every { vedtakRepository.hentVedtak(personId) } returns emptyList()
+
+        val vedtak = service.hentVedtakForPerson(autorisert)
+
+        assertThat(vedtak).isEmpty()
+        verify(exactly = 1) { vedtakRepository.hentVedtak(personId) }
+    }
+
+    @Test
     fun `hentVedtakDetaljerForPerson returnerer flattened vedtakliste fra alle saker`() {
         val personId = PersonId(42)
         val sak1 = lagArenaSak(sakId = "1")
@@ -43,8 +81,7 @@ class SakOgVedtakServiceTest {
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(101, 102)) } returns emptyMap()
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(201)) } returns emptyMap()
 
-        val autorisertPersonId = AuthorisertPersonId.createInstance(personId)
-        val vedtak = service.hentVedtakDetaljerForPerson(autorisertPersonId)
+        val vedtak = service.hentVedtakDetaljerForPerson(personId)
 
         assertThat(vedtak).hasSize(3)
         assertThat(vedtak.map { it.vedtakId }).containsExactlyInAnyOrder(101, 102, 201)
@@ -55,8 +92,7 @@ class SakOgVedtakServiceTest {
         val personId = PersonId(99)
         every { sakRepository.hentSakerDetaljerForPerson(personId) } returns emptyList()
 
-        val autorisertPersonId = AuthorisertPersonId.createInstance(personId)
-        val vedtak = service.hentVedtakDetaljerForPerson(autorisertPersonId)
+        val vedtak = service.hentVedtakDetaljerForPerson(personId)
 
         assertThat(vedtak).isEmpty()
     }
