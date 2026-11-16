@@ -115,6 +115,8 @@ class TilgangkontrollService(
         saksnummer: Saksnummer? = null,
     ) {
         logger.info(
+            // FIXME kan ikke logge navident, må være forsiktig med PII-data
+            // må ha securelog som et miniumum
             "Tilgangsmaskinen avviste tilgang: navIdent={}, årsak={}, begrunnelse={}, fnr(maskert)={}{}",
             token.navIdent(),
             avvistResponse?.title,
