@@ -135,7 +135,7 @@ fun Application.server(
     }
 }
 
-private fun Application.warmup(datasource: DataSource) {
+private fun warmup(datasource: DataSource) {
     val historikkService = skapHistorikkService(datasource)
     val sakService = skapSakListeService(datasource)
     val fiktivArenaPerson = PersonId(0xcafebabe.toInt())
