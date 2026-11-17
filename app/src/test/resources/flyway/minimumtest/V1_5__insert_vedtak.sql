@@ -1,6 +1,6 @@
 -- hente ut gyldig minimumstruktur for enkelt vedtak
 insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
-values (1, '123', 'Bestesen', 'Test');
+values (1, '00000000123', 'Bestesen', 'Test');
 
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
                  DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,
@@ -36,7 +36,7 @@ values ('4321', 2, 'IVERK', 'O', 'JA', 'AAP', '2', DATE '2010-08-27',
 
 -- person uten vedtak
 insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
-values (3, 'ingenvedtak', 'Inga', 'Vedtaksløs');
+values (3, '00000000003', 'Inga', 'Vedtaksløs');
 
 
 -- person med vedtak som ikke er valid

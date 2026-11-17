@@ -30,10 +30,9 @@ class MeldekortStartukeApiTest : H2TestBase("flyway/meldekort") {
     @Test
     fun `gir tomme felter for person som ikke finnes i Arena`() {
         withTestServer(h2) { gateway ->
-            val response = gateway.hentMeldekortStartuke(MeldekortStartukeRequest("007"))
+            val response = gateway.hentMeldekortStartuke(MeldekortStartukeRequest("00000000007"))
 
             assertThat(response).isEqualTo(MeldekortStartukeResponse.ingen)
         }
     }
 }
-

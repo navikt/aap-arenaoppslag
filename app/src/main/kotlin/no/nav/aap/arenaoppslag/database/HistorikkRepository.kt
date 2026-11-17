@@ -2,7 +2,7 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.Date
@@ -13,7 +13,7 @@ import javax.sql.DataSource
 class HistorikkRepository(private val dataSource: DataSource) {
 
     fun hentAlleSignifikanteVedtakForPerson(
-        arenaPersonId: PersonId, søknadMottattPå: LocalDate
+        arenaPersonId: ArenaPersonId, søknadMottattPå: LocalDate
     ): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
             hentAlleSignifikanteVedtakForPerson(arenaPersonId.id, søknadMottattPå, con)

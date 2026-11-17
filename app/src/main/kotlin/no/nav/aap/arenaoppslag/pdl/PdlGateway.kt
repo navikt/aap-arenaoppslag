@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import java.net.URI
 import java.time.Duration
 import no.nav.aap.arenaoppslag.Metrics
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLRequest
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponse
 import no.nav.aap.arenaoppslag.pdl.graphql.GraphQLResponseHandler
@@ -17,7 +18,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.request.PostRequest
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.azurecc.AzureM2MTokenProvider
 
 interface IPdlGateway {
-    fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent>
+    fun hentAlleIdenterForPerson(personIdent: PersonIdentifikator): List<PdlIdent>
 }
 
 private const val SAKSBEHANDLING_NUMMER = "B287"
@@ -43,8 +44,8 @@ class PdlGateway : IPdlGateway {
             responseHandler = GraphQLResponseHandler(),
         )
 
-    override fun hentAlleIdenterForPerson(personIdent: String): List<PdlIdent> = cache.get(personIdent) {
-        val request = GraphQLRequest(IDENT_QUERY, variables = PdlRequestVariables(personIdent))
+    override fun hentAlleIdenterForPerson(personIdent: PersonIdentifikator): List<PdlIdent> = cache.get(personIdent.id) {
+        val request = GraphQLRequest(IDENT_QUERY, variables = PdlRequestVariables(personIdent.id))
         val response = query(request)
         val pdlIdenter =
             checkNotNull(response.data?.hentIdenter?.identer) {

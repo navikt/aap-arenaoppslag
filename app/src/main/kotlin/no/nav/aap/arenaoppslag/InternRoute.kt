@@ -11,6 +11,7 @@ import no.nav.aap.arenaoppslag.kontrakt.intern.PerioderResponse
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakStatus
 import no.nav.aap.arenaoppslag.kontrakt.intern.SakerRequest
 import no.nav.aap.arenaoppslag.kontrakt.modeller.Maksimum
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.service.InternService
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.ManuellFordelingsgrunnlagService
@@ -72,7 +73,7 @@ fun Route.manuellFordelingsgrunnlag(
     post("/manuell-fordelingsgrunnlag") {
         val request: ManuellFordelingsgrunnlagRequest = call.receive()
 
-        val personId = personService.hentPersonId(request.personidentifikator)
+        val personId = personService.hentArenaPersonidentifikator(PersonIdentifikator(request.personidentifikator))
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val respons = manuellFordelingsgrunnlagService.hentManuellFordelingsgrunnlag(personId)

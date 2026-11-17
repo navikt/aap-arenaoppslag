@@ -2,7 +2,7 @@ package no.nav.aap.arenaoppslag.database;
 
 import no.nav.aap.arenaoppslag.modeller.KvoteVerdi
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.intellij.lang.annotations.Language
 import javax.sql.DataSource;
 
@@ -52,7 +52,7 @@ class TelleverkRepository(private val datasource: DataSource) {
 
     }
 
-    fun hentKvoteBrukHendelserForPerson(personId: PersonId): Set<KvotebrukHendelse> {
+    fun hentKvoteBrukHendelserForPerson(personId: ArenaPersonId): Set<KvotebrukHendelse> {
         return datasource.connection.use { connection ->
             connection.createParameterizedQuery(selectKvotePåPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
@@ -75,7 +75,7 @@ class TelleverkRepository(private val datasource: DataSource) {
         }
     }
 
-    fun hentTelleverkForPerson(personId: PersonId): Set<KvoteVerdi> {
+    fun hentTelleverkForPerson(personId: ArenaPersonId): Set<KvoteVerdi> {
         return datasource.connection.use { con ->
             con.createParameterizedQuery(selectTelleverkPåPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)

@@ -61,10 +61,10 @@ class TilgangAvvistApiTest : H2TestBase("flyway/minimumtest") {
 
         withTestServer(h2, tilgangmaskinGateway, navIdent = "Z123456") { gateway ->
             val kall: List<suspend () -> Unit> = listOf(
-                { gateway.hentVedtakForPerson(VedtakForPersonRequest("123")) },
-                { gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("123")) },
-                { gateway.hentVedtakForPerson(VedtakForPersonRequest("007")) },
-                { gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("007")) },
+                { gateway.hentVedtakForPerson(VedtakForPersonRequest("00000000123")) },
+                { gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("00000000123")) },
+                { gateway.hentVedtakForPerson(VedtakForPersonRequest("00000000007")) },
+                { gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("00000000007")) },
                 { gateway.hentSak("2021-1") },
             )
             val mapper = DefaultJsonMapper.objectMapper()

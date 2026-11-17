@@ -4,7 +4,7 @@ import io.mockk.every
 import io.mockk.mockk
 import no.nav.aap.arenaoppslag.database.MeldekortRepository
 import no.nav.aap.arenaoppslag.modeller.MeldekortStartuke
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -15,7 +15,7 @@ class MeldekortServiceTest {
 
     @Test
     fun `hentStartukeForSisteMeldekort returnerer startuke fra repository`() {
-        val personId = PersonId(500)
+        val personId = ArenaPersonId(500)
         every { meldekortRepository.hentStartukeForSisteMeldekort(personId) } returns
                 MeldekortStartuke(aar = 2026, ukenummer = 53)
 
@@ -25,7 +25,7 @@ class MeldekortServiceTest {
 
     @Test
     fun `hentStartukeForSisteMeldekort returnerer null når personen ikke har meldekort`() {
-        val personId = PersonId(502)
+        val personId = ArenaPersonId(502)
         every { meldekortRepository.hentStartukeForSisteMeldekort(personId) } returns null
 
         assertThat(service.hentStartukeForSisteMeldekort(personId)).isNull()

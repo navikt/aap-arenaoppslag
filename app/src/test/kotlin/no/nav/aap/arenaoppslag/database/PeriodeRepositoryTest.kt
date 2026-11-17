@@ -21,7 +21,7 @@ class PeriodeRepositoryTest : H2TestBase("flyway/minimumtest") {
         val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            fodselsnr = "ingenvedtak",
+            fodselsnr = "00000000003",
         )
 
         assertThat(alleVedtak).isEmpty()
@@ -37,7 +37,7 @@ class PeriodeRepositoryTest : H2TestBase("flyway/minimumtest") {
         val alleVedtak = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2010, 10, 1),
             tilOgMedDato = LocalDate.of(2024, 12, 31),
-            fodselsnr = "123",
+            fodselsnr = "00000000123",
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtak)
@@ -84,13 +84,13 @@ class PeriodeRepositoryTest : H2TestBase("flyway/minimumtest") {
         val alleVedtakLeftOverlap = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2022, 2, 1),
             tilOgMedDato = LocalDate.of(2022, 10, 31),
-            fodselsnr = "123",
+            fodselsnr = "00000000123",
         )
 
         val alleVedtakRightOverlap = periodeRepository.hentPerioder(
             fraOgMedDato = LocalDate.of(2023, 6, 1),
             tilOgMedDato = LocalDate.of(2024, 10, 31),
-            fodselsnr = "123",
+            fodselsnr = "00000000123",
         )
 
         assertEquals(forventetVedtaksperioder, alleVedtakLeftOverlap)

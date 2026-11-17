@@ -7,11 +7,10 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerResponse
-import no.nav.aap.arenaoppslag.kontrakt.apiv1.SisteSakDetaljer
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import java.time.LocalDate
@@ -29,7 +28,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
         CaffeineCacheMetrics.monitor(prometheus, sakerCache, "arenaoppslag_saker_per_person")
     }
 
-    fun hentSakerForPerson(personId: PersonId): SakerResponse {
+    fun hentSakerForPerson(personId: ArenaPersonId): SakerResponse {
         val cacheNokkel = personId.id.toString()
         return sakerCache.get(cacheNokkel) {
             val saker: List<ArenaSakOppsummering> = sakRepository.hentSakerForPerson(personId)
@@ -46,7 +45,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
 
     private fun ArenaSak.tilSakId(): SakId? = sakId.toIntOrNull()?.let { SakId(it) }
 
-    fun hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId: PersonId): SakMedSisteVedtakOgMaksdato? {
+    fun hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId: ArenaPersonId): SakMedSisteVedtakOgMaksdato? {
         val sisteVedtak = sakRepository.hentMaxdatoForSisteVedtak(personId)
 
         val vedtakfakta = sisteVedtak?.vedtakId?.let { vedtakId ->
@@ -71,7 +70,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
      * Hvis siste vedtak er stansvedtak (S): Returnere null
      * Hvis vi ikke finner noen relevante saker: Returnere null
      */
-    fun hentMaksdatoAapForPerson(personId: PersonId): LocalDate? {
+    fun hentMaksdatoAapForPerson(personId: ArenaPersonId): LocalDate? {
         val sisteVedtak = hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)?.sisteVedtak
 
         return sisteVedtak

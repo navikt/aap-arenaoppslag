@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.tilgangsmaskin
 
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 
 /**
@@ -7,7 +8,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
  */
 class FakeTilgangmaskinGateway : TilgangsmaskinGateway {
     override suspend fun harTilgangTilPerson(
-        personIdentifikator: String, token: OidcToken
+        personIdentifikator: PersonIdentifikator, token: OidcToken
     ): TilgangsmaskinKomplettResponse = TilgangsmaskinKomplettResponse(harTilgang = true)
 
     override fun close() {

@@ -1,9 +1,18 @@
 package no.nav.aap.arenaoppslag.tilgangsmaskin
 
 import com.sun.net.httpserver.HttpServer
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.http.HttpStatusCode
+import io.ktor.client.engine.mock.*
+import io.ktor.http.*
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
+import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl.TilgangsmaskinException
+import no.nav.aap.arenaoppslag.util.AzureTokenGen
+import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.net.InetSocketAddress
 import java.net.http.HttpTimeoutException
 import java.util.concurrent.CountDownLatch
@@ -11,17 +20,12 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.measureTime
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl.TilgangsmaskinException
-import no.nav.aap.arenaoppslag.util.AzureTokenGen
-import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class TilgangmaskinOboTokenTest {
+    companion object {
+        val testPerson = PersonIdentifikator("12312312312")
+    }
+
     @Test
     fun `tidsavbrudd og kansellering avbryter lesing fra Texas`(): Unit = runBlocking {
         val avslutt = CountDownLatch(1)
@@ -54,7 +58,7 @@ class TilgangmaskinOboTokenTest {
             TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine)).use { gateway ->
                 val varighet = measureTime {
                     val feil = assertThrows<TilgangsmaskinException> {
-                        withTimeout(5_000) { gateway.harTilgangTilPerson("12312312312", brukerToken) }
+                        withTimeout(5_000) { gateway.harTilgangTilPerson(testPerson, brukerToken) }
                     }
                     assertThat(feil).hasRootCauseInstanceOf(HttpTimeoutException::class.java)
                 }
@@ -63,7 +67,7 @@ class TilgangmaskinOboTokenTest {
                 assertThat(engine.requestHistory).isEmpty()
 
                 assertThrows<TimeoutCancellationException> {
-                    withTimeout(500) { gateway.harTilgangTilPerson("12312312312", brukerToken) }
+                    withTimeout(500) { gateway.harTilgangTilPerson(testPerson, brukerToken) }
                 }
                 assertThat(antallKall.get()).isEqualTo(2)
                 assertThat(engine.requestHistory).isEmpty()

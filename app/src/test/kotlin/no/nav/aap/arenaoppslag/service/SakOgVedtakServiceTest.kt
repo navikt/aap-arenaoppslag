@@ -12,7 +12,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.util.autorisertPerson
 import org.assertj.core.api.Assertions.assertThat
@@ -33,7 +33,7 @@ class SakOgVedtakServiceTest {
 
     @Test
     fun `hentVedtakForPerson bruker person-id fra autorisert person og returnerer vedtakene`() {
-        val personId = PersonId(42)
+        val personId = ArenaPersonId(42)
         val autorisert = autorisertPerson(personId)
         val førsteVedtak = ArenaVedtak(
             vedtakId = 101,
@@ -57,7 +57,7 @@ class SakOgVedtakServiceTest {
 
     @Test
     fun `hentVedtakForPerson returnerer tom liste når autorisert person ikke har vedtak`() {
-        val personId = PersonId(99)
+        val personId = ArenaPersonId(99)
         val autorisert = autorisertPerson(personId)
         every { vedtakRepository.hentVedtak(autorisert) } returns emptyList()
 
@@ -69,7 +69,7 @@ class SakOgVedtakServiceTest {
 
     @Test
     fun `hentVedtakDetaljerForPerson returnerer flattened vedtakliste fra alle saker`() {
-        val personId = PersonId(42)
+        val personId = ArenaPersonId(42)
         val autorisert = autorisertPerson(personId)
         val sak1 = lagArenaSak(sakId = "1")
         val sak2 = lagArenaSak(sakId = "2")
@@ -90,7 +90,7 @@ class SakOgVedtakServiceTest {
 
     @Test
     fun `hentVedtakDetaljerForPerson returnerer tom liste når person ikke har saker`() {
-        val personId = PersonId(99)
+        val personId = ArenaPersonId(99)
         val autorisert = autorisertPerson(personId)
         every { sakRepository.hentSakerDetaljerForPerson(autorisert) } returns emptyList()
 

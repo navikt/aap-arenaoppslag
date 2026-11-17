@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.util.autorisertPerson
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.groups.Tuple.tuple
@@ -24,7 +24,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `ingen signifikante vedtak for person som ikke finnes`() {
         val alleVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(
-            PersonId(54601), /* finnes ikke */
+            ArenaPersonId(54601), /* finnes ikke */
             testDato,
         )
         assertThat(alleVedtak).isEmpty()
@@ -33,7 +33,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `ingen signifikante vedtak for person med kun veldig gamle vedtak`() {
         val testPerson = "kun_gamle"
-        val testPersonId = PersonId(992)
+        val testPersonId = ArenaPersonId(992)
         val alleVedtak: List<ArenaVedtak> = vedtakRepository.hentVedtak(testPerson)
         assertThat(alleVedtak).hasSize(2)
 
@@ -43,8 +43,8 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     @Test
     fun `finner signifikante vedtak for person med kun nye vedtak`() {
-        val testPersonFnr = "kun_nye"
-        val testPersonId = PersonId(996)
+        val testPersonFnr = "00000000996"
+        val testPersonId = ArenaPersonId(996)
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(3) // antall i vedtak-tabellen
 
@@ -64,7 +64,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `finner signifikante KLAG1 KLAG2 og ANKE vedtak`() {
         val testPersonFnr = "klager_anke"
-        val testPersonId = PersonId(998)
+        val testPersonId = ArenaPersonId(998)
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(3)
@@ -77,7 +77,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     @Test
     fun `finner ikke KLAG1 KLAG2 og ANKE eldre enn maksimal behandlingstid`() {
-        val testPersonId = PersonId(999)
+        val testPersonId = ArenaPersonId(999)
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
         assertThat(vedtakRepository.hentVedtak(autorisertPerson(testPersonId)).map { it.rettighetkode })
             .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")
@@ -87,7 +87,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     @Test
     fun `finner ikke KLAG1 KLAG2 og ANKE med utfall TRUKK`() {
-        val testPersonId = PersonId(1000)
+        val testPersonId = ArenaPersonId(1000)
         val alleVedtak = vedtakRepository.hentVedtak(autorisertPerson(testPersonId))
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
         assertThat(alleVedtak.map { it.rettighetkode })
@@ -100,7 +100,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
 
     @Test
     fun `finner ikke klager behandlet for mer enn 12 uker siden eller anker behandlet for mer enn 52 uker siden`() {
-        val testPersonId = PersonId(1001)
+        val testPersonId = ArenaPersonId(1001)
         val alleVedtak = vedtakRepository.hentVedtak(autorisertPerson(testPersonId))
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
         assertThat(alleVedtak.map { it.rettighetkode })
@@ -114,7 +114,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `finner signifikante vedtak for person med både gamle og nye vedtak`() {
         val testPersonFnr = "blanding"
-        val testPersonId = PersonId(997)
+        val testPersonId = ArenaPersonId(997)
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(6)
 
@@ -125,7 +125,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `Ingen signifikante vedtak for person med kun avslag på AA115`() {
         val testPersonFnr = "426282"
-        val testPersonId = PersonId(426282)
+        val testPersonId = ArenaPersonId(426282)
         val alleVedtak = vedtakRepository.hentVedtak(testPersonFnr)
         assertThat(alleVedtak).hasSize(1)
 

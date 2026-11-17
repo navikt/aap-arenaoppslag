@@ -1,16 +1,9 @@
 package no.nav.aap.arenaoppslag.tilgangsmaskin
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.engine.mock.toByteArray
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.HttpRequestTimeoutException
-import io.ktor.client.plugins.HttpTimeoutCapability
-import java.io.IOException
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
+import io.ktor.client.engine.mock.*
+import io.ktor.client.plugins.*
+import io.ktor.http.*
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -22,14 +15,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import no.nav.aap.arenaoppslag.DefaultJsonMapper
-import no.nav.aap.arenaoppslag.util.AzureTokenGen
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl.TilgangsmaskinException
+import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.TokenProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.io.IOException
 import java.util.concurrent.CountDownLatch
 
 class TilgangmaskinGatewayImplTest {
@@ -65,11 +60,13 @@ class TilgangmaskinGatewayImplTest {
         return gateway to engine
     }
 
+    val testPerson = PersonIdentifikator("12312312312")
+
     @Test
     fun `gir tilgang ved 204`(): Unit = runBlocking {
         val (gateway, engine) = lagGateway(HttpStatusCode.NoContent)
 
-        assertThat(gateway.harTilgangTilPerson("12312312312", brukerToken).harTilgang).isTrue()
+        assertThat(gateway.harTilgangTilPerson(testPerson, brukerToken).harTilgang).isTrue()
         assertThat(engine.requestHistory).hasSize(1)
     }
 
@@ -77,7 +74,7 @@ class TilgangmaskinGatewayImplTest {
     fun `avslår ved 403 uten nye forsøk`(): Unit = runBlocking {
         val (gateway, engine) = lagGateway(HttpStatusCode.Forbidden)
 
-        assertThat(gateway.harTilgangTilPerson("12312312312", brukerToken).harTilgang).isFalse()
+        assertThat(gateway.harTilgangTilPerson(testPerson, brukerToken).harTilgang).isFalse()
         assertThat(engine.requestHistory).hasSize(1)
     }
 
@@ -108,8 +105,11 @@ class TilgangmaskinGatewayImplTest {
                 respond(body, HttpStatusCode.Forbidden, headersOf(HttpHeaders.ContentType, "application/problem+json"))
             }
             try {
-                TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider).use { gateway ->
-                    val resultat = gateway.harTilgangTilPerson("12312312312", brukerToken)
+                TilgangmaskinGatewayImpl(
+                    TilgangMaskinHttpClient.lagHttpClient(engine),
+                    fakeTokenProvider
+                ).use { gateway ->
+                    val resultat = gateway.harTilgangTilPerson(testPerson, brukerToken)
 
                     assertThat(resultat.harTilgang).isFalse()
                     assertThat(resultat.avvistResponse).isNull()
@@ -126,7 +126,7 @@ class TilgangmaskinGatewayImplTest {
         val engine = MockEngine { respond("ikke JSON", HttpStatusCode.OK) }
         try {
             TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider).use { gateway ->
-                assertThat(gateway.harTilgangTilPerson("12312312312", brukerToken).harTilgang).isTrue()
+                assertThat(gateway.harTilgangTilPerson(testPerson, brukerToken).harTilgang).isTrue()
                 assertThat(engine.requestHistory).hasSize(1)
             }
         } finally {
@@ -146,7 +146,7 @@ class TilgangmaskinGatewayImplTest {
             every { DefaultJsonMapper.objectMapper() } returns mapper
 
             val feil = assertThrows<CancellationException> {
-                gateway.harTilgangTilPerson("12312312312", brukerToken)
+                gateway.harTilgangTilPerson(testPerson, brukerToken)
             }
             assertThat(feil).isSameAs(kansellering)
             assertThat(engine.requestHistory).hasSize(1)
@@ -179,7 +179,7 @@ class TilgangmaskinGatewayImplTest {
         }
         val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider)
 
-        val resultat = gateway.harTilgangTilPerson("12312312312", brukerToken)
+        val resultat = gateway.harTilgangTilPerson(testPerson, brukerToken)
 
         assertThat(resultat.harTilgang).isFalse()
         assertThat(resultat.avvistResponse).isNotNull()
@@ -199,7 +199,7 @@ class TilgangmaskinGatewayImplTest {
         }
         val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider)
 
-        gateway.harTilgangTilPerson("12312312312", brukerToken)
+        gateway.harTilgangTilPerson(testPerson, brukerToken)
 
         assertThat(correlationId).isNotBlank()
         assertThat(consumerId).isEqualTo("arenaoppslag")
@@ -210,7 +210,7 @@ class TilgangmaskinGatewayImplTest {
         val (gateway, engine) = lagGateway(HttpStatusCode.Unauthorized)
 
         val feil = assertThrows<TilgangsmaskinException> {
-            runBlocking { gateway.harTilgangTilPerson("12312312312", brukerToken) }
+            runBlocking { gateway.harTilgangTilPerson(testPerson, brukerToken) }
         }
         assertThat(feil.cause).isInstanceOf(ClientRequestException::class.java)
         assertThat(engine.requestHistory).hasSize(1)
@@ -221,7 +221,7 @@ class TilgangmaskinGatewayImplTest {
         val (gateway, engine) = lagGateway(HttpStatusCode.BadRequest, HttpStatusCode.NoContent)
 
         assertThrows<TilgangsmaskinException> {
-            runBlocking { gateway.harTilgangTilPerson("12312312312", brukerToken) }
+            runBlocking { gateway.harTilgangTilPerson(testPerson, brukerToken) }
         }
         assertThat(engine.requestHistory).hasSize(1)
     }
@@ -235,7 +235,7 @@ class TilgangmaskinGatewayImplTest {
         }
         val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider)
 
-        assertThat(gateway.harTilgangTilPerson("12312312312", brukerToken).harTilgang).isTrue()
+        assertThat(gateway.harTilgangTilPerson(testPerson, brukerToken).harTilgang).isTrue()
         assertThat(kall).isEqualTo(2)
     }
 
@@ -250,7 +250,7 @@ class TilgangmaskinGatewayImplTest {
         }
         val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider)
 
-        assertThat(gateway.harTilgangTilPerson("12312312312", brukerToken).harTilgang).isTrue()
+        assertThat(gateway.harTilgangTilPerson(testPerson, brukerToken).harTilgang).isTrue()
         assertThat(kall).isEqualTo(3)
         assertThat(timeouter).containsExactly(1_000L, 2_000L, 4_000L)
     }
@@ -265,7 +265,7 @@ class TilgangmaskinGatewayImplTest {
         val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), fakeTokenProvider)
 
         assertThrows<TilgangsmaskinException> {
-            runBlocking { gateway.harTilgangTilPerson("12312312312", brukerToken) }
+            runBlocking { gateway.harTilgangTilPerson(testPerson, brukerToken) }
         }
         assertThat(kall).isEqualTo(4) // 1 opprinnelig forsøk + 3 nye forsøk
     }
@@ -279,7 +279,7 @@ class TilgangmaskinGatewayImplTest {
         val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), feilendeTokenProvider)
 
         val feil = assertThrows<TilgangsmaskinException> {
-            runBlocking { gateway.harTilgangTilPerson("12312312312", brukerToken) }
+            runBlocking { gateway.harTilgangTilPerson(testPerson, brukerToken) }
         }
         assertThat(feil.message).contains("OBO-token")
         assertThat(engine.requestHistory).isEmpty()
@@ -304,7 +304,7 @@ class TilgangmaskinGatewayImplTest {
         }
         val engine = MockEngine { respond("", HttpStatusCode.NoContent) }
         val gateway = TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), blokkerendeTokenProvider)
-        val jobb = launch { gateway.harTilgangTilPerson("12312312312", brukerToken) }
+        val jobb = launch { gateway.harTilgangTilPerson(testPerson, brukerToken) }
         try {
             withTimeout(5_000) { startet.await() }
             jobb.cancel()
@@ -328,9 +328,12 @@ class TilgangmaskinGatewayImplTest {
         }
         val engine = MockEngine { respond("", HttpStatusCode.NoContent) }
         try {
-            TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), avbruttTokenProvider).use { gateway ->
+            TilgangmaskinGatewayImpl(
+                TilgangMaskinHttpClient.lagHttpClient(engine),
+                avbruttTokenProvider
+            ).use { gateway ->
                 assertThrows<CancellationException> {
-                    gateway.harTilgangTilPerson("12312312312", brukerToken)
+                    gateway.harTilgangTilPerson(testPerson, brukerToken)
                 }
                 assertThat(engine.requestHistory).isEmpty()
             }
@@ -348,7 +351,7 @@ class TilgangmaskinGatewayImplTest {
         try {
             TilgangmaskinGatewayImpl(TilgangMaskinHttpClient.lagHttpClient(engine), tomTokenProvider).use { gateway ->
                 val feil = assertThrows<TilgangsmaskinException> {
-                    gateway.harTilgangTilPerson("12312312312", brukerToken)
+                    gateway.harTilgangTilPerson(testPerson, brukerToken)
                 }
                 assertThat(feil.message).contains("OBO-token")
                 assertThat(feil.cause).isInstanceOf(IllegalStateException::class.java)
@@ -367,7 +370,7 @@ class TilgangmaskinGatewayImplTest {
             HttpStatusCode.NoContent,
         )
 
-        assertThat(gateway.harTilgangTilPerson("12312312312", brukerToken).harTilgang).isTrue()
+        assertThat(gateway.harTilgangTilPerson(testPerson, brukerToken).harTilgang).isTrue()
         assertThat(engine.requestHistory).hasSize(3)
     }
 }

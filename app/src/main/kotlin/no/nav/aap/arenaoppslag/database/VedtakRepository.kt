@@ -6,7 +6,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedMaxdato
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.Periode
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
 import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorisertPersonId
@@ -20,7 +20,7 @@ import javax.sql.DataSource
 
 class VedtakRepository(private val dataSource: DataSource) {
 
-    fun hentSisteLøpendeVedtakDetalj(personId: PersonId): ArenaVedtakMedMaxdato? {
+    fun hentSisteLøpendeVedtakDetalj(personId: ArenaPersonId): ArenaVedtakMedMaxdato? {
         return dataSource.connection.use { connection ->
             connection.prepareStatement(selectSisteVedtakSomIkkeErStansetOgPåvirkerKvote).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
@@ -120,7 +120,7 @@ class VedtakRepository(private val dataSource: DataSource) {
             }
         }
 
-        private fun selectAlleVedtakForPerson(personId: PersonId, connection: Connection): List<ArenaVedtak> {
+        private fun selectAlleVedtakForPerson(personId: ArenaPersonId, connection: Connection): List<ArenaVedtak> {
             connection.prepareStatement(selectAlleVedtakForPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()

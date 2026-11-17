@@ -4,7 +4,8 @@ import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.TilgangAvvistResponse
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.SakService
@@ -22,7 +23,7 @@ class TilgangkontrollService(
         private val logger = LoggerFactory.getLogger("TilgangkontrollService")
     }
 
-    private class VerifisertPerson(override val personId: PersonId) : AuthorisertPersonId
+    private class VerifisertPerson(override val personId: ArenaPersonId) : AuthorisertPersonId
     private class VerifisertSak(override val saksnummer: Saksnummer) : AutorisertSaksnummer
 
     /**
@@ -30,14 +31,14 @@ class TilgangkontrollService(
      * `AccessDenied` uten å avsløre om personen finnes. Hvis tilgang gis, slås person-ID-en opp,
      * og `NotFound` returneres bare til kallere som har lov til å vite at personen mangler.
      */
-    suspend fun verifiserTilgangTilPerson(personIdentifikator: String, token: OidcToken): PersonTilgangResultat {
+    suspend fun verifiserTilgangTilPerson(personIdentifikator: PersonIdentifikator, token: OidcToken): PersonTilgangResultat {
         val response = tilgangmaskinGateway.harTilgangTilPerson(personIdentifikator, token)
         if (!response.harTilgang) {
             loggAvvisning(token, response.avvistResponse, personIdentifikator)
             return PersonTilgangResultat.AccessDenied(response.avvistResponse)
         }
 
-        val personId = personService.hentPersonId(personIdentifikator)
+        val personId = personService.hentArenaPersonidentifikator(personIdentifikator)
         if (personId == null) {
             logger.info("Fant ikke person med angitt personIdentifikator i AAP-Arena")
             return PersonTilgangResultat.NotFound
@@ -48,7 +49,7 @@ class TilgangkontrollService(
 
     suspend fun medVerifisertPersonTilgang(
         routingContext: RoutingContext,
-        personidentifikator: String,
+        personidentifikator: PersonIdentifikator,
         onAccessDenied: suspend RoutingContext.(PersonTilgangResultat.AccessDenied) -> Unit = { svarMedAvvistTilgang(it.avvistResponse) },
         onNotFound: suspend RoutingContext.() -> Unit = {
             call.respond(HttpStatusCode.NotFound, "Fant ikke personen i AAP-Arena")
@@ -65,15 +66,15 @@ class TilgangkontrollService(
      * Vi velger å opplyse om saken finnes eller ikke til alle kallere.
      */
     suspend fun verifiserTilgangTilSak(saksnummer: Saksnummer, token: OidcToken): SakTilgangResultat {
-        val person = sakService.hentPersonForSak(saksnummer)
-        if (person == null) {
+        val personIdentifikator = personService.hentArenaPersonidentifikator(saksnummer)
+        if (personIdentifikator == null) {
             logger.info("Fant ikke saksnummer=$saksnummer i AAP-Arena med en person tilknyttet")
             return SakTilgangResultat.NotFound
         }
 
-        val response = tilgangmaskinGateway.harTilgangTilPerson(person.fodselsnummer, token)
+        val response = tilgangmaskinGateway.harTilgangTilPerson(personIdentifikator, token)
         if (!response.harTilgang) {
-            loggAvvisning(token, response.avvistResponse, person.fodselsnummer, saksnummer)
+            loggAvvisning(token, response.avvistResponse, personIdentifikator, saksnummer)
             return SakTilgangResultat.AccessDenied(response.avvistResponse)
         }
         return SakTilgangResultat.Granted(VerifisertSak(saksnummer))
@@ -115,7 +116,7 @@ class TilgangkontrollService(
     private fun loggAvvisning(
         token: OidcToken,
         avvistResponse: TilgangsmaskinAvvistResponse?,
-        fodselsnummer: String,
+        personIdentifikator: PersonIdentifikator,
         saksnummer: Saksnummer? = null,
     ) {
         logger.info(
@@ -125,7 +126,7 @@ class TilgangkontrollService(
             token.navIdent(),
             avvistResponse?.title,
             avvistResponse?.begrunnelse,
-            maskerFnr(fodselsnummer),
+            maskerFnr(personIdentifikator.id),
             saksnummer?.let { ", saksnummer=$it" }.orEmpty(),
         )
     }

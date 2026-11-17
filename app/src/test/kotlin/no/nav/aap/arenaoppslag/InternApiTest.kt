@@ -15,7 +15,7 @@ import java.time.LocalDate
 
 class InternApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer") {
     companion object {
-        const val ukjentPerson = "007"
+        const val ukjentPerson = "00000000007"
         const val kjentPerson = "12312312312"
     }
 

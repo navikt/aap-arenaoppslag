@@ -9,9 +9,9 @@
 -- =========================================================================
 
 insert into PERSON (PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
-values (100, 'maksdato100', 'Maks', 'Datosen'),
+values (100, '00000000100', 'Maks', 'Datosen'),
        -- annen person med tilsvarende data — skal IKKE komme med pga person_id-filter
-       (101, 'annen101', 'Annen', 'Person');
+       (101, '00000000101', 'Annen', 'Person');
 
 -- Sak 1102 — flere vedtak
 -- Saken er avsluttet (sakstatuskode != 'AKTIV') for å verifisere at AKTIV-kravet er fjernet.
@@ -79,7 +79,7 @@ values
     (1111, DATE '2030-01-01', DATE '2031-01-01');
 
 insert into PERSON (PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
-values (102, 'maksdato102', 'Aktfase', 'Treff'),
+values (102, '00000000102', 'Aktfase', 'Treff'),
        (103, 'annen103', 'Aktfase', 'Filtrert');
 
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,

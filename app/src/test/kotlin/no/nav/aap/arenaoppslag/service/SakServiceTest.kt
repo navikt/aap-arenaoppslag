@@ -8,14 +8,14 @@ import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakfakta
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class SakServiceTest {
 
-    private val personId = PersonId(42)
+    private val personId = ArenaPersonId(42)
 
     @Test
     fun `hentSakerForPerson mapper saker til kontrakt og cacher per person`() {

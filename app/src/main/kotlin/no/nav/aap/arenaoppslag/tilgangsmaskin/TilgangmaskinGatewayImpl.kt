@@ -12,6 +12,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeoutOrNull
 import no.nav.aap.arenaoppslag.DefaultJsonMapper
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
 import no.nav.aap.komponenter.config.requiredConfigForKey
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
@@ -36,7 +37,7 @@ class TilgangmaskinGatewayImpl(
     private val scope = requiredConfigForKey("integrasjon.tilgangsmaskin.scope")
 
     override suspend fun harTilgangTilPerson(
-        personIdentifikator: String,
+        personIdentifikator: PersonIdentifikator,
         token: OidcToken
     ): TilgangsmaskinKomplettResponse {
         val oboToken = hentOboToken(token)
@@ -52,7 +53,7 @@ class TilgangmaskinGatewayImpl(
                 header(HttpHeaders.XCorrelationId, correlationId)
                 header(NAV_CONSUMER_ID_HEADER, consumerId)
                 contentType(ContentType.Text.Plain)
-                setBody(personIdentifikator)
+                setBody(personIdentifikator.id)
             }
             TilgangsmaskinKomplettResponse(harTilgang = true)
         } catch (e: ResponseException) {

@@ -4,7 +4,8 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -21,34 +22,34 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
     }
 
     @Test
-    fun `hentPersonIdHvisEksisterer returnerer person-id for en personsak`() {
-        val personId = sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 1, aar = 2020))
+    fun `hentPersonIdentifikatorHvisEksisterer returnerer personidentifikator for en personsak`() {
+        val personidentifikator = sakRepository.hentPersonIdentifikatorHvisEksisterer(Saksnummer(lopenummerSak = 1, aar = 2020))
 
-        assertThat(personId).isEqualTo(PersonId(900))
+        assertThat(personidentifikator).isEqualTo(PersonIdentifikator("00000000900"))
     }
 
     @Test
-    fun `hentPersonIdHvisEksisterer returnerer null for ukjent saksnummer`() {
-        val personId = sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 99999, aar = 1919))
+    fun `hentPersonIdentifikatorHvisEksisterer returnerer null for ukjent saksnummer`() {
+        val personidentifikator = sakRepository.hentPersonIdentifikatorHvisEksisterer(Saksnummer(lopenummerSak = 99999, aar = 1919))
 
-        assertThat(personId).isNull()
+        assertThat(personidentifikator).isNull()
     }
 
     @Test
-    fun `hentPersonIdHvisEksisterer krever treff på både år og løpenummer`() {
+    fun `hentPersonIdentifikatorHvisEksisterer krever treff på både år og løpenummer`() {
         assertThat(
-            sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 1, aar = 1919))
+            sakRepository.hentPersonIdentifikatorHvisEksisterer(Saksnummer(lopenummerSak = 1, aar = 1919))
         ).isNull()
         assertThat(
-            sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 99999, aar = 2020))
+            sakRepository.hentPersonIdentifikatorHvisEksisterer(Saksnummer(lopenummerSak = 99999, aar = 2020))
         ).isNull()
     }
 
     @Test
-    fun `hentPersonIdHvisEksisterer returnerer null når saken ikke gjelder PERSON`() {
-        val personId = sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 3, aar = 2023))
+    fun `hentPersonIdentifikatorHvisEksisterer returnerer null når saken ikke gjelder PERSON`() {
+        val personidentifikator = sakRepository.hentPersonIdentifikatorHvisEksisterer(Saksnummer(lopenummerSak = 3, aar = 2023))
 
-        assertThat(personId).isNull()
+        assertThat(personidentifikator).isNull()
     }
 
     @Test
@@ -63,7 +64,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
             avsluttetDato = null,
             person = ArenaSakPerson(
                 personId = 1,
-                fodselsnummer = "123",
+                fodselsnummer = "00000000123",
                 fornavn = "Test",
                 etternavn = "Bestesen",
             )
@@ -91,21 +92,21 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
             regDato = LocalDate.of(2022, 2, 1),
             avsluttetDato = null,
         )
-        // person_id=1 tilsvarer fnr "123" i minimumtest-datasettet
-        val saker = sakRepository.hentSakerForPerson(PersonId(1))
+        // person_id=1 tilsvarer fnr "00000000123" i minimumtest-datasettet
+        val saker = sakRepository.hentSakerForPerson(ArenaPersonId(1))
         assertThat(saker).containsExactly(forventetSak)
     }
 
     @Test
     fun `hentSakerForPerson returnerer tom liste for ukjent person`() {
-        val saker = sakRepository.hentSakerForPerson(PersonId(99999))
+        val saker = sakRepository.hentSakerForPerson(ArenaPersonId(99999))
         assertThat(saker).isEmpty()
     }
 
     @Test
     fun `hentSakerForPerson returnerer tom liste for person uten saker`() {
-        // Person "ingenvedtak" har person_id=3 i minimumtest-datasettet
-        val saker = sakRepository.hentSakerForPerson(PersonId(3))
+        // Person "00000000003" har person_id=3 i minimumtest-datasettet
+        val saker = sakRepository.hentSakerForPerson(ArenaPersonId(3))
         assertThat(saker).isEmpty()
     }
 
@@ -135,14 +136,14 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 avsluttetDato = LocalDate.of(2023, 12, 31),
             ),
         )
-        // person_id=900 tilsvarer fnr "tosaker" i saklistetest-datasettet
-        val saker = sakRepository.hentSakerForPerson(PersonId(900))
+        // person_id=900 tilsvarer fnr "00000000900" i saklistetest-datasettet
+        val saker = sakRepository.hentSakerForPerson(ArenaPersonId(900))
         assertThat(saker).containsExactlyInAnyOrderElementsOf(forventedeSaker)
     }
 
     @Test
     fun `hent maksdato paa saker for person finner forventede data`() {
-        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(102))
+        val sak = sakRepository.hentMaxdatoForSisteVedtak(ArenaPersonId(102))
         assertThat(sak).isEqualTo(
             Maksdatolinje(
                 1_12_0, 2022, 1_12_0, 1_12_2, "IKKE", "O",
@@ -160,7 +161,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
 
     @Test
     fun `hent maksdato paa saker for person med vedtak som har annen aktfasekode`() {
-        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(103))
+        val sak = sakRepository.hentMaxdatoForSisteVedtak(ArenaPersonId(103))
         assertThat(sak).isEqualTo(
             Maksdatolinje(
                 1_13_0, 2022, 1_13_0, 1_13_1, "IKKE", "O",
@@ -178,7 +179,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
 
     @Test
     fun `hent maksdato paa saker for person som ikke finnes`() {
-        val sak = sakRepository.hentMaxdatoForSisteVedtak(PersonId(0xcafebabe.toInt()))
+        val sak = sakRepository.hentMaxdatoForSisteVedtak(ArenaPersonId(0xcafebabe.toInt()))
         assertThat(sak).isNull()
     }
 
