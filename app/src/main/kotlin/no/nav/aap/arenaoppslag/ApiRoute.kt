@@ -96,22 +96,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
 
 }
 
-fun Route.meldekortStartuke(meldekortService: MeldekortService, personService: PersonService) {
-    post("/samordning/meldekort/startuke") {
-        logger.info("Henter startuke for siste meldekort for person")
-        val request: MeldekortStartukeRequest = call.receive()
-
-        val personId = personService.hentPersonId(request.personidentifikator)
-            ?: return@post call.respond(HttpStatusCode.OK, MeldekortStartukeResponse.ingen)
-
-        val response = meldekortService.hentStartukeForSisteMeldekort(personId)?.tilResponse()
-            ?: MeldekortStartukeResponse.ingen
-
-        call.respond(status = HttpStatusCode.OK, message = response)
-    }
-}
-
-fun Route.samordning(sakService: SakService, personService: PersonService) {
+fun Route.samordning(sakService: SakService, personService: PersonService, meldekortService: MeldekortService) {
     post("/samordning/person/maksdato") {
         logger.info("Henter maksdato-AAP for samordning på person")
         val request: MaksdatoSamordningRequest = call.receive()
@@ -125,6 +110,20 @@ fun Route.samordning(sakService: SakService, personService: PersonService) {
 
         call.respond(HttpStatusCode.OK, response)
     }
+
+        post("/samordning/meldekort/startuke") {
+            logger.info("Henter startuke for siste meldekort for person")
+            val request: MeldekortStartukeRequest = call.receive()
+
+            val personId = personService.hentPersonId(request.personidentifikator)
+                ?: return@post call.respond(HttpStatusCode.OK, MeldekortStartukeResponse.ingen)
+
+            val response = meldekortService.hentStartukeForSisteMeldekort(personId)?.tilResponse()
+                ?: MeldekortStartukeResponse.ingen
+
+            call.respond(status = HttpStatusCode.OK, message = response)
+        }
+
 }
 
 fun Route.sak(sakOgVedtakService: SakOgVedtakService, tilgangService: TilgangkontrollService) {

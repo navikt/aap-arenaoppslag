@@ -299,17 +299,13 @@ private fun Application.routes(
                 telleverk(telleverkService, personService)
                 sakerForPerson(sakListeService, personService)
                 maksdato(sakListeService, personService)
-                samordning(sakListeService, personService)
+                samordning(sakListeService, personService, meldekortService)
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, tilgangService)
                 sak(sakOgVedtakService, tilgangService)
-                meldekortStartuke(
-                    meldekortService = meldekortService,
-                    personService = personService,
-                )
             }
             route("/api/intern") {
-                // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
+                // Visningsklienten bruker disse endepunktene, og de er ikke ment for andre.
                 // Kontrakten på disse endepunktene kan endre seg helt uten forvarsel
                 sakDetaljert(
                     sakOgVedtakService = sakOgVedtakService,

@@ -50,7 +50,6 @@ fun Route.sakDetaljert(
             vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
         )
 
-
         logger.info("Henter saksdetaljer")
         val response = sakMedSamordning.tilDetaljert()
         call.respond(status = HttpStatusCode.OK, message = response)
