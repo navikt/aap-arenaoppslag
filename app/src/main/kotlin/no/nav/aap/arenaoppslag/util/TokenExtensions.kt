@@ -5,7 +5,7 @@ import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
 
 fun ApplicationCall.token(): OidcToken {
     val raw = request.headers["Authorization"]
-        ?.removePrefix("Bearer ")
+        ?.replaceFirst(Regex("^Bearer +", RegexOption.IGNORE_CASE), "")
         ?: error("Authorization header mangler — kall bare token() fra autentiserte routes")
     return OidcToken(raw)
 }
