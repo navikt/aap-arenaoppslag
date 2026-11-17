@@ -120,8 +120,7 @@ class TilgangkontrollService(
         saksnummer: Saksnummer? = null,
     ) {
         LoggerFactory.getLogger("team-logs").info(
-            // FIXME kan ikke logge navident, må være forsiktig med PII-data
-            // må ha securelog som et miniumum
+            // logger z-ident for nav-ansatt
             "Tilgangsmaskinen avviste tilgang: navIdent={}, årsak={}, begrunnelse={}, fnr(maskert)={}{}",
             token.navIdent(),
             avvistResponse?.title,
