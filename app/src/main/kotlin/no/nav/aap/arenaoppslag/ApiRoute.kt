@@ -31,7 +31,7 @@ fun Route.historikk(
             logger.info("Personidentifikator er på et ugyldig format")
             return@post call.respond(HttpStatusCode.BadRequest)
         }
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
             ?: return@post call.respond(SignifikantHistorikkResponse.ingen)
 
         val response: SignifikantHistorikkResponse = historikkService.signifikantHistorikk(
@@ -50,7 +50,7 @@ fun Route.historikk(
             return@post call.respond(HttpStatusCode.BadRequest)
         }
 
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
         val response = when (personId) {
             null -> HarHistorikkResponse.nei
             else -> HarHistorikkResponse.ja
@@ -66,7 +66,7 @@ fun Route.historikk(
             logger.info("Personidentifikator er på et ugyldig format")
             return@post call.respond(HttpStatusCode.BadRequest)
         }
-        val personId = personService.hentArenaPersonId(personidentifikator) ?: return@post call.respond(
+        val personId = personService.hentPersonIdentifikator(personidentifikator) ?: return@post call.respond(
             HistorikkStatusDetaljResponse.ingen
         )
 
@@ -86,7 +86,7 @@ fun Route.sakerForPerson(sakService: SakService, personService: PersonService) {
             logger.info("Personidentifikator er på et ugyldig format")
             return@post call.respond(HttpStatusCode.BadRequest)
         }
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val respons: SakerResponse = sakService.hentSakerForPerson(personId)
@@ -105,7 +105,7 @@ fun Route.maksdato(sakService: SakService, personService: PersonService) {
             logger.info("Personidentifikator er på et ugyldig format")
             return@post call.respond(HttpStatusCode.BadRequest)
         }
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
@@ -125,7 +125,7 @@ fun Route.samordning(sakService: SakService, personService: PersonService, melde
             logger.info("Personidentifikator er på et ugyldig format")
             return@post call.respond(HttpStatusCode.BadRequest)
         }
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
 
         val response = personId?.let {
             val sakMedSisteVedtakOgMaksdato = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId)
@@ -144,7 +144,7 @@ fun Route.samordning(sakService: SakService, personService: PersonService, melde
                 logger.info("Personidentifikator er på et ugyldig format")
                 return@post call.respond(HttpStatusCode.BadRequest)
             }
-            val personId = personService.hentArenaPersonId(personidentifikator)
+            val personId = personService.hentPersonIdentifikator(personidentifikator)
                 ?: return@post call.respond(HttpStatusCode.OK, MeldekortStartukeResponse.ingen)
 
             val response = meldekortService.hentStartukeForSisteMeldekort(personId)?.tilResponse()
@@ -194,7 +194,7 @@ fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService:
             return@post call.respond(HttpStatusCode.BadRequest)
         }
 
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val vedtak: List<ArenaVedtak> = sakOgVedtakService.hentVedtakForPerson(personId)
@@ -222,7 +222,7 @@ fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService:
             return@post call.respond(HttpStatusCode.BadRequest)
         }
 
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val vedtak: List<ArenaVedtakMedDetaljer> = sakOgVedtakService.hentVedtakDetaljerForPerson(personId)
@@ -242,7 +242,7 @@ fun Route.telleverk(telleverkService: TelleverkService, personService: PersonSer
             logger.info("Personidentifikator er på et ugyldig format")
             return@post call.respond(HttpStatusCode.BadRequest)
         }
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val telleverk = telleverkService.hentTelleverkForPerson(personId)
@@ -261,7 +261,7 @@ fun Route.utbetalinger(posteringService: PosteringService, personService: Person
             logger.info("Personidentifikator er på et ugyldig format")
             return@post call.respond(HttpStatusCode.BadRequest)
         }
-        val personId = personService.hentArenaPersonId(personidentifikator)
+        val personId = personService.hentPersonIdentifikator(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val utbetaling = posteringService.hentSisteAapUtbetalingForPerson(personId)

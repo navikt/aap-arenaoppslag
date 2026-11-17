@@ -33,7 +33,7 @@ class PersonService(
         CaffeineCacheMetrics.monitor(prometheus, personIdCache, "arenaoppslag_person_id")
     }
 
-    fun hentArenaPersonId(personidentifikator: PersonIdentifikator): ArenaPersonId? {
+    fun hentPersonIdentifikator(personidentifikator: PersonIdentifikator): ArenaPersonId? {
         return personIdCache.getIfPresent(personidentifikator)
             ?: hentArenaPersonIdUtenCache(personidentifikator)
                 ?.also { funnetPersonId ->
@@ -48,7 +48,7 @@ class PersonService(
         return personRepository.hentPersonIdHvisEksisterer(alleIdenter)
     }
 
-    fun hentArenaPersonId(saknummer: Saksnummer): PersonIdentifikator? {
+    fun hentPersonIdentifikator(saknummer: Saksnummer): PersonIdentifikator? {
         return saksnummerTilPersonidentifikatorCache.getIfPresent(saknummer)
             ?: hentPersonIdentifikatorUtenCache(saknummer)
                 ?.also { funnetPersonId ->

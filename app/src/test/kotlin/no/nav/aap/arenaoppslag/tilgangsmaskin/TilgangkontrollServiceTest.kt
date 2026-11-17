@@ -29,7 +29,7 @@ class TilgangkontrollServiceTest {
     @Test
     fun `personbevis opprettes etter godkjent tilgang og personoppslag`(): Unit = runBlocking {
         coEvery { gateway.harTilgangTilPerson(testperson, token) } returns TilgangsmaskinKomplettResponse(true)
-        every { personService.hentArenaPersonId(testperson) } returns ArenaPersonId(42)
+        every { personService.hentPersonIdentifikator(testperson) } returns ArenaPersonId(42)
         val resultat = service.verifiserTilgangTilPerson(testperson, token)
         check(resultat is PersonTilgangResultat.Granted)
         assertThat(resultat.autorisertPerson.personId).isEqualTo(ArenaPersonId(42))
@@ -40,19 +40,19 @@ class TilgangkontrollServiceTest {
         coEvery { gateway.harTilgangTilPerson(testperson, token) } returns TilgangsmaskinKomplettResponse(false)
         assertThat(service.verifiserTilgangTilPerson(testperson, token))
             .isInstanceOf(PersonTilgangResultat.AccessDenied::class.java)
-        verify(exactly = 0) { personService.hentArenaPersonId(any<PersonIdentifikator>()) }
+        verify(exactly = 0) { personService.hentPersonIdentifikator(any<PersonIdentifikator>()) }
     }
 
     @Test
     fun `godkjent tilgang til ukjent person gir ikke bevis`(): Unit = runBlocking {
         coEvery { gateway.harTilgangTilPerson(testperson, token) } returns TilgangsmaskinKomplettResponse(true)
-        every { personService.hentArenaPersonId(testperson) } returns null
+        every { personService.hentPersonIdentifikator(testperson) } returns null
         assertThat(service.verifiserTilgangTilPerson(testperson, token)).isEqualTo(PersonTilgangResultat.NotFound)
     }
 
     @Test
     fun `sakbevis gjelder saken som ble kontrollert`(): Unit = runBlocking {
-        every { personService.hentArenaPersonId(saksnummer) } returns testperson
+        every { personService.hentPersonIdentifikator(saksnummer) } returns testperson
         coEvery { gateway.harTilgangTilPerson(testperson, token) } returns TilgangsmaskinKomplettResponse(true)
         val resultat = service.verifiserTilgangTilSak(saksnummer, token)
         check(resultat is SakTilgangResultat.Granted)
@@ -61,7 +61,7 @@ class TilgangkontrollServiceTest {
 
     @Test
     fun `avvist sak gir ikke bevis`(): Unit = runBlocking {
-        every { personService.hentArenaPersonId(saksnummer) } returns testperson
+        every { personService.hentPersonIdentifikator(saksnummer) } returns testperson
         coEvery { gateway.harTilgangTilPerson(testperson, token) } returns TilgangsmaskinKomplettResponse(false)
         assertThat(service.verifiserTilgangTilSak(saksnummer, token))
             .isInstanceOf(SakTilgangResultat.AccessDenied::class.java)
@@ -69,7 +69,7 @@ class TilgangkontrollServiceTest {
 
     @Test
     fun `ukjent sak gir ikke bevis`(): Unit = runBlocking {
-        every { personService.hentArenaPersonId(saksnummer) } returns null
+        every { personService.hentPersonIdentifikator(saksnummer) } returns null
         assertThat(service.verifiserTilgangTilSak(saksnummer, token)).isEqualTo(SakTilgangResultat.NotFound)
         coVerify(exactly = 0) { gateway.harTilgangTilPerson(any(), any()) }
     }
@@ -78,6 +78,6 @@ class TilgangkontrollServiceTest {
     fun `feil fra tilgangsmaskinen gir ikke bevis`(): Unit = runBlocking {
         coEvery { gateway.harTilgangTilPerson(testperson, token) } throws IllegalStateException("utilgjengelig")
         assertThrows<IllegalStateException> { service.verifiserTilgangTilPerson(testperson, token) }
-        verify(exactly = 0) { personService.hentArenaPersonId(any<PersonIdentifikator>()) }
+        verify(exactly = 0) { personService.hentPersonIdentifikator(any<PersonIdentifikator>()) }
     }
 }
