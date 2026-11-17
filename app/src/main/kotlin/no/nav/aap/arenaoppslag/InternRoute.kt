@@ -73,7 +73,13 @@ fun Route.manuellFordelingsgrunnlag(
     post("/manuell-fordelingsgrunnlag") {
         val request: ManuellFordelingsgrunnlagRequest = call.receive()
 
-        val personId = personService.hentArenaPersonId(PersonIdentifikator(request.personidentifikator))
+        val personidentifikator = PersonIdentifikator.fromString(request.personidentifikator)
+        if (personidentifikator == null) {
+            logger.info("Personidentifikator er på et ugyldig format")
+            return@post call.respond(HttpStatusCode.BadRequest)
+        }
+
+        val personId = personService.hentArenaPersonId(personidentifikator)
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val respons = manuellFordelingsgrunnlagService.hentManuellFordelingsgrunnlag(personId)

@@ -3,10 +3,13 @@ package no.nav.aap.arenaoppslag.modeller
 data class ArenaPersonId(val id: Int)
 
 data class PersonIdentifikator(val id: String) {
-    // Et fødselsnummer eller d-nummer
-    init {
-        require(id.length == 11) { "Personidentifikatoren må være 11 tegn lang" }
-        require(id.all { it.isDigit() }) { "Personidentifikatoren må bare inneholde sifre" }
+    companion object {
+        fun fromString(id: String?): PersonIdentifikator? {
+            // Et fødselsnummer eller d-nummer
+            if (id == null || id.length != 11 || !id.all { it.isDigit() }) return null
+
+            return PersonIdentifikator(id)
+        }
     }
 }
 
