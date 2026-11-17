@@ -232,6 +232,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
             vedtakId = row.getInt("vedtak_id"),
             aar = row.getInt("aar"),
             lopenrvedtak = row.getInt("lopenrvedtak"),
+            lopenrSak = row.getInt("lopenrsak"),
             statusKode = row.getString("vedtakstatuskode"),
             vedtaktypeKode = row.getString("vedtaktypekode"),
             fraOgMed = fraDato(row.getDate("fra_dato")),

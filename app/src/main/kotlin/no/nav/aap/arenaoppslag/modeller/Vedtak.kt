@@ -26,9 +26,11 @@ data class ArenaVedtak(
     val aktivitetsfaseKode: String,
     val aar: Int = 0,
     val lopenrvedtak: Int = 0,
+    val lopenrSak: Int = 0
 ) {
     fun tilKontrakt() = ArenaVedtakKontrakt(
         sakId = sakId.toInt(),
+        saksnummer = Saksnummer(lopenrSak, aar).toString(),
         statusKode = statusKode,
         vedtaktypeKode = vedtaktypeKode,
         fraOgMed = fraOgMed,

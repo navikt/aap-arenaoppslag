@@ -97,6 +97,7 @@ class ArenaSakMedVedtakTest {
 
         val forventetVedtak = ArenaVedtakKontrakt(
             sakId = 42,
+            saksnummer = "2025-7",
             vedtaktypeKode = "O",
             statusKode = "IVERK",
             tilDato = tilDato,
