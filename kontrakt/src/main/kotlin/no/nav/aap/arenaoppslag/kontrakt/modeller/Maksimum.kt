@@ -4,6 +4,13 @@ public data class Maksimum(
     val vedtak: List<Vedtak>,
 )
 
+/**
+ * @property dagsats Dagsats uten barnetillegg før samordning. Kommer fra dagsmbt i vedtaksfakta.
+ * @property vedtaksdato fra_dato fra vedtaks-tabellen.
+ * @property status vedtakstatuskode
+ * @property rettighetsType Aktivitetsfasekode (aktfasekode).
+ * @property barnetillegg Barnetillegg som er registrert på vedtaket. Fra vedtaksfakta-tabellen.
+ */
 public data class Vedtak(
     val vedtaksId: String,
     val utbetaling: List<UtbetalingMedMer>,
@@ -15,7 +22,7 @@ public data class Vedtak(
     val vedtaksTypeKode: String,
     val vedtaksTypeNavn: String,
     val periode: Periode,
-    val rettighetsType: String, ////aktivitetsfase //Aktfasekode
+    val rettighetsType: String,
     val beregningsgrunnlag: Int,
     val barnMedStonad: Int,
     val barnetillegg: Int,
@@ -28,6 +35,7 @@ public data class Vedtak(
 
 /**
  * @param barnetillegg Totalt barnetillegg.
+ * @property dagsats Dagsats med barnetillegg.
  */
 public data class UtbetalingMedMer(
     val reduksjon: Reduksjon? = null,

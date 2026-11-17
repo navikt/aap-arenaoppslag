@@ -120,6 +120,7 @@ data class ArenaSakMedVedtak(
         vedtakene = vedtak.map {
             ArenaVedtakKontrakt(
                 sakId = sisteVedtak.sakId,
+                saksnummer = Saksnummer(lopenr, opprettetAar).toString(),
                 vedtaktypeKode = it.vedtaktypeKode,
                 statusKode = it.statusKode,
                 tilDato = it.tilDato,
