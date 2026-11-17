@@ -127,8 +127,8 @@ values (5257651, 997, 994449, 4, 'KHO4407S', null, DATE '2026-01-14', 'se meldek
 
 -- person med to oppføringer, en aktiv og en duplikat
 insert into PERSON(PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN, PERSON_ID_STATUS)
-values (987, '00000000987', 'Gammel', 'Rettighet', 'AKTIV'),
-       (876, '00000000876', 'Se f.nr 00000000987', 'Må ikke brukes', 'DUPLIKAT_TIL_BEH');
+values (987, 'korrekt', 'Gammel', 'Rettighet', 'AKTIV'),
+       (876, 'duplikat', 'Se f.nr korrekt', 'Må ikke brukes', 'DUPLIKAT_TIL_BEH');
 
 
 -- person med nyere vedtak som ikke har til og fra dato fordi det ikke er jobbet med

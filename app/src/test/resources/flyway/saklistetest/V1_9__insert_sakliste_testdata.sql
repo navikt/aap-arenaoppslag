@@ -3,7 +3,7 @@
 
 -- Person med to saker: én med to vedtak, én med ett vedtak
 insert into PERSON (PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
-values (900, '00000000900', 'To', 'Saker');
+values (900, 'tosaker', 'To', 'Saker');
 
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
                  DATO_AVSLUTTET, SAKSTATUSKODE, AETATENHET_ANSVARLIG, ER_UTLAND)

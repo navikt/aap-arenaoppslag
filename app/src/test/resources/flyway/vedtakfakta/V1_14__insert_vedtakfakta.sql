@@ -1,7 +1,7 @@
 -- Minimumstruktur for å støtte vedtakfakta-testene.
 -- VEDTAK 1234 og 4321 må finnes for at VEDTAKFAKTA-radene i V1_14 skal kunne settes inn (FK).
 insert into PERSON(PERSON_ID, FODSELSNR, ETTERNAVN, FORNAVN)
-values (1, '00000000123', 'Bestesen', 'Test');
+values (1, '123', 'Bestesen', 'Test');
 
 Insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS, OBJEKT_ID, AAR, LOPENRSAK,
                  DATO_AVSLUTTET, SAKSTATUSKODE, ARKIVNOKKEL, AETATENHET_ARKIV, ARKIVHENVISNING, BRUKERID_ANSVARLIG,

@@ -25,7 +25,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
     fun `hentPersonIdentifikatorHvisEksisterer returnerer personidentifikator for en personsak`() {
         val personidentifikator = sakRepository.hentPersonIdentifikatorHvisEksisterer(Saksnummer(lopenummerSak = 1, aar = 2020))
 
-        assertThat(personidentifikator).isEqualTo(PersonIdentifikator("00000000900"))
+        assertThat(personidentifikator).isEqualTo(PersonIdentifikator("tosaker"))
     }
 
     @Test
@@ -136,7 +136,7 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
                 avsluttetDato = LocalDate.of(2023, 12, 31),
             ),
         )
-        // person_id=900 tilsvarer fnr "00000000900" i saklistetest-datasettet
+        // person_id=900 tilsvarer fnr "tosaker" i saklistetest-datasettet
         val saker = sakRepository.hentSakerForPerson(ArenaPersonId(900))
         assertThat(saker).containsExactlyInAnyOrderElementsOf(forventedeSaker)
     }

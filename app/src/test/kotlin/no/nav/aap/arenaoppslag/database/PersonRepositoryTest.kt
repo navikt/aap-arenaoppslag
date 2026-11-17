@@ -19,13 +19,13 @@ class PersonRepositoryTest : H2TestBase("flyway/eksisterer") {
     fun `person eksisterer`() {
         val personEksisterer = personRepository.hentPersonIdHvisEksisterer(setOf(PersonIdentifikator("12312312312")))
         assertNotNull(personEksisterer)
-        val personEksistererIkke = personRepository.hentPersonIdHvisEksisterer(setOf(PersonIdentifikator("02012012031")))
+        val personEksistererIkke = personRepository.hentPersonIdHvisEksisterer(setOf(PersonIdentifikator("2012012031")))
         assertNull(personEksistererIkke)
     }
 
     @Test
     fun `person eksisterer men er merket som duplikat`() {
-        val personEksisterer = personRepository.hentPersonIdHvisEksisterer(setOf("00000000987", "00000000876", "00000000007").map { PersonIdentifikator(it) }.toSet())
+        val personEksisterer = personRepository.hentPersonIdHvisEksisterer(setOf("korrekt", "duplikat", "en ekstra").map { PersonIdentifikator(it) }.toSet())
         assertNotNull(personEksisterer) // skal returneres uten feil
     }
 
