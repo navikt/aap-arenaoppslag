@@ -241,7 +241,8 @@ private fun skapManuellFordelingsgrunnlagService(
 
 private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): PersonService {
     val personRepository = PersonRepository(datasource)
-    return PersonService(personRepository, pdlGateway)
+    val sakRepository = SakRepository(datasource)
+    return PersonService(personRepository, sakRepository, pdlGateway)
 }
 
 private fun skapSaksopplysningService(datasource: DataSource): SaksopplysningService {

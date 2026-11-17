@@ -4,11 +4,14 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.PersonRepository
+import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.pdl.IPdlGateway
 
 class PersonService(
     private val personRepository: PersonRepository,
+    private val sakRepository: SakRepository,
     private val pdlGateway: IPdlGateway,
 ) {
     // Lagrer mappingen personidentifikator -> arena-personId. Bare treff i databasen lagres.
@@ -36,4 +39,17 @@ class PersonService(
             .toSet()
         return personRepository.hentPersonIdHvisEksisterer(alleIdenter)
     }
+
+    fun hentPersonId(saknummer: Saksnummer): PersonId? {
+        return personIdCache.getIfPresent(saknummer.toString())
+            ?: hentPersonIdUtenCache(saknummer)
+                ?.also { funnetPersonId ->
+                    personIdCache.put(saknummer.toString(), funnetPersonId)
+                }
+    }
+
+    private fun hentPersonIdUtenCache(saknummer: Saksnummer): PersonId? {
+        return sakRepository.hentPersonIdHvisEksisterer(saknummer)
+    }
+
 }

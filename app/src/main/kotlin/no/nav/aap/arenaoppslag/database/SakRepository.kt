@@ -44,6 +44,12 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun hentPersonIdHvisEksisterer(saksnummer: Saksnummer): PersonId? {
+        return dataSource.connection.use { con ->
+            selectPersonIdFraSaksnummer(saksnummer, con)
+        }
+    }
+
     companion object {
         private fun doHentMaxdatoForSisteVedtak(personId: PersonId, connection: Connection): Maksdatolinje? {
             connection.prepareStatement(selectVedtakMedNyesteMaxdatoForPerson).use { preparedStatement ->
@@ -84,6 +90,21 @@ class SakRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
                 return resultSet.map { row -> mapperForArenaSak(row) }
+            }
+        }
+
+        private fun selectPersonIdFraSaksnummer(saksnummer: Saksnummer, connection: Connection): PersonId? {
+            connection.prepareStatement(selectPersonIdFraSaksnummer).use { preparedStatement ->
+                preparedStatement.setInt(1, saksnummer.lopenummerSak)
+                preparedStatement.setInt(2, saksnummer.aar)
+                preparedStatement.executeQuery().use { resultSet ->
+                    return if (resultSet.next()) {
+                        PersonId(resultSet.getInt("person_id"))
+                    } else {
+                        // Ingen funnet, må være ugyldig saksnummer eller en sak som ikke tilhører en person (f.eks. en virksomhetssak)
+                        null
+                    }
+                }
             }
         }
 
@@ -147,6 +168,13 @@ class SakRepository(private val dataSource: DataSource) {
             FROM SAK
             LEFT JOIN person ON person.person_id = sak.objekt_id
             LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
+            WHERE LOPENRSAK = ? AND AAR = ? AND TABELLNAVNALIAS='PERS'
+        """.trimIndent()
+
+        @Language("OracleSql")
+        internal val selectPersonIdFraSaksnummer = """
+            SELECT objekt_id 
+            FROM SAK
             WHERE LOPENRSAK = ? AND AAR = ? AND TABELLNAVNALIAS='PERS'
         """.trimIndent()
 

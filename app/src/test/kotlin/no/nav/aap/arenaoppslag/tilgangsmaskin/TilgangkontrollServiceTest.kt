@@ -39,7 +39,7 @@ class TilgangkontrollServiceTest {
         coEvery { gateway.harTilgangTilPerson("testperson", token) } returns TilgangsmaskinKomplettResponse(false)
         assertThat(service.verifiserTilgangTilPerson("testperson", token))
             .isInstanceOf(PersonTilgangResultat.AccessDenied::class.java)
-        verify(exactly = 0) { personService.hentPersonId(any()) }
+        verify(exactly = 0) { personService.hentPersonId(any<String>()) }
     }
 
     @Test
@@ -77,6 +77,6 @@ class TilgangkontrollServiceTest {
     fun `feil fra tilgangsmaskinen gir ikke bevis`(): Unit = runBlocking {
         coEvery { gateway.harTilgangTilPerson("testperson", token) } throws IllegalStateException("utilgjengelig")
         assertThrows<IllegalStateException> { service.verifiserTilgangTilPerson("testperson", token) }
-        verify(exactly = 0) { personService.hentPersonId(any()) }
+        verify(exactly = 0) { personService.hentPersonId(any<String>()) }
     }
 }
