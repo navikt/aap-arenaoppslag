@@ -130,7 +130,7 @@ fun Application.server(
     }
 }
 
-private fun Application.warmup(datasource: DataSource) {
+private fun warmup(datasource: DataSource) {
     val historikkService = skapHistorikkService(datasource)
     val sakService = skapSakListeService(datasource)
     val fiktivArenaPerson = PersonId(0xcafebabe.toInt())
@@ -289,14 +289,10 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 telleverk(telleverkService, personService)
                 sakerForPerson(sakListeService, personService)
                 maksdato(sakListeService, personService)
-                samordning(sakListeService, personService)
+                samordning(sakListeService, personService, meldekortService)
                 utbetalinger(utbetalingService, personService)
                 vedtakForPerson(sakOgVedtakService, personService)
                 sak(sakOgVedtakService)
-                meldekortStartuke(
-                    meldekortService = meldekortService,
-                    personService = personService,
-                )
             }
             route("/api/intern") {
                 // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
