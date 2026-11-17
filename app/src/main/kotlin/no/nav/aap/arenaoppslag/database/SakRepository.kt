@@ -99,7 +99,7 @@ class SakRepository(private val dataSource: DataSource) {
                 preparedStatement.setInt(2, saksnummer.aar)
                 preparedStatement.executeQuery().use { resultSet ->
                     return if (resultSet.next()) {
-                        PersonId(resultSet.getInt("person_id"))
+                        PersonId(resultSet.getInt("objekt_id"))
                     } else {
                         // Ingen funnet, må være ugyldig saksnummer eller en sak som ikke tilhører en person (f.eks. en virksomhetssak)
                         null
@@ -173,7 +173,7 @@ class SakRepository(private val dataSource: DataSource) {
 
         @Language("OracleSql")
         internal val selectPersonIdFraSaksnummer = """
-            SELECT objekt_id 
+            SELECT objekt_id
             FROM SAK
             WHERE LOPENRSAK = ? AND AAR = ? AND TABELLNAVNALIAS='PERS'
         """.trimIndent()

@@ -6,12 +6,76 @@ import io.mockk.verify
 import no.nav.aap.arenaoppslag.database.PersonRepository
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.pdl.IPdlGateway
 import no.nav.aap.arenaoppslag.pdl.PdlIdent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class PersonServiceTest {
+
+    @Test
+    fun `hentPersonId med saksnummer slår opp i repository ved cache-miss`() {
+        val saksnummer = Saksnummer(lopenummerSak = 1, aar = 2021)
+        val sakRepository = mockk<SakRepository>()
+        every { sakRepository.hentPersonIdHvisEksisterer(saksnummer) } returns PersonId(900)
+        val service = PersonService(mockk<PersonRepository>(), sakRepository, mockk<IPdlGateway>())
+
+        assertThat(service.hentPersonId(saksnummer)).isEqualTo(PersonId(900))
+
+        verify(exactly = 1) { sakRepository.hentPersonIdHvisEksisterer(saksnummer) }
+    }
+
+    @Test
+    fun `hentPersonId med saksnummer bruker cache ved andre kall`() {
+        val saksnummer = Saksnummer(lopenummerSak = 1, aar = 2021)
+        val sakRepository = mockk<SakRepository>()
+        every { sakRepository.hentPersonIdHvisEksisterer(saksnummer) } returns PersonId(900)
+        val service = PersonService(mockk<PersonRepository>(), sakRepository, mockk<IPdlGateway>())
+
+        assertThat(service.hentPersonId(saksnummer)).isEqualTo(PersonId(900))
+        assertThat(service.hentPersonId(saksnummer.copy())).isEqualTo(PersonId(900))
+
+        verify(exactly = 1) { sakRepository.hentPersonIdHvisEksisterer(saksnummer) }
+    }
+
+    @Test
+    fun `hentPersonId med saksnummer cacher ikke null-resultat`() {
+        val saksnummer = Saksnummer(lopenummerSak = 1, aar = 2021)
+        val sakRepository = mockk<SakRepository>()
+        every { sakRepository.hentPersonIdHvisEksisterer(saksnummer) } returnsMany listOf(null, PersonId(900))
+        val service = PersonService(mockk<PersonRepository>(), sakRepository, mockk<IPdlGateway>())
+
+        assertThat(service.hentPersonId(saksnummer)).isNull()
+        assertThat(service.hentPersonId(saksnummer)).isEqualTo(PersonId(900))
+        assertThat(service.hentPersonId(saksnummer)).isEqualTo(PersonId(900))
+
+        verify(exactly = 2) { sakRepository.hentPersonIdHvisEksisterer(saksnummer) }
+    }
+
+    @Test
+    fun `hentPersonId cacher uavhengig per år og løpenummer`() {
+        val saksnumre = listOf(
+            Saksnummer(lopenummerSak = 1, aar = 2021),
+            Saksnummer(lopenummerSak = 1, aar = 2022),
+            Saksnummer(lopenummerSak = 2, aar = 2021),
+        )
+        val sakRepository = mockk<SakRepository>()
+        saksnumre.forEachIndexed { indeks, saksnummer ->
+            every { sakRepository.hentPersonIdHvisEksisterer(saksnummer) } returns PersonId(indeks + 1)
+        }
+        val service = PersonService(mockk<PersonRepository>(), sakRepository, mockk<IPdlGateway>())
+
+        repeat(2) {
+            saksnumre.forEachIndexed { indeks, saksnummer ->
+                assertThat(service.hentPersonId(saksnummer)).isEqualTo(PersonId(indeks + 1))
+            }
+        }
+
+        saksnumre.forEach { saksnummer ->
+            verify(exactly = 1) { sakRepository.hentPersonIdHvisEksisterer(saksnummer) }
+        }
+    }
 
     @Test
     fun `hentPersonId bruker cache ved andre kall`() {

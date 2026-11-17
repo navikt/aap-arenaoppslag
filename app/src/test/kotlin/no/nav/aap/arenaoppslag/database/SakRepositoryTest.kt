@@ -21,6 +21,37 @@ class SakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/saklistetest"
     }
 
     @Test
+    fun `hentPersonIdHvisEksisterer returnerer person-id for en personsak`() {
+        val personId = sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 1, aar = 2020))
+
+        assertThat(personId).isEqualTo(PersonId(900))
+    }
+
+    @Test
+    fun `hentPersonIdHvisEksisterer returnerer null for ukjent saksnummer`() {
+        val personId = sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 99999, aar = 1919))
+
+        assertThat(personId).isNull()
+    }
+
+    @Test
+    fun `hentPersonIdHvisEksisterer krever treff på både år og løpenummer`() {
+        assertThat(
+            sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 1, aar = 1919))
+        ).isNull()
+        assertThat(
+            sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 99999, aar = 2020))
+        ).isNull()
+    }
+
+    @Test
+    fun `hentPersonIdHvisEksisterer returnerer null når saken ikke gjelder PERSON`() {
+        val personId = sakRepository.hentPersonIdHvisEksisterer(Saksnummer(lopenummerSak = 3, aar = 2023))
+
+        assertThat(personId).isNull()
+    }
+
+    @Test
     fun `klarer å hente en sak fra databasen`() {
         val forventetSak = ArenaSak(
             sakId = "1",
