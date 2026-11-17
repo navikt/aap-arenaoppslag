@@ -160,4 +160,24 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(utbetaling.belop).isEqualTo(7700)
         assertThat(utbetaling.reduksjon!!.timerArbeidet).isEqualTo(7.5)
     }
+
+    @Test
+    fun `beholder posteringer uten meldekortdager innenfor posteringsperioden`() {
+        val vedtak = repo.hentMaksimumsløsning(
+            "99999999999",
+            LocalDate.of(2025, 11, 1),
+            LocalDate.of(2025, 12, 31),
+        ).vedtak.associateBy { it.vedtaksId }
+
+        assertThat(vedtak.keys).containsExactlyInAnyOrder("90090", "90091")
+        val førsteUtbetaling = vedtak.getValue("90090").utbetaling.single()
+        val andreUtbetaling = vedtak.getValue("90091").utbetaling.single()
+
+        assertThat(førsteUtbetaling.belop).isEqualTo(1461)
+        assertThat(førsteUtbetaling.periode)
+            .isEqualTo(Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 11, 30)))
+        assertThat(andreUtbetaling.belop).isEqualTo(731)
+        assertThat(andreUtbetaling.periode)
+            .isEqualTo(Periode(LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 7)))
+    }
 }

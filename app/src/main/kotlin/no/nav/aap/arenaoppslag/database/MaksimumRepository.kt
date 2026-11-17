@@ -301,7 +301,7 @@ class MaksimumRepository(
             u.dato_periode_til
            
         FROM utbetalinger u
-        JOIN timer        t ON  t.meldekort_id = u.meldekort_id
+        LEFT JOIN timer   t ON  t.meldekort_id = u.meldekort_id
                             AND t.dato   BETWEEN u.dato_periode_fra AND u.dato_periode_til
         GROUP BY u.meldekort_id,
                  u.belop,
