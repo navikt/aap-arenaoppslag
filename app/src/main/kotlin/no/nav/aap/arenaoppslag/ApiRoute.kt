@@ -16,7 +16,6 @@ import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.TelleverkService
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakerRequest as SakerRequestV1
 
 fun Route.historikk(
@@ -156,7 +155,7 @@ fun Route.sak(sakOgVedtakService: SakOgVedtakService) {
     }
 }
 
-fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService, tilgangService: TilgangkontrollService) {
+fun Route.vedtakForPerson(sakOgVedtakService: SakOgVedtakService, personService: PersonService) {
     post("/person/vedtak") {
         logger.info("Henter alle vedtak for person")
         val request: VedtakForPersonRequest = call.receive()

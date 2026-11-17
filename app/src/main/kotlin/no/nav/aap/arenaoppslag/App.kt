@@ -37,7 +37,6 @@ import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.service.VedtakService
 import no.nav.aap.arenaoppslag.service.VedtakfaktaService
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangkontrollService
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinGateway
 import no.nav.aap.komponenter.server.auth.IdentityProvider
@@ -100,7 +99,7 @@ fun Application.server(
 
     authentication(listOf(IdentityProvider.ENTRA_ID))
 
-    routes(datasource, pdlGateway, tilgangmaskinGateway)
+    routes(datasource, pdlGateway)
 
     warmup(datasource)
 
@@ -263,7 +262,6 @@ private fun skapMeldekortService(datasource: DataSource): MeldekortService {
 private fun Application.routes(
     datasource: DataSource,
     pdlGateway: IPdlGateway,
-    tilgangmaskinGateway: TilgangsmaskinGateway,
 ) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
@@ -278,7 +276,6 @@ private fun Application.routes(
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
     val meldekortService = skapMeldekortService(datasource)
-    val tilgangService = TilgangkontrollService(tilgangmaskinGateway, sakListeService, personService)
 
     routing {
         actuator(prometheus)
@@ -302,7 +299,7 @@ private fun Application.routes(
                 maksdato(sakListeService, personService)
                 samordning(sakListeService, personService, meldekortService)
                 utbetalinger(utbetalingService, personService)
-                vedtakForPerson(sakOgVedtakService, personService, tilgangService)
+                vedtakForPerson(sakOgVedtakService, personService)
                 sak(sakOgVedtakService)
             }
             route("/api/intern") {
