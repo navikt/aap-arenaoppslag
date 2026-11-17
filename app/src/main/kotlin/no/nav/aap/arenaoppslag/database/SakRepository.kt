@@ -7,21 +7,13 @@ import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
-import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorisertPersonId
-import no.nav.aap.arenaoppslag.tilgangsmaskin.AutorisertSaksnummer
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
 
 class SakRepository(private val dataSource: DataSource) {
-    fun hentSak(autorisert: AutorisertSaksnummer): ArenaSak? {
-        return dataSource.connection.use { con ->
-            selectSakMedSaksnummer(autorisert.saksnummer, con)
-        }
-    }
-
-    internal fun hentSakUtenTilgangskontroll(saksnummer: Saksnummer): ArenaSak? {
+    fun hentSak(saksnummer: Saksnummer): ArenaSak? {
         return dataSource.connection.use { con ->
             selectSakMedSaksnummer(saksnummer, con)
         }
@@ -39,9 +31,9 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentSakerDetaljerForPerson(autorisert: AuthorisertPersonId): List<ArenaSak> {
+    fun hentSakerDetaljerForPerson(personId: ArenaPersonId): List<ArenaSak> {
         return dataSource.connection.use { con ->
-            selectSakerDetaljerForPersonId(autorisert.personId, con)
+            selectSakerDetaljerForPersonId(personId, con)
         }
     }
 

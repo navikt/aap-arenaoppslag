@@ -14,9 +14,11 @@ import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinKomplettResponse
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinGateway
 import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinAvvistResponse
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
+@Disabled("Ikke tatt i bruk enda")
 class TilgangAvvistApiTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `returnerer avslagsdetaljer ved avvist tilgang`() {

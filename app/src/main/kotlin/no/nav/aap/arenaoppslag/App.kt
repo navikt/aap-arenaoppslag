@@ -302,8 +302,8 @@ private fun Application.routes(
                 maksdato(sakListeService, personService)
                 samordning(sakListeService, personService, meldekortService)
                 utbetalinger(utbetalingService, personService)
-                vedtakForPerson(sakOgVedtakService, tilgangService)
-                sak(sakOgVedtakService, tilgangService)
+                vedtakForPerson(sakOgVedtakService, personService, tilgangService)
+                sak(sakOgVedtakService)
             }
             route("/api/intern") {
                 // Visningsklienten bruker disse endepunktene, og de er ikke ment for andre.

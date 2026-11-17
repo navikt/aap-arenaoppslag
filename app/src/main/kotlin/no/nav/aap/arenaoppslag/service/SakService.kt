@@ -38,10 +38,10 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
 
 
     fun hentSakId(saksnummer: Saksnummer): SakId? =
-        sakRepository.hentSakUtenTilgangskontroll(saksnummer)?.tilSakId()
+        sakRepository.hentSak(saksnummer)?.tilSakId()
 
     fun hentSak(saksnummer: Saksnummer): ArenaSak? =
-        sakRepository.hentSakUtenTilgangskontroll(saksnummer)
+        sakRepository.hentSak(saksnummer)
 
     private fun ArenaSak.tilSakId(): SakId? = sakId.toIntOrNull()?.let { SakId(it) }
 
@@ -78,7 +78,4 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
             ?.maxdatoAap
     }
 
-
-    fun hentPersonForSak(saksnummer: Saksnummer): ArenaSakPerson? =
-        sakRepository.hentSakUtenTilgangskontroll(saksnummer)?.person
 }

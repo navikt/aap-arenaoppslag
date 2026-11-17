@@ -14,7 +14,6 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
-import no.nav.aap.arenaoppslag.util.autorisertPerson
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -32,9 +31,8 @@ class SakOgVedtakServiceTest {
     )
 
     @Test
-    fun `hentVedtakForPerson bruker person-id fra autorisert person og returnerer vedtakene`() {
+    fun `hentVedtakForPerson bruker person-id fra person og returnerer vedtakene`() {
         val personId = ArenaPersonId(42)
-        val autorisert = autorisertPerson(personId)
         val førsteVedtak = ArenaVedtak(
             vedtakId = 101,
             sakId = "1",
@@ -47,34 +45,32 @@ class SakOgVedtakServiceTest {
             aktivitetsfaseKode = "IKKE",
         )
         val andreVedtak = førsteVedtak.copy(vedtakId = 201, sakId = "2")
-        every { vedtakRepository.hentVedtak(autorisert) } returns listOf(førsteVedtak, andreVedtak)
+        every { vedtakRepository.hentVedtak(personId) } returns listOf(førsteVedtak, andreVedtak)
 
-        val vedtak = service.hentVedtakForPerson(autorisert)
+        val vedtak = service.hentVedtakForPerson(personId)
 
         assertThat(vedtak).containsExactly(førsteVedtak, andreVedtak)
-        verify(exactly = 1) { vedtakRepository.hentVedtak(autorisert) }
+        verify(exactly = 1) { vedtakRepository.hentVedtak(personId) }
     }
 
     @Test
-    fun `hentVedtakForPerson returnerer tom liste når autorisert person ikke har vedtak`() {
+    fun `hentVedtakForPerson returnerer tom liste når person ikke har vedtak`() {
         val personId = ArenaPersonId(99)
-        val autorisert = autorisertPerson(personId)
-        every { vedtakRepository.hentVedtak(autorisert) } returns emptyList()
+        every { vedtakRepository.hentVedtak(personId) } returns emptyList()
 
-        val vedtak = service.hentVedtakForPerson(autorisert)
+        val vedtak = service.hentVedtakForPerson(personId)
 
         assertThat(vedtak).isEmpty()
-        verify(exactly = 1) { vedtakRepository.hentVedtak(autorisert) }
+        verify(exactly = 1) { vedtakRepository.hentVedtak(personId) }
     }
 
     @Test
     fun `hentVedtakDetaljerForPerson returnerer flattened vedtakliste fra alle saker`() {
         val personId = ArenaPersonId(42)
-        val autorisert = autorisertPerson(personId)
         val sak1 = lagArenaSak(sakId = "1")
         val sak2 = lagArenaSak(sakId = "2")
 
-        every { sakRepository.hentSakerDetaljerForPerson(autorisert) } returns listOf(sak1, sak2)
+        every { sakRepository.hentSakerDetaljerForPerson(personId) } returns listOf(sak1, sak2)
         every { vedtakRepository.hentVedtakForSak(SakId(1)) } returns listOf(lagVedtakRad(101), lagVedtakRad(102))
         every { vedtakRepository.hentVedtakForSak(SakId(2)) } returns listOf(lagVedtakRad(201))
         every { vedtakfaktaRepository.hentForVedtakIder(listOf(101, 102)) } returns emptyMap()
@@ -82,7 +78,7 @@ class SakOgVedtakServiceTest {
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(101, 102)) } returns emptyMap()
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(201)) } returns emptyMap()
 
-        val vedtak = service.hentVedtakDetaljerForPerson(autorisert)
+        val vedtak = service.hentVedtakDetaljerForPerson(personId)
 
         assertThat(vedtak).hasSize(3)
         assertThat(vedtak.map { it.vedtakId }).containsExactlyInAnyOrder(101, 102, 201)
@@ -91,10 +87,9 @@ class SakOgVedtakServiceTest {
     @Test
     fun `hentVedtakDetaljerForPerson returnerer tom liste når person ikke har saker`() {
         val personId = ArenaPersonId(99)
-        val autorisert = autorisertPerson(personId)
-        every { sakRepository.hentSakerDetaljerForPerson(autorisert) } returns emptyList()
+        every { sakRepository.hentSakerDetaljerForPerson(personId) } returns emptyList()
 
-        val vedtak = service.hentVedtakDetaljerForPerson(autorisert)
+        val vedtak = service.hentVedtakDetaljerForPerson(personId)
 
         assertThat(vedtak).isEmpty()
     }

@@ -2,7 +2,6 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
-import no.nav.aap.arenaoppslag.util.autorisertPerson
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.groups.Tuple.tuple
 import org.junit.jupiter.api.BeforeEach
@@ -79,7 +78,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     fun `finner ikke KLAG1 KLAG2 og ANKE eldre enn maksimal behandlingstid`() {
         val testPersonId = ArenaPersonId(999)
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
-        assertThat(vedtakRepository.hentVedtak(autorisertPerson(testPersonId)).map { it.rettighetkode })
+        assertThat(vedtakRepository.hentVedtak(testPersonId).map { it.rettighetkode })
             .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")
         // Sjekk at ingen av dem regnes som signifikante
         assertThat(historikkRepository.hentAlleSignifikanteVedtakForPerson(testPersonId, testDato)).isEmpty()
@@ -88,7 +87,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `finner ikke KLAG1 KLAG2 og ANKE med utfall TRUKK`() {
         val testPersonId = ArenaPersonId(1000)
-        val alleVedtak = vedtakRepository.hentVedtak(autorisertPerson(testPersonId))
+        val alleVedtak = vedtakRepository.hentVedtak(testPersonId)
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
         assertThat(alleVedtak.map { it.rettighetkode })
             .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")
@@ -101,7 +100,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
     @Test
     fun `finner ikke klager behandlet for mer enn 12 uker siden eller anker behandlet for mer enn 52 uker siden`() {
         val testPersonId = ArenaPersonId(1001)
-        val alleVedtak = vedtakRepository.hentVedtak(autorisertPerson(testPersonId))
+        val alleVedtak = vedtakRepository.hentVedtak(testPersonId)
         // Sjekk først at vedtakene finnes i databasen og har forventede verdier
         assertThat(alleVedtak.map { it.rettighetkode })
             .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")

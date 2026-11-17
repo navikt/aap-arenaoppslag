@@ -9,7 +9,6 @@ import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
-import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorisertPersonId
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import java.sql.Connection
@@ -43,9 +42,9 @@ class VedtakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentVedtak(autorisert: AuthorisertPersonId): List<ArenaVedtak> {
+    fun hentVedtak(personId: ArenaPersonId): List<ArenaVedtak> {
         return dataSource.connection.use { con ->
-            selectAlleVedtakForPerson(autorisert.personId, con)
+            selectAlleVedtakForPerson(personId, con)
         }
     }
 

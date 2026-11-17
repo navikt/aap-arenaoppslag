@@ -38,7 +38,7 @@ class TilgangkontrollService(
             return PersonTilgangResultat.AccessDenied(response.avvistResponse)
         }
 
-        val personId = personService.hentArenaPersonidentifikator(personIdentifikator)
+        val personId = personService.hentArenaPersonId(personIdentifikator)
         if (personId == null) {
             logger.info("Fant ikke person med angitt personIdentifikator i AAP-Arena")
             return PersonTilgangResultat.NotFound
@@ -66,7 +66,7 @@ class TilgangkontrollService(
      * Vi velger å opplyse om saken finnes eller ikke til alle kallere.
      */
     suspend fun verifiserTilgangTilSak(saksnummer: Saksnummer, token: OidcToken): SakTilgangResultat {
-        val personIdentifikator = personService.hentArenaPersonidentifikator(saksnummer)
+        val personIdentifikator = personService.hentArenaPersonId(saksnummer)
         if (personIdentifikator == null) {
             logger.info("Fant ikke saksnummer=$saksnummer i AAP-Arena med en person tilknyttet")
             return SakTilgangResultat.NotFound

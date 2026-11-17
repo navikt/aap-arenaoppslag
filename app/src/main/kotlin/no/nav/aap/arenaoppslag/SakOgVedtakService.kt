@@ -4,6 +4,7 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
@@ -11,8 +12,6 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
-import no.nav.aap.arenaoppslag.tilgangsmaskin.AuthorisertPersonId
-import no.nav.aap.arenaoppslag.tilgangsmaskin.AutorisertSaksnummer
 
 class SakOgVedtakService(
     private val sakRepository: SakRepository,
@@ -20,26 +19,18 @@ class SakOgVedtakService(
     private val vedtakfaktaRepository: VedtakfaktaRepository,
     private val vilkårsvurderingRepository: VilkårsvurderingRepository,
 ) {
-
-    fun hentSakMedVedtak(autorisertSaksnummer: AutorisertSaksnummer): ArenaSakMedVedtak {
-        val sak = checkNotNull(sakRepository.hentSak(autorisertSaksnummer)) {
-            "Fant ikke den autoriserte saken i AAP-Arena"
-        }
+    fun hentSakMedVedtak(saksnummer: Saksnummer): ArenaSakMedVedtak? {
+        val sak = sakRepository.hentSak(saksnummer) ?: return null
         return getArenaSakMedVedtak(sak)
     }
 
-    fun hentVedtakForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtak> {
-        return vedtakRepository.hentVedtak(autorisert)
+    fun hentVedtakForPerson(personId: ArenaPersonId): List<ArenaVedtak> {
+        return vedtakRepository.hentVedtak(personId)
     }
 
-    fun hentVedtakDetaljerForPerson(autorisert: AuthorisertPersonId): List<ArenaVedtakMedDetaljer> {
-        val saker = sakRepository.hentSakerDetaljerForPerson(autorisert)
+    fun hentVedtakDetaljerForPerson(personId: ArenaPersonId): List<ArenaVedtakMedDetaljer> {
+        val saker = sakRepository.hentSakerDetaljerForPerson(personId)
         return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
-    }
-
-    internal fun hentSakMedVedtakUtenTilgangskontroll(saksnummer: Saksnummer): ArenaSakMedVedtak? {
-        val sak = sakRepository.hentSakUtenTilgangskontroll(saksnummer) ?: return null
-        return getArenaSakMedVedtak(sak)
     }
 
     private fun getArenaSakMedVedtak(sak: ArenaSak): ArenaSakMedVedtak {

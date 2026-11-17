@@ -29,7 +29,7 @@ fun Route.sakDetaljert(
             return@get call.respond(HttpStatusCode.BadRequest)
         }
 
-        val sak = sakOgVedtakService.hentSakMedVedtakUtenTilgangskontroll(saksnummer)
+        val sak = sakOgVedtakService.hentSakMedVedtak(saksnummer)
 
         if (sak == null) {
             logger.info("Klarte ikke hente sak for saksnummer $saksnummer")

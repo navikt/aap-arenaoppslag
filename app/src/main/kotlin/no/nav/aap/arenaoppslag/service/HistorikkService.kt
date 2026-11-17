@@ -76,7 +76,7 @@ class HistorikkService(
     fun hentHistorikkStatusDetalj(personId: ArenaPersonId): HistorikkStatusDetaljResponse {
         val sisteVedtakMedMaksdato = vedtakService.hentSisteLøpendeVedtakDetalj(personId)
         val sisteSakMedVedtak = sisteVedtakMedMaksdato?.saksnummer()
-            ?.let { sakOgVedtakService.hentSakMedVedtakUtenTilgangskontroll(it) }
+            ?.let { sakOgVedtakService.hentSakMedVedtak(it) }
             ?.let { sak ->
                 sak.copy(
                     vedtak = sak.vedtak.filter { vedtaket ->

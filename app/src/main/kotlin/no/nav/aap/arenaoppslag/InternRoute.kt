@@ -73,7 +73,7 @@ fun Route.manuellFordelingsgrunnlag(
     post("/manuell-fordelingsgrunnlag") {
         val request: ManuellFordelingsgrunnlagRequest = call.receive()
 
-        val personId = personService.hentArenaPersonidentifikator(PersonIdentifikator(request.personidentifikator))
+        val personId = personService.hentArenaPersonId(PersonIdentifikator(request.personidentifikator))
             ?: return@post call.respond(HttpStatusCode.NotFound, "Fant ikke personen i Arena")
 
         val respons = manuellFordelingsgrunnlagService.hentManuellFordelingsgrunnlag(personId)

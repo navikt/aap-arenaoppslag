@@ -22,7 +22,7 @@ class PersonServiceTest {
         every { sakRepository.hentPersonIdentifikatorHvisEksisterer(saksnummer) } returns PersonIdentifikator("00000000900")
         val service = PersonService(mockk<PersonRepository>(), sakRepository, mockk<IPdlGateway>())
 
-        assertThat(service.hentArenaPersonidentifikator(saksnummer)).isEqualTo(PersonIdentifikator("00000000900"))
+        assertThat(service.hentArenaPersonId(saksnummer)).isEqualTo(PersonIdentifikator("00000000900"))
 
         verify(exactly = 1) { sakRepository.hentPersonIdentifikatorHvisEksisterer(saksnummer) }
     }
@@ -34,8 +34,8 @@ class PersonServiceTest {
         every { sakRepository.hentPersonIdentifikatorHvisEksisterer(saksnummer) } returns PersonIdentifikator("00000000900")
         val service = PersonService(mockk<PersonRepository>(), sakRepository, mockk<IPdlGateway>())
 
-        assertThat(service.hentArenaPersonidentifikator(saksnummer)).isEqualTo(PersonIdentifikator("00000000900"))
-        assertThat(service.hentArenaPersonidentifikator(saksnummer.copy())).isEqualTo(PersonIdentifikator("00000000900"))
+        assertThat(service.hentArenaPersonId(saksnummer)).isEqualTo(PersonIdentifikator("00000000900"))
+        assertThat(service.hentArenaPersonId(saksnummer.copy())).isEqualTo(PersonIdentifikator("00000000900"))
 
         verify(exactly = 1) { sakRepository.hentPersonIdentifikatorHvisEksisterer(saksnummer) }
     }
@@ -47,9 +47,9 @@ class PersonServiceTest {
         every { sakRepository.hentPersonIdentifikatorHvisEksisterer(saksnummer) } returnsMany listOf(null, PersonIdentifikator("00000000900"))
         val service = PersonService(mockk<PersonRepository>(), sakRepository, mockk<IPdlGateway>())
 
-        assertThat(service.hentArenaPersonidentifikator(saksnummer)).isNull()
-        assertThat(service.hentArenaPersonidentifikator(saksnummer)).isEqualTo(PersonIdentifikator("00000000900"))
-        assertThat(service.hentArenaPersonidentifikator(saksnummer)).isEqualTo(PersonIdentifikator("00000000900"))
+        assertThat(service.hentArenaPersonId(saksnummer)).isNull()
+        assertThat(service.hentArenaPersonId(saksnummer)).isEqualTo(PersonIdentifikator("00000000900"))
+        assertThat(service.hentArenaPersonId(saksnummer)).isEqualTo(PersonIdentifikator("00000000900"))
 
         verify(exactly = 2) { sakRepository.hentPersonIdentifikatorHvisEksisterer(saksnummer) }
     }
@@ -69,7 +69,7 @@ class PersonServiceTest {
 
         repeat(2) {
             saksnumre.forEachIndexed { indeks, saksnummer ->
-                assertThat(service.hentArenaPersonidentifikator(saksnummer)).isEqualTo(PersonIdentifikator((indeks + 1).toString().padStart(11, '0')))
+                assertThat(service.hentArenaPersonId(saksnummer)).isEqualTo(PersonIdentifikator((indeks + 1).toString().padStart(11, '0')))
             }
         }
 
@@ -94,8 +94,8 @@ class PersonServiceTest {
 
         val service = PersonService(personRepository, sakRepository, pdlGateway)
 
-        val firstCall = service.hentArenaPersonidentifikator(personidentifikator)
-        val secondCall = service.hentArenaPersonidentifikator(personidentifikator)
+        val firstCall = service.hentArenaPersonId(personidentifikator)
+        val secondCall = service.hentArenaPersonId(personidentifikator)
 
         assertThat(firstCall).isEqualTo(ArenaPersonId(1))
         assertThat(secondCall).isEqualTo(ArenaPersonId(1))
@@ -117,8 +117,8 @@ class PersonServiceTest {
 
         val service = PersonService(personRepository, sakRepository, pdlGateway)
 
-        val firstCall = service.hentArenaPersonidentifikator(personidentifikator)
-        val secondCall = service.hentArenaPersonidentifikator(personidentifikator)
+        val firstCall = service.hentArenaPersonId(personidentifikator)
+        val secondCall = service.hentArenaPersonId(personidentifikator)
 
         assertThat(firstCall).isNull()
         assertThat(secondCall).isEqualTo(ArenaPersonId(2))
@@ -145,10 +145,10 @@ class PersonServiceTest {
 
         val service = PersonService(personRepository, sakRepository, pdlGateway)
 
-        val firstCallKey1 = service.hentArenaPersonidentifikator(personidentifikator1)
-        val firstCallKey2 = service.hentArenaPersonidentifikator(personidentifikator2)
-        val secondCallKey1 = service.hentArenaPersonidentifikator(personidentifikator1)
-        val secondCallKey2 = service.hentArenaPersonidentifikator(personidentifikator2)
+        val firstCallKey1 = service.hentArenaPersonId(personidentifikator1)
+        val firstCallKey2 = service.hentArenaPersonId(personidentifikator2)
+        val secondCallKey1 = service.hentArenaPersonId(personidentifikator1)
+        val secondCallKey2 = service.hentArenaPersonId(personidentifikator2)
 
         assertThat(firstCallKey1).isEqualTo(ArenaPersonId(1))
         assertThat(firstCallKey2).isEqualTo(ArenaPersonId(2))

@@ -72,7 +72,7 @@ class HistorikkServiceTest {
         assertThat(detaljer.sakId).isEqualTo(42)
         assertThat(detaljer.saknummer).isEqualTo("2026-17")
         assertThat(detaljer.sisteVedtak.vedtakId).isEqualTo(1)
-        verify(exactly = 1) { sakOgVedtakService.hentSakMedVedtakUtenTilgangskontroll(saksnummer) }
+        verify(exactly = 1) { sakOgVedtakService.hentSakMedVedtak(saksnummer) }
     }
 
     @Test
@@ -87,7 +87,7 @@ class HistorikkServiceTest {
             vedtak.copy(vedtakId = 7, tilDato = unntaksdato.minusDays(1)),
         )
         klargjørSak(vedtakMedUlikeDatoer)
-        val opprinneligSak = requireNotNull(sakOgVedtakService.hentSakMedVedtakUtenTilgangskontroll(saksnummer))
+        val opprinneligSak = requireNotNull(sakOgVedtakService.hentSakMedVedtak(saksnummer))
 
         val detaljer = requireNotNull(service.hentHistorikkStatusDetalj(personId).sisteSakOgVedtak)
 
@@ -509,7 +509,7 @@ class HistorikkServiceTest {
         assertThat(respons.telleverk?.utvidetAAPKvote).isEqualTo(25)
         assertThat(respons.sisteUtbetalingDato).isEqualTo(sluttdato)
 
-        verify(exactly = 0) { sakOgVedtakService.hentSakMedVedtakUtenTilgangskontroll(any()) }
+        verify(exactly = 0) { sakOgVedtakService.hentSakMedVedtak(any()) }
         verify(exactly = 0) { vedtakfaktaService.hentForVedtakliste(any()) }
         verify(exactly = 1) { telleverkService.hentTelleverkForPerson(personId) }
         verify(exactly = 1) { utbetalingService.hentSisteAapUtbetalingForPerson(personId) }
@@ -517,7 +517,7 @@ class HistorikkServiceTest {
 
     @Test
     fun `manglende sak beholder telleverk og siste utbetaling`() {
-        every { sakOgVedtakService.hentSakMedVedtakUtenTilgangskontroll(any()) } returns null
+        every { sakOgVedtakService.hentSakMedVedtak(any()) } returns null
         every { telleverkService.hentTelleverkForPerson(personId) } returns TelleverkForPerson(100, 25)
         every { utbetalingService.hentSisteAapUtbetalingForPerson(personId) } returns sluttdato
 
@@ -560,7 +560,7 @@ class HistorikkServiceTest {
         løpende: ArenaVedtakMedMaxdato = løpendeVedtak(),
     ) {
         every { vedtakService.hentSisteLøpendeVedtakDetalj(personId) } returns løpende
-        every { sakOgVedtakService.hentSakMedVedtakUtenTilgangskontroll(saksnummer) } returns ArenaSakMedVedtak(
+        every { sakOgVedtakService.hentSakMedVedtak(saksnummer) } returns ArenaSakMedVedtak(
             sakId = "42",
             opprettetAar = saksnummer.aar,
             lopenr = saksnummer.lopenummerSak,
