@@ -17,7 +17,7 @@ class UtbetalingerApiTest : H2TestBase("flyway/postering") {
         withTestServer(h2) { gateway ->
             val result = runCatching {
                 gateway.hentSisteUtbetalingISaker(
-                    SisteUtbetalingerRequest("007")
+                    SisteUtbetalingerRequest("00000000007")
                 )
             }
             val error = result.exceptionOrNull() as? ClientRequestException
@@ -30,7 +30,7 @@ class UtbetalingerApiTest : H2TestBase("flyway/postering") {
     fun `Henter ut siste utbetaling by personId, personId har ingen utbetalinger`() {
         withTestServer(h2) { gateway ->
             val utbetalingForUkjenteSaker: SisteUtbetalingerResponse = gateway.hentSisteUtbetalingISaker(
-                SisteUtbetalingerRequest("2")
+                SisteUtbetalingerRequest("00000000002")
             )
             assertThat(utbetalingForUkjenteSaker.utbetalingsdato).isNull()
         }
@@ -41,7 +41,7 @@ class UtbetalingerApiTest : H2TestBase("flyway/postering") {
         withTestServer(h2) { gateway ->
             val utbetalingForKjenteSaker: SisteUtbetalingerResponse = gateway.hentSisteUtbetalingISaker(
                 SisteUtbetalingerRequest(
-                    "1"
+                    "00000000001"
                 )
             )
             assertThat(utbetalingForKjenteSaker.utbetalingsdato)

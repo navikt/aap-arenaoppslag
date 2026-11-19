@@ -5,10 +5,9 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortAnmerkning
 import no.nav.aap.arenaoppslag.modeller.MeldekortDag
 import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
-import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.MeldekortStartuke
 import no.nav.aap.arenaoppslag.modeller.Periode
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Spesialutbetaling
@@ -33,7 +32,7 @@ class MeldekortRepository(
         )
     }
 
-    fun hentStartukeForSisteMeldekort(personId: PersonId): MeldekortStartuke? = dataSource.connection.use { con ->
+    fun hentStartukeForSisteMeldekort(personId: ArenaPersonId): MeldekortStartuke? = dataSource.connection.use { con ->
         con.createParameterizedQuery(startukeForSisteMeldekortSql).use { preparedStatement ->
             preparedStatement.setInt(1, personId.id)
             preparedStatement.executeQuery().map { row ->

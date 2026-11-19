@@ -4,7 +4,8 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakOppsummering
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
@@ -18,26 +19,32 @@ class SakRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentSakerForPerson(personId: PersonId): List<ArenaSakOppsummering> {
+    fun hentSakerForPerson(personId: ArenaPersonId): List<ArenaSakOppsummering> {
         return dataSource.connection.use { con ->
             selectSakerForPersonId(personId, con)
         }
     }
 
-    fun hentMaxdatoForSisteVedtak(personId: PersonId): Maksdatolinje? {
+    fun hentMaxdatoForSisteVedtak(personId: ArenaPersonId): Maksdatolinje? {
         return dataSource.connection.use { con ->
             doHentMaxdatoForSisteVedtak(personId, con)
         }
     }
 
-    fun hentSakerDetaljerForPerson(personId: PersonId): List<ArenaSak> {
+    fun hentSakerDetaljerForPerson(personId: ArenaPersonId): List<ArenaSak> {
         return dataSource.connection.use { con ->
             selectSakerDetaljerForPersonId(personId, con)
         }
     }
 
+    fun hentPersonIdentifikatorHvisEksisterer(saksnummer: Saksnummer): PersonIdentifikator? {
+        return dataSource.connection.use { con ->
+            selectPersonidentifikatorFraSaksnummer(saksnummer, con)
+        }
+    }
+
     companion object {
-        private fun doHentMaxdatoForSisteVedtak(personId: PersonId, connection: Connection): Maksdatolinje? {
+        private fun doHentMaxdatoForSisteVedtak(personId: ArenaPersonId, connection: Connection): Maksdatolinje? {
             connection.prepareStatement(selectVedtakMedNyesteMaxdatoForPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
@@ -63,7 +70,7 @@ class SakRepository(private val dataSource: DataSource) {
                 sakStatus = row.getString("sak_statuskode")
             )
 
-        fun selectSakerForPersonId(personId: PersonId, connection: Connection): List<ArenaSakOppsummering> {
+        fun selectSakerForPersonId(personId: ArenaPersonId, connection: Connection): List<ArenaSakOppsummering> {
             connection.prepareStatement(selectSakerMedAntallVedtakForPersonId).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
@@ -71,7 +78,7 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectSakerDetaljerForPersonId(personId: PersonId, connection: Connection): List<ArenaSak> {
+        private fun selectSakerDetaljerForPersonId(personId: ArenaPersonId, connection: Connection): List<ArenaSak> {
             connection.prepareStatement(selectSakerDetaljerForPersonId).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)
                 val resultSet = preparedStatement.executeQuery()
@@ -79,7 +86,22 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
+        private fun selectPersonidentifikatorFraSaksnummer(saksnummer: Saksnummer, connection: Connection): PersonIdentifikator? {
+            connection.prepareStatement(selectPersonIdentifikatorFraSaksnummer).use { preparedStatement ->
+                preparedStatement.setInt(1, saksnummer.lopenummerSak)
+                preparedStatement.setInt(2, saksnummer.aar)
+                preparedStatement.executeQuery().use { resultSet ->
+                    return if (resultSet.next()) {
+                        PersonIdentifikator(resultSet.getString("fodselsnr"))
+                    } else {
+                        // Ingen funnet, må være ugyldig saksnummer eller en sak som ikke tilhører en person (f.eks. en virksomhetssak)
+                        null
+                    }
+                }
+            }
+        }
+
+        private fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
             connection.prepareStatement(selectSakMedSaksnummer).use { preparedStatement ->
                 preparedStatement.setInt(1, saksnummer.lopenummerSak)
                 preparedStatement.setInt(2, saksnummer.aar)
@@ -139,6 +161,14 @@ class SakRepository(private val dataSource: DataSource) {
             FROM SAK
             LEFT JOIN person ON person.person_id = sak.objekt_id
             LEFT JOIN sakstatus ON sak.sakstatuskode = sakstatus.sakstatuskode
+            WHERE LOPENRSAK = ? AND AAR = ? AND TABELLNAVNALIAS='PERS'
+        """.trimIndent()
+
+        @Language("OracleSql")
+        internal val selectPersonIdentifikatorFraSaksnummer = """
+            SELECT person.fodselsnr
+            FROM SAK 
+            LEFT JOIN person ON person.person_id = sak.objekt_id
             WHERE LOPENRSAK = ? AND AAR = ? AND TABELLNAVNALIAS='PERS'
         """.trimIndent()
 

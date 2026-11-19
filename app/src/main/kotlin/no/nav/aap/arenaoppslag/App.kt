@@ -17,7 +17,7 @@ import io.ktor.utils.io.*
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.*
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.pdl.IPdlGateway
 import no.nav.aap.arenaoppslag.pdl.PdlGateway
 import no.nav.aap.arenaoppslag.plugins.MdcKeys
@@ -133,7 +133,7 @@ fun Application.server(
 private fun warmup(datasource: DataSource) {
     val historikkService = skapHistorikkService(datasource)
     val sakService = skapSakListeService(datasource)
-    val fiktivArenaPerson = PersonId(0xcafebabe.toInt())
+    val fiktivArenaPerson = ArenaPersonId(0xcafebabe.toInt())
 
     try {
         // Dette gjøres for å unngå at etter redeploy tar første query 2-3 sekund
@@ -236,7 +236,8 @@ private fun skapManuellFordelingsgrunnlagService(
 
 private fun skapPersonService(datasource: DataSource, pdlGateway: IPdlGateway): PersonService {
     val personRepository = PersonRepository(datasource)
-    return PersonService(personRepository, pdlGateway)
+    val sakRepository = SakRepository(datasource)
+    return PersonService(personRepository, sakRepository, pdlGateway)
 }
 
 private fun skapSaksopplysningService(datasource: DataSource): SaksopplysningService {
@@ -254,7 +255,10 @@ private fun skapMeldekortService(datasource: DataSource): MeldekortService {
     return MeldekortService(meldekortRepository)
 }
 
-private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) {
+private fun Application.routes(
+    datasource: DataSource,
+    pdlGateway: IPdlGateway,
+) {
     val internService = skapInternService(datasource)
     val sakOgVedtakService = skapSakOgVedtakService(datasource)
     val telleverkService = skapTelleverkService(datasource)
@@ -295,7 +299,7 @@ private fun Application.routes(datasource: DataSource, pdlGateway: IPdlGateway) 
                 sak(sakOgVedtakService)
             }
             route("/api/intern") {
-                // Nye interne APIer, disse skal kun konsumeres av team-aap-migrering sine applikasjoner
+                // Visningsklienten bruker disse endepunktene, og de er ikke ment for andre.
                 // Kontrakten på disse endepunktene kan endre seg helt uten forvarsel
                 sakDetaljert(
                     sakOgVedtakService = sakOgVedtakService,

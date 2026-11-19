@@ -14,4 +14,3 @@ insert into V_OPPGAVE (PERSON_ID, FODSELSNR, TASK_ID, DESCRIPTION, CASECONTEXT, 
                        OPPGAVE_ENHET, NAV_ENHET, NOTE)
 values (2, '321', 1004, 'Oppgave for annen person', 'AA', 'Annen person', DATE '2024-01-01', 'Min benk',
         '0826', '4402', null);
-

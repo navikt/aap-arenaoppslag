@@ -59,7 +59,7 @@ private fun withTestServer(testBlokk: suspend (ArenaOppslagGateway) -> Unit) {
 ## Known test persons
 
 - `"12312312312"`: in standard `minimumtest` data, the "known person".
-- `"007"`: the "unknown person", exists in no dataset.
+- `"00000000007"`: the "unknown person", exists in no dataset.
 
 ## Finish
 

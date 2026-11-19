@@ -27,7 +27,10 @@ fun main() {
     logger.info("Texas port: ${fakes.texas.port()}")
 
     embeddedServer(Netty, port = 8087) {
-        server(config = config, pdlGateway = FakePdlGateway())
+        server(
+            config = config,
+            pdlGateway = FakePdlGateway(),
+        )
         module(dataSource)
     }.start(wait = true)
 }

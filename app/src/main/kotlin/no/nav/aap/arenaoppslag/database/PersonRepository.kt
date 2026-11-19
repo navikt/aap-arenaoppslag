@@ -1,7 +1,8 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.Person
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
 import org.slf4j.Logger
@@ -12,9 +13,9 @@ import javax.sql.DataSource
 
 class PersonRepository(private val dataSource: DataSource) {
 
-    fun hentPersonIdHvisEksisterer(fodselnummerene: Set<String>): PersonId? {
+    fun hentPersonIdHvisEksisterer(fodselnummerene: Set<PersonIdentifikator>): ArenaPersonId? {
         dataSource.connection.use { con ->
-            return selectPersonIdFraFnr(fodselnummerene, con)?.let { PersonId(it) }
+            return selectPersonIdFraFnr(fodselnummerene, con)?.let { ArenaPersonId(it) }
         }
     }
 
@@ -36,14 +37,14 @@ class PersonRepository(private val dataSource: DataSource) {
             return baseQuery.replace(FNR_LISTE_TOKEN, allePersonensFodselsnummer)
         }
 
-        fun selectPersonIdFraFnr(fodselsnr: Set<String>, connection: Connection): Int? {
+        fun selectPersonIdFraFnr(fodselsnr: Set<PersonIdentifikator>, connection: Connection): Int? {
             @Language("OracleSQL")
             val baseQuery = """
                 SELECT person_id from PERSON
                 WHERE fodselsnr in ($FNR_LISTE_TOKEN) 
                     AND person_id_status = 'AKTIV' -- DUPLIKAT_TIL_BEH og andre feilstatuser filtreres ut
                 """
-            val query = queryMedFodselsnummerListe(baseQuery, fodselsnr)
+            val query = queryMedFodselsnummerListe(baseQuery, fodselsnr.map { it.id }.toSet())
 
             val liste = connection.prepareStatement(query).use { preparedStatement ->
                 val resultSet = preparedStatement.executeQuery()

@@ -14,7 +14,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedMaxdato
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
 import org.assertj.core.api.Assertions.assertThat
@@ -39,7 +39,7 @@ class HistorikkServiceTest {
         sakOgVedtakService,
         vedtakfaktaService,
     )
-    private val personId = PersonId(1)
+    private val personId = ArenaPersonId(1)
     private val saksnummer = Saksnummer(lopenummerSak = 17, aar = 2026)
     private val sluttdato = LocalDate.of(2026, 1, 31)
     private val unntaksdato = sluttdato.plusDays(1)

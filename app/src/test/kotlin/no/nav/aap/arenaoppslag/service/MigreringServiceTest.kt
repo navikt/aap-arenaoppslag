@@ -23,7 +23,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaVilkårsvurdering
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.MedisinskOpplysning
 import no.nav.aap.arenaoppslag.modeller.Periode
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.komponenter.httpklient.exception.VerdiIkkeFunnetException
 import org.assertj.core.api.Assertions.assertThat
@@ -118,13 +118,13 @@ class MigreringServiceTest {
     @Test
     fun `henter soknadsdato, migreringsdato og gjenstaaende ordinaer kvote`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
-        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(ArenaPersonId(100), idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
-        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(ArenaPersonId(100)) } returns
             Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3))
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } returns
             mapOf(5001L to Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3)))
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns setOf(
             kvotebrukHendelse(id = 1, dato = LocalDate.of(2023, 2, 1), resterende = 15680),
             kvotebrukHendelse(id = 2, dato = LocalDate.of(2024, 2, 1), resterende = 15480),
             // Meldekort behandlet etter migreringsdatoen, men for en periode før, skal trekkes fra kvoten.
@@ -152,9 +152,9 @@ class MigreringServiceTest {
         val idag = LocalDate.of(2026, 10, 1)
         val migreringsdato = LocalDate.of(2026, 9, 21)
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2026, 4, 23))
-        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(ArenaPersonId(100), idag) } returns
             Periode(migreringsdato, LocalDate.of(2026, 10, 4))
-        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(ArenaPersonId(100)) } returns
             Periode(LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 20))
         // Alle meldekortene gjelder perioder før migreringsdatoen.
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } answers {
@@ -165,7 +165,7 @@ class MigreringServiceTest {
         }
         val behandlet = LocalDate.of(2026, 10, 1)
         val saldoer = listOf(784, 777, 767, 757, 747, 737, 727, 717)
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns setOf(
             initHendelse(id = 1, dato = LocalDate.of(2026, 6, 18), dager = saldoer.first()),
         ) + saldoer.zipWithNext().mapIndexed { i, (forrige, saldo) ->
             kvotebrukHendelse(
@@ -196,14 +196,14 @@ class MigreringServiceTest {
         val behandlet = onsdagUke4.plusMonths(1)
 
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2026, 4, 23))
-        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), onsdagUke4) } returns meldeperiode2
-        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns meldeperiode1
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(ArenaPersonId(100), onsdagUke4) } returns meldeperiode2
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(ArenaPersonId(100)) } returns meldeperiode1
         every { meldekortperiodeRepository.hentPerioderForMeldekort(any()) } returns mapOf(
             101L to meldeperiode1,
             102L to meldeperiode2,
             103L to meldeperiode3,
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns setOf(
             initHendelse(id = 1, dato = LocalDate.of(2026, 6, 18), dager = 110),
             kvotebrukHendelse(
                 id = 2, dato = behandlet, resterende = 100 * 20, meldekortId = 101L, antallBevegelse = -10 * 20,
@@ -225,11 +225,11 @@ class MigreringServiceTest {
     @Test
     fun `soknadsdato er null når saken ikke har noe innvilget vedtak`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns null
-        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(ArenaPersonId(100), idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
-        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(ArenaPersonId(100)) } returns
             Periode(LocalDate.of(2024, 2, 19), LocalDate.of(2024, 3, 3))
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns emptySet()
 
         val krav = service.hentKravForSak(sak, sakId, idag)
 
@@ -241,7 +241,7 @@ class MigreringServiceTest {
     @Test
     fun `kaster feil når brukeren ikke har noen meldekortperiode som dekker dagens dato`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
-        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns null
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(ArenaPersonId(100), idag) } returns null
 
         assertThatThrownBy { service.hentKravForSak(sak, sakId, idag) }
             .isInstanceOf(VerdiIkkeFunnetException::class.java)
@@ -251,11 +251,11 @@ class MigreringServiceTest {
     @Test
     fun `returnerer siste ferdig behandlede meldekortperiode også når den ikke grenser til migreringsdatoen`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
-        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(ArenaPersonId(100), idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
-        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(ArenaPersonId(100)) } returns
             Periode(LocalDate.of(2024, 2, 5), LocalDate.of(2024, 2, 18))
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns emptySet()
 
         val krav = service.hentKravForSak(sak, sakId, idag)
 
@@ -266,10 +266,10 @@ class MigreringServiceTest {
     @Test
     fun `siste ferdig behandlede meldekortperiode er null når brukeren ikke har noen`() {
         every { vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId) } returns vedtak(LocalDate.of(2023, 1, 1))
-        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(PersonId(100), idag) } returns
+        every { meldekortperiodeRepository.hentGjeldendePeriodeForPerson(ArenaPersonId(100), idag) } returns
             Periode(LocalDate.of(2024, 3, 4), LocalDate.of(2024, 3, 17))
-        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(PersonId(100)) } returns null
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+        every { meldekortperiodeRepository.hentSisteLevertePeriodeForPerson(ArenaPersonId(100)) } returns null
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns emptySet()
 
         val krav = service.hentKravForSak(sak, sakId, idag)
 
@@ -304,7 +304,7 @@ class MigreringServiceTest {
                 vilkårsvurdering(3, "AAARBEVNE", "V"),
             )
         )
-        every { medisinskOpplysningRepository.hentForPerson(PersonId(100)) } returns emptyList()
+        every { medisinskOpplysningRepository.hentForPerson(ArenaPersonId(100)) } returns emptyList()
 
         val respons = service.hentSykdomsvurderingForSak(sak, sakId, idag)!!.tilKontrakt()
 
@@ -322,7 +322,7 @@ class MigreringServiceTest {
     fun `gir tom vilkårsliste når 11-5-vedtaket mangler vilkårsvurderinger`() {
         every { vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
-        every { medisinskOpplysningRepository.hentForPerson(PersonId(100)) } returns emptyList()
+        every { medisinskOpplysningRepository.hentForPerson(ArenaPersonId(100)) } returns emptyList()
 
         val sykdomsvurdering = service.hentSykdomsvurderingForSak(sak, sakId, idag)
 
@@ -334,7 +334,7 @@ class MigreringServiceTest {
     fun `sender diagnosene videre med Arena-kodene uendret`() {
         every { vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) } returns vedtak(idag).copy(vedtakId = 115)
         every { vilkårsvurderingRepository.hentForVedtakIder(listOf(115)) } returns emptyMap()
-        every { medisinskOpplysningRepository.hentForPerson(PersonId(100)) } returns listOf(
+        every { medisinskOpplysningRepository.hentForPerson(ArenaPersonId(100)) } returns listOf(
             MedisinskOpplysning(1, "ICPC2", "L84", "HOVED", LocalDate.of(2023, 2, 1)),
             MedisinskOpplysning(2, "ICD10", "M54", "BI", LocalDate.of(2023, 3, 1)),
         )
