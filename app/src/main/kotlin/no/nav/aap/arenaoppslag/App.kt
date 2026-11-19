@@ -37,8 +37,6 @@ import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.service.VedtakService
 import no.nav.aap.arenaoppslag.service.VedtakfaktaService
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangmaskinGatewayImpl
-import no.nav.aap.arenaoppslag.tilgangsmaskin.TilgangsmaskinGateway
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
 import org.slf4j.LoggerFactory
@@ -71,7 +69,6 @@ fun Application.server(
     config: AppConfig = AppConfig(),
     datasource: DataSource = ArenaDatasource.create(config.database),
     pdlGateway: IPdlGateway = PdlGateway(),
-    tilgangmaskinGateway: TilgangsmaskinGateway = TilgangmaskinGatewayImpl(),
 ) {
     statusPages()
 
@@ -130,7 +127,6 @@ fun Application.server(
         } catch (_: Exception) {
             // Ignorert
         }
-        tilgangmaskinGateway.close()
     }
 }
 

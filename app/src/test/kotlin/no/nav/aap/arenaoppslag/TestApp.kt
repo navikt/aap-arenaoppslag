@@ -5,7 +5,6 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import no.nav.aap.arenaoppslag.database.ArenaDatasource
-import no.nav.aap.arenaoppslag.tilgangsmaskin.FakeTilgangmaskinGateway
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
 import no.nav.aap.arenaoppslag.util.Fakes
 import no.nav.aap.arenaoppslag.util.port
@@ -31,7 +30,6 @@ fun main() {
         server(
             config = config,
             pdlGateway = FakePdlGateway(),
-            tilgangmaskinGateway = FakeTilgangmaskinGateway(),
         )
         module(dataSource)
     }.start(wait = true)
