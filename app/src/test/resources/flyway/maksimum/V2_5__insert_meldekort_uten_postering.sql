@@ -34,31 +34,31 @@ values (90070, 9007, 'IVERK', 'O', 'JA', 'AAP', 106,
         DATE '2023-02-01', DATE '2023-03-12', '4402', 9007, 2023, 1, 'IKKE', DATE '2023-02-01');
 
 insert into MELDEKORTPERIODE (AAR, PERIODEKODE, UKENR_UKE1, UKENR_UKE2, DATO_FRA, DATO_TIL)
-values (2023, '05', 9, 10, DATE '2023-02-27', DATE '2023-03-12'),
-       (2023, '06', 11, 12, DATE '2023-03-13', DATE '2023-03-26'),
-       (2023, '07', 13, 14, DATE '2023-03-27', DATE '2023-04-09'),
-       (2023, '08', 15, 16, DATE '2023-04-10', DATE '2023-04-23'),
-       (2023, '09', 17, 18, DATE '2023-04-24', DATE '2023-05-07');
+values (2023, '09', 9, 10, DATE '2023-02-27', DATE '2023-03-12'),
+       (2023, '11', 11, 12, DATE '2023-03-13', DATE '2023-03-26'),
+       (2023, '13', 13, 14, DATE '2023-03-27', DATE '2023-04-09'),
+       (2023, '15', 15, 16, DATE '2023-04-10', DATE '2023-04-23'),
+       (2023, '17', 17, 18, DATE '2023-04-24', DATE '2023-05-07');
 
 -- 7001: ordinært meldekort med utbetaling
 insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
-values (7001, 106, 2023, '06', 'E1', 'FERDI', 'AT');
+values (7001, 106, 2023, '11', 'E1', 'FERDI', 'AT');
 
 -- 7002: ferdig beregnet, men uten postering (full reduksjon gir ingen utbetaling)
 insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
-values (7002, 106, 2023, '07', 'E1', 'FERDI', 'AT');
+values (7002, 106, 2023, '13', 'E1', 'FERDI', 'AT');
 
 -- 7003: levert, men ikke ferdig beregnet — har derfor heller ingen postering
 insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
-values (7003, 106, 2023, '08', 'E1', 'OPPRE', 'AT');
+values (7003, 106, 2023, '15', 'E1', 'OPPRE', 'AT');
 
 -- 7004: dagpenge-meldekort — hører ikke til AAP-saken
 insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
-values (7004, 106, 2023, '09', 'E1', 'FERDI', 'DP');
+values (7004, 106, 2023, '17', 'E1', 'FERDI', 'DP');
 
 -- 7005: ligger innenfor vedtaksvinduet til 9006, men er postert på sak 9007
 insert into MELDEKORT (MELDEKORT_ID, PERSON_ID, AAR, PERIODEKODE, MKSKORTKODE, BEREGNINGSTATUSKODE, MELDEKORTKODE)
-values (7005, 106, 2023, '05', 'E1', 'FERDI', 'AT');
+values (7005, 106, 2023, '09', 'E1', 'FERDI', 'AT');
 
 insert into MELDEKORTDAG (MELDEKORT_ID, UKENR, DAGNR, STATUS_ARBEIDSDAG, STATUS_KURS, STATUS_SYK, TIMER_ARBEIDET)
 values (7001, 11, 1, 'J', 'N', 'N', 7.5),
