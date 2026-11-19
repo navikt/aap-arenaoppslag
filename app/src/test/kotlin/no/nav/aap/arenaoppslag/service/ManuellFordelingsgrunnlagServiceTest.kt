@@ -5,7 +5,7 @@ import io.mockk.mockk
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SakMedSisteVedtakOgMaksdato
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.VedtakMedMaksdato
 import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -19,7 +19,7 @@ class ManuellFordelingsgrunnlagServiceTest {
     private val oppgaveService: OppgaveService = mockk()
     private val service = ManuellFordelingsgrunnlagService(sakService, posteringService, telleverkService, oppgaveService)
 
-    private val personId = PersonId(1)
+    private val personId = ArenaPersonId(1)
     private val iDag = LocalDate.of(2026, 1, 1)
 
     private fun oppgave(oppgaveId: Long = 1L) = ArenaOppgave(

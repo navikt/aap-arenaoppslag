@@ -1,17 +1,12 @@
 package no.nav.aap.arenaoppslag
 
 import io.ktor.http.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeRequest
-import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
-import no.nav.aap.arenaoppslag.service.MeldekortService
 import no.nav.aap.arenaoppslag.service.OppgaveService
-import no.nav.aap.arenaoppslag.service.PersonService
 import no.nav.aap.arenaoppslag.service.PosteringService
 import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
@@ -49,7 +44,6 @@ fun Route.sakDetaljert(
         val sakMedSamordning = sak.copy(
             vedtak = sak.vedtak.map { vedtak -> vedtak.medSamordning(samordningPerVedtak[vedtak.vedtakId]) }
         )
-
 
         logger.info("Henter saksdetaljer")
         val response = sakMedSamordning.tilDetaljert()
@@ -97,7 +91,7 @@ fun Route.kvotehistorikkForSak(sakService: SakService, telleverkService: Telleve
             return@get call.respond(HttpStatusCode.NotFound)
         }
 
-        val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(PersonId(sak.person.personId))
+        val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(sak.person.personId))
 
         call.respond(status = HttpStatusCode.OK, message = kvoteHistorikk)
     }
@@ -120,7 +114,7 @@ fun Route.oppgaverForSak(sakService: SakService, oppgaveService: OppgaveService)
             return@get call.respond(HttpStatusCode.NotFound)
         }
 
-        val oppgaver = oppgaveService.hentOppgaverForPerson(PersonId(sak.person.personId))
+        val oppgaver = oppgaveService.hentOppgaverForPerson(ArenaPersonId(sak.person.personId))
 
         call.respond(status = HttpStatusCode.OK, message = oppgaver)
     }
@@ -145,7 +139,7 @@ fun Route.telleverkForSak(sakService: SakService, posteringService: PosteringSer
             return@get call.respond(HttpStatusCode.NotFound)
         }
 
-        val personId = PersonId(sak.person.personId)
+        val personId = ArenaPersonId(sak.person.personId)
 
         val tellerverk = telleverkService.hentTelleverkForPerson(personId)
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)

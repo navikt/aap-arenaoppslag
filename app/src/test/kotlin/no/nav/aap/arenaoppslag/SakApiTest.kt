@@ -17,7 +17,7 @@ class SakApiTest : H2TestBase("flyway/minimumtest") {
             assertThat(sak.opprettetAar).isEqualTo(2021)
             assertThat(sak.lopenr).isEqualTo(1)
             assertThat(sak.statuskode).isEqualTo("AKTIV")
-            assertThat(sak.person.fodselsnummer).isEqualTo("123")
+            assertThat(sak.person.fodselsnummer).isEqualTo("00000000123")
             assertThat(sak.vedtak).hasSize(1)
         }
     }

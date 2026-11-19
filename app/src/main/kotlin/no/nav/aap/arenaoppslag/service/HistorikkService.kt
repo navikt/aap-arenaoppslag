@@ -14,7 +14,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.TelleverkForPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedMaxdato
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak as ArenaVedtakModell
@@ -41,7 +41,7 @@ class HistorikkService(
     }
 
     fun signifikantHistorikk(
-        personId: PersonId,
+        personId: ArenaPersonId,
         virkningstidspunkt: LocalDate
     ): SignifikantHistorikkResponse {
         val signifikanteVedtak: List<ArenaVedtakModell> = historikkRepository.hentAlleSignifikanteVedtakForPerson(
@@ -73,7 +73,7 @@ class HistorikkService(
         }
     }
 
-    fun hentHistorikkStatusDetalj(personId: PersonId): HistorikkStatusDetaljResponse {
+    fun hentHistorikkStatusDetalj(personId: ArenaPersonId): HistorikkStatusDetaljResponse {
         val sisteVedtakMedMaksdato = vedtakService.hentSisteLøpendeVedtakDetalj(personId)
         val sisteSakMedVedtak = sisteVedtakMedMaksdato?.saksnummer()
             ?.let { sakOgVedtakService.hentSakMedVedtak(it) }

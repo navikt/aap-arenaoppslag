@@ -1,6 +1,17 @@
 package no.nav.aap.arenaoppslag.modeller
 
-data class PersonId(val id: Int)
+data class ArenaPersonId(val id: Int)
+
+data class PersonIdentifikator(val id: String) {
+    companion object {
+        fun fromString(id: String?): PersonIdentifikator? {
+            // Et fødselsnummer eller d-nummer
+            if (id == null || id.length != 11 || !id.all { it.isDigit() }) return null
+
+            return PersonIdentifikator(id)
+        }
+    }
+}
 
 data class SakId(val id: Int) {
     companion object {

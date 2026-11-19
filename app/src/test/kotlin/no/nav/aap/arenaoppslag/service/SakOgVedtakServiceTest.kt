@@ -2,6 +2,7 @@ package no.nav.aap.arenaoppslag.service
 
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import no.nav.aap.arenaoppslag.SakOgVedtakService
 import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
@@ -9,8 +10,9 @@ import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
+import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -29,8 +31,42 @@ class SakOgVedtakServiceTest {
     )
 
     @Test
+    fun `hentVedtakForPerson bruker person-id fra person og returnerer vedtakene`() {
+        val personId = ArenaPersonId(42)
+        val førsteVedtak = ArenaVedtak(
+            vedtakId = 101,
+            sakId = "1",
+            statusKode = "IVERK",
+            vedtaktypeKode = "O",
+            fraOgMed = LocalDate.of(2024, 1, 1),
+            tilDato = LocalDate.of(2025, 1, 1),
+            rettighetkode = "AAP",
+            utfallkode = "JA",
+            aktivitetsfaseKode = "IKKE",
+        )
+        val andreVedtak = førsteVedtak.copy(vedtakId = 201, sakId = "2")
+        every { vedtakRepository.hentVedtak(personId) } returns listOf(førsteVedtak, andreVedtak)
+
+        val vedtak = service.hentVedtakForPerson(personId)
+
+        assertThat(vedtak).containsExactly(førsteVedtak, andreVedtak)
+        verify(exactly = 1) { vedtakRepository.hentVedtak(personId) }
+    }
+
+    @Test
+    fun `hentVedtakForPerson returnerer tom liste når person ikke har vedtak`() {
+        val personId = ArenaPersonId(99)
+        every { vedtakRepository.hentVedtak(personId) } returns emptyList()
+
+        val vedtak = service.hentVedtakForPerson(personId)
+
+        assertThat(vedtak).isEmpty()
+        verify(exactly = 1) { vedtakRepository.hentVedtak(personId) }
+    }
+
+    @Test
     fun `hentVedtakDetaljerForPerson returnerer flattened vedtakliste fra alle saker`() {
-        val personId = PersonId(42)
+        val personId = ArenaPersonId(42)
         val sak1 = lagArenaSak(sakId = "1")
         val sak2 = lagArenaSak(sakId = "2")
 
@@ -50,7 +86,7 @@ class SakOgVedtakServiceTest {
 
     @Test
     fun `hentVedtakDetaljerForPerson returnerer tom liste når person ikke har saker`() {
-        val personId = PersonId(99)
+        val personId = ArenaPersonId(99)
         every { sakRepository.hentSakerDetaljerForPerson(personId) } returns emptyList()
 
         val vedtak = service.hentVedtakDetaljerForPerson(personId)

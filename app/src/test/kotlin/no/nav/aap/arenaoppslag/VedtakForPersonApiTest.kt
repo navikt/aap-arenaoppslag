@@ -16,7 +16,7 @@ class VedtakForPersonApiTest : H2TestBase("flyway/minimumtest") {
     fun `Henter vedtak (udetaljert) for kjent person`() {
         withTestServer(h2) { gateway ->
             val vedtak: List<ArenaVedtak> =
-                gateway.hentVedtakForPerson(VedtakForPersonRequest("123"))
+                gateway.hentVedtakForPerson(VedtakForPersonRequest("00000000123"))
 
             assertThat(vedtak).isNotEmpty()
             assertThat(vedtak.first().rettighetkode).isEqualTo("AAP")
@@ -27,7 +27,7 @@ class VedtakForPersonApiTest : H2TestBase("flyway/minimumtest") {
     fun `Returnerer 404 for ukjent person (udetaljert)`() {
         withTestServer(h2) { gateway ->
             val resultat = runCatching {
-                gateway.hentVedtakForPerson(VedtakForPersonRequest("007"))
+                gateway.hentVedtakForPerson(VedtakForPersonRequest("00000000007"))
             }
             val feil = resultat.exceptionOrNull() as? ClientRequestException
             assertThat(feil).isNotNull
@@ -39,7 +39,7 @@ class VedtakForPersonApiTest : H2TestBase("flyway/minimumtest") {
     fun `Henter tom liste for person uten saker (udetaljert)`() {
         withTestServer(h2) { gateway ->
             val vedtak: List<ArenaVedtak> =
-                gateway.hentVedtakForPerson(VedtakForPersonRequest("ingenvedtak"))
+                gateway.hentVedtakForPerson(VedtakForPersonRequest("00000000003"))
 
             assertThat(vedtak).isEmpty()
         }
@@ -48,9 +48,9 @@ class VedtakForPersonApiTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `Henter vedtak for kjent person`() {
         withTestServer(h2) { gateway ->
-            // Person med fodselsnr '123' har én sak med ett vedtak (id=1234)
+            // Person med fodselsnr '00000000123' har én sak med ett vedtak (id=1234)
             val vedtak: List<ArenaVedtakMedDetaljer> =
-                gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("123"))
+                gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("00000000123"))
 
             assertThat(vedtak).isNotEmpty()
             assertThat(vedtak.first().vedtakId).isEqualTo(1234)
@@ -61,7 +61,7 @@ class VedtakForPersonApiTest : H2TestBase("flyway/minimumtest") {
     fun `Returnerer 404 for ukjent person`() {
         withTestServer(h2) { gateway ->
             val resultat = runCatching {
-                gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("007"))
+                gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("00000000007"))
             }
             val feil = resultat.exceptionOrNull() as? ClientRequestException
             assertThat(feil).isNotNull
@@ -72,9 +72,9 @@ class VedtakForPersonApiTest : H2TestBase("flyway/minimumtest") {
     @Test
     fun `Henter tom liste for person uten saker`() {
         withTestServer(h2) { gateway ->
-            // Person med fodselsnr 'ingenvedtak' eksisterer i Arena men har ingen saker
+            // Person med fodselsnr '00000000003' eksisterer i Arena men har ingen saker
             val vedtak: List<ArenaVedtakMedDetaljer> =
-                gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("ingenvedtak"))
+                gateway.hentVedtakDetaljerForPerson(VedtakForPersonRequest("00000000003"))
 
             assertThat(vedtak).isEmpty()
         }

@@ -16,7 +16,7 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
         withTestServer(h2) { gateway ->
             val result = runCatching {
                 gateway.hentMaksdatoByPerson(
-                    MaksdatoRequest("ukjent")
+                    MaksdatoRequest("00000000007")
                 )
             }
             val error = result.exceptionOrNull() as? ClientRequestException
@@ -29,7 +29,7 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
     fun `Henter ut maksdato by fodselsnummer, person uten AAP-vedtak ikke i Stans`() {
         withTestServer(h2) { gateway ->
             val maksdatoForUkjenteSaker: MaksdatoMedVedtakResponse = gateway.hentMaksdatoByPerson(
-                MaksdatoRequest("annen101")
+                MaksdatoRequest("00000000101")
             )
             assertThat(maksdatoForUkjenteSaker.sak).isNull()
         }
@@ -40,7 +40,7 @@ class MaksdatoApiTest : H2TestBase("flyway/saklistetest") {
         withTestServer(h2) { gateway ->
             // FakePdlGateway ekkoer fnr-en, slik at PersonService kan slå opp uten å gå mot PDL.
             val maksdatoForKjenteSaker: MaksdatoMedVedtakResponse = gateway.hentMaksdatoByPerson(
-                MaksdatoRequest("maksdato102")
+                MaksdatoRequest("00000000102")
             )
 
             assertThat(maksdatoForKjenteSaker.sak?.sisteVedtak?.vedtakId).isEqualTo(1122)

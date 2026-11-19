@@ -4,16 +4,14 @@ import no.nav.aap.arenaoppslag.database.SakRepository
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedDetaljer
-import no.nav.aap.arenaoppslag.modeller.PersonId
 import no.nav.aap.arenaoppslag.modeller.ArenaSakMedVedtak
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtak
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.toArenaSakMedVedtak
-import no.nav.aap.arenaoppslag.service.VedtakfaktaService
-import javax.sql.DataSource
 
 class SakOgVedtakService(
     private val sakRepository: SakRepository,
@@ -26,11 +24,11 @@ class SakOgVedtakService(
         return getArenaSakMedVedtak(sak)
     }
 
-    fun hentVedtakForPerson(personId: PersonId): List<ArenaVedtak> {
+    fun hentVedtakForPerson(personId: ArenaPersonId): List<ArenaVedtak> {
         return vedtakRepository.hentVedtak(personId)
     }
 
-    fun hentVedtakDetaljerForPerson(personId: PersonId): List<ArenaVedtakMedDetaljer> {
+    fun hentVedtakDetaljerForPerson(personId: ArenaPersonId): List<ArenaVedtakMedDetaljer> {
         val saker = sakRepository.hentSakerDetaljerForPerson(personId)
         return saker.flatMap { sak -> getArenaSakMedVedtak(sak).vedtak }
     }
@@ -52,6 +50,4 @@ class SakOgVedtakService(
         return sak.toArenaSakMedVedtak(vedtakMedFaktaOgVilkår)
     }
 
-    fun skapVedtakfaktaService(datasource: DataSource) =
-        VedtakfaktaService(VedtakfaktaRepository(datasource))
 }

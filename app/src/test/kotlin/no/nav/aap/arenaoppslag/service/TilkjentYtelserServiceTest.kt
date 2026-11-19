@@ -12,7 +12,7 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortForSak
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
 import no.nav.aap.arenaoppslag.modeller.MeldekortReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Spesialutbetaling
@@ -87,7 +87,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns setOf(
             kvotebrukHendelse(id = 1, kvoteTypeKode = "AAP", grunnlag = "VEDTAK", objektId = 90010, resterende = 20),
             kvotebrukHendelse(id = 2, kvoteTypeKode = "MAAPU", grunnlag = "VEDTAK", objektId = 90010, resterende = 30),
             kvotebrukHendelse(id = 3, kvoteTypeKode = "AAP", grunnlag = "MKORT", objektId = 5001, resterende = 10),
@@ -194,7 +194,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns emptySet()
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
 
@@ -239,7 +239,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns emptySet()
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
 
@@ -272,7 +272,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort(meldekortId = 5020, periode = meldekortperiode, ukenrUke1 = 48, ukenrUke2 = 49)),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(106)) } returns emptySet()
 
         val postert = service.hentTilkjenteYtelserForSak(sakId).rader.first { it.posteringId == null && it.beregnetBrutto != null }
 
@@ -296,7 +296,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(meldekort(meldekortId = 5021, periode = periode, ukenrUke1 = 1, ukenrUke2 = 2)),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(106)) } returns emptySet()
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
 
@@ -326,7 +326,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = emptyList(),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns setOf(
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns setOf(
             kvotebrukHendelse(id = 200, kvoteTypeKode = "AAP", grunnlag = "VEDTAK", objektId = 90010, resterende = 20),
             kvotebrukHendelse(id = 201, kvoteTypeKode = "MAAPU", grunnlag = "VEDTAK", objektId = 90010, resterende = 30),
             kvotebrukHendelse(id = 202, kvoteTypeKode = "AAP", grunnlag = "MKORT", objektId = 5001, resterende = 10),
@@ -368,7 +368,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = emptyList(),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(104)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(104)) } returns emptySet()
 
         val rader = service.hentTilkjenteYtelserForSak(sakId).rader
 
@@ -406,7 +406,7 @@ class TilkjentYtelserServiceTest {
                 ),
             ),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(106)) } returns emptySet()
 
         val rader = service.hentTilkjenteYtelserForSak(sakId).rader
 
@@ -456,14 +456,14 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = emptyList(),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) } returns emptySet()
 
         val forste = service.hentTilkjenteYtelserForSak(sakId)
         val andre = service.hentTilkjenteYtelserForSak(sakId)
 
         assertThat(andre).isEqualTo(forste)
         verify(exactly = 1) { meldekortRepository.hentForSak(sakId) }
-        verify(exactly = 1) { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(100)) }
+        verify(exactly = 1) { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(100)) }
     }
 
     @Test
@@ -502,7 +502,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(mk),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(106)) } returns emptySet()
 
         val rader = service.hentTilkjenteYtelserForSak(sakId).rader
 
@@ -519,7 +519,7 @@ class TilkjentYtelserServiceTest {
             posteringer = emptyList(),
             meldekort = listOf(meldekort(meldekortId = 5003, periode = periode, ukenrUke1 = 1, ukenrUke2 = 2)),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(106)) } returns emptySet()
 
         val rad = service.hentTilkjenteYtelserForSak(sakId).rader.single()
 
@@ -550,7 +550,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(mk),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(106)) } returns emptySet()
 
         val rader = service.hentTilkjenteYtelserForSak(sakId).rader
 
@@ -606,7 +606,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(mk),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(106)) } returns emptySet()
 
         val (uke48, uke49) = service.hentTilkjenteYtelserForSak(sakId).rader
 
@@ -662,7 +662,7 @@ class TilkjentYtelserServiceTest {
             ),
             meldekort = listOf(mk),
         )
-        every { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(106)) } returns emptySet()
+        every { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(106)) } returns emptySet()
 
         val (uke48, uke49) = service.hentTilkjenteYtelserForSak(sakId).rader
 

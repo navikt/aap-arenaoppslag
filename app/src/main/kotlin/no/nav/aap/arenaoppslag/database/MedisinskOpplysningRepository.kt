@@ -2,14 +2,14 @@ package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.database.DbDato.fraDato
 import no.nav.aap.arenaoppslag.modeller.MedisinskOpplysning
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.intellij.lang.annotations.Language
 import java.sql.ResultSet
 import javax.sql.DataSource
 
 class MedisinskOpplysningRepository(private val dataSource: DataSource) {
 
-    fun hentForPerson(personId: PersonId): List<MedisinskOpplysning> =
+    fun hentForPerson(personId: ArenaPersonId): List<MedisinskOpplysning> =
         dataSource.connection.use { con ->
             con.createParameterizedQuery(selectMedisinskeOpplysningerForPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)

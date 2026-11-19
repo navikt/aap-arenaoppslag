@@ -4,7 +4,7 @@ import io.mockk.every
 import io.mockk.mockk
 import no.nav.aap.arenaoppslag.database.OppgaveRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -27,16 +27,16 @@ class OppgaveServiceTest {
             navEnhet = "4402",
             notat = null,
         )
-        every { repo.hentOppgaverForPerson(PersonId(1)) } returns listOf(oppgave)
+        every { repo.hentOppgaverForPerson(ArenaPersonId(1)) } returns listOf(oppgave)
 
-        assertThat(service.hentOppgaverForPerson(PersonId(1))).containsExactly(oppgave)
+        assertThat(service.hentOppgaverForPerson(ArenaPersonId(1))).containsExactly(oppgave)
     }
 
     @Test
     fun `hentOppgaverForPerson returnerer tom liste naar personen ikke har oppgaver`() {
-        every { repo.hentOppgaverForPerson(PersonId(2)) } returns emptyList()
+        every { repo.hentOppgaverForPerson(ArenaPersonId(2)) } returns emptyList()
 
-        assertThat(service.hentOppgaverForPerson(PersonId(2))).isEmpty()
+        assertThat(service.hentOppgaverForPerson(ArenaPersonId(2))).isEmpty()
     }
 }
 

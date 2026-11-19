@@ -3,13 +3,13 @@ package no.nav.aap.arenaoppslag.service
 import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedMaxdato
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 
 class VedtakService(
     private val vedtakRepository: VedtakRepository,
     private val vedtakfaktaRepository: VedtakfaktaRepository,
 ) {
-    fun hentSisteLøpendeVedtakDetalj(personId: PersonId): ArenaVedtakMedMaxdato? {
+    fun hentSisteLøpendeVedtakDetalj(personId: ArenaPersonId): ArenaVedtakMedMaxdato? {
         val sakMedVedtak = vedtakRepository.hentSisteLøpendeVedtakDetalj(personId)
 
         val vedtakfakta = sakMedVedtak?.vedtakId?.let { vedtakId ->

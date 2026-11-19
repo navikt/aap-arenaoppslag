@@ -8,7 +8,7 @@ import no.nav.aap.arenaoppslag.database.MeldekortRepository
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
 import no.nav.aap.arenaoppslag.modeller.Meldekort
 import no.nav.aap.arenaoppslag.modeller.MeldekortPostering
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.Periode
 import no.nav.aap.arenaoppslag.modeller.PosteringKilde
 import no.nav.aap.arenaoppslag.modeller.ReduksjonRespons
@@ -48,7 +48,7 @@ class TilkjentYtelserService(
 
         val personId = meldekortForSak.posteringer.firstOrNull()?.personId ?: meldekortForSak.meldekort.firstOrNull()?.personId
         val kvoteSaldo = KvoteSaldo(
-            personId?.let { telleverkService.hentKvoteBrukHendelserForPerson(PersonId(it)) }.orEmpty()
+            personId?.let { telleverkService.hentKvoteBrukHendelserForPerson(ArenaPersonId(it)) }.orEmpty()
         )
 
         val posteringsrader = meldekortForSak.posteringer.map { postering ->

@@ -74,6 +74,11 @@ spec:
         - application: pdl-api
           namespace: pdl
           cluster: {{cluster}}-fss
+        - application: tilgang
+          namespace: aap
+          cluster: {{cluster}}-gcp
+      external:
+        - host: {{tilgang_host}}
   webproxy: true
   ingresses:
     - {{ingress}}
@@ -95,3 +100,7 @@ spec:
       value: {{pdl_scope}}
     - name: INTEGRASJON_PDL_URL
       value: {{pdl_url}}
+    - name: INTEGRASJON_TILGANG_SCOPE
+      value: api://{{cluster}}-gcp.aap.tilgang/.default
+    - name: INTEGRASJON_TILGANG_URL
+      value: https://{{tilgang_host}}

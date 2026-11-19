@@ -1,7 +1,7 @@
 package no.nav.aap.arenaoppslag.service
 
 import no.nav.aap.arenaoppslag.kontrakt.intern.ManuellFordelingsgrunnlagResponse
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import java.time.LocalDate
 
 
@@ -12,7 +12,7 @@ class ManuellFordelingsgrunnlagService(
     private val oppgaveService: OppgaveService,
 ) {
     fun hentManuellFordelingsgrunnlag(
-        personId: PersonId,
+        personId: ArenaPersonId,
         iDag: LocalDate = LocalDate.now(),
     ): ManuellFordelingsgrunnlagResponse? {
         val sak = sakService.hentMaksdatoAapMedVedtakOgSakOgVedtaksfakta(personId) ?: return null

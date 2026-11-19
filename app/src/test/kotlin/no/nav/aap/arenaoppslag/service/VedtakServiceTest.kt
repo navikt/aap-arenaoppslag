@@ -7,7 +7,7 @@ import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakMedMaxdato
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakfakta
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -16,7 +16,7 @@ class VedtakServiceTest {
     private val vedtakRepository = mockk<VedtakRepository>()
     private val vedtakfaktaRepository = mockk<VedtakfaktaRepository>()
     private val service = VedtakService(vedtakRepository, vedtakfaktaRepository)
-    private val personId = PersonId(42)
+    private val personId = ArenaPersonId(42)
     private val unntaksdato = LocalDate.of(2026, 2, 1)
     private val vedtak = ArenaVedtakMedMaxdato(
         sakId = 1,

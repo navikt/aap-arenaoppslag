@@ -6,7 +6,7 @@ import no.nav.aap.arenaoppslag.database.VedtakRepository
 import no.nav.aap.arenaoppslag.database.VedtakfaktaRepository
 import no.nav.aap.arenaoppslag.database.VilkårsvurderingRepository
 import no.nav.aap.arenaoppslag.modeller.ArenaSak
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.migrering.Beregningstidspunkt
 import no.nav.aap.arenaoppslag.modeller.migrering.ForutgaaendeMedlemskap
@@ -30,7 +30,7 @@ class MigreringService(
 
     fun hentKravForSak(sak: ArenaSak, sakId: SakId, idag: LocalDate = LocalDate.now()): Krav {
         val forsteInnvilgedeVedtak = vedtakRepository.hentForsteInnvilgetVedtakForSak(sakId)
-        val personId = PersonId(sak.person.personId)
+        val personId = ArenaPersonId(sak.person.personId)
         val gjeldendeMeldekortperiode = meldekortperiodeRepository.hentGjeldendePeriodeForPerson(personId, idag)
         val migreringsdato = gjeldendeMeldekortperiode?.fraOgMedDato
             ?: throw VerdiIkkeFunnetException("Fant ingen meldekortperiode for brukeren som dekker $idag for sak ${sakId.id}, saken kan derfor ikke migreres.")
@@ -57,7 +57,7 @@ class MigreringService(
         val vedtak = vedtakRepository.hentGjeldende115VedtakForSakPåDato(sakId, idag) ?: return null
         val vilkårsvurderinger = vilkårsvurderingRepository.hentForVedtakIder(listOf(vedtak.vedtakId))[vedtak.vedtakId]
             .orEmpty()
-        val diagnoser = medisinskOpplysningRepository.hentForPerson(PersonId(sak.person.personId))
+        val diagnoser = medisinskOpplysningRepository.hentForPerson(ArenaPersonId(sak.person.personId))
 
         return Sykdomsvurdering(
             vedtakId = vedtak.vedtakId,
@@ -117,7 +117,7 @@ class MigreringService(
         return Beregningstidspunkt.fraVedtakfakta(vedtakfakta)
     }
 
-    private fun hentGjenstaaendeOrdinaerKvote(personId: PersonId, migreringsdato: LocalDate): Int? {
+    private fun hentGjenstaaendeOrdinaerKvote(personId: ArenaPersonId, migreringsdato: LocalDate): Int? {
         val hendelser = telleverkService.hentKvoteBrukHendelserForPerson(personId)
             .filter { it.kvoteTypeKode == KVOTE_ORDINAER }
             .sortedBy { it.id }

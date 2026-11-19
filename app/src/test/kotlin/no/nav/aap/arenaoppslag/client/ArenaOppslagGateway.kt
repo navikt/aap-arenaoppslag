@@ -49,6 +49,8 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
 import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.server
+import no.nav.aap.arenaoppslag.tilgang.TilgangGateway
+import no.nav.aap.arenaoppslag.tilgang.FakeTilgangGateway
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
 import no.nav.aap.arenaoppslag.util.Fakes
@@ -338,12 +340,24 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     }
 
     companion object {
-        fun withTestServer(dataSource: DataSource, testBody: suspend (ArenaOppslagGateway) -> Unit) {
+        fun withTestServer(
+            dataSource: DataSource,
+            tilgangmaskinGateway: TilgangGateway = FakeTilgangGateway(),
+            navIdent: String? = null,
+            testBody: suspend (ArenaOppslagGateway) -> Unit,
+        ) {
             Fakes().use {
                 val config = TestConfig.default()
-                val tokenProvider = AzureTokenGen("issuer", "arenaoppslag")
+                val tokenProvider = AzureTokenGen("issuer", "arenaoppslag", navIdent)
                 testApplication {
-                    application { server(config, dataSource, FakePdlGateway()) }
+                    application {
+                        server(
+                            config,
+                            dataSource,
+                            FakePdlGateway(),
+                            tilgangmaskinGateway,
+                        )
+                    }
                     val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
 
                     testBody(gateway)
