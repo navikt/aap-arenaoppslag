@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.konfig)
     implementation(libs.kelvin.server)
     implementation(libs.kelvin.infrastructure)
+    implementation(libs.tilgang.api.kontrakt)
 
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.jwt)

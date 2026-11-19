@@ -1,4 +1,4 @@
-package no.nav.aap.arenaoppslag.tilgangsmaskin
+package no.nav.aap.arenaoppslag.tilgang
 
 import io.ktor.http.*
 import io.ktor.server.response.*
@@ -8,15 +8,14 @@ import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.service.PersonService
-import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.util.token
 import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
+import no.nav.aap.tilgang.TilgangResponse
 import org.slf4j.LoggerFactory
 import kotlin.math.min
 
 class TilgangkontrollService(
-    private val tilgangmaskinGateway: TilgangsmaskinGateway,
-    private val sakService: SakService,
+    private val tilgangmaskinGateway: TilgangGateway,
     private val personService: PersonService,
 ) {
     companion object {
@@ -33,9 +32,9 @@ class TilgangkontrollService(
      */
     suspend fun verifiserTilgangTilPerson(personIdentifikator: PersonIdentifikator, token: OidcToken): PersonTilgangResultat {
         val response = tilgangmaskinGateway.harTilgangTilPerson(personIdentifikator, token)
-        if (!response.harTilgang) {
-            loggAvvisning(token, response.avvistResponse, personIdentifikator)
-            return PersonTilgangResultat.AccessDenied(response.avvistResponse)
+        if (!response.tilgang) {
+            loggAvvisning(token, response, personIdentifikator)
+            return PersonTilgangResultat.AccessDenied(response)
         }
 
         val personId = personService.hentPersonIdentifikator(personIdentifikator)
@@ -73,9 +72,9 @@ class TilgangkontrollService(
         }
 
         val response = tilgangmaskinGateway.harTilgangTilPerson(personIdentifikator, token)
-        if (!response.harTilgang) {
-            loggAvvisning(token, response.avvistResponse, personIdentifikator, saksnummer)
-            return SakTilgangResultat.AccessDenied(response.avvistResponse)
+        if (!response.tilgang) {
+            loggAvvisning(token, response, personIdentifikator, saksnummer)
+            return SakTilgangResultat.AccessDenied(response)
         }
         return SakTilgangResultat.Granted(VerifisertSak(saksnummer))
     }
@@ -93,38 +92,35 @@ class TilgangkontrollService(
         routingContext.medTilgangKontrollert(tilgang, onAccessDenied, onNotFound, onGranted)
     }
 
-    private suspend fun RoutingContext.svarMedAvvistTilgang(avvistResponse: TilgangsmaskinAvvistResponse?) {
+    private suspend fun RoutingContext.svarMedAvvistTilgang(avvistResponse: TilgangResponse?) {
         if (avvistResponse == null) {
             call.respond(HttpStatusCode.Forbidden)
         } else {
             call.respond(
                 HttpStatusCode.Forbidden,
                 TilgangAvvistResponse(
-                    title = avvistResponse.title,
-                    begrunnelse = avvistResponse.begrunnelse,
-                    kanOverstyres = avvistResponse.kanOverstyres,
+                    title = "ingen tilgang",
                 ),
             )
         }
     }
 
     /**
-     * Logger avvisning fra Tilgangsmaskinen slik Tilgangsmaskin-dokumentasjonen anbefaler:
+     * Logger avvisning fra tilgangstjenesten:
      * nav-ident, avvisningsårsak og en maskert variant av brukerens fødselsnummer (kun de seks
      * første sifrene vises, resten maskeres). Hele fødselsnummeret logges aldri.
      */
     private fun loggAvvisning(
         token: OidcToken,
-        avvistResponse: TilgangsmaskinAvvistResponse?,
+        avvistResponse: TilgangResponse?,
         personIdentifikator: PersonIdentifikator,
         saksnummer: Saksnummer? = null,
     ) {
         LoggerFactory.getLogger("team-logs").info(
             // logger z-ident for nav-ansatt
-            "Tilgangsmaskinen avviste tilgang: navIdent={}, årsak={}, begrunnelse={}, fnr(maskert)={}{}",
+            "aap-tilgang avviste tilgang: navIdent={}, tilgangIKontekst={}, fnr(maskert)={}{}",
             token.navIdent(),
-            avvistResponse?.title,
-            avvistResponse?.begrunnelse,
+            avvistResponse?.tilgangIKontekst,
             maskerFnr(personIdentifikator.id),
             saksnummer?.let { ", saksnummer=$it" }.orEmpty(),
         )
@@ -138,11 +134,11 @@ class TilgangkontrollService(
 sealed interface PersonTilgangResultat {
     data class Granted(val autorisertPerson: AuthorisertPersonId) : PersonTilgangResultat
     data object NotFound : PersonTilgangResultat
-    data class AccessDenied(val avvistResponse: TilgangsmaskinAvvistResponse?) : PersonTilgangResultat
+    data class AccessDenied(val avvistResponse: TilgangResponse) : PersonTilgangResultat
 }
 
 sealed interface SakTilgangResultat {
     data class Granted(val autorisertSaksnummer: AutorisertSaksnummer) : SakTilgangResultat
     data object NotFound : SakTilgangResultat
-    data class AccessDenied(val avvistResponse: TilgangsmaskinAvvistResponse?) : SakTilgangResultat
+    data class AccessDenied(val avvistResponse: TilgangResponse) : SakTilgangResultat
 }

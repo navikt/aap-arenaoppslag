@@ -1,4 +1,4 @@
-package no.nav.aap.arenaoppslag.tilgangsmaskin
+package no.nav.aap.arenaoppslag.tilgang
 
 import io.ktor.server.routing.*
 

@@ -8,6 +8,7 @@ jackson3 = "3.3.0"
 netty = "4.2.20.Final"
 konfig = "1.6.10.0"
 kelvin = "3.0.3"
+tilgang = "1.0.245"
 micrometer = "1.17.2"
 logback = "1.6.6"
 logstash-encoder = "9.0"
@@ -32,6 +33,7 @@ jackson3-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson3" 
 konfig = { module = "com.natpryce:konfig", version.ref = "konfig" }
 kelvin-server = { module = "no.nav.aap.kelvin:server", version.ref = "kelvin" }
 kelvin-infrastructure = { module = "no.nav.aap.kelvin:infrastructure", version.ref = "kelvin" }
+tilgang-api-kontrakt = { module = "no.nav.aap.tilgang:api-kontrakt", version.ref = "tilgang" }
 
 ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = "ktor" }
