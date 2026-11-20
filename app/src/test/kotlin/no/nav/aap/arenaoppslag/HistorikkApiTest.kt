@@ -9,11 +9,14 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkRequest
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SignifikantHistorikkResponse
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.TelleverkForPerson
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.groups.Tuple.tuple
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "flyway/historikkapi") {
+class HistorikkApiTest : H2TestBase(
+    "flyway/minimumtest", "flyway/eksisterer", "flyway/historikkapi", "flyway/historikkaktivitetsfase"
+) {
     companion object {
         const val ukjentPerson = "007"
         const val kjentPerson = "kun_nye"
@@ -32,6 +35,84 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "
             )
 
             assertThat(response.harSignifikantHistorikk).isTrue
+            assertThat(response.signifikanteVedtak).extracting("rettighetkode", "vedtaktypeKode", "utfallkode")
+                .containsExactly(tuple("AAP", "O", "JA"))
+        }
+    }
+
+    @Test
+    fun `signifikant historikk inneholder bare vanlige AAP-vedtak i UA og AU`() {
+        withTestServer(h2) { gateway ->
+            val response = gateway.harSignifikantHistorikk(
+                SignifikantHistorikkRequest("aap_faser", testDato)
+            )
+
+            assertThat(response.harSignifikantHistorikk).isTrue
+            assertThat(response.signifikanteVedtak).allMatch { it.rettighetkode == "AAP" }
+            assertThat(response.signifikanteVedtak)
+                .extracting("vedtaktypeKode", "statusKode", "fraOgMed", "utfallkode")
+                .containsExactlyInAnyOrder(
+                    tuple("O", "IVERK", LocalDate.of(2025, 1, 1), "JA"),
+                    tuple("O", "IVERK", LocalDate.of(2025, 1, 2), "JA"),
+                    tuple("E", "IVERK", LocalDate.of(2025, 1, 5), "JA"),
+                    tuple("E", "IVERK", LocalDate.of(2025, 1, 6), "JA"),
+                    tuple("G", "IVERK", LocalDate.of(2025, 1, 9), "JA"),
+                    tuple("G", "IVERK", LocalDate.of(2025, 1, 10), "JA"),
+                    tuple("O", "REGIS", null, null),
+                    tuple("E", "REGIS", null, null)
+                )
+        }
+    }
+
+    @Test
+    fun `kjent person med bare vanlige AAP-vedtak utenfor UA og AU har ikke signifikant historikk`() {
+        withTestServer(h2) { gateway ->
+            val person = "andre_faser"
+            assertThat(gateway.harHistorikk(HarHistorikkRequest(person)).harHistorikk).isTrue
+
+            val response = gateway.harSignifikantHistorikk(SignifikantHistorikkRequest(person, testDato))
+
+            assertThat(response).isEqualTo(SignifikantHistorikkResponse.ingen)
+        }
+    }
+
+    @Test
+    fun `signifikant historikk beholder stanser med og uten sluttdato også utenfor UA og AU`() {
+        withTestServer(h2) { gateway ->
+            val response = gateway.harSignifikantHistorikk(
+                SignifikantHistorikkRequest("stans_faser", testDato)
+            )
+
+            assertThat(response.harSignifikantHistorikk).isTrue
+            assertThat(response.signifikanteVedtak).allMatch { it.vedtaktypeKode == "S" }
+            assertThat(response.signifikanteVedtak).hasSize(8)
+            assertThat(response.signifikanteVedtak.map { it.tilDato }).containsExactlyInAnyOrder(
+                null, null, null, null,
+                LocalDate.of(2025, 12, 31), LocalDate.of(2025, 12, 31),
+                LocalDate.of(2025, 12, 31), LocalDate.of(2025, 12, 31)
+            )
+        }
+    }
+
+    @Test
+    fun `signifikant historikk beholder ubehandlet AA115 utenfor UA og AU`() {
+        withTestServer(h2) { gateway ->
+            val response = gateway.harSignifikantHistorikk(SignifikantHistorikkRequest("aa115_fase", testDato))
+
+            assertThat(response.harSignifikantHistorikk).isTrue
+            assertThat(response.signifikanteVedtak).extracting("rettighetkode", "statusKode", "utfallkode")
+                .containsExactly(tuple("AA115", "REGIS", null))
+        }
+    }
+
+    @Test
+    fun `signifikant historikk beholder klager og anker utenfor UA og AU`() {
+        withTestServer(h2) { gateway ->
+            val response = gateway.harSignifikantHistorikk(SignifikantHistorikkRequest("klager_anke", testDato))
+
+            assertThat(response.harSignifikantHistorikk).isTrue
+            assertThat(response.signifikanteVedtak.map { it.rettighetkode })
+                .containsExactlyInAnyOrder("KLAG1", "KLAG2", "ANKE")
         }
     }
 
