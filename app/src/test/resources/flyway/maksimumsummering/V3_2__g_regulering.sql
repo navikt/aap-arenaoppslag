@@ -57,3 +57,10 @@ VALUES (9850, 7700, 'AAP', DATE '2023-01-30', DATE '2023-02-05', DATE '2023-02-1
        (9854, 50000, 'DAGP', DATE '2023-01-30', DATE '2023-02-05', DATE '2023-02-17',
         2023, 122, 'ORD', 'DP00', DATE '2023-01-30', 92033, 'ART', '2900', '01', '001',
         'TEST', '4402', 7504, 'MKORT', 7504);
+
+INSERT INTO anmerkning (anmerkning_id, anmerkningkode, tabellnavnalias, objekt_id, vedtak_id, verdi)
+VALUES (9950, 'FSNN', 'MKORT', 7504, 92030, 2),
+       (9951, 'FXNN', 'MKORT', 7504, 92031, 3),
+       (9952, 'SENN', 'MKORT', 7504, NULL, 1),
+       (9953, 'FSNN', 'MKORT', 7504, 92033, 20),
+       (9954, 'FXNN', 'MKORT', 7504, 92032, 40);

@@ -51,10 +51,10 @@ class MaksimumRepository(
                 fodselsnr = fodselsnr,
             )
 
-            val anmerkningerPerMeldekort =
+            val anmerkningerPerUtbetaling =
                 selectAlleMeldekortAnmerkninger(meldekortrader.map { rad -> rad.meldekortId }.distinct(), connection)
 
-            log.info("Fant ${anmerkningerPerMeldekort.size} meldekort. Fra-dato: $fraOgMedDato, til-dato: $tilOgMedDato.")
+            log.info("Fant anmerkninger for ${anmerkningerPerUtbetaling.size} utbetalingsperioder. Fra-dato: $fraOgMedDato, til-dato: $tilOgMedDato.")
 
             val vedtak = resultSet.map { row ->
                 val vedtakId = row.getInt("vedtak_id")
@@ -69,7 +69,7 @@ class MaksimumRepository(
                 val utbetalinger = utbetalingerForVedtak(meldekortrader, vedtaksperiode).map { rad ->
                     mapTilUtbetaling(
                         rad,
-                        anmerkningerPerMeldekort,
+                        anmerkningerPerUtbetaling,
                         vedtakFakta.dagsmbt,
                         vedtakFakta.barntill
                     )
@@ -138,13 +138,17 @@ class MaksimumRepository(
     private fun selectAlleMeldekortAnmerkninger(
         meldekortIder: List<Long>,
         connection: Connection,
-    ): Map<Long, AnnenReduksjon> {
+    ): Map<Utbetalingsnøkkel, AnnenReduksjon> {
         if (meldekortIder.isEmpty()) return emptyMap()
         return meldekortIder.chunked(chunkStørrelse).flatMap { chunk ->
             val sql = selectAnmerkningerForMeldekortliste(chunk)
             connection.createStatement().use { statement ->
                 statement.executeQuery(sql).map { row ->
-                    row.getLong("objekt_id") to AnnenReduksjon(
+                    Utbetalingsnøkkel(
+                        meldekortId = row.getLong("meldekort_id"),
+                        fraOgMedDato = row.getDate("dato_periode_fra").toLocalDate(),
+                        tilOgMedDato = row.getDate("dato_periode_til").toLocalDate(),
+                    ) to AnnenReduksjon(
                         sykedager = row.getFloat("sykedager"),
                         sentMeldekort = row.getFloat("for_sent") > 0,
                         fravær = row.getFloat("fravar"),
@@ -203,15 +207,23 @@ class MaksimumRepository(
         val belop: Int,
     )
 
+    private data class Utbetalingsnøkkel(
+        val meldekortId: Long,
+        val fraOgMedDato: LocalDate,
+        val tilOgMedDato: LocalDate,
+    )
+
     private fun mapTilUtbetaling(
         rad: MeldekortRad,
-        anmerkninger: Map<Long, AnnenReduksjon>,
+        anmerkninger: Map<Utbetalingsnøkkel, AnnenReduksjon>,
         dagsats: Int,
         barnetillegg: Int,
     ): UtbetalingMedMer = UtbetalingMedMer(
         reduksjon = Reduksjon(
             timerArbeidet = rad.timerArbeidet,
-            annenReduksjon = anmerkninger[rad.meldekortId] ?: AnnenReduksjon(0.0f, false, 0.0f),
+            annenReduksjon = anmerkninger[
+                Utbetalingsnøkkel(rad.meldekortId, rad.posteringsperiodeFra, rad.posteringsperiodeTil)
+            ] ?: AnnenReduksjon(0.0f, false, 0.0f),
         ),
         periode = Periode(
             fraOgMedDato = rad.posteringsperiodeFra,
@@ -257,15 +269,34 @@ class MaksimumRepository(
     private fun selectAnmerkningerForMeldekortliste(meldekortIder: List<Long>): String {
         val idListe = meldekortIder.joinToString(",")
         return """
-            SELECT objekt_id,
-                   sum(CASE WHEN anmerkningkode = 'FSNN' THEN verdi ELSE 0 END) AS sykedager,
-                   sum(CASE WHEN anmerkningkode = 'SENN' THEN verdi ELSE 0 END) AS for_sent,
-                   sum(CASE WHEN anmerkningkode = 'FXNN' THEN verdi ELSE 0 END) AS fravar
-              FROM anmerkning
-             WHERE tabellnavnalias = 'MKORT'
-               AND objekt_id IN ($idListe)
-               AND anmerkningkode IN ('FSNN', 'SENN', 'FXNN')
-             GROUP BY objekt_id
+            WITH aap_posteringer AS (
+                SELECT p.meldekort_id, p.dato_periode_fra, p.dato_periode_til, p.vedtak_id
+                  FROM postering p
+                  JOIN vedtak v ON v.vedtak_id = p.vedtak_id
+                 WHERE p.meldekort_id IN ($idListe)
+                   AND v.rettighetkode = 'AAP'
+            ),
+            utbetalingsperioder AS (
+                SELECT DISTINCT meldekort_id, dato_periode_fra, dato_periode_til
+                  FROM aap_posteringer
+            )
+            SELECT u.meldekort_id, u.dato_periode_fra, u.dato_periode_til,
+                   SUM(CASE WHEN a.anmerkningkode = 'FSNN' THEN a.verdi ELSE 0 END) AS sykedager,
+                   SUM(CASE WHEN a.anmerkningkode = 'SENN' THEN a.verdi ELSE 0 END) AS for_sent,
+                   SUM(CASE WHEN a.anmerkningkode = 'FXNN' THEN a.verdi ELSE 0 END) AS fravar
+              FROM utbetalingsperioder u
+              JOIN anmerkning a ON a.objekt_id = u.meldekort_id
+             WHERE a.tabellnavnalias = 'MKORT'
+               AND a.anmerkningkode IN ('FSNN', 'SENN', 'FXNN')
+               AND (a.vedtak_id IS NULL OR EXISTS (
+                   SELECT 1
+                     FROM aap_posteringer p
+                    WHERE p.meldekort_id = u.meldekort_id
+                      AND p.dato_periode_fra = u.dato_periode_fra
+                      AND p.dato_periode_til = u.dato_periode_til
+                      AND p.vedtak_id = a.vedtak_id
+               ))
+             GROUP BY u.meldekort_id, u.dato_periode_fra, u.dato_periode_til
         """.trimIndent()
     }
 

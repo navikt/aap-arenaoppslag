@@ -179,5 +179,15 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(andreUtbetaling.belop).isEqualTo(731)
         assertThat(andreUtbetaling.periode)
             .isEqualTo(Periode(LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 7)))
+
+        val førsteReduksjon = førsteUtbetaling.reduksjon!!.annenReduksjon
+        assertThat(førsteReduksjon.sykedager).isEqualTo(2.0f)
+        assertThat(førsteReduksjon.fravær).isZero()
+        assertThat(førsteReduksjon.sentMeldekort).isFalse()
+
+        val andreReduksjon = andreUtbetaling.reduksjon!!.annenReduksjon
+        assertThat(andreReduksjon.sykedager).isZero()
+        assertThat(andreReduksjon.fravær).isEqualTo(3.0f)
+        assertThat(andreReduksjon.sentMeldekort).isFalse()
     }
 }

@@ -1,5 +1,6 @@
 package no.nav.aap.arenaoppslag.database
 
+import no.nav.aap.arenaoppslag.modeller.AnnenReduksjon
 import no.nav.aap.arenaoppslag.modeller.Periode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -92,6 +93,19 @@ class MaksimumRepositorySummeringTest : H2TestBase("flyway/maksimumsummering") {
 
         assertThat(vedtak.vedtaksId).isEqualTo("92032")
         assertThat(vedtak.utbetaling.single().belop).isEqualTo(9000)
+    }
+
+    @Test
+    fun `knytter reduksjoner til opprinnelige AAP-beregninger også etter G-regulering`() {
+        val vedtak = repo.hentMaksimumsløsning("12200000000", fraOgMedDato, tilOgMedDato)
+            .vedtak.associateBy { it.vedtaksId }
+        val førRegulering = vedtak.getValue("92031").utbetaling.single()
+        val etterRegulering = vedtak.getValue("92032").utbetaling.single()
+
+        assertThat(førRegulering.reduksjon!!.annenReduksjon)
+            .isEqualTo(AnnenReduksjon(sykedager = 2.0f, sentMeldekort = true, fravær = 3.0f))
+        assertThat(etterRegulering.reduksjon!!.annenReduksjon)
+            .isEqualTo(AnnenReduksjon(sykedager = 2.0f, sentMeldekort = true, fravær = 0.0f))
     }
 
     @Test
