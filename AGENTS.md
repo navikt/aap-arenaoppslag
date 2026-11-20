@@ -101,6 +101,7 @@ Only successful lookups are cached, keyed by the original input identifier.
 - **Use Norwegian** for variable, function, class, and property names — e.g.
   `hentPerioder`, `fodselsnummer`, `Periode`, `tilKontrakt`.
 - **Use Norwegian** in code comments.
+- Norwegian characters **æ, ø, å** are allowed in test names. Do not transliterate them to `ae`, `oe`, or `aa`.
 - **Avoid comments** where the code is self-explanatory. When a comment is necessary,
   it must explain **why** the code does what it does — not just what it does.
   Bad comment: `// setter fødselsnummer`. Good comment:
@@ -124,6 +125,10 @@ Only successful lookups are cached, keyed by the original input identifier.
 ---
 
 ## After making code changes
+
+Temporary `println` statements are allowed for local debugging with repository test data,
+which contains no real personal information. Remove the debug statements before finishing.
+This does not permit logging real personal information from external databases or runtime environments.
 
 After completing any code change, always run the full test suite and fix all failures before
 presenting the work as done:
