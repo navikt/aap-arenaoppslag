@@ -132,4 +132,32 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         assertThat(signifikanteVedtak).hasSize(0)
     }
 
+    @Test
+    fun `velger siste stans etter fra-dato og vedtak-id når personen kun har stanser`() {
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(PersonId(2301), testDato)
+
+        assertThat(signifikanteVedtak.map { it.vedtakId }).containsExactly(23013)
+    }
+
+    @Test
+    fun `velger siste stans når alle ordinære AAP-vedtak er utenfor tidsbufferen`() {
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(PersonId(2302), testDato)
+
+        assertThat(signifikanteVedtak.map { it.vedtakId }).containsExactly(23022)
+    }
+
+    @Test
+    fun `velger kun stans som gjelder siste løpende vedtak når det finnes`() {
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(PersonId(2303), testDato)
+
+        assertThat(signifikanteVedtak.map { it.vedtakId }).containsExactly(23032, 23031)
+    }
+
+    @Test
+    fun `velger ingen stans når siste løpende vedtak finnes uten en tilhørende stans`() {
+        val signifikanteVedtak = historikkRepository.hentAlleSignifikanteVedtakForPerson(PersonId(2304), testDato)
+
+        assertThat(signifikanteVedtak.map { it.vedtakId }).containsExactly(23041)
+    }
+
 }
