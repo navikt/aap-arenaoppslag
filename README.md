@@ -10,15 +10,7 @@ Det er ikke lagt opp til at denne skal kjøre standalone, siden den er avhengig 
 
 ## Tilgangssjekk
 
-Arenaoppslag kaller `POST /tilgang/arenasaker` i `aap-tilgang` med `personIdent` i JSON-body og et OBO-token.
-`INTEGRASJON_TILGANG_URL` og `INTEGRASJON_TILGANG_SCOPE` konfigurerer kallet.
-Klienten henter OBO-token via `AzureOBOTokenProvider` fra kelvin-komponenter.
-Provideren bruker `NAIS_TOKEN_EXCHANGE_ENDPOINT` i Texas og cacher token per scope og innkommende token.
-Det blokkerende provider-kallet kjører på `Dispatchers.IO` med støtte for kansellering.
-HTTP-klienten mot aap-tilgang har fem sekunders timeout og to sekunders tilkoblingstimeout.
-Tilgangskallet bruker ikke retry. Tilgangstjenesten håndterer selv nye forsøk mot Tilgangsmaskinen.
-Tilgang gis bare når svaret er HTTP 200 med `tilgang: true`. `tilgang: false` gir avslag uten avslagsdetaljer.
-Ugyldige svar og HTTP-feil behandles som integrasjonsfeil.
+Arenaoppslag kaller på AAP-tilgang for å sjekke om innlogget bruker har tilgang til å se AAP-informasjon i Arena for en gitt person eller en gitt sak. Dette gjøres per nå kun for kall fra Visningsklienten, men kan utvides til andre klienter senere. Trolig ikke mulig for kall fra aap-api (eksterne), som ikke gjøres i kontekst av en personlig bruker. 
 
 # Tabeller i Arena
 
