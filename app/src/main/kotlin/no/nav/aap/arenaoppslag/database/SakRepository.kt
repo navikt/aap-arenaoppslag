@@ -12,12 +12,12 @@ import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
+import kotlin.use
 
 class SakRepository(private val dataSource: DataSource) {
     fun hentSak(saksnummer: AutorisertSaksnummer): ArenaSak {
         return dataSource.connection.use { con ->
-            // vi har tidligere sjekket at saken finnes
-            selectSakMedSaksnummer(saksnummer.saksnummer, con)!!
+            selectSakMedSaksnummer(saksnummer, con)
         }
     }
     fun hentSak(saksnummer: Saksnummer): ArenaSak? {
@@ -108,19 +108,32 @@ class SakRepository(private val dataSource: DataSource) {
             }
         }
 
-        private fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
-            connection.prepareStatement(selectSakMedSaksnummer).use { preparedStatement ->
+        fun hentSakFraDatabasen(saksnummer: Saksnummer, connection: Connection): List<ArenaSak> {
+            val saker = connection.prepareStatement(selectSakMedSaksnummer).use { preparedStatement ->
                 preparedStatement.setInt(1, saksnummer.lopenummerSak)
                 preparedStatement.setInt(2, saksnummer.aar)
                 val resultSet = preparedStatement.executeQuery()
-                val saker = resultSet.map { row -> mapperForArenaSak(row) }
-
-                if (saker.isEmpty()) {
-                    return null
-                }
-
-                return saker.first()
+                resultSet.map { row -> mapperForArenaSak(row) }
             }
+            return saker
+        }
+
+        private fun selectSakMedSaksnummer(saksnummer: Saksnummer, connection: Connection): ArenaSak? {
+            val saker = hentSakFraDatabasen(saksnummer, connection)
+
+            if (saker.isEmpty()) {
+                return null
+            }
+
+            return saker.first()
+        }
+
+        private fun selectSakMedSaksnummer(saksnummer: AutorisertSaksnummer, connection: Connection): ArenaSak {
+            val saker = hentSakFraDatabasen(saksnummer.saksnummer, connection)
+            // AutorisertSaksnummer er kun tilgjengelig dersom vi har sjekket at saken finnes,
+            // derfor sjekker vi ikke for tom liste her
+
+            return saker.first()
         }
 
         fun mapperForArenaSak(row: ResultSet) = ArenaSak(
