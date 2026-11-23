@@ -31,6 +31,11 @@ class PersonService(
 
     init {
         CaffeineCacheMetrics.monitor(prometheus, personIdCache, "arenaoppslag_person_id")
+        CaffeineCacheMetrics.monitor(
+            prometheus,
+            saksnummerTilPersonidentifikatorCache,
+            "arenaoppslag_saksnummer_til_personidentifikator",
+        )
     }
 
     fun hentPersonIdentifikator(personidentifikator: PersonIdentifikator): ArenaPersonId? {
