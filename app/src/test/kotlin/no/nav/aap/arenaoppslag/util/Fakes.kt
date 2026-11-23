@@ -14,13 +14,13 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
 
 class Fakes : AutoCloseable {
-    internal val texas = embeddedServer(Netty, port = 0, module = Application::texas).apply { start() }
+    internal val texas = embeddedServer(Netty, host = "127.0.0.1", port = 0, module = Application::texas).apply { start() }
 
     init {
         // Texas
-        System.setProperty("nais.token.endpoint", "http://localhost:${texas.port()}/token")
-        System.setProperty("nais.token.exchange.endpoint", "http://localhost:${texas.port()}/token/exchange")
-        System.setProperty("nais.token.introspection.endpoint", "http://localhost:${texas.port()}/introspect")
+        System.setProperty("nais.token.endpoint", "http://127.0.0.1:${texas.port()}/token")
+        System.setProperty("nais.token.exchange.endpoint", "http://127.0.0.1:${texas.port()}/token/exchange")
+        System.setProperty("nais.token.introspection.endpoint", "http://127.0.0.1:${texas.port()}/introspect")
     }
 
     override fun close() {
