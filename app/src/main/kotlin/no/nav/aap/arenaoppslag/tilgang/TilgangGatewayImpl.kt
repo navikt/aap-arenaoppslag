@@ -24,7 +24,7 @@ import no.nav.aap.tilgang.TilgangResponse as TilgangApiResponse
 class TilgangGatewayImpl(
     private val httpClient: HttpClient = TilgangHttpClient.lagHttpClient(),
     private val tokenProvider: TokenProvider = AzureOBOTokenProvider,
-) : TilgangGateway {
+) : TilgangGateway, AutoCloseable {
     private val baseUrl by lazy { requiredConfigForKey("INTEGRASJON_TILGANG_URL").trimEnd('/') }
     private val scope by lazy { requiredConfigForKey("INTEGRASJON_TILGANG_SCOPE") }
 
