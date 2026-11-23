@@ -12,6 +12,7 @@ import no.nav.aap.arenaoppslag.service.SakService
 import no.nav.aap.arenaoppslag.service.SaksopplysningService
 import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
+import no.nav.aap.arenaoppslag.tilgang.TilgangkontrollService
 
 /**
  * Ting som ligger i denne fila skal ligge under /api/intern
@@ -74,7 +75,11 @@ fun Route.tilkjentYtelseForSak(sakService: SakService, tilkjentYtelserService: T
     }
 }
 
-fun Route.kvotehistorikkForSak(sakService: SakService, telleverkService: TelleverkService) {
+fun Route.kvotehistorikkForSak(
+    sakService: SakService,
+    telleverkService: TelleverkService,
+    tilgangskontrollService: TilgangkontrollService
+) {
     get("/sak/{saksnummer}/kvotehistorikk") {
         logger.info("Henter kvotehistorikk for sak")
         val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
@@ -95,6 +100,27 @@ fun Route.kvotehistorikkForSak(sakService: SakService, telleverkService: Telleve
 
         call.respond(status = HttpStatusCode.OK, message = kvoteHistorikk)
     }
+
+    // TODO midlertid for å teste autentisering. Duplikert.
+    get("/autorisert/sak/{saksnummer}/kvotehistorikk") {
+        logger.info("Henter autorisert kvotehistorikk for sak")
+        val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
+
+        if (saksnummer == null) {
+            logger.info("Saksnummer er på et ugyldig format")
+            return@get call.respond(HttpStatusCode.BadRequest)
+        }
+
+        tilgangskontrollService.medVerifisertSakTilgang(this, saksnummer) { godkjent ->
+            val sak = sakService.hentSak(godkjent.autorisertSaksnummer)
+
+            val personId = ArenaPersonId(sak.person.personId)
+            val kvoteHistorikk = telleverkService.hentKvoteBrukHendelserForPerson(personId)
+            call.respond(status = HttpStatusCode.OK, message = kvoteHistorikk)
+        }
+
+    }
+
 }
 
 fun Route.oppgaverForSak(sakService: SakService, oppgaveService: OppgaveService) {
@@ -121,8 +147,11 @@ fun Route.oppgaverForSak(sakService: SakService, oppgaveService: OppgaveService)
 }
 
 
-
-fun Route.telleverkForSak(sakService: SakService, posteringService: PosteringService, telleverkService: TelleverkService) {
+fun Route.telleverkForSak(
+    sakService: SakService,
+    posteringService: PosteringService,
+    telleverkService: TelleverkService
+) {
     get("/sak/{saksnummer}/telleverk") {
         logger.info("Henter telleverk for sak")
         val saksnummer = Saksnummer.fromString(call.parameters["saksnummer"])
@@ -145,10 +174,12 @@ fun Route.telleverkForSak(sakService: SakService, posteringService: PosteringSer
         val maksdato = sakService.hentMaksdatoAapForPerson(personId)
         val sisteUtbetalingDato = posteringService.hentSisteAapUtbetalingForPerson(personId)
 
-        call.respond(status = HttpStatusCode.OK, message = TelleverkResponse(
-            telleverk = tellerverk,
-            maksdato = maksdato,
-            sisteUtbetalingDato = sisteUtbetalingDato
-        ))
+        call.respond(
+            status = HttpStatusCode.OK, message = TelleverkResponse(
+                telleverk = tellerverk,
+                maksdato = maksdato,
+                sisteUtbetalingDato = sisteUtbetalingDato
+            )
+        )
     }
 }

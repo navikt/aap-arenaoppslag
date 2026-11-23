@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 import kotlin.math.min
 
 class TilgangkontrollService(
-    private val tilgangmaskinGateway: TilgangGateway,
+    private val tilgangGateway: TilgangGateway,
     private val personService: PersonService,
 ) {
     companion object {
@@ -31,7 +31,7 @@ class TilgangkontrollService(
      * og `NotFound` returneres bare til kallere som har lov til å vite at personen mangler.
      */
     suspend fun verifiserTilgangTilPerson(personIdentifikator: PersonIdentifikator, token: OidcToken): PersonTilgangResultat {
-        val response = tilgangmaskinGateway.harTilgangTilPerson(personIdentifikator, token)
+        val response = tilgangGateway.harTilgangTilPerson(personIdentifikator, token)
         if (!response.tilgang) {
             loggAvvisning(token, response, personIdentifikator)
             return PersonTilgangResultat.AccessDenied(response)
@@ -71,7 +71,7 @@ class TilgangkontrollService(
             return SakTilgangResultat.NotFound
         }
 
-        val response = tilgangmaskinGateway.harTilgangTilPerson(personIdentifikator, token)
+        val response = tilgangGateway.harTilgangTilPerson(personIdentifikator, token)
         if (!response.tilgang) {
             loggAvvisning(token, response, personIdentifikator, saksnummer)
             return SakTilgangResultat.AccessDenied(response)
@@ -84,7 +84,7 @@ class TilgangkontrollService(
         saksnummer: Saksnummer,
         onAccessDenied: suspend RoutingContext.(SakTilgangResultat.AccessDenied) -> Unit = { svarMedAvvistTilgang(it.avvistResponse) },
         onNotFound: suspend RoutingContext.() -> Unit = {
-            call.respond(HttpStatusCode.NotFound, "Fant ikke saken i AAP-Arena")
+            call.respond(HttpStatusCode.NotFound, "Fant ikke saken i AAP-Arena med saksnummer=$saksnummer")
         },
         onGranted: suspend RoutingContext.(SakTilgangResultat.Granted) -> Unit,
     ) {

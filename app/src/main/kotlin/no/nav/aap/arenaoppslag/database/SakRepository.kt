@@ -7,12 +7,18 @@ import no.nav.aap.arenaoppslag.modeller.Maksdatolinje
 import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
+import no.nav.aap.arenaoppslag.tilgang.AutorisertSaksnummer
 import org.intellij.lang.annotations.Language
 import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
 
 class SakRepository(private val dataSource: DataSource) {
+    fun hentSak(saksnummer: AutorisertSaksnummer): ArenaSak? {
+        return dataSource.connection.use { con ->
+            selectSakMedSaksnummer(saksnummer.saksnummer, con)
+        }
+    }
     fun hentSak(saksnummer: Saksnummer): ArenaSak? {
         return dataSource.connection.use { con ->
             selectSakMedSaksnummer(saksnummer, con)
