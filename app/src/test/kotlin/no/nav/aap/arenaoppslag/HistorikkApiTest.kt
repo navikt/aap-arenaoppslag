@@ -15,8 +15,8 @@ import java.time.LocalDateTime
 
 class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "flyway/historikkapi") {
     companion object {
-        const val ukjentPerson = "007"
-        const val kjentPerson = "kun_nye"
+        const val ukjentPerson = "00000000007"
+        const val kjentPerson = "00000000996"
     }
 
     private val testDato = LocalDate.parse("2025-12-15")
@@ -113,13 +113,13 @@ class HistorikkApiTest : H2TestBase("flyway/minimumtest", "flyway/eksisterer", "
     @Test
     fun `henter unntaksstatus og maksdato for gammel prosedyre, eget vedtak og stansvedtak`() {
         val forventninger = listOf(
-            Triple("gammel_nei", false, null),
-            Triple("gammel_ja", true, null),
-            Triple("eget_nei", false, null),
-            Triple("eget_ja", true, null),
-            Triple("stans_nei", false, null),
-            Triple("stans_ja", true, null),
-            Triple("gammel_dato", true, LocalDate.of(2025, 2, 1)),
+            Triple("00000022001", false, null),
+            Triple("00000022002", true, null),
+            Triple("00000022003", false, null),
+            Triple("00000022004", true, null),
+            Triple("00000022005", false, null),
+            Triple("00000022006", true, null),
+            Triple("00000022007", true, LocalDate.of(2025, 2, 1)),
         )
 
         withTestServer(h2) { gateway ->

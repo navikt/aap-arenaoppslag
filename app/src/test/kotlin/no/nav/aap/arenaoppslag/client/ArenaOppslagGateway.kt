@@ -338,12 +338,22 @@ class ArenaOppslagGateway(private val tokenProvider: AzureTokenGen, private val 
     }
 
     companion object {
-        fun withTestServer(dataSource: DataSource, testBody: suspend (ArenaOppslagGateway) -> Unit) {
+        fun withTestServer(
+            dataSource: DataSource,
+            navIdent: String? = null,
+            testBody: suspend (ArenaOppslagGateway) -> Unit,
+        ) {
             Fakes().use {
                 val config = TestConfig.default()
-                val tokenProvider = AzureTokenGen("issuer", "arenaoppslag")
+                val tokenProvider = AzureTokenGen("issuer", "arenaoppslag", navIdent)
                 testApplication {
-                    application { server(config, dataSource, FakePdlGateway()) }
+                    application {
+                        server(
+                            config,
+                            dataSource,
+                            FakePdlGateway(),
+                        )
+                    }
                     val gateway = ArenaOppslagGateway(tokenProvider, jsonHttpClient)
 
                     testBody(gateway)

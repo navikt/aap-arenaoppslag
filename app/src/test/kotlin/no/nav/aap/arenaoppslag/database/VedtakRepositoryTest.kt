@@ -3,7 +3,7 @@ package no.nav.aap.arenaoppslag.database
 import no.nav.aap.arenaoppslag.kontrakt.intern.Status
 import no.nav.aap.arenaoppslag.modeller.ArenaVedtakRad
 import no.nav.aap.arenaoppslag.modeller.Periode
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
 import no.nav.aap.arenaoppslag.modeller.VedtakStatus
@@ -17,7 +17,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
 
     @Test
     fun `hentSisteLøpendeVedtakDetalj mapper sakens løpenummer uavhengig av vedtakets`() {
-        val vedtak = requireNotNull(VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1201)))
+        val vedtak = requireNotNull(VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(ArenaPersonId(1201)))
 
         assertThat(vedtak.lopenrVedtak).isEqualTo(1)
         assertThat(vedtak.lopenrSak).isEqualTo(17)
@@ -26,7 +26,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
 
     @Test
     fun `hentSisteLøpendeVedtakDetalj støtter null for begge maksdatoer`() {
-        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1201))
+        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(ArenaPersonId(1201))
 
         assertThat(sak?.vedtakId).isEqualTo(12011)
         assertThat(sak?.maxdatoOrdinaer).isNull()
@@ -35,14 +35,14 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
 
     @Test
     fun `hentSisteLøpendeVedtakDetalj finner ikke vedtak med utfall NEI`() {
-        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1202))
+        val sak = VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(ArenaPersonId(1202))
 
         assertThat(sak).isNull()
     }
 
     @Test
     fun `hentSisteLøpendeVedtakDetalj finner vedtak med aktfase UVUP`() {
-        val vedtak = requireNotNull(VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(PersonId(1203)))
+        val vedtak = requireNotNull(VedtakRepository(h2).hentSisteLøpendeVedtakDetalj(ArenaPersonId(1203)))
 
         assertThat(vedtak.vedtakId).isEqualTo(12031)
         assertThat(vedtak.aktivitetsfaseKode).isEqualTo("UVUP")
@@ -115,7 +115,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
     fun `hentVedtak for person returnerer forventet vedtak`() {
         val vedtakRepository = VedtakRepository(h2)
 
-        val vedtak = vedtakRepository.hentVedtak(PersonId(1))
+        val vedtak = vedtakRepository.hentVedtak(ArenaPersonId(1))
         val enesteVedtak = vedtak.single()
 
         assertThat(enesteVedtak.sakId).isEqualTo("1")
@@ -132,7 +132,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
     fun `hentVedtak for person returnerer tom liste når person ikke har vedtak`() {
         val vedtakRepository = VedtakRepository(h2)
 
-        val vedtak = vedtakRepository.hentVedtak(PersonId(3))
+        val vedtak = vedtakRepository.hentVedtak((ArenaPersonId(3)))
 
         assertThat(vedtak).isEmpty()
     }
@@ -162,7 +162,7 @@ class VedtakRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/vedtakrepo
     fun `hentVedtak for person returnerer alle vedtak for person uten filtrering`() {
         val vedtakRepository = VedtakRepository(h2)
 
-        val vedtak = vedtakRepository.hentVedtak(PersonId(5))
+        val vedtak = vedtakRepository.hentVedtak(ArenaPersonId(5))
 
         assertThat(vedtak).hasSize(5)
         assertThat(vedtak).extracting(

@@ -6,7 +6,7 @@ import io.mockk.verify
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.modeller.KvoteVerdi
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -18,7 +18,7 @@ class TelleverkServiceTest {
 
     @Test
     fun `hentTelleverkForPerson bruker cache ved andre kall`() {
-        val personId = PersonId(100)
+        val personId = ArenaPersonId(100)
         every { telleverkRepository.hentTelleverkForPerson(personId) } returns setOf(
             KvoteVerdi(kode = "AAP", verdi = 4),
             KvoteVerdi(kode = "MAAPU", verdi = 25),
@@ -35,7 +35,7 @@ class TelleverkServiceTest {
 
     @Test
     fun `hentTelleverkForPerson cacher ikke null-resultat`() {
-        val personId = PersonId(101)
+        val personId = ArenaPersonId(101)
         every { telleverkRepository.hentTelleverkForPerson(personId) } returns emptySet()
 
         assertThat(service.hentTelleverkForPerson(personId)).isNull()
@@ -46,8 +46,8 @@ class TelleverkServiceTest {
 
     @Test
     fun `hentTelleverkForPerson cacher uavhengig per person`() {
-        val personEn = PersonId(102)
-        val personTo = PersonId(103)
+        val personEn = ArenaPersonId(102)
+        val personTo = ArenaPersonId(103)
         every { telleverkRepository.hentTelleverkForPerson(personEn) } returns setOf(KvoteVerdi("AAP", 4))
         every { telleverkRepository.hentTelleverkForPerson(personTo) } returns setOf(KvoteVerdi("AAP", 9))
 
@@ -60,7 +60,7 @@ class TelleverkServiceTest {
 
     @Test
     fun `hentKvoteBrukHendelserForPerson bruker cache ved andre kall`() {
-        val personId = PersonId(104)
+        val personId = ArenaPersonId(104)
         val hendelser = setOf(
             KvotebrukHendelse(
                 id = 1,
@@ -85,7 +85,7 @@ class TelleverkServiceTest {
 
     @Test
     fun `hentKvoteBrukHendelserForPerson cacher ogsaa tomt resultat`() {
-        val personId = PersonId(105)
+        val personId = ArenaPersonId(105)
         every { telleverkRepository.hentKvoteBrukHendelserForPerson(personId) } returns emptySet()
 
         assertThat(service.hentKvoteBrukHendelserForPerson(personId)).isEmpty()

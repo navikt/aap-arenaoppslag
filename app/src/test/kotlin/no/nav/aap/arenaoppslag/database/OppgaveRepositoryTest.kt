@@ -1,6 +1,6 @@
 package no.nav.aap.arenaoppslag.database
 
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -11,7 +11,7 @@ class OppgaveRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/oppgave")
     fun `hentOppgaverForPerson returnerer oppgaver sortert paa frist synkende med tomme frister sist`() {
         val oppgaveRepository = OppgaveRepository(h2)
 
-        val oppgaver = oppgaveRepository.hentOppgaverForPerson(PersonId(1))
+        val oppgaver = oppgaveRepository.hentOppgaverForPerson(ArenaPersonId(1))
 
         assertThat(oppgaver).hasSize(3)
         assertThat(oppgaver.map { it.fristDato })
@@ -22,7 +22,7 @@ class OppgaveRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/oppgave")
     fun `hentOppgaverForPerson mapper alle felter`() {
         val oppgaveRepository = OppgaveRepository(h2)
 
-        val oppgave = oppgaveRepository.hentOppgaverForPerson(PersonId(1))
+        val oppgave = oppgaveRepository.hentOppgaverForPerson(ArenaPersonId(1))
             .single { it.fristDato == LocalDate.of(2024, 5, 1) }
 
         assertThat(oppgave.beskrivelse).isEqualTo("Vurder rett til AAP")
@@ -39,7 +39,7 @@ class OppgaveRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/oppgave")
     fun `hentOppgaverForPerson taaler oppgave uten utfylte felter`() {
         val oppgaveRepository = OppgaveRepository(h2)
 
-        val oppgave = oppgaveRepository.hentOppgaverForPerson(PersonId(1)).last()
+        val oppgave = oppgaveRepository.hentOppgaverForPerson(ArenaPersonId(1)).last()
 
         assertThat(oppgave.beskrivelse).isEqualTo("Oppgave uten frist")
         assertThat(oppgave.oppgaveId).isEqualTo(1003L)
@@ -56,7 +56,7 @@ class OppgaveRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/oppgave")
     fun `hentOppgaverForPerson returnerer kun oppgaver for etterspurt person`() {
         val oppgaveRepository = OppgaveRepository(h2)
 
-        val oppgaver = oppgaveRepository.hentOppgaverForPerson(PersonId(2))
+        val oppgaver = oppgaveRepository.hentOppgaverForPerson(ArenaPersonId(2))
 
         assertThat(oppgaver).singleElement()
             .satisfies({ oppgave -> assertThat(oppgave.beskrivelse).isEqualTo("Oppgave for annen person") })
@@ -66,7 +66,7 @@ class OppgaveRepositoryTest : H2TestBase("flyway/minimumtest", "flyway/oppgave")
     fun `hentOppgaverForPerson returnerer tom liste for ukjent person`() {
         val oppgaveRepository = OppgaveRepository(h2)
 
-        assertThat(oppgaveRepository.hentOppgaverForPerson(PersonId(999))).isEmpty()
+        assertThat(oppgaveRepository.hentOppgaverForPerson(ArenaPersonId(999))).isEmpty()
     }
 }
 

@@ -16,7 +16,7 @@ class SamordningApiTest : H2TestBase("flyway/saklistetest") {
         withTestServer(h2) { gateway ->
             val result = runCatching {
                 gateway.hentMaksdatoSamordningByPerson(
-                    MaksdatoSamordningRequest("ukjent")
+                    MaksdatoSamordningRequest("00000000007")
                 )
             }
             assertThat(result.isSuccess)
@@ -28,7 +28,7 @@ class SamordningApiTest : H2TestBase("flyway/saklistetest") {
     fun `Henter ut maksdato by fodselsnummer, person uten AAP-vedtak ikke i Stans`() {
         withTestServer(h2) { gateway ->
             val maksdatoForUkjenteSaker = gateway.hentMaksdatoSamordningByPerson(
-                MaksdatoSamordningRequest("annen ukjent")
+                MaksdatoSamordningRequest("00000000008")
             )
             assertThat(maksdatoForUkjenteSaker.sisteAktuelleVedtak).isNull()
         }
@@ -38,7 +38,7 @@ class SamordningApiTest : H2TestBase("flyway/saklistetest") {
     fun `Henter ut maksdato by fodselsnummer, person med Stans-vedtak`() {
         withTestServer(h2) { gateway ->
             val maksdatoForUkjenteSaker = gateway.hentMaksdatoSamordningByPerson(
-                MaksdatoSamordningRequest("maksdato100")
+                MaksdatoSamordningRequest("00000000100")
             )
             assertThat(maksdatoForUkjenteSaker.sisteAktuelleVedtak).isNotNull()
             val expected = SamordningSisteVedtak(
@@ -57,7 +57,7 @@ class SamordningApiTest : H2TestBase("flyway/saklistetest") {
         withTestServer(h2) { gateway ->
             // FakePdlGateway ekkoer fnr-en, slik at PersonService kan slå opp uten å gå mot PDL.
             val maksdatoForKjenteSaker = gateway.hentMaksdatoSamordningByPerson(
-                MaksdatoSamordningRequest("maksdato102")
+                MaksdatoSamordningRequest("00000000102")
             )
 
             assertThat(maksdatoForKjenteSaker.sisteAktuelleVedtak?.vedtakId).isEqualTo(1122)

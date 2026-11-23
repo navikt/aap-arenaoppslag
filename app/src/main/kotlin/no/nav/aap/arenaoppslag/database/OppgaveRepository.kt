@@ -1,13 +1,13 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.ArenaOppgave
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.intellij.lang.annotations.Language
 import javax.sql.DataSource
 
 class OppgaveRepository(private val dataSource: DataSource) {
 
-    fun hentOppgaverForPerson(personId: PersonId): List<ArenaOppgave> {
+    fun hentOppgaverForPerson(personId: ArenaPersonId): List<ArenaOppgave> {
         return dataSource.connection.use { con ->
             con.createParameterizedQuery(selectOppgaverForPerson).use { preparedStatement ->
                 preparedStatement.setInt(1, personId.id)

@@ -14,7 +14,7 @@ class ManuellFordelingsgrunnlagApiTest : H2TestBase("flyway/saklistetest") {
     fun `ukjent person gir 404`() {
         withTestServer(h2) { gateway ->
             val result = runCatching {
-                gateway.hentManuellFordelingsgrunnlag(ManuellFordelingsgrunnlagRequest("ukjent"))
+                gateway.hentManuellFordelingsgrunnlag(ManuellFordelingsgrunnlagRequest("00000000007"))
             }
             val error = result.exceptionOrNull() as? ClientRequestException
             assertThat(error).isNotNull
@@ -26,10 +26,9 @@ class ManuellFordelingsgrunnlagApiTest : H2TestBase("flyway/saklistetest") {
     fun `kjent person med AAP-sak returnerer grunnlag med siste vedtak`() {
         withTestServer(h2) { gateway ->
             val grunnlag: ManuellFordelingsgrunnlagResponse =
-                gateway.hentManuellFordelingsgrunnlag(ManuellFordelingsgrunnlagRequest("maksdato102"))
+                gateway.hentManuellFordelingsgrunnlag(ManuellFordelingsgrunnlagRequest("00000000102"))
 
             assertThat(grunnlag.sisteVedtak?.vedtakId).isEqualTo(1122)
         }
     }
 }
-

@@ -1,14 +1,14 @@
 package no.nav.aap.arenaoppslag.database
 
 import no.nav.aap.arenaoppslag.modeller.Periode
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.intellij.lang.annotations.Language
 import java.sql.Date
 import java.time.LocalDate
 import javax.sql.DataSource
 
 class MeldekortperiodeRepository(private val dataSource: DataSource) {
-    fun hentGjeldendePeriodeForPerson(personId: PersonId, idag: LocalDate): Periode? = dataSource.connection.use { con ->
+    fun hentGjeldendePeriodeForPerson(personId: ArenaPersonId, idag: LocalDate): Periode? = dataSource.connection.use { con ->
         con.createParameterizedQuery(selectGjeldendePeriodeForPerson).use { preparedStatement ->
             preparedStatement.setInt(1, personId.id)
             preparedStatement.setDate(2, Date.valueOf(idag))
@@ -42,7 +42,7 @@ class MeldekortperiodeRepository(private val dataSource: DataSource) {
         }
     }
 
-    fun hentSisteLevertePeriodeForPerson(personId: PersonId): Periode? = dataSource.connection.use { con ->
+    fun hentSisteLevertePeriodeForPerson(personId: ArenaPersonId): Periode? = dataSource.connection.use { con ->
         con.createParameterizedQuery(selectSisteLevertePeriodeForPerson).use { preparedStatement ->
             preparedStatement.setInt(1, personId.id)
             val resultSet = preparedStatement.executeQuery()

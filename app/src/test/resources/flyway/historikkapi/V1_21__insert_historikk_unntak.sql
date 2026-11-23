@@ -1,11 +1,11 @@
 insert into PERSON (PERSON_ID, FODSELSNR, FORNAVN, ETTERNAVN)
-values (22001, 'gammel_nei', 'Test', 'Gammelt avslag'),
-       (22002, 'gammel_ja', 'Test', 'Gammel innvilgelse uten dato'),
-       (22003, 'eget_nei', 'Test', 'Eget avslag'),
-       (22004, 'eget_ja', 'Test', 'Egen innvilgelse uten dato'),
-       (22005, 'stans_nei', 'Test', 'Stans med avslag'),
-       (22006, 'stans_ja', 'Test', 'Stans innvilget uten dato'),
-       (22007, 'gammel_dato', 'Test', 'Gammel innvilgelse med dato');
+values (22001, '00000022001', 'Test', 'Gammelt avslag'),
+       (22002, '00000022002', 'Test', 'Gammel innvilgelse uten dato'),
+       (22003, '00000022003', 'Test', 'Eget avslag'),
+       (22004, '00000022004', 'Test', 'Egen innvilgelse uten dato'),
+       (22005, '00000022005', 'Test', 'Stans med avslag'),
+       (22006, '00000022006', 'Test', 'Stans innvilget uten dato'),
+       (22007, '00000022007', 'Test', 'Gammel innvilgelse med dato');
 
 insert into SAK (SAK_ID, SAKSKODE, REG_DATO, REG_USER, MOD_DATO, MOD_USER, TABELLNAVNALIAS,
                  OBJEKT_ID, AAR, LOPENRSAK, SAKSTATUSKODE)

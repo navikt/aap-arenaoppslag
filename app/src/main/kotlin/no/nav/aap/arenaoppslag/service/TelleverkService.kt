@@ -5,7 +5,7 @@ import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
 import no.nav.aap.arenaoppslag.Metrics.prometheus
 import no.nav.aap.arenaoppslag.database.TelleverkRepository
 import no.nav.aap.arenaoppslag.modeller.KvotebrukHendelse
-import no.nav.aap.arenaoppslag.modeller.PersonId
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.TelleverkForPerson
 import java.time.Duration
 
@@ -28,11 +28,11 @@ class TelleverkService(private val telleverkRepository: TelleverkRepository) {
     }
 
     // Caffeine kan ikke lagre null, så personer uten telleverk gir nytt databaseoppslag hver gang.
-    fun hentTelleverkForPerson(personId: PersonId): TelleverkForPerson? =
+    fun hentTelleverkForPerson(personId: ArenaPersonId): TelleverkForPerson? =
         telleverkCache.getIfPresent(personId.id)
             ?: hentTelleverkForPersonUtenCache(personId)?.also { telleverkCache.put(personId.id, it) }
 
-    private fun hentTelleverkForPersonUtenCache(personId: PersonId): TelleverkForPerson? {
+    private fun hentTelleverkForPersonUtenCache(personId: ArenaPersonId): TelleverkForPerson? {
         val tellekvoter = telleverkRepository.hentTelleverkForPerson(personId)
         val ordinaerAAPKvote = tellekvoter.firstOrNull { it.kode == "AAP" }?.verdi
         val utvidetAAPKvote = tellekvoter.firstOrNull { it.kode == "MAAPU" }?.verdi
@@ -49,7 +49,7 @@ class TelleverkService(private val telleverkRepository: TelleverkRepository) {
         )
     }
 
-    fun hentKvoteBrukHendelserForPerson(personId: PersonId): Set<KvotebrukHendelse> =
+    fun hentKvoteBrukHendelserForPerson(personId: ArenaPersonId): Set<KvotebrukHendelse> =
         kvotebrukCache.get(personId.id) {
             telleverkRepository.hentKvoteBrukHendelserForPerson(personId)
         }
