@@ -14,9 +14,10 @@ import java.sql.ResultSet
 import javax.sql.DataSource
 
 class SakRepository(private val dataSource: DataSource) {
-    fun hentSak(saksnummer: AutorisertSaksnummer): ArenaSak? {
+    fun hentSak(saksnummer: AutorisertSaksnummer): ArenaSak {
         return dataSource.connection.use { con ->
-            selectSakMedSaksnummer(saksnummer.saksnummer, con)
+            // vi har tidligere sjekket at saken finnes
+            selectSakMedSaksnummer(saksnummer.saksnummer, con)!!
         }
     }
     fun hentSak(saksnummer: Saksnummer): ArenaSak? {

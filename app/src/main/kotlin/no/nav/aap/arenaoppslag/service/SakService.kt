@@ -41,7 +41,7 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
         sakRepository.hentSak(saksnummer)?.tilSakId()
 
     fun hentSak(saksnummer: AutorisertSaksnummer): ArenaSak =
-        sakRepository.hentSak(saksnummer)!! // vi har tidligere sjekket at saken finnes
+        sakRepository.hentSak(saksnummer)
 
     fun hentSak(saksnummer: Saksnummer): ArenaSak? =
         sakRepository.hentSak(saksnummer)
