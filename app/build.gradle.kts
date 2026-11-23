@@ -33,6 +33,7 @@ dependencies {
     implementation(libs.konfig)
     implementation(libs.kelvin.server)
     implementation(libs.kelvin.infrastructure)
+    implementation(libs.tilgang.api.kontrakt)
 
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.jwt)
@@ -46,6 +47,9 @@ dependencies {
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.call.logging.jvm)
     implementation(libs.ktor.server.call.id)
+
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
 
     implementation(libs.ktor.serialization.jackson)
     implementation(libs.jackson.datatype.jsr310)
@@ -61,10 +65,10 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.mock)
     testImplementation(libs.nimbus.jose.jwt)
     testImplementation(libs.flyway.core)
     testImplementation(libs.assertj.core)
-    testImplementation(libs.ktor.client.content.negotiation)
     testImplementation(libs.h2)
     testImplementation(libs.mockk)
 }

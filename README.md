@@ -8,6 +8,18 @@ Skal kun kalles fra våre egne interne apper, ikke lag åpning for apper utenfor
 Bruker gradle wrapper, så bare klon og kjør `./gradlew build`.
 Det er ikke lagt opp til at denne skal kjøre standalone, siden den er avhengig av Arena.
 
+## Tilgangssjekk
+
+Arenaoppslag kaller `POST /tilgang/arenasaker` i `aap-tilgang` med `personIdent` i JSON-body og et OBO-token.
+`INTEGRASJON_TILGANG_URL` og `INTEGRASJON_TILGANG_SCOPE` konfigurerer kallet.
+Klienten henter OBO-token via `AzureOBOTokenProvider` fra kelvin-komponenter.
+Provideren bruker `NAIS_TOKEN_EXCHANGE_ENDPOINT` i Texas og cacher token per scope og innkommende token.
+Det blokkerende provider-kallet kjører på `Dispatchers.IO` med støtte for kansellering.
+HTTP-klienten mot aap-tilgang har fem sekunders timeout og to sekunders tilkoblingstimeout.
+Tilgangskallet bruker ikke retry. Tilgangstjenesten håndterer selv nye forsøk mot Tilgangsmaskinen.
+Tilgang gis bare når svaret er HTTP 200 med `tilgang: true`. `tilgang: false` gir avslag uten avslagsdetaljer.
+Ugyldige svar og HTTP-feil behandles som integrasjonsfeil.
+
 # Tabeller i Arena
 
 Tabellene i Arena er beskrevet av 

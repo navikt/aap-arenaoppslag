@@ -49,6 +49,8 @@ import no.nav.aap.arenaoppslag.modeller.MeldekortStartukeResponse
 import no.nav.aap.arenaoppslag.modeller.TelleverkResponse
 import no.nav.aap.arenaoppslag.modeller.TilkjentYtelseResponse
 import no.nav.aap.arenaoppslag.server
+import no.nav.aap.arenaoppslag.tilgang.TilgangGateway
+import no.nav.aap.arenaoppslag.tilgang.FakeTilgangGateway
 import no.nav.aap.arenaoppslag.util.AzureTokenGen
 import no.nav.aap.arenaoppslag.util.FakePdlGateway
 import no.nav.aap.arenaoppslag.util.Fakes
