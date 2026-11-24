@@ -10,10 +10,17 @@ class MeldekortStartukeRepositoryTest : H2TestBase("flyway/meldekort") {
     private val meldekortRepository by lazy { MeldekortRepository(h2) }
 
     @Test
-    fun `henter år og periodekode fra siste ATTF-meldekort`() {
+    fun `henter år og periodekode fra siste godkjente ATTF-meldekort`() {
         val startuke = meldekortRepository.hentStartukeForSisteMeldekort(ArenaPersonId(500))
 
-        assertThat(startuke).isEqualTo(MeldekortStartuke(aar = 2026, ukenummer = 53))
+        assertThat(startuke).isEqualTo(MeldekortStartuke(aar = 2026, ukenummer = 51))
+    }
+
+    @Test
+    fun `henter startuke fra meldekort i meldegruppe FY`() {
+        val startuke = meldekortRepository.hentStartukeForSisteMeldekort(ArenaPersonId(504))
+
+        assertThat(startuke).isEqualTo(MeldekortStartuke(aar = 2026, ukenummer = 12))
     }
 
     @Test
@@ -24,8 +31,15 @@ class MeldekortStartukeRepositoryTest : H2TestBase("flyway/meldekort") {
     }
 
     @Test
-    fun `ignorerer meldekort i andre meldegrupper enn ATTF`() {
+    fun `ignorerer meldekort i andre meldegrupper enn FY og ATTF`() {
         val startuke = meldekortRepository.hentStartukeForSisteMeldekort(ArenaPersonId(501))
+
+        assertThat(startuke).isNull()
+    }
+
+    @Test
+    fun `ignorerer meldekort med annen beregningsstatus enn KLAR og FERDI`() {
+        val startuke = meldekortRepository.hentStartukeForSisteMeldekort(ArenaPersonId(505))
 
         assertThat(startuke).isNull()
     }
@@ -37,4 +51,3 @@ class MeldekortStartukeRepositoryTest : H2TestBase("flyway/meldekort") {
         assertThat(startuke).isNull()
     }
 }
-

@@ -321,7 +321,8 @@ class MeldekortRepository(
     }
 
     // Meldekort-ID er stigende sekvens i Arena, så høyeste ID er personens siste meldekort.
-    // Meldegruppe ATTF avgrenser til AAP-meldekort.
+    // Meldegruppe ATTF og FY avgrenser til AAP-meldekort. Kun meldekort med beregningsstatus
+    // KLAR eller FERDI telles, slik at meldekort som ikke er ferdig behandlet ikke styrer startuken.
     @Language("OracleSql")
     private val startukeForSisteMeldekortSql = """
         SELECT m.aar, m.periodekode
@@ -329,7 +330,8 @@ class MeldekortRepository(
          WHERE m.meldekort_id = (SELECT MAX(meldekort_id)
                                    FROM meldekort
                                   WHERE person_id = ?
-                                    AND meldegruppekode = 'ATTF')
+                                    AND meldegruppekode IN ('FY', 'ATTF')
+                                    AND beregningstatuskode IN ('KLAR', 'FERDI'))
     """.trimIndent()
 
     // Oracle støtter ikke listeparametere i PreparedStatement, så meldekort-IDer interpoleres direkte.
