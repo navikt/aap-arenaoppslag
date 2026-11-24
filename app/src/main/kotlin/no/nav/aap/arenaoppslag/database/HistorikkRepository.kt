@@ -22,7 +22,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
 
     companion object {
 
-        // S1a: Hent alle AAP-vedtak med relevant historikk for personen, utenom stanser
+        // S1a: Hent alle AAP-vedtak med relevant historikk for personen, utenom stanser og vedtak som er under behandling
         // OBS 1: tabellen i Prod har forekomster av at til_dato er før fra_dato.
         // De kalles for "ugyldiggjorte vedtak", og for "deaktiverte saker". Vi ekskluderer disse vedtakene her.
         // OBS 2: De samme feltene kan være (null, null). Dette er "etterregistrerte vedtak" som er opprettet i
