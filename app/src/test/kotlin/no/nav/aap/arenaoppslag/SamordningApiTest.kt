@@ -8,6 +8,7 @@ import no.nav.aap.arenaoppslag.kontrakt.apiv1.SamordningSisteVedtak
 import no.nav.aap.arenaoppslag.kontrakt.apiv1.SamordningVedtakStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class SamordningApiTest : H2TestBase("flyway/saklistetest") {
 
@@ -61,6 +62,7 @@ class SamordningApiTest : H2TestBase("flyway/saklistetest") {
             )
 
             assertThat(maksdatoForKjenteSaker.sisteAktuelleVedtak?.vedtakId).isEqualTo(1122)
+            assertThat(maksdatoForKjenteSaker.sisteAktuelleVedtak?.vedtakTil).isEqualTo(LocalDate.of(2027, 1, 1))
         }
     }
 
