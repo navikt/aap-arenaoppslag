@@ -4,7 +4,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class KvotebrukRepositoryTest : H2TestBase("flyway/kvotebruktest") {
+class TelleverkRepositoryTest : H2TestBase("flyway/kvotebruktest") {
 
     private val repo = lazy { TelleverkRepository(h2) }
 

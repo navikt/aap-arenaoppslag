@@ -39,6 +39,11 @@ fun Application.texas() {
             call.respond(TestToken(access_token = token))
         }
 
+        post("/token/exchange") {
+            val token = AzureTokenGen("tilgang", "tilgang", navIdent = "Lokalsaksbehandler").generate()
+            call.respond(TestToken(access_token = token))
+        }
+
         post("/introspect") {
             call.respond(mapOf("active" to true))
         }
