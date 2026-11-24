@@ -13,6 +13,7 @@ import no.nav.aap.arenaoppslag.modeller.ArenaSakPerson
 import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
 import no.nav.aap.arenaoppslag.modeller.SakId
 import no.nav.aap.arenaoppslag.modeller.Saksnummer
+import no.nav.aap.arenaoppslag.tilgang.AutorisertSaksnummer
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
@@ -36,9 +37,11 @@ class SakService(private val sakRepository: SakRepository, private val vedtakfak
         }
     }
 
-
     fun hentSakId(saksnummer: Saksnummer): SakId? =
         sakRepository.hentSak(saksnummer)?.tilSakId()
+
+    fun hentSak(saksnummer: AutorisertSaksnummer): ArenaSak =
+        sakRepository.hentSak(saksnummer)
 
     fun hentSak(saksnummer: Saksnummer): ArenaSak? =
         sakRepository.hentSak(saksnummer)

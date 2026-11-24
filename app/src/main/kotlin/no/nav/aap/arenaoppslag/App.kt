@@ -37,6 +37,9 @@ import no.nav.aap.arenaoppslag.service.TelleverkService
 import no.nav.aap.arenaoppslag.service.TilkjentYtelserService
 import no.nav.aap.arenaoppslag.service.VedtakService
 import no.nav.aap.arenaoppslag.service.VedtakfaktaService
+import no.nav.aap.arenaoppslag.tilgang.TilgangGateway
+import no.nav.aap.arenaoppslag.tilgang.TilgangGatewayImpl
+import no.nav.aap.arenaoppslag.tilgang.TilgangkontrollService
 import no.nav.aap.komponenter.server.auth.IdentityProvider
 import no.nav.aap.komponenter.server.authentication
 import org.slf4j.LoggerFactory
@@ -69,6 +72,7 @@ fun Application.server(
     config: AppConfig = AppConfig(),
     datasource: DataSource = ArenaDatasource.create(config.database),
     pdlGateway: IPdlGateway = PdlGateway(),
+    tilgangGateway: TilgangGatewayImpl = TilgangGatewayImpl(),
 ) {
     statusPages()
 
@@ -255,6 +259,14 @@ private fun skapMeldekortService(datasource: DataSource): MeldekortService {
     return MeldekortService(meldekortRepository)
 }
 
+private fun skapTilgangkontrollService(datasource: DataSource, pdlGateway: IPdlGateway, tilgangGateway: TilgangGateway): TilgangkontrollService {
+    val tilgangkontrollService = TilgangkontrollService(
+        tilgangGateway = tilgangGateway,
+        personService = skapPersonService(datasource, pdlGateway)
+    )
+    return tilgangkontrollService
+}
+
 private fun Application.routes(
     datasource: DataSource,
     pdlGateway: IPdlGateway,
@@ -272,6 +284,8 @@ private fun Application.routes(
     val manuellFordelingsgrunnlagService = skapManuellFordelingsgrunnlagService(datasource, telleverkService)
     val migreringService = skapMigreringService(datasource, telleverkService)
     val meldekortService = skapMeldekortService(datasource)
+    val tilgangGateway = TilgangGatewayImpl()
+    val tilgangskontrollService = skapTilgangkontrollService(datasource, pdlGateway, tilgangGateway)
 
     routing {
         actuator(prometheus)
@@ -315,7 +329,8 @@ private fun Application.routes(
                 )
                 kvotehistorikkForSak(
                     sakService = sakListeService,
-                    telleverkService = telleverkService
+                    telleverkService = telleverkService,
+                    tilgangskontrollService = tilgangskontrollService
                 )
                 telleverkForSak(
                     sakService = sakListeService,

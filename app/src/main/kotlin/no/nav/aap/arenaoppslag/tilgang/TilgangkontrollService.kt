@@ -1,0 +1,144 @@
+package no.nav.aap.arenaoppslag.tilgang
+
+import io.ktor.http.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import no.nav.aap.arenaoppslag.kontrakt.apiv1.TilgangAvvistResponse
+import no.nav.aap.arenaoppslag.modeller.ArenaPersonId
+import no.nav.aap.arenaoppslag.modeller.PersonIdentifikator
+import no.nav.aap.arenaoppslag.modeller.Saksnummer
+import no.nav.aap.arenaoppslag.service.PersonService
+import no.nav.aap.arenaoppslag.util.token
+import no.nav.aap.komponenter.httpklient.httpclient.tokenprovider.OidcToken
+import no.nav.aap.tilgang.TilgangResponse
+import org.slf4j.LoggerFactory
+import kotlin.math.min
+
+class TilgangkontrollService(
+    private val tilgangGateway: TilgangGateway,
+    private val personService: PersonService,
+) {
+    companion object {
+        private val logger = LoggerFactory.getLogger("TilgangkontrollService")
+    }
+
+    private class VerifisertPerson(override val personId: ArenaPersonId) : AuthorisertPersonId
+    private class VerifisertSak(override val saksnummer: Saksnummer) : AutorisertSaksnummer
+
+    /**
+     * Tilgang først: Hvis tokenet ikke gir lesetilgang til denne identifikatoren, returneres
+     * `AccessDenied` uten å avsløre om personen finnes. Hvis tilgang gis, slås person-ID-en opp,
+     * og `NotFound` returneres bare til kallere som har lov til å vite at personen mangler.
+     */
+    suspend fun verifiserTilgangTilPerson(personIdentifikator: PersonIdentifikator, token: OidcToken): PersonTilgangResultat {
+        val response = tilgangGateway.harTilgangTilPerson(personIdentifikator, token)
+        if (!response.tilgang) {
+            loggAvvisning(token, response, personIdentifikator)
+            return PersonTilgangResultat.AccessDenied(response)
+        }
+
+        val personId = personService.hentPersonIdentifikator(personIdentifikator)
+        if (personId == null) {
+            logger.info("Fant ikke person med angitt personIdentifikator i AAP-Arena")
+            return PersonTilgangResultat.NotFound
+        }
+
+        return PersonTilgangResultat.Granted(VerifisertPerson(personId))
+    }
+
+    suspend fun medVerifisertPersonTilgang(
+        routingContext: RoutingContext,
+        personidentifikator: PersonIdentifikator,
+        onAccessDenied: suspend RoutingContext.(PersonTilgangResultat.AccessDenied) -> Unit = { svarMedAvvistTilgang(it.avvistResponse) },
+        onNotFound: suspend RoutingContext.() -> Unit = {
+            call.respond(HttpStatusCode.NotFound, "Fant ikke personen i AAP-Arena")
+        },
+        onGranted: suspend RoutingContext.(PersonTilgangResultat.Granted) -> Unit,
+    ) {
+        val tilgang = verifiserTilgangTilPerson(personidentifikator, routingContext.call.token())
+        routingContext.medTilgangKontrollert(tilgang, onAccessDenied, onNotFound, onGranted)
+    }
+
+    /**
+     * Finner personen bak [saksnummer] og kontrollerer deretter om tokenet gir tilgang til personen.
+     * Returnerer et sealed result slik at kallere kan skille mellom `NotFound` og `AccessDenied`.
+     * Vi velger å opplyse om saken finnes eller ikke til alle kallere.
+     */
+    suspend fun verifiserTilgangTilSak(saksnummer: Saksnummer, token: OidcToken): SakTilgangResultat {
+        val personIdentifikator = personService.hentPersonIdentifikator(saksnummer)
+        if (personIdentifikator == null) {
+            logger.info("Fant ikke saksnummer=$saksnummer i AAP-Arena med en person tilknyttet")
+            return SakTilgangResultat.NotFound
+        }
+
+        val response = tilgangGateway.harTilgangTilPerson(personIdentifikator, token)
+        if (!response.tilgang) {
+            loggAvvisning(token, response, personIdentifikator, saksnummer)
+            return SakTilgangResultat.AccessDenied(response)
+        }
+        return SakTilgangResultat.Granted(VerifisertSak(saksnummer))
+    }
+
+    suspend fun medVerifisertSakTilgang(
+        routingContext: RoutingContext,
+        saksnummer: Saksnummer,
+        onAccessDenied: suspend RoutingContext.(SakTilgangResultat.AccessDenied) -> Unit = { svarMedAvvistTilgang(it.avvistResponse) },
+        onNotFound: suspend RoutingContext.() -> Unit = {
+            call.respond(HttpStatusCode.NotFound, "Fant ikke saken i AAP-Arena med saksnummer=$saksnummer")
+        },
+        onGranted: suspend RoutingContext.(SakTilgangResultat.Granted) -> Unit,
+    ) {
+        val tilgang = verifiserTilgangTilSak(saksnummer, routingContext.call.token())
+        routingContext.medTilgangKontrollert(tilgang, onAccessDenied, onNotFound, onGranted)
+    }
+
+    private suspend fun RoutingContext.svarMedAvvistTilgang(avvistResponse: TilgangResponse?) {
+        if (avvistResponse == null) {
+            call.respond(HttpStatusCode.Forbidden)
+        } else {
+            call.respond(
+                HttpStatusCode.Forbidden,
+                TilgangAvvistResponse(
+                    title = "ingen tilgang",
+                ),
+            )
+        }
+    }
+
+    /**
+     * Logger avvisning fra tilgangstjenesten:
+     * nav-ident, avvisningsårsak og en maskert variant av brukerens fødselsnummer (kun de seks
+     * første sifrene vises, resten maskeres). Hele fødselsnummeret logges aldri.
+     */
+    private fun loggAvvisning(
+        token: OidcToken,
+        avvistResponse: TilgangResponse?,
+        personIdentifikator: PersonIdentifikator,
+        saksnummer: Saksnummer? = null,
+    ) {
+        LoggerFactory.getLogger("team-logs").info(
+            // logger z-ident for nav-ansatt
+            "aap-tilgang avviste tilgang: navIdent={}, tilgangIKontekst={}, fnr(maskert)={}{}",
+            token.navIdent(),
+            avvistResponse?.tilgangIKontekst,
+            maskerFnr(personIdentifikator.id),
+            saksnummer?.let { ", saksnummer=$it" }.orEmpty(),
+        )
+    }
+
+    private fun maskerFnr(fodselsnummer: String): String =
+        "${fodselsnummer.substring(0, min(fodselsnummer.length, 6))}*****"
+
+}
+
+sealed interface PersonTilgangResultat {
+    data class Granted(val autorisertPerson: AuthorisertPersonId) : PersonTilgangResultat
+    data object NotFound : PersonTilgangResultat
+    data class AccessDenied(val avvistResponse: TilgangResponse) : PersonTilgangResultat
+}
+
+sealed interface SakTilgangResultat {
+    data class Granted(val autorisertSaksnummer: AutorisertSaksnummer) : SakTilgangResultat
+    data object NotFound : SakTilgangResultat
+    data class AccessDenied(val avvistResponse: TilgangResponse) : SakTilgangResultat
+}
