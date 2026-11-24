@@ -26,6 +26,7 @@ public data class MaksdatoSamordningResponse(
                         maksdato = maksdato,
                         status = status,
                         harForlengelseEtter11_12 = it.unntaksvilkaarInnvilget == true,
+                        vedtakTil = it.sisteVedtak.til,
                     )
                 )
             } ?: INGEN
@@ -57,5 +58,6 @@ public data class SamordningSisteVedtak(
     val saknummer: String,
     val maksdato: LocalDate?, // maxdato returneres kun for vedtak med aktivitetsfase UA og AU i Arena, ellers null
     val status: SamordningVedtakStatus,
-    val harForlengelseEtter11_12: Boolean
+    val harForlengelseEtter11_12: Boolean,
+    val vedtakTil: LocalDate? = null,
 )
