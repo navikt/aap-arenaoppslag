@@ -276,7 +276,8 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
                             (DATE '$maksimalTidUendret'),
                             (DATE '${maksimalTidUendret.plusDays(1)}')
                         ) endret(dato)
-                        WHERE (status.kode NOT IN ('OPPRE', 'MOTAT') OR utfall.kode IS NULL)
+                        WHERE (status.kode <> 'OPPRE' OR utfall.kode IS NULL OR utfall.kode = 'NEI')
+                          AND (status.kode <> 'MOTAT' OR utfall.kode IS NULL)
                           AND NOT (
                               type.kode IN ('O', 'E', 'G')
                               AND status.kode IN ('IVERK', 'AVSLU')
@@ -300,13 +301,16 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
                     SELECT v.*
                     FROM vedtak v
                     WHERE v.person_id = ?
-                      AND (v.utfallkode IS NULL OR v.utfallkode = 'JA')
+                      AND (
+                          v.utfallkode IS NULL OR v.utfallkode = 'JA'
+                          OR (v.utfallkode = 'NEI' AND v.vedtakstatuskode IN ('OPPRE', 'REGIS', 'INNST'))
+                      )
                       AND v.rettighetkode = 'AAP'
                       AND NOT (fra_dato > til_dato AND (til_dato IS NOT NULL AND fra_dato IS NOT NULL))
                       AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'MOTAT', 'REGIS', 'INNST'))
                       AND vedtaktypekode IN ('O','E','G')
                       AND (til_dato IS NULL OR til_dato >= ?)
-                      AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?)
+                      AND NOT ((v.utfallkode IS NULL OR v.utfallkode = 'NEI') AND v.mod_dato <= ?)
                       AND v.MOD_DATO >= ?
                     ORDER BY aar DESC, lopenrsak DESC, lopenrvedtak DESC
                 """.trimIndent()
@@ -336,7 +340,8 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
                     statement.setInt(1, 992)
                     statement.setDate(2, Date.valueOf(vanligTidsbuffer))
                     statement.setDate(3, Date.valueOf(maksimalTidUbehandlet))
-                    statement.setDate(4, Date.valueOf(maksimalTidUendret))
+                    statement.setDate(4, Date.valueOf(maksimalTidUbehandlet))
+                    statement.setDate(5, Date.valueOf(maksimalTidUendret))
                     statement.executeQuery().use { resultSet ->
                         resultSet.map { HistorikkRepository.mapperForArenaVedtak(it) }
                     }
@@ -368,7 +373,7 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
                     .anyMatch { it.tilDato == null }
                 assertThat(vedtakUnderBehandling.filter { it.statusKode in setOf("OPPRE", "MOTAT") })
                     .extracting("statusKode", "utfallkode")
-                    .containsOnly(tuple("OPPRE", null), tuple("MOTAT", null))
+                    .containsOnly(tuple("OPPRE", null), tuple("OPPRE", "NEI"), tuple("MOTAT", null))
                 assertThat(signifikanteVedtak).containsExactlyElementsOf(forventedeVedtak)
             } finally {
                 connection.rollback()
@@ -376,4 +381,61 @@ class HistorikkRepositoryTest : H2TestBase("flyway/eksisterer") {
         }
     }
 
+    @Test
+    fun `tar bare med ferske NEI-vedtak under behandling for AAP og stanser`() {
+        val maksimalTidUbehandlet = testDato.minusWeeks(HistorikkRepository.maksimalTidUbehandletAAPUker)
+        val forventedeVedtakIder = mutableListOf<Int>()
+        var vedtakId = 3000000
+
+        h2.connection.use { connection ->
+            connection.autoCommit = false
+            try {
+                connection.prepareStatement(
+                    """
+                    INSERT INTO vedtak (
+                        vedtak_id, sak_id, vedtakstatuskode, vedtaktypekode, utfallkode,
+                        rettighetkode, person_id, fra_dato, til_dato, aetatenhet_behandler,
+                        lopenrsak, aar, lopenrvedtak, aktfasekode, dato_mottatt, mod_dato
+                    )
+                    VALUES (?, 13, ?, ?, 'NEI', 'AAP', 992, ?, ?, '4402', 13, 2021, ?, 'IKKE', ?, ?)
+                    """.trimIndent()
+                ).use { statement ->
+                    for (type in listOf("O", "E", "G", "S")) {
+                        for (status in listOf("OPPRE", "MOTAT", "REGIS", "INNST", "IVERK", "AVSLU")) {
+                            if (type == "S" && status == "MOTAT") continue
+                            for (endret in listOf(
+                                maksimalTidUbehandlet.minusDays(1),
+                                maksimalTidUbehandlet,
+                                maksimalTidUbehandlet.plusDays(1),
+                                testDato,
+                            )) {
+                                statement.setInt(1, vedtakId)
+                                statement.setString(2, status)
+                                statement.setString(3, type)
+                                statement.setDate(4, Date.valueOf(testDato))
+                                statement.setDate(5, Date.valueOf(testDato))
+                                statement.setInt(6, vedtakId)
+                                statement.setDate(7, Date.valueOf(testDato))
+                                statement.setDate(8, Date.valueOf(endret))
+                                statement.executeUpdate()
+
+                                if (status in setOf("OPPRE", "REGIS", "INNST") && endret > maksimalTidUbehandlet) {
+                                    forventedeVedtakIder.add(vedtakId)
+                                }
+                                vedtakId++
+                            }
+                        }
+                    }
+                }
+
+                val signifikanteVedtak = HistorikkRepository.hentAlleSignifikanteVedtakForPerson(
+                    992, testDato, connection
+                )
+                assertThat(signifikanteVedtak.map { it.vedtakId })
+                    .containsExactlyInAnyOrderElementsOf(forventedeVedtakIder)
+            } finally {
+                connection.rollback()
+            }
+        }
+    }
 }

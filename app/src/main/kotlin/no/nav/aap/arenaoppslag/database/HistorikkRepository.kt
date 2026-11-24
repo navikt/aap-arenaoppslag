@@ -63,7 +63,11 @@ class HistorikkRepository(private val dataSource: DataSource) {
           AND (v.til_dato IS NULL OR v.til_dato >= ?)
           AND (
               (v.utfallkode IS NULL AND v.mod_dato > ?) -- er ubehandlet, men rimelig nye
-              OR
+            OR
+              -- De som er under behandling kan midlertidig ha utfallkode = 'NEI', som senere blir endre til 'JA'
+              -- Behold disse en en stund, men ekskluder de som har vært ubehandlet lenge
+              (v.utfallkode = 'NEI' AND vedtakstatuskode IN ('OPPRE', 'REGIS', 'INNST') AND v.mod_dato > ?)
+            OR
               (v.utfallkode = 'JA' AND v.mod_dato >= ?) -- er ikke for gamle til å være relevante
           )
         """.trimIndent()
@@ -76,7 +80,9 @@ class HistorikkRepository(private val dataSource: DataSource) {
         FROM 
               vedtak v 
         WHERE v.person_id = ?
-          AND (v.utfallkode IS NULL OR v.utfallkode = 'JA') -- kun vedtak som er innvilget eller under behandling
+          -- Kun vedtak som er innvilget eller under behandling. 
+          -- De som er under behandling kan midlertidig ha utfallkode = 'NEI', som senere blir endre til 'JA'.
+          AND (v.utfallkode IS NULL OR v.utfallkode = 'JA' OR (v.utfallkode = 'NEI' AND vedtakstatuskode IN ('OPPRE', 'REGIS', 'INNST') ) ) 
           AND v.rettighetkode = 'AAP'
           AND NOT ((til_dato IS NOT NULL AND fra_dato IS NOT NULL) AND fra_dato > til_dato) -- filtrer ut ugyldiggjorte vedtak
           AND ((fra_dato IS NOT NULL OR til_dato IS NOT NULL) OR vedtakstatuskode IN ('OPPRE', 'REGIS', 'INNST')) -- filtrer ut etterregistrerte vedtak, men behold vedtak som er under behandling
@@ -93,7 +99,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                   )
                 )
           )
-          AND NOT (v.utfallkode IS NULL AND v.mod_dato <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
+          AND NOT ((v.utfallkode IS NULL OR v.utfallkode = 'NEI') AND v.mod_dato <= ?) -- opprettet men ikke behandlet på lang tid, ekskluder disse
           AND v.MOD_DATO >= ? -- ytelse: unngå å løpe gjennom veldig gamle vedtak
         """.trimIndent()
 
@@ -248,6 +254,7 @@ class HistorikkRepository(private val dataSource: DataSource) {
                 // S1b: AAP-vedtak under behandling
                 preparedStatement.setInt(p++, arenaPersonId)
                 preparedStatement.setDate(p++, vanligTidsbuffer)
+                preparedStatement.setDate(p++, maksimalTidUbehandletAAP)
                 preparedStatement.setDate(p++, maksimalTidUbehandletAAP)
                 preparedStatement.setDate(p++, maksimalTidUendretAAP)
 
