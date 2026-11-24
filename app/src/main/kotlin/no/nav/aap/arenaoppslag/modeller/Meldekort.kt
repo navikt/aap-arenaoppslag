@@ -129,7 +129,7 @@ data class MeldekortForSak(
     val meldekort: List<Meldekort>,
 )
 
-// Domeneobjekt: år og startuke for personens siste AAP-meldekort (meldegruppe ATTF).
+// Domeneobjekt: år og startuke for personens siste AAP-meldekort (meldegruppe FY/ATTF).
 data class MeldekortStartuke(
     val aar: Int,
     val ukenummer: Int,
