@@ -107,6 +107,9 @@ class MaksimumRepository(
         vedtaksperiode: Periode,
     ): List<MeldekortRad> {
         // G-regulering kan ugyldiggjøre vedtaket posteringen peker på, uten at utbetalingen bortfaller.
+
+        // Dette filteret sørger for at utbetalingsradene holder seg innenfor vedtaksperioden
+        // Ellers kan man risikere å få samme utbetaling på flere vedtak
         return meldekortrader.filter { rad ->
             (vedtaksperiode.fraOgMedDato == null ||
                     rad.posteringsperiodeFra >= vedtaksperiode.fraOgMedDato) &&
