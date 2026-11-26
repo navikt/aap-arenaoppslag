@@ -66,6 +66,9 @@ spec:
         - application: azure-token-generator
           cluster: dev-gcp
           namespace: nais
+        - application: localauth
+          cluster: dev-gcp
+          namespace: aap
         {{/if}}
     outbound:
       rules:
