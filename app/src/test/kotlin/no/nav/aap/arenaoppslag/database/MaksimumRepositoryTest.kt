@@ -115,4 +115,79 @@ class MaksimumRepositoryTest : H2TestBase("flyway/maksimum") {
         assertThat(meldekortdata2.sentMeldekort).isTrue()
         assertThat(meldekortdata2.fravær).isEqualTo(2.0f)
     }
+
+    @Test
+    fun `beholder hele posteringsperioden over årsskiftet når bare januar er etterspurt`() {
+        val vedtak = repo.hentMaksimumsløsning(
+            "44444444444",
+            LocalDate.of(2023, 1, 1),
+            LocalDate.of(2023, 1, 31),
+        ).vedtak.single()
+        val utbetaling = vedtak.utbetaling.single()
+
+        assertThat(utbetaling.periode).isEqualTo(Periode(LocalDate.of(2022, 12, 26), LocalDate.of(2023, 1, 8)))
+        assertThat(utbetaling.belop).isEqualTo(5200)
+        assertThat(utbetaling.reduksjon!!.timerArbeidet).isEqualTo(5.0)
+    }
+
+    @Test
+    fun `fordeler posteringer mellom to saker uten å duplisere en periode som krysser vedtaksstart`() {
+        val vedtak = repo.hentMaksimumsløsning("55555555555", søkeperiodeFra, søkeperiodeTil)
+            .vedtak.associateBy { it.vedtaksId }
+
+        assertThat(vedtak.keys).containsExactlyInAnyOrder("90060", "90070")
+        val utbetalingEldreSak = vedtak.getValue("90070").utbetaling.single()
+        val utbetalingNyereSak = vedtak.getValue("90060").utbetaling.single()
+
+        assertThat(utbetalingEldreSak.periode)
+            .isEqualTo(Periode(LocalDate.of(2023, 2, 27), LocalDate.of(2023, 3, 12)))
+        assertThat(utbetalingEldreSak.belop).isEqualTo(5000)
+        assertThat(utbetalingEldreSak.reduksjon!!.timerArbeidet).isEqualTo(3.0)
+
+        assertThat(utbetalingNyereSak.periode)
+            .isEqualTo(Periode(LocalDate.of(2023, 3, 13), LocalDate.of(2023, 3, 26)))
+        assertThat(utbetalingNyereSak.belop).isEqualTo(6000)
+        assertThat(utbetalingNyereSak.reduksjon!!.timerArbeidet).isEqualTo(7.5)
+        assertThat(utbetalingNyereSak.dagsats).isEqualTo(600)
+    }
+
+    @Test
+    fun `blander ikke spesialutbetaling og betalingsplan inn i meldekortets utbetaling`() {
+        val vedtak = repo.hentMaksimumsløsning("33333333333", søkeperiodeFra, søkeperiodeTil).vedtak.single()
+        val utbetaling = vedtak.utbetaling.single()
+
+        assertThat(utbetaling.periode).isEqualTo(Periode(LocalDate.of(2023, 1, 30), LocalDate.of(2023, 2, 12)))
+        assertThat(utbetaling.belop).isEqualTo(7700)
+        assertThat(utbetaling.reduksjon!!.timerArbeidet).isEqualTo(7.5)
+    }
+
+    @Test
+    fun `beholder posteringer uten meldekortdager innenfor posteringsperioden`() {
+        val vedtak = repo.hentMaksimumsløsning(
+            "99999999999",
+            LocalDate.of(2025, 11, 1),
+            LocalDate.of(2025, 12, 31),
+        ).vedtak.associateBy { it.vedtaksId }
+
+        assertThat(vedtak.keys).containsExactlyInAnyOrder("90090", "90091")
+        val førsteUtbetaling = vedtak.getValue("90090").utbetaling.single()
+        val andreUtbetaling = vedtak.getValue("90091").utbetaling.single()
+
+        assertThat(førsteUtbetaling.belop).isEqualTo(1461)
+        assertThat(førsteUtbetaling.periode)
+            .isEqualTo(Periode(LocalDate.of(2025, 11, 24), LocalDate.of(2025, 11, 30)))
+        assertThat(andreUtbetaling.belop).isEqualTo(731)
+        assertThat(andreUtbetaling.periode)
+            .isEqualTo(Periode(LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 7)))
+
+        val førsteReduksjon = førsteUtbetaling.reduksjon!!.annenReduksjon
+        assertThat(førsteReduksjon.sykedager).isEqualTo(2.0f)
+        assertThat(førsteReduksjon.fravær).isZero()
+        assertThat(førsteReduksjon.sentMeldekort).isFalse()
+
+        val andreReduksjon = andreUtbetaling.reduksjon!!.annenReduksjon
+        assertThat(andreReduksjon.sykedager).isZero()
+        assertThat(andreReduksjon.fravær).isEqualTo(3.0f)
+        assertThat(andreReduksjon.sentMeldekort).isFalse()
+    }
 }
