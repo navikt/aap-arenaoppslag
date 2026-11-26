@@ -119,7 +119,7 @@ class TilgangkontrollService(
         LoggerFactory.getLogger("team-logs").info(
             // logger z-ident for nav-ansatt
             "aap-tilgang avviste tilgang: navIdent={}, tilgangIKontekst={}, fnr(maskert)={}{}",
-            token.navIdent(),
+            runCatching { token.navIdent()}.getOrDefault("n/a"),
             avvistResponse?.tilgangIKontekst,
             maskerFnr(personIdentifikator.id),
             saksnummer?.let { ", saksnummer=$it" }.orEmpty(),

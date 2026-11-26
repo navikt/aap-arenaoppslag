@@ -13,8 +13,12 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
 
-class Fakes : AutoCloseable {
-    internal val texas = embeddedServer(Netty, host = "127.0.0.1", port = 0, module = Application::texas).apply { start() }
+class Fakes(texasPort: Int = 0) : AutoCloseable {
+    init {
+        require(texasPort in 0..65535) { "Texas-port må være mellom 0 og 65535" }
+    }
+
+    internal val texas = embeddedServer(Netty, host = "127.0.0.1", port = texasPort, module = Application::texas).apply { start() }
 
     init {
         // Texas
