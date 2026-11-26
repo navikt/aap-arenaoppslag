@@ -8,6 +8,14 @@ Skal kun kalles fra våre egne interne apper, ikke lag åpning for apper utenfor
 Bruker gradle wrapper, så bare klon og kjør `./gradlew build`.
 Det er ikke lagt opp til at denne skal kjøre standalone, siden den er avhengig av Arena.
 
+## Lokal TestApp med fast tokenport
+
+`TestApp` bruker port `8087` for API-et. Tokenserveren (Texas) velger en ledig port ved hver oppstart.
+For å bruke en fast tokenport, sett `-Darenaoppslag.test.texas.port=60933` i **VM options** i IntelliJ-konfigurasjonen
+`TestApp Arenaoppslag som virker`. Sett `ARENAOPPSLAG_MOCK_OBO_TOKEN_URL=http://127.0.0.1:60933/token`
+i visningsklientens `.env.local-backend`, og start begge applikasjonene på nytt.
+Vanlige tester bruker fortsatt en ledig port. Hvis den valgte porten er opptatt, feiler oppstarten.
+
 ## Tilgangssjekk
 
 Arenaoppslag kaller på AAP-tilgang for å sjekke om innlogget bruker har tilgang til å se AAP-informasjon i Arena for en gitt person eller en gitt sak. Dette gjøres per nå kun for kall fra Visningsklienten, men kan utvides til andre klienter senere. Trolig ikke mulig for kall fra aap-api (eksterne), som ikke gjøres i kontekst av en personlig bruker. 

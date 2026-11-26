@@ -13,7 +13,8 @@ import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
 
 fun main() {
-    val fakes = Fakes()
+    val texasPort = System.getProperty("arenaoppslag.test.texas.port")?.toInt() ?: 0
+    val fakes = Fakes(texasPort)
     val logger = LoggerFactory.getLogger("no.nav.aap.arenaoppslag.TestApp")
     val dataSource: HikariDataSource = ArenaDatasource.create(TestConfig.oracleH2)
     // Initialize database with schema and test data using the same initializer as tests
